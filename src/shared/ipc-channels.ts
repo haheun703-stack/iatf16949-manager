@@ -21,6 +21,10 @@ export const IPC_CHANNELS = {
   TEAM_LIST: 'team:list',
   TEAM_GET_MEMBERS: 'team:getMembers',
 
+  // Bulk operations
+  TASK_BULK_CREATE: 'task:bulkCreate',
+  REGULATION_LIST: 'regulation:list',
+
   // Dashboard
   DASHBOARD_STATS: 'dashboard:stats',
 

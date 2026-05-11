@@ -1,0 +1,596 @@
+[
+  {
+    "docCode": "QM-01",
+    "name": "품질환경 매뉴얼",
+    "type": "manual",
+    "clauseId": "4.4.1",
+    "teamId": "team-qc",
+    "revision": "REV.7",
+    "fileName": "1.품질환경 매뉴얼 (REV.7_250106_프로세스맵 포함)_1,2,3공장 공통적용_완료.xlsx"
+  },
+  {
+    "docCode": "QM-02",
+    "name": "품질 및 환경 시스템 문서 목록표",
+    "type": "record",
+    "clauseId": "7.5.1",
+    "teamId": "team-qc",
+    "revision": "25년4월",
+    "fileName": "2.품질 및 환경 시스템 문서 목록표_25년4월1일 기준.xlsx"
+  },
+  {
+    "docCode": "CP-01",
+    "name": "영업관리 프로세스",
+    "type": "procedure",
+    "clauseId": "8.2",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "CP-01_영업관리 프로세스 (23년5월1일_REV.5)_영업.xlsx"
+  },
+  {
+    "docCode": "CP-02",
+    "name": "개발관리 프로세스",
+    "type": "procedure",
+    "clauseId": "8.3",
+    "teamId": "team-de",
+    "revision": "REV.5",
+    "fileName": "CP-02_개발관리 프로세스 (23년5월1일_REV.5)_개발.xlsx"
+  },
+  {
+    "docCode": "CP-03",
+    "name": "생산관리 프로세스",
+    "type": "procedure",
+    "clauseId": "8.5",
+    "teamId": "team-pr",
+    "revision": "REV.5",
+    "fileName": "CP-03_생산관리 프로세스 (23년5월1일_REV.5)_생산.xlsx"
+  },
+  {
+    "docCode": "MP-01",
+    "name": "경영관리 프로세스",
+    "type": "procedure",
+    "clauseId": "5.1",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "MP-01_경영관리 프로세스 (23년5월1일_REV.5)_전부서.xlsx"
+  },
+  {
+    "docCode": "MP-02",
+    "name": "리스크관리 프로세스",
+    "type": "procedure",
+    "clauseId": "6.1",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "MP-02_리스크관리 프로세스 (23년5월1일_REV.5)_전부서.xlsx"
+  },
+  {
+    "docCode": "MP-03",
+    "name": "인적 자원관리 프로세스",
+    "type": "procedure",
+    "clauseId": "7.2",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "MP-03_인적 자원관리 프로세스 (23년5월1일_REV.5)_전부서.xlsx"
+  },
+  {
+    "docCode": "SP-01",
+    "name": "구매관리 프로세스",
+    "type": "procedure",
+    "clauseId": "8.4",
+    "teamId": "team-pu",
+    "revision": "REV.5",
+    "fileName": "SP-01_구매관리 프로세스 (23년5월1일_REV.5)_구매,생산,영업.xlsx"
+  },
+  {
+    "docCode": "SP-02",
+    "name": "검사 및 시험 프로세스",
+    "type": "procedure",
+    "clauseId": "8.6",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "SP-02_검사 및 시험 프로세스 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "SP-03",
+    "name": "지속적 개선 프로세스",
+    "type": "procedure",
+    "clauseId": "10.3",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "SP-03_지속적 개선 프로세스 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "A-1100",
+    "name": "조직 및 업무분장 규정",
+    "type": "procedure",
+    "clauseId": "5.3",
+    "teamId": "team-mg",
+    "revision": "REV.6",
+    "fileName": "A-1100 조직 및 업무분장 규정 (25년6월27일_REV.6)_총무.xlsx"
+  },
+  {
+    "docCode": "A-2100",
+    "name": "사업계획 운영 규정",
+    "type": "procedure",
+    "clauseId": "6.2",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "A-2100 사업계획 운영 규정 (23년5월1일_REV.5)_총무.xlsx"
+  },
+  {
+    "docCode": "A-2200",
+    "name": "경영검토 규정",
+    "type": "procedure",
+    "clauseId": "9.3",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "A-2200 경영검토 규정 (23년5월1일_REV.5)_총무.xlsx"
+  },
+  {
+    "docCode": "A-3100",
+    "name": "회의 운영 규정",
+    "type": "procedure",
+    "clauseId": "5.1.1",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "A-3100 회의 운영 규정 (23년5월1일_REV.5)_총무.xlsx"
+  },
+  {
+    "docCode": "A-3200",
+    "name": "의사소통 규정",
+    "type": "procedure",
+    "clauseId": "7.4",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "A-3200 의사소통 규정 (23년5월1일_REV.5)_총무.xlsx"
+  },
+  {
+    "docCode": "A-4100",
+    "name": "문서 및 자료 관리 규정",
+    "type": "procedure",
+    "clauseId": "7.5",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "A-4100 문서 및 자료 관리 규정 (23년5월1일_REV.5)_품질경영.xlsx"
+  },
+  {
+    "docCode": "A-4101",
+    "name": "관리표준작성 지침",
+    "type": "procedure",
+    "clauseId": "7.5.2",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "A-4101 관리표준작성 지침 (23년5월1일_REV.5)_품질경영.xlsx"
+  },
+  {
+    "docCode": "A-4200",
+    "name": "기록관리 규정",
+    "type": "procedure",
+    "clauseId": "7.5.3",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "A-4200 기록관리 규정 (23년5월1일_REV.5)_총무.xlsx"
+  },
+  {
+    "docCode": "A-5100",
+    "name": "내부심사 규정",
+    "type": "procedure",
+    "clauseId": "9.2",
+    "teamId": "team-qc",
+    "revision": "REV.6",
+    "fileName": "A-5100 내부심사 규정 (24년5월27일_REV.6)_품질경영.xlsx"
+  },
+  {
+    "docCode": "A-5200",
+    "name": "공정 및 제품심사 규정",
+    "type": "procedure",
+    "clauseId": "9.2.2",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "A-5200 공정 및 제품심사 규정 (23년5월1일_REV.5)_품질경영.xlsx"
+  },
+  {
+    "docCode": "A-6100",
+    "name": "제안관리 규정",
+    "type": "procedure",
+    "clauseId": "10.3",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "A-6100 제안관리 규정 (23년5월1일_REV.5)_품질경영.xlsx"
+  },
+  {
+    "docCode": "A-6200",
+    "name": "분임조관리 규정",
+    "type": "procedure",
+    "clauseId": "10.3.1",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "A-6200 분임조관리 규정 (23년5월1일_REV.5)_품질경영.xlsx"
+  },
+  {
+    "docCode": "A-6300",
+    "name": "품질문제 신고포상 규정",
+    "type": "procedure",
+    "clauseId": "10.2",
+    "teamId": "team-qc",
+    "revision": "REV.0",
+    "fileName": "A-6300 품질문제 신고포상 규정 (25년6월13일_REV.0)_품질보증.xlsx"
+  },
+  {
+    "docCode": "A-7100",
+    "name": "윤리경영 규정",
+    "type": "procedure",
+    "clauseId": "5.1.1.1",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "A-7100 윤리경영 규정 (23년5월1일_REV.5)_총무.xlsx"
+  },
+  {
+    "docCode": "A-8100",
+    "name": "리스크 관리 규정",
+    "type": "procedure",
+    "clauseId": "6.1",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "A-8100 리스크 관리 규정 (23년5월1일_REV.5)_품질경영.xlsx"
+  },
+  {
+    "docCode": "A-8101",
+    "name": "비상상태 대비 및 대응 규정",
+    "type": "procedure",
+    "clauseId": "6.1.2.3",
+    "teamId": "team-mg",
+    "revision": "REV.6",
+    "fileName": "A-8101 비상상태 대비 및 대응 규정 (25년6월25일_REV.6)_총무.xlsx"
+  },
+  {
+    "docCode": "B-1100",
+    "name": "부적합품 관리 규정",
+    "type": "procedure",
+    "clauseId": "8.7",
+    "teamId": "team-qc",
+    "revision": "REV.7",
+    "fileName": "B-1100 부적합품 관리 규정 (25년6월25일_REV.7)_품질보증.xlsx"
+  },
+  {
+    "docCode": "B-2100",
+    "name": "시정조치 규정",
+    "type": "procedure",
+    "clauseId": "10.2",
+    "teamId": "team-qc",
+    "revision": "REV.6",
+    "fileName": "B-2100 시정조치 규정 (25년8월18일_REV.6)_품질보증.xlsx"
+  },
+  {
+    "docCode": "B-2200",
+    "name": "지속적 개선업무 규정",
+    "type": "procedure",
+    "clauseId": "10.3",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "B-2200 지속적 개선업무 규정 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "B-2300",
+    "name": "정성품질 운영 지침",
+    "type": "procedure",
+    "clauseId": "10.3.1",
+    "teamId": "team-qc",
+    "revision": "REV.1",
+    "fileName": "B-2300 정성품질 운영 지침 (25년8월1일_REV.1)_품질보증.xlsx"
+  },
+  {
+    "docCode": "D-1100",
+    "name": "제품 특성 안전관리 규정",
+    "type": "procedure",
+    "clauseId": "8.3.3.3",
+    "teamId": "team-de",
+    "revision": "REV.5",
+    "fileName": "D-1100 제품 특성 안전관리 규정 (23년5월1일_REV.5)_개발.xlsx"
+  },
+  {
+    "docCode": "F-1100",
+    "name": "교육훈련 규정",
+    "type": "procedure",
+    "clauseId": "7.2",
+    "teamId": "team-mg",
+    "revision": "REV.9",
+    "fileName": "F-1100 교육훈련 규정 (25년6월13일_REV.9)_총무.xlsx"
+  },
+  {
+    "docCode": "F-1101",
+    "name": "신규보직자 관리 지침",
+    "type": "procedure",
+    "clauseId": "7.2.1",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "F-1101 신규보직자 관리 지침(23년5월1일_REV.5)_총무.xlsx"
+  },
+  {
+    "docCode": "F-2100",
+    "name": "사내 자격관리 규정",
+    "type": "procedure",
+    "clauseId": "7.2.3",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "F-2100 사내 자격관리 규정 (23년5월1일_REV.5)_품질경영.xlsx"
+  },
+  {
+    "docCode": "H-1100",
+    "name": "계약검토 규정",
+    "type": "procedure",
+    "clauseId": "8.2.3",
+    "teamId": "team-de",
+    "revision": "REV.5",
+    "fileName": "H-1100 계약검토 규정 (23년5월1일_REV.5)_개발.xlsx"
+  },
+  {
+    "docCode": "H-2100",
+    "name": "양산주문접수 및 납품관리 규정",
+    "type": "procedure",
+    "clauseId": "8.2.1",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "H-2100 양산주문접수 및 납품관리 규정 (23년5월1일_REV.5)_영업.xlsx"
+  },
+  {
+    "docCode": "H-3100",
+    "name": "고객 만족도 관리 규정",
+    "type": "procedure",
+    "clauseId": "9.1.2",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "H-3100 고객 만족도 관리 규정 (23년5월1일_REV.5)_영업&총무.xlsx"
+  },
+  {
+    "docCode": "H-3200",
+    "name": "고객 불만처리 규정",
+    "type": "procedure",
+    "clauseId": "10.2.6",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "H-3200 고객 불만처리 규정 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "J-1100",
+    "name": "개발업무 규정",
+    "type": "procedure",
+    "clauseId": "8.3",
+    "teamId": "team-de",
+    "revision": "REV.7",
+    "fileName": "J-1100 개발업무 규정 (24년3월29일_REV.7)_개발.xlsx"
+  },
+  {
+    "docCode": "J-1101",
+    "name": "공정FMEA 작성 및 관리 지침",
+    "type": "procedure",
+    "clauseId": "8.3.5.2",
+    "teamId": "team-de",
+    "revision": "REV.6",
+    "fileName": "J-1101 공정FMEA 작성 및 관리 지침 (25년6월13일_REV.6)_개발.xlsx"
+  },
+  {
+    "docCode": "J-1102",
+    "name": "관리계획서 작성 및 관리 지침",
+    "type": "procedure",
+    "clauseId": "8.5.1.1",
+    "teamId": "team-qc",
+    "revision": "REV.7",
+    "fileName": "J-1102 관리계획서 작성 및 관리 지침 (25년8월18일_REV.7)_품질보증.xlsx"
+  },
+  {
+    "docCode": "J-1103",
+    "name": "작업표준서 작성 및 관리 지침",
+    "type": "procedure",
+    "clauseId": "8.5.1.2",
+    "teamId": "team-pr",
+    "revision": "REV.6",
+    "fileName": "J-1103 작업표준서 작성 및 관리 지침 (23년7월17일_REV.6)_생산.xlsx"
+  },
+  {
+    "docCode": "J-2100",
+    "name": "양산부품승인업무규정",
+    "type": "procedure",
+    "clauseId": "8.3.4.4",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "J-2100 양산부품승인업무규정 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "J-3100",
+    "name": "4M변경관리 규정",
+    "type": "procedure",
+    "clauseId": "8.5.6",
+    "teamId": "team-de",
+    "revision": "REV.5",
+    "fileName": "J-3100 4M변경관리 규정 (23년5월1일_REV.5)_개발.xlsx"
+  },
+  {
+    "docCode": "J-4100",
+    "name": "도면관리 규정",
+    "type": "procedure",
+    "clauseId": "7.5.3.2.2",
+    "teamId": "team-de",
+    "revision": "REV.5",
+    "fileName": "J-4100 도면관리 규정 (23년5월1일_REV.5)_개발.xlsx"
+  },
+  {
+    "docCode": "J-4200",
+    "name": "도면부품 일치성 점검지침",
+    "type": "procedure",
+    "clauseId": "8.6",
+    "teamId": "team-qc",
+    "revision": "REV.0",
+    "fileName": "J-4200 도면부품 일치성 점검지침 (24년7월1일_REV.0)_품질보증.xlsx"
+  },
+  {
+    "docCode": "K-1100",
+    "name": "구매업무 규정",
+    "type": "procedure",
+    "clauseId": "8.4",
+    "teamId": "team-pu",
+    "revision": "REV.5",
+    "fileName": "K-1100 구매업무 규정 (23년5월1일_REV.5)_구매.xlsx"
+  },
+  {
+    "docCode": "K-1200",
+    "name": "협력업체 관리 규정",
+    "type": "procedure",
+    "clauseId": "8.4.2.4",
+    "teamId": "team-pu",
+    "revision": "REV.8",
+    "fileName": "K-1200 협력업체 관리 규정 (25년6월13일_REV.8)_구매.xlsx"
+  },
+  {
+    "docCode": "K-2100",
+    "name": "자재관리 규정",
+    "type": "procedure",
+    "clauseId": "8.5.4",
+    "teamId": "team-pu",
+    "revision": "REV.7",
+    "fileName": "K-2100 자재관리 규정 (25년6월25일_REV.7)_구매.xlsx"
+  },
+  {
+    "docCode": "L-1100",
+    "name": "설비관리 규정",
+    "type": "procedure",
+    "clauseId": "7.1.3.1",
+    "teamId": "team-pe",
+    "revision": "REV.5",
+    "fileName": "L-1100 설비관리 규정 (23년5월1일_REV.5)_생산기술.xlsx"
+  },
+  {
+    "docCode": "L-1200",
+    "name": "지그관리 규정",
+    "type": "procedure",
+    "clauseId": "8.5.1.6",
+    "teamId": "team-de",
+    "revision": "REV.5",
+    "fileName": "L-1200 지그관리 규정 (23년5월1일_REV.5)_개발.xlsx"
+  },
+  {
+    "docCode": "L-2100",
+    "name": "검사업무 규정",
+    "type": "procedure",
+    "clauseId": "8.6",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "L-2100 검사업무 규정 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "L-2200",
+    "name": "신뢰성 시험업무 규정",
+    "type": "procedure",
+    "clauseId": "8.6.2",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "L-2200 신뢰성 시험업무 규정 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "L-2300",
+    "name": "한도견본관리 규정",
+    "type": "procedure",
+    "clauseId": "8.6.6",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "L-2300 한도견본관리 규정 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "L-3100",
+    "name": "계측기관리 규정",
+    "type": "procedure",
+    "clauseId": "7.1.5",
+    "teamId": "team-qc",
+    "revision": "REV.8",
+    "fileName": "L-3100 계측기관리 규정 (25년6월13일_REV.8)_품질보증.xlsx"
+  },
+  {
+    "docCode": "L-3101",
+    "name": "측정시스템 평가 지침",
+    "type": "procedure",
+    "clauseId": "7.1.5.1.1",
+    "teamId": "team-qc",
+    "revision": "REV.6",
+    "fileName": "L-3101 측정시스템 평가 지침 (23년7월17일_REV.6)_품질보증.xlsx"
+  },
+  {
+    "docCode": "L-4100",
+    "name": "통계적 기법적용 규정",
+    "type": "procedure",
+    "clauseId": "9.1.1.1",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "L-4100 통계적 기법적용 규정 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "L-4101",
+    "name": "관리도 운영 지침",
+    "type": "procedure",
+    "clauseId": "9.1.1.1",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "L-4101 관리도 운영 지침 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "L-4102",
+    "name": "공정능력 운영 지침",
+    "type": "procedure",
+    "clauseId": "9.1.1.1",
+    "teamId": "team-qc",
+    "revision": "REV.5",
+    "fileName": "L-4102 공정능력 운영 지침 (23년5월1일_REV.5)_품질보증.xlsx"
+  },
+  {
+    "docCode": "M-1100",
+    "name": "생산관리 규정",
+    "type": "procedure",
+    "clauseId": "8.5.1",
+    "teamId": "team-pr",
+    "revision": "REV.5",
+    "fileName": "M-1100 생산관리 규정 (23년5월1일_REV.5)_생산.xlsx"
+  },
+  {
+    "docCode": "M-1200",
+    "name": "공정관리 규정",
+    "type": "procedure",
+    "clauseId": "8.5.1",
+    "teamId": "team-pr",
+    "revision": "REV.7",
+    "fileName": "M-1200 공정관리 규정 (25년8월18일_REV.7)_생산.xlsx"
+  },
+  {
+    "docCode": "M-2100",
+    "name": "식별 및 추적성관리 규정",
+    "type": "procedure",
+    "clauseId": "8.5.2",
+    "teamId": "team-pr",
+    "revision": "REV.5",
+    "fileName": "M-2100 식별 및 추적성관리 규정 (23년5월1일_REV.5)_생산.xlsx"
+  },
+  {
+    "docCode": "M-3100",
+    "name": "완성품 관리 규정",
+    "type": "procedure",
+    "clauseId": "8.5.4",
+    "teamId": "team-mg",
+    "revision": "REV.5",
+    "fileName": "M-3100 완성품 관리 규정 (23년5월1일_REV.5)_영업.xlsx"
+  },
+  {
+    "docCode": "M-4100",
+    "name": "3정5S활동 규정",
+    "type": "procedure",
+    "clauseId": "7.1.3",
+    "teamId": "team-mg",
+    "revision": "REV.6",
+    "fileName": "M-4100 3정5S활동 규정 (25년8월1일_REV.6)_총무.xlsx"
+  },
+  {
+    "docCode": "M-4200",
+    "name": "조도(Lux) 관리 지침",
+    "type": "procedure",
+    "clauseId": "7.1.4",
+    "teamId": "team-qc",
+    "revision": "REV.0",
+    "fileName": "M-4200 조도(Lux) 관리 지침 (23년5월1일_REV.0)_품질보증.xlsx"
+  }
+]

@@ -29,6 +29,16 @@ interface PersonSeed {
   qualifications: string | null
 }
 
+interface RegulationSeed {
+  docCode: string
+  name: string
+  type: string
+  clauseId: string
+  teamId: string
+  revision: string
+  fileName: string
+}
+
 export function seedDatabase(): void {
   const db = getSqlite()
 
@@ -96,6 +106,24 @@ export function seedDatabase(): void {
     }
   }
   console.log(`Seeded ${clauses.length} clauses, ${docCount} documents`)
+
+  // 4. Seed regulations (procedure/manual documents with team mapping)
+  const regPath = join(seedDir, 'regulations.json')
+  if (existsSync(regPath)) {
+    const regulations: RegulationSeed[] = JSON.parse(readFileSync(regPath, 'utf-8'))
+    const insertReg = db.prepare(
+      'INSERT INTO documents (id, clause_id, name, type, current_version, retention_days, team_id, doc_code, revision) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+    for (const reg of regulations) {
+      const docId = `reg-${reg.docCode.toLowerCase()}`
+      insertReg.run(
+        docId, reg.clauseId, reg.name, reg.type,
+        reg.revision, 1095,
+        reg.teamId, reg.docCode, reg.revision
+      )
+    }
+    console.log(`Seeded ${regulations.length} regulation documents`)
+  }
 
   console.log('Database seeding complete!')
 }

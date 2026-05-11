@@ -11,7 +11,8 @@ import type {
   DashboardStats,
   TeamSummary,
   PersonSummary,
-  DbStatus
+  DbStatus,
+  RegulationItem
 } from '@shared/ipc-types'
 
 export function registerAllIpcHandlers(): void {
@@ -53,10 +54,13 @@ export function registerAllIpcHandlers(): void {
     if (!clause) return null
 
     const docs = db
-      .prepare('SELECT * FROM documents WHERE clause_id = ?')
-      .all(id) as Array<{
-        id: string; name: string; type: string; current_version: string; clause_id: string
-      }>
+      .prepare(`
+        SELECT d.*, tm.name as team_name
+        FROM documents d
+        LEFT JOIN teams tm ON d.team_id = tm.id
+        WHERE d.clause_id = ?
+      `)
+      .all(id) as Array<Record<string, unknown>>
 
     const tasks = db
       .prepare(`
@@ -77,11 +81,15 @@ export function registerAllIpcHandlers(): void {
       depth: clause.depth,
       category: clause.category,
       documents: docs.map((d) => ({
-        id: d.id,
-        name: d.name,
-        type: d.type,
-        currentVersion: d.current_version,
-        clauseId: d.clause_id
+        id: d.id as string,
+        name: d.name as string,
+        type: d.type as string,
+        currentVersion: (d.current_version as string) || '1.0',
+        clauseId: d.clause_id as string,
+        docCode: (d.doc_code as string) || null,
+        teamId: (d.team_id as string) || null,
+        teamName: (d.team_name as string) || null,
+        revision: (d.revision as string) || null
       })),
       tasks: tasks.map((t) => ({
         id: t.id as string,
@@ -137,17 +145,24 @@ export function registerAllIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.DOCUMENT_LIST_BY_CLAUSE, (_event, { clauseId }: { clauseId: string }) => {
     const docs = db
-      .prepare('SELECT * FROM documents WHERE clause_id = ?')
-      .all(clauseId) as Array<{
-        id: string; name: string; type: string; current_version: string; clause_id: string
-      }>
+      .prepare(`
+        SELECT d.*, tm.name as team_name
+        FROM documents d
+        LEFT JOIN teams tm ON d.team_id = tm.id
+        WHERE d.clause_id = ?
+      `)
+      .all(clauseId) as Array<Record<string, unknown>>
 
     return docs.map((d) => ({
-      id: d.id,
-      name: d.name,
-      type: d.type,
-      currentVersion: d.current_version,
-      clauseId: d.clause_id
+      id: d.id as string,
+      name: d.name as string,
+      type: d.type as string,
+      currentVersion: (d.current_version as string) || '1.0',
+      clauseId: d.clause_id as string,
+      docCode: (d.doc_code as string) || null,
+      teamId: (d.team_id as string) || null,
+      teamName: (d.team_name as string) || null,
+      revision: (d.revision as string) || null
     })) as DocumentSummary[]
   })
 
@@ -344,5 +359,77 @@ export function registerAllIpcHandlers(): void {
       persons: getCount('persons'),
       tasks: getCount('tasks')
     } as DbStatus
+  })
+
+  // ──── Regulation Handlers ────
+
+  ipcMain.handle(IPC_CHANNELS.REGULATION_LIST, () => {
+    const rows = db.prepare(`
+      SELECT d.*, c.title as clause_title, tm.name as team_name
+      FROM documents d
+      LEFT JOIN clauses c ON d.clause_id = c.id
+      LEFT JOIN teams tm ON d.team_id = tm.id
+      WHERE d.doc_code IS NOT NULL
+      ORDER BY d.doc_code
+    `).all() as Array<Record<string, unknown>>
+
+    return rows.map((r) => ({
+      id: r.id as string,
+      docCode: r.doc_code as string,
+      name: r.name as string,
+      type: r.type as string,
+      clauseId: r.clause_id as string,
+      clauseTitle: (r.clause_title as string) || '',
+      teamId: r.team_id as string,
+      teamName: (r.team_name as string) || '',
+      revision: (r.revision as string) || null
+    })) as RegulationItem[]
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TASK_BULK_CREATE, (_event, { deadline }: { deadline: string }) => {
+    // Get all regulation documents (those with doc_code and team_id)
+    const regulations = db.prepare(`
+      SELECT d.id as doc_id, d.clause_id, d.team_id, d.name, d.doc_code
+      FROM documents d
+      WHERE d.doc_code IS NOT NULL AND d.team_id IS NOT NULL
+    `).all() as Array<{
+      doc_id: string; clause_id: string; team_id: string; name: string; doc_code: string
+    }>
+
+    // Get team managers as default assignees
+    const teamManagers = db.prepare(`
+      SELECT t.id as team_id, t.manager_id FROM teams t WHERE t.manager_id IS NOT NULL
+    `).all() as Array<{ team_id: string; manager_id: string }>
+
+    const managerMap = new Map(teamManagers.map((tm) => [tm.team_id, tm.manager_id]))
+
+    const now = new Date().toISOString()
+    const insertTask = db.prepare(`
+      INSERT INTO tasks (id, clause_id, document_id, assignee_id, team_id, status, priority, deadline, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 'plan', 'medium', ?, ?, ?)
+    `)
+    const insertHistory = db.prepare(`
+      INSERT INTO task_pdca_history (task_id, from_status, to_status, changed_at, note)
+      VALUES (?, NULL, 'plan', ?, ?)
+    `)
+
+    // Check existing tasks to avoid duplicates
+    const existingTasks = db.prepare(`
+      SELECT document_id FROM tasks WHERE document_id IS NOT NULL
+    `).all() as Array<{ document_id: string }>
+    const existingDocIds = new Set(existingTasks.map((t) => t.document_id))
+
+    let created = 0
+    for (const reg of regulations) {
+      if (existingDocIds.has(reg.doc_id)) continue // skip if task already exists for this regulation
+
+      const taskId = randomUUID()
+      const assigneeId = managerMap.get(reg.team_id) || null
+      insertTask.run(taskId, reg.clause_id, reg.doc_id, assigneeId, reg.team_id, deadline, now, now)
+      insertHistory.run(taskId, now, `[일괄생성] ${reg.doc_code} ${reg.name}`)
+      created++
+    }
+
+    return { created }
   })
 }

@@ -31,6 +31,22 @@ export interface DocumentSummary {
   type: string
   currentVersion: string
   clauseId: string
+  docCode: string | null
+  teamId: string | null
+  teamName: string | null
+  revision: string | null
+}
+
+export interface RegulationItem {
+  id: string
+  docCode: string
+  name: string
+  type: string
+  clauseId: string
+  clauseTitle: string
+  teamId: string
+  teamName: string
+  revision: string | null
 }
 
 export interface TaskListItem {
@@ -158,6 +174,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.TEAM_GET_MEMBERS]: {
     request: { teamId: string }
     response: PersonSummary[]
+  }
+  [IPC_CHANNELS.TASK_BULK_CREATE]: {
+    request: { deadline: string }
+    response: { created: number }
+  }
+  [IPC_CHANNELS.REGULATION_LIST]: {
+    request: void
+    response: RegulationItem[]
   }
   [IPC_CHANNELS.DASHBOARD_STATS]: {
     request: void
