@@ -28,7 +28,13 @@ export function registerAllIpcHandlers(): void {
         parent_id: string | null; depth: number; sort_order: number; category: string | null
       }>
 
-    const countStmt = db.prepare('SELECT COUNT(*) as count FROM documents WHERE clause_id = ?')
+    // Batch document count query (fixes N+1: was 172 queries, now 1)
+    const docCounts = db.prepare(
+      'SELECT clause_id, COUNT(*) as count FROM documents GROUP BY clause_id'
+    ).all() as Array<{ clause_id: string; count: number }>
+    const countMap = new Map(docCounts.map((r) => [r.clause_id, r.count]))
+
+    const parentIds = new Set(allClauses.filter((c) => c.parent_id).map((c) => c.parent_id!))
 
     const result: ClauseTreeNode[] = allClauses.map((c) => ({
       id: c.id,
@@ -38,8 +44,8 @@ export function registerAllIpcHandlers(): void {
       depth: c.depth,
       sortOrder: c.sort_order,
       category: c.category,
-      hasChildren: allClauses.some((child) => child.parent_id === c.id),
-      documentCount: (countStmt.get(c.id) as { count: number }).count
+      hasChildren: parentIds.has(c.id),
+      documentCount: countMap.get(c.id) || 0
     }))
 
     return result
@@ -164,6 +170,29 @@ export function registerAllIpcHandlers(): void {
       teamName: (d.team_name as string) || null,
       revision: (d.revision as string) || null
     })) as DocumentSummary[]
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DOCUMENT_GET_BY_ID, (_event, { id }: { id: string }) => {
+    const doc = db.prepare(`
+      SELECT d.*, tm.name as team_name
+      FROM documents d
+      LEFT JOIN teams tm ON d.team_id = tm.id
+      WHERE d.id = ?
+    `).get(id) as Record<string, unknown> | undefined
+
+    if (!doc) return null
+
+    return {
+      id: doc.id as string,
+      name: doc.name as string,
+      type: doc.type as string,
+      currentVersion: (doc.current_version as string) || '1.0',
+      clauseId: doc.clause_id as string,
+      docCode: (doc.doc_code as string) || null,
+      teamId: (doc.team_id as string) || null,
+      teamName: (doc.team_name as string) || null,
+      revision: (doc.revision as string) || null
+    } as DocumentSummary
   })
 
   // ──── Task Handlers ────
@@ -302,15 +331,17 @@ export function registerAllIpcHandlers(): void {
   })
 
   ipcMain.handle(IPC_CHANNELS.TASK_GET_HISTORY, (_event, { taskId }: { taskId: string }) => {
-    return db.prepare(
-      'SELECT * FROM task_pdca_history WHERE task_id = ? ORDER BY changed_at DESC'
-    ).all(taskId) as TaskHistoryItem[]
+    return db.prepare(`
+      SELECT id, task_id as taskId, from_status as fromStatus, to_status as toStatus,
+             changed_at as changedAt, changed_by as changedBy, note
+      FROM task_pdca_history WHERE task_id = ? ORDER BY changed_at DESC
+    `).all(taskId) as TaskHistoryItem[]
   })
 
   // ──── Team Handlers ────
 
   ipcMain.handle(IPC_CHANNELS.TEAM_LIST, () => {
-    return db.prepare('SELECT * FROM teams').all() as TeamSummary[]
+    return db.prepare('SELECT id, name, manager_id as managerId FROM teams').all() as TeamSummary[]
   })
 
   ipcMain.handle(IPC_CHANNELS.TEAM_GET_MEMBERS, (_event, { teamId }: { teamId: string }) => {
@@ -387,49 +418,53 @@ export function registerAllIpcHandlers(): void {
   })
 
   ipcMain.handle(IPC_CHANNELS.TASK_BULK_CREATE, (_event, { deadline }: { deadline: string }) => {
-    // Get all regulation documents (those with doc_code and team_id)
-    const regulations = db.prepare(`
-      SELECT d.id as doc_id, d.clause_id, d.team_id, d.name, d.doc_code
-      FROM documents d
-      WHERE d.doc_code IS NOT NULL AND d.team_id IS NOT NULL
-    `).all() as Array<{
-      doc_id: string; clause_id: string; team_id: string; name: string; doc_code: string
-    }>
+    const bulkCreate = db.transaction(() => {
+      // Get all regulation documents (those with doc_code and team_id)
+      const regulations = db.prepare(`
+        SELECT d.id as doc_id, d.clause_id, d.team_id, d.name, d.doc_code
+        FROM documents d
+        WHERE d.doc_code IS NOT NULL AND d.team_id IS NOT NULL
+      `).all() as Array<{
+        doc_id: string; clause_id: string; team_id: string; name: string; doc_code: string
+      }>
 
-    // Get team managers as default assignees
-    const teamManagers = db.prepare(`
-      SELECT t.id as team_id, t.manager_id FROM teams t WHERE t.manager_id IS NOT NULL
-    `).all() as Array<{ team_id: string; manager_id: string }>
+      // Get team managers as default assignees
+      const teamManagers = db.prepare(`
+        SELECT t.id as team_id, t.manager_id FROM teams t WHERE t.manager_id IS NOT NULL
+      `).all() as Array<{ team_id: string; manager_id: string }>
 
-    const managerMap = new Map(teamManagers.map((tm) => [tm.team_id, tm.manager_id]))
+      const managerMap = new Map(teamManagers.map((tm) => [tm.team_id, tm.manager_id]))
 
-    const now = new Date().toISOString()
-    const insertTask = db.prepare(`
-      INSERT INTO tasks (id, clause_id, document_id, assignee_id, team_id, status, priority, deadline, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, 'plan', 'medium', ?, ?, ?)
-    `)
-    const insertHistory = db.prepare(`
-      INSERT INTO task_pdca_history (task_id, from_status, to_status, changed_at, note)
-      VALUES (?, NULL, 'plan', ?, ?)
-    `)
+      const now = new Date().toISOString()
+      const insertTask = db.prepare(`
+        INSERT INTO tasks (id, clause_id, document_id, assignee_id, team_id, status, priority, deadline, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 'plan', 'medium', ?, ?, ?)
+      `)
+      const insertHistory = db.prepare(`
+        INSERT INTO task_pdca_history (task_id, from_status, to_status, changed_at, note)
+        VALUES (?, NULL, 'plan', ?, ?)
+      `)
 
-    // Check existing tasks to avoid duplicates
-    const existingTasks = db.prepare(`
-      SELECT document_id FROM tasks WHERE document_id IS NOT NULL
-    `).all() as Array<{ document_id: string }>
-    const existingDocIds = new Set(existingTasks.map((t) => t.document_id))
+      // Check existing tasks to avoid duplicates
+      const existingTasks = db.prepare(`
+        SELECT document_id FROM tasks WHERE document_id IS NOT NULL
+      `).all() as Array<{ document_id: string }>
+      const existingDocIds = new Set(existingTasks.map((t) => t.document_id))
 
-    let created = 0
-    for (const reg of regulations) {
-      if (existingDocIds.has(reg.doc_id)) continue // skip if task already exists for this regulation
+      let created = 0
+      for (const reg of regulations) {
+        if (existingDocIds.has(reg.doc_id)) continue
 
-      const taskId = randomUUID()
-      const assigneeId = managerMap.get(reg.team_id) || null
-      insertTask.run(taskId, reg.clause_id, reg.doc_id, assigneeId, reg.team_id, deadline, now, now)
-      insertHistory.run(taskId, now, `[일괄생성] ${reg.doc_code} ${reg.name}`)
-      created++
-    }
+        const taskId = randomUUID()
+        const assigneeId = managerMap.get(reg.team_id) || null
+        insertTask.run(taskId, reg.clause_id, reg.doc_id, assigneeId, reg.team_id, deadline, now, now)
+        insertHistory.run(taskId, now, `[일괄생성] ${reg.doc_code} ${reg.name}`)
+        created++
+      }
 
-    return { created }
+      return { created }
+    })
+
+    return bulkCreate()
   })
 }

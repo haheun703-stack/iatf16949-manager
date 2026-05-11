@@ -44,13 +44,13 @@ export function TopBar(): JSX.Element {
           onChange={(e) => setFilterTeam(e.target.value)}
           className="bg-background border border-border rounded-md px-2 py-1 text-[11px] text-foreground outline-none focus:border-primary"
         >
-          <option>전체</option>
-          <option>품질관리팀</option>
-          <option>생산기술팀</option>
-          <option>구매팀</option>
-          <option>설계팀</option>
-          <option>생산팀</option>
-          <option>경영지원팀</option>
+          <option value="전체">전체</option>
+          <option value="team-qc">품질관리팀</option>
+          <option value="team-pe">생산기술팀</option>
+          <option value="team-pu">구매팀</option>
+          <option value="team-de">설계팀</option>
+          <option value="team-pr">생산팀</option>
+          <option value="team-mg">경영지원팀</option>
         </select>
         <select
           value={filterStatus}

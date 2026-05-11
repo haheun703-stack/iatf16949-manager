@@ -17,7 +17,7 @@ export function GanttChartView(): JSX.Element {
     loadTasks()
   }, [loadTasks])
 
-  const tasksWithDates = tasks.filter((t) => t.deadline && t.createdAt)
+  const tasksWithDates = useMemo(() => tasks.filter((t) => t.deadline && t.createdAt), [tasks])
 
   const { startDate, endDate, totalDays } = useMemo(() => {
     if (tasksWithDates.length === 0) {
