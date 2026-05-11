@@ -1,0 +1,34 @@
+appId: com.iatf16949.qms-manager
+productName: IATF16949 품질경영시스템
+copyright: Copyright © 2026
+
+directories:
+  buildResources: build
+  output: dist
+
+files:
+  - out/**/*
+  - resources/**/*
+  - "!resources/seed/**"
+
+extraResources:
+  - from: resources/migrations
+    to: migrations
+  - from: resources/seed
+    to: seed
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: IATF16949 QMS
