@@ -20,25 +20,25 @@ export function Dashboard(): JSX.Element {
           icon={<BarChart3 className="w-5 h-5" />}
           label="전체 업무"
           value={dashboardStats?.total ?? 0}
-          color="#a78bfa"
+          color="#7c3aed"
         />
         <StatCard
           icon={<CheckCircle2 className="w-5 h-5" />}
           label="완료"
           value={dashboardStats?.done ?? 0}
-          color="#22c55e"
+          color="#16a34a"
         />
         <StatCard
           icon={<Clock className="w-5 h-5" />}
           label="진행중"
           value={dashboardStats?.inProgress ?? 0}
-          color="#f59e0b"
+          color="#d97706"
         />
         <StatCard
           icon={<AlertTriangle className="w-5 h-5" />}
           label="기한초과"
           value={dashboardStats?.overdue ?? 0}
-          color="#ef4444"
+          color="#dc2626"
         />
       </div>
 
@@ -72,7 +72,7 @@ export function Dashboard(): JSX.Element {
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
-            아직 등록된 업무가 없습니다. Phase 2에서 업무 생성 기능이 추가되면 여기에 PDCA 분포가 표시됩니다.
+            아직 등록된 업무가 없습니다. 업무 탭에서 업무를 생성하면 여기에 PDCA 분포가 표시됩니다.
           </p>
         )}
       </div>

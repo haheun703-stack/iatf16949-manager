@@ -47,6 +47,18 @@ export interface TaskListItem {
   priority: string
   deadline: string | null
   completedAt: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export interface TaskHistoryItem {
+  id: number
+  taskId: string
+  fromStatus: string | null
+  toStatus: string
+  changedAt: string
+  changedBy: string | null
+  note: string | null
 }
 
 export interface DashboardStats {
@@ -127,9 +139,17 @@ export interface IpcChannelMap {
     request: { id: string }
     response: TaskListItem | null
   }
+  [IPC_CHANNELS.TASK_DELETE]: {
+    request: { id: string }
+    response: { success: boolean }
+  }
   [IPC_CHANNELS.TASK_UPDATE_STATUS]: {
     request: { taskId: string; newStatus: string; note?: string; changedBy?: string }
     response: { success: boolean }
+  }
+  [IPC_CHANNELS.TASK_GET_HISTORY]: {
+    request: { taskId: string }
+    response: TaskHistoryItem[]
   }
   [IPC_CHANNELS.TEAM_LIST]: {
     request: void

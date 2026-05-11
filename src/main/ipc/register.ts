@@ -1,10 +1,13 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
+import { randomUUID } from 'crypto'
 import type {
   ClauseTreeNode,
   ClauseDetail,
   DocumentSummary,
+  TaskListItem,
+  TaskHistoryItem,
   DashboardStats,
   TeamSummary,
   PersonSummary,
@@ -93,7 +96,9 @@ export function registerAllIpcHandlers(): void {
         status: t.status as string,
         priority: t.priority as string,
         deadline: (t.deadline as string) || null,
-        completedAt: (t.completed_at as string) || null
+        completedAt: (t.completed_at as string) || null,
+        createdAt: (t.created_at as string) || null,
+        updatedAt: (t.updated_at as string) || null
       }))
     }
 
@@ -144,6 +149,147 @@ export function registerAllIpcHandlers(): void {
       currentVersion: d.current_version,
       clauseId: d.clause_id
     })) as DocumentSummary[]
+  })
+
+  // ──── Task Handlers ────
+
+  const VALID_TRANSITIONS: Record<string, string[]> = {
+    plan: ['do'],
+    do: ['check'],
+    check: ['act'],
+    act: ['done', 'plan'],
+    done: ['plan']
+  }
+
+  function mapTaskRow(t: Record<string, unknown>): TaskListItem {
+    return {
+      id: t.id as string,
+      clauseId: t.clause_id as string,
+      clauseTitle: (t.clause_title as string) || '',
+      documentId: (t.document_id as string) || null,
+      documentName: (t.doc_name as string) || null,
+      team: (t.team_name as string) || '',
+      teamId: (t.team_id as string) || '',
+      assignee: (t.assignee_name as string) || '',
+      assigneeId: (t.assignee_id as string) || '',
+      status: t.status as string,
+      priority: t.priority as string,
+      deadline: (t.deadline as string) || null,
+      completedAt: (t.completed_at as string) || null,
+      createdAt: (t.created_at as string) || null,
+      updatedAt: (t.updated_at as string) || null
+    }
+  }
+
+  const TASK_SELECT_SQL = `
+    SELECT t.*, c.title as clause_title,
+           p.name as assignee_name, tm.name as team_name, d.name as doc_name
+    FROM tasks t
+    LEFT JOIN clauses c ON t.clause_id = c.id
+    LEFT JOIN persons p ON t.assignee_id = p.id
+    LEFT JOIN teams tm ON t.team_id = tm.id
+    LEFT JOIN documents d ON t.document_id = d.id
+  `
+
+  ipcMain.handle(IPC_CHANNELS.TASK_CREATE, (_event, data: {
+    clauseId: string; documentId?: string; assigneeId: string;
+    teamId: string; priority: string; deadline: string
+  }) => {
+    const id = randomUUID()
+    const now = new Date().toISOString()
+    db.prepare(`
+      INSERT INTO tasks (id, clause_id, document_id, assignee_id, team_id, status, priority, deadline, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 'plan', ?, ?, ?, ?)
+    `).run(id, data.clauseId, data.documentId || null, data.assigneeId, data.teamId, data.priority, data.deadline, now, now)
+
+    db.prepare(`
+      INSERT INTO task_pdca_history (task_id, from_status, to_status, changed_at, note)
+      VALUES (?, NULL, 'plan', ?, '업무 생성')
+    `).run(id, now)
+
+    return { id }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TASK_UPDATE, (_event, data: { id: string; [key: string]: unknown }) => {
+    const { id, ...fields } = data
+    const allowed = ['document_id', 'assignee_id', 'team_id', 'priority', 'deadline']
+    const fieldMap: Record<string, string> = {
+      documentId: 'document_id', assigneeId: 'assignee_id',
+      teamId: 'team_id', priority: 'priority', deadline: 'deadline'
+    }
+
+    const sets: string[] = []
+    const values: unknown[] = []
+    for (const [key, col] of Object.entries(fieldMap)) {
+      if (key in fields) {
+        if (!allowed.includes(col)) continue
+        sets.push(`${col} = ?`)
+        values.push(fields[key] ?? null)
+      }
+    }
+    if (sets.length === 0) return { success: false }
+
+    sets.push("updated_at = datetime('now')")
+    values.push(id)
+    db.prepare(`UPDATE tasks SET ${sets.join(', ')} WHERE id = ?`).run(...values)
+    return { success: true }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TASK_DELETE, (_event, { id }: { id: string }) => {
+    db.prepare('DELETE FROM task_pdca_history WHERE task_id = ?').run(id)
+    db.prepare('DELETE FROM tasks WHERE id = ?').run(id)
+    return { success: true }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TASK_LIST, (_event, filters: { clauseId?: string; teamId?: string; status?: string }) => {
+    let sql = TASK_SELECT_SQL
+    const conditions: string[] = []
+    const params: unknown[] = []
+
+    if (filters?.clauseId) { conditions.push('t.clause_id = ?'); params.push(filters.clauseId) }
+    if (filters?.teamId) { conditions.push('t.team_id = ?'); params.push(filters.teamId) }
+    if (filters?.status) { conditions.push('t.status = ?'); params.push(filters.status) }
+
+    if (conditions.length > 0) sql += ' WHERE ' + conditions.join(' AND ')
+    sql += ' ORDER BY t.deadline ASC, t.created_at DESC'
+
+    const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>
+    return rows.map(mapTaskRow)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TASK_GET_BY_ID, (_event, { id }: { id: string }) => {
+    const row = db.prepare(TASK_SELECT_SQL + ' WHERE t.id = ?').get(id) as Record<string, unknown> | undefined
+    return row ? mapTaskRow(row) : null
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TASK_UPDATE_STATUS, (_event, data: {
+    taskId: string; newStatus: string; note?: string; changedBy?: string
+  }) => {
+    const task = db.prepare('SELECT status FROM tasks WHERE id = ?').get(data.taskId) as { status: string } | undefined
+    if (!task) return { success: false }
+
+    const allowed = VALID_TRANSITIONS[task.status]
+    if (!allowed || !allowed.includes(data.newStatus)) return { success: false }
+
+    const now = new Date().toISOString()
+    const completedAt = data.newStatus === 'done' ? now : null
+
+    db.prepare(`
+      UPDATE tasks SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?
+    `).run(data.newStatus, completedAt, now, data.taskId)
+
+    db.prepare(`
+      INSERT INTO task_pdca_history (task_id, from_status, to_status, changed_at, changed_by, note)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(data.taskId, task.status, data.newStatus, now, data.changedBy || null, data.note || null)
+
+    return { success: true }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TASK_GET_HISTORY, (_event, { taskId }: { taskId: string }) => {
+    return db.prepare(
+      'SELECT * FROM task_pdca_history WHERE task_id = ? ORDER BY changed_at DESC'
+    ).all(taskId) as TaskHistoryItem[]
   })
 
   // ──── Team Handlers ────

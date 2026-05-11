@@ -18,11 +18,11 @@ export const PDCA_LABELS: Record<PDCAStatus, string> = {
 }
 
 export const PDCA_COLORS: Record<PDCAStatus, { color: string; bg: string }> = {
-  plan: { color: '#6b7280', bg: '#1f2937' },
-  do: { color: '#f59e0b', bg: '#422006' },
-  check: { color: '#3b82f6', bg: '#1e3a5f' },
-  act: { color: '#ef4444', bg: '#450a0a' },
-  done: { color: '#22c55e', bg: '#052e16' }
+  plan: { color: '#64748b', bg: '#f1f5f9' },
+  do: { color: '#b45309', bg: '#fef3c7' },
+  check: { color: '#1d4ed8', bg: '#dbeafe' },
+  act: { color: '#dc2626', bg: '#fee2e2' },
+  done: { color: '#15803d', bg: '#dcfce7' }
 }
 
 export function canTransition(from: PDCAStatus, to: PDCAStatus): boolean {

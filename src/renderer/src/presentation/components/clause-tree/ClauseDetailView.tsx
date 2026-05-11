@@ -1,17 +1,30 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useUIStore } from '../../stores/uiStore'
 import { useClauseStore } from '../../stores/clauseStore'
-import { FileText, Hash } from 'lucide-react'
+import { useTaskStore } from '../../stores/taskStore'
+import { FileText, Hash, Plus } from 'lucide-react'
+import { StatusBadge, PriorityBadge } from '../shared/StatusBadge'
+import { TaskFormModal } from '../tasks/TaskFormModal'
 
 export function ClauseDetailView(): JSX.Element {
   const { selectedClauseId } = useUIStore()
   const { clauseDetail, loadClauseDetail } = useClauseStore()
+  const { createTask } = useTaskStore()
+  const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
     if (selectedClauseId) {
       loadClauseDetail(selectedClauseId)
     }
   }, [selectedClauseId, loadClauseDetail])
+
+  const handleCreateTask = async (data: {
+    clauseId: string; documentId?: string; assigneeId: string;
+    teamId: string; priority: string; deadline: string
+  }): Promise<void> => {
+    await createTask(data)
+    if (selectedClauseId) loadClauseDetail(selectedClauseId)
+  }
 
   if (!selectedClauseId) {
     return (
@@ -75,62 +88,64 @@ export function ClauseDetailView(): JSX.Element {
         </div>
       )}
 
-      {/* Tasks (placeholder) */}
-      {clauseDetail.tasks.length > 0 ? (
-        <div>
-          <h3 className="text-sm font-semibold mb-3">연결된 업무 ({clauseDetail.tasks.length})</h3>
+      {/* Tasks */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold">연결된 업무 ({clauseDetail.tasks.length})</h3>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1 px-2.5 py-1 text-[11px] bg-primary/20 text-primary rounded hover:bg-primary/30"
+          >
+            <Plus className="w-3.5 h-3.5" /> 업무 추가
+          </button>
+        </div>
+        {clauseDetail.tasks.length > 0 ? (
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
-                  <th className="text-left p-3">업무</th>
+                  <th className="text-left p-3">문서</th>
                   <th className="text-left p-3">담당</th>
                   <th className="text-left p-3">상태</th>
+                  <th className="text-left p-3">우선순위</th>
                   <th className="text-left p-3">마감일</th>
                 </tr>
               </thead>
               <tbody>
-                {clauseDetail.tasks.map((task) => (
-                  <tr key={task.id} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="p-3">{task.documentName || task.id}</td>
-                    <td className="p-3 text-muted-foreground">{task.assignee}</td>
-                    <td className="p-3">
-                      <StatusBadge status={task.status} />
-                    </td>
-                    <td className="p-3 text-muted-foreground">{task.deadline || '-'}</td>
-                  </tr>
-                ))}
+                {clauseDetail.tasks.map((task) => {
+                  const isOverdue = task.deadline && task.status !== 'done' && task.deadline < new Date().toISOString().split('T')[0]
+                  return (
+                    <tr key={task.id} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="p-3">{task.documentName || '-'}</td>
+                      <td className="p-3">
+                        <span>{task.assignee}</span>
+                        <span className="text-muted-foreground ml-1 text-[10px]">({task.team})</span>
+                      </td>
+                      <td className="p-3"><StatusBadge status={task.status} /></td>
+                      <td className="p-3"><PriorityBadge priority={task.priority} /></td>
+                      <td className={`p-3 ${isOverdue ? 'text-red-400 font-medium' : 'text-muted-foreground'}`}>
+                        {task.deadline || '-'}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
-        </div>
-      ) : (
-        <div className="text-muted-foreground text-center py-8 bg-card border border-border rounded-lg">
-          <p className="text-sm">이 항목에 연결된 업무가 없습니다.</p>
-          <p className="text-[11px] mt-1">Phase 2에서 업무 생성 기능이 추가됩니다.</p>
-        </div>
-      )}
+        ) : (
+          <div className="text-muted-foreground text-center py-8 bg-card border border-border rounded-lg">
+            <p className="text-sm">이 항목에 연결된 업무가 없습니다.</p>
+            <p className="text-[11px] mt-1">위 &apos;업무 추가&apos; 버튼으로 생성하세요.</p>
+          </div>
+        )}
+      </div>
+
+      <TaskFormModal
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        onSubmit={handleCreateTask}
+        clauseId={selectedClauseId}
+      />
     </div>
-  )
-}
-
-function StatusBadge({ status }: { status: string }): JSX.Element {
-  const styles: Record<string, { bg: string; text: string; label: string }> = {
-    plan: { bg: '#1f2937', text: '#6b7280', label: '기획' },
-    do: { bg: '#422006', text: '#f59e0b', label: '실행' },
-    check: { bg: '#1e3a5f', text: '#3b82f6', label: '검증' },
-    act: { bg: '#450a0a', text: '#ef4444', label: '개선' },
-    done: { bg: '#052e16', text: '#22c55e', label: '완료' }
-  }
-
-  const style = styles[status] || styles.plan
-
-  return (
-    <span
-      className="inline-block px-2 py-0.5 rounded text-[10px] font-medium"
-      style={{ backgroundColor: style.bg, color: style.text }}
-    >
-      {style.label}
-    </span>
   )
 }
