@@ -1,0 +1,32 @@
+[
+  {
+    "id": "team-qc",
+    "name": "품질관리팀",
+    "managerId": "p-001"
+  },
+  {
+    "id": "team-pe",
+    "name": "생산기술팀",
+    "managerId": "p-005"
+  },
+  {
+    "id": "team-pu",
+    "name": "구매팀",
+    "managerId": "p-008"
+  },
+  {
+    "id": "team-de",
+    "name": "설계팀",
+    "managerId": "p-010"
+  },
+  {
+    "id": "team-pr",
+    "name": "생산팀",
+    "managerId": "p-013"
+  },
+  {
+    "id": "team-mg",
+    "name": "경영지원팀",
+    "managerId": "p-017"
+  }
+]
