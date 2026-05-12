@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type TabId = 'dashboard' | 'detail' | 'tasks' | 'gantt' | 'team'
+export type TabId = 'dashboard' | 'detail' | 'tasks' | 'gantt' | 'team' | 'docgen'
 
 interface UIState {
   activeTab: TabId

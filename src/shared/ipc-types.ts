@@ -109,6 +109,45 @@ export interface DbStatus {
   tasks: number
 }
 
+export interface CalendarEvent {
+  date: string
+  type: 'audit' | 'deadline' | 'meeting' | 'holiday'
+  label: string
+}
+
+export interface DashboardFullData {
+  stats: DashboardStats
+  tasks: TaskListItem[]
+  teams: TeamSummary[]
+  members: PersonSummary[]
+  calendarEvents: CalendarEvent[]
+  nextAudit: { label: string; daysUntil: number } | null
+}
+
+export interface CompanyProfile {
+  companyName: string
+  ceoName: string
+  address: string
+  phone: string
+  fax: string
+  factoryName: string
+  revisionNumber: string
+  revisionDate: string
+}
+
+export interface DocGenRequest {
+  templateId: string
+  profile: CompanyProfile
+  outputPath: string
+}
+
+export interface DocGenResult {
+  success: boolean
+  outputPath?: string
+  error?: string
+  replacedCount?: number
+}
+
 // ===== IPC Channel → Request/Response Map =====
 
 export interface IpcChannelMap {
@@ -187,8 +226,28 @@ export interface IpcChannelMap {
     request: void
     response: DashboardStats
   }
+  [IPC_CHANNELS.DASHBOARD_FULL]: {
+    request: void
+    response: DashboardFullData
+  }
   [IPC_CHANNELS.DB_STATUS]: {
     request: void
     response: DbStatus
+  }
+  [IPC_CHANNELS.COMPANY_PROFILE_GET]: {
+    request: void
+    response: CompanyProfile
+  }
+  [IPC_CHANNELS.COMPANY_PROFILE_SAVE]: {
+    request: CompanyProfile
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.DOCGEN_GENERATE]: {
+    request: DocGenRequest
+    response: DocGenResult
+  }
+  [IPC_CHANNELS.DOCGEN_SAVE_DIALOG]: {
+    request: { defaultName: string }
+    response: { filePath: string | null }
   }
 }

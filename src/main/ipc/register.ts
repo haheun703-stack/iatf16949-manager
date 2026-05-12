@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { randomUUID } from 'crypto'
@@ -9,11 +9,17 @@ import type {
   TaskListItem,
   TaskHistoryItem,
   DashboardStats,
+  DashboardFullData,
+  CalendarEvent,
   TeamSummary,
   PersonSummary,
   DbStatus,
-  RegulationItem
+  RegulationItem,
+  CompanyProfile,
+  DocGenRequest,
+  DocGenResult
 } from '@shared/ipc-types'
+import { generateQualityManual } from '../docgen/quality-manual-generator'
 
 export function registerAllIpcHandlers(): void {
   const db = getSqlite()
@@ -375,6 +381,94 @@ export function registerAllIpcHandlers(): void {
     return stats
   })
 
+  // ──── Dashboard Full ────
+
+  ipcMain.handle(IPC_CHANNELS.DASHBOARD_FULL, () => {
+    const now = new Date().toISOString().split('T')[0]
+
+    // 1) All tasks with joins
+    const taskRows = db.prepare(TASK_SELECT_SQL + ' ORDER BY t.deadline ASC, t.created_at DESC')
+      .all() as Array<Record<string, unknown>>
+    const tasks = taskRows.map(mapTaskRow)
+
+    // 2) Stats from tasks
+    const stats: DashboardStats = {
+      total: tasks.length,
+      done: tasks.filter((t) => t.status === 'done').length,
+      inProgress: tasks.filter((t) => t.status === 'do').length,
+      overdue: tasks.filter((t) => {
+        if (!t.deadline || t.status === 'done') return false
+        return t.deadline < now
+      }).length,
+      pending: tasks.filter((t) => t.status === 'plan').length,
+      plan: tasks.filter((t) => t.status === 'plan').length,
+      check: tasks.filter((t) => t.status === 'check').length,
+      act: tasks.filter((t) => t.status === 'act').length
+    }
+
+    // 3) Teams
+    const teams = db.prepare('SELECT id, name, manager_id as managerId FROM teams')
+      .all() as TeamSummary[]
+
+    // 4) All persons
+    const members = db.prepare('SELECT id, name, role, team_id as teamId FROM persons')
+      .all() as PersonSummary[]
+
+    // 5) Calendar events from audits
+    const audits = db.prepare(`
+      SELECT id, type, scheduled_date, status, scope
+      FROM audits WHERE scheduled_date IS NOT NULL ORDER BY scheduled_date ASC
+    `).all() as Array<{
+      id: string; type: string; scheduled_date: string; status: string; scope: string | null
+    }>
+
+    const auditTypeLabels: Record<string, string> = {
+      internal_qms: 'QMS 내부심사',
+      internal_process: '공정심사',
+      internal_product: '제품심사',
+      external_surveillance: '사후심사',
+      external_recert: '갱신심사',
+      special: '특별심사'
+    }
+
+    const calendarEvents: CalendarEvent[] = audits.map((a) => ({
+      date: a.scheduled_date,
+      type: 'audit' as const,
+      label: `${auditTypeLabels[a.type] || a.type}${a.scope ? ` (${a.scope})` : ''}`
+    }))
+
+    // Add task deadlines as calendar events (upcoming 60 days)
+    const sixtyDaysLater = new Date()
+    sixtyDaysLater.setDate(sixtyDaysLater.getDate() + 60)
+    const futureLimit = sixtyDaysLater.toISOString().split('T')[0]
+
+    tasks.forEach((t) => {
+      if (t.deadline && t.status !== 'done' && t.deadline >= now && t.deadline <= futureLimit) {
+        calendarEvents.push({
+          date: t.deadline,
+          type: 'deadline',
+          label: `${t.clauseId} ${t.documentName || t.clauseTitle} 마감`
+        })
+      }
+    })
+
+    calendarEvents.sort((a, b) => a.date.localeCompare(b.date))
+
+    // 6) Next audit D-day
+    let nextAudit: DashboardFullData['nextAudit'] = null
+    const upcomingAudit = audits.find((a) => a.scheduled_date >= now)
+    if (upcomingAudit) {
+      const diffMs = new Date(upcomingAudit.scheduled_date).getTime() - new Date(now).getTime()
+      const daysUntil = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+      nextAudit = {
+        label: auditTypeLabels[upcomingAudit.type] || upcomingAudit.type,
+        daysUntil
+      }
+    }
+
+    return { stats, tasks, teams, members, calendarEvents, nextAudit } as DashboardFullData
+  })
+
   // ──── DB Status ────
 
   ipcMain.handle(IPC_CHANNELS.DB_STATUS, () => {
@@ -466,5 +560,68 @@ export function registerAllIpcHandlers(): void {
     })
 
     return bulkCreate()
+  })
+
+  // ──── Company Profile Handlers ────
+
+  const PROFILE_KEYS: (keyof CompanyProfile)[] = [
+    'companyName', 'ceoName', 'address', 'phone', 'fax',
+    'factoryName', 'revisionNumber', 'revisionDate'
+  ]
+
+  ipcMain.handle(IPC_CHANNELS.COMPANY_PROFILE_GET, () => {
+    const rows = db.prepare('SELECT key, value FROM company_profile').all() as Array<{ key: string; value: string }>
+    const map = new Map(rows.map((r) => [r.key, r.value]))
+    const profile: CompanyProfile = {
+      companyName: map.get('companyName') || '',
+      ceoName: map.get('ceoName') || '',
+      address: map.get('address') || '',
+      phone: map.get('phone') || '',
+      fax: map.get('fax') || '',
+      factoryName: map.get('factoryName') || '',
+      revisionNumber: map.get('revisionNumber') || '',
+      revisionDate: map.get('revisionDate') || ''
+    }
+    return profile
+  })
+
+  ipcMain.handle(IPC_CHANNELS.COMPANY_PROFILE_SAVE, (_event, profile: CompanyProfile) => {
+    const upsert = db.prepare(
+      'INSERT INTO company_profile (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+    )
+    const saveAll = db.transaction(() => {
+      for (const key of PROFILE_KEYS) {
+        upsert.run(key, profile[key] || '')
+      }
+    })
+    saveAll()
+    return { success: true }
+  })
+
+  // ──── Document Generation Handlers ────
+
+  ipcMain.handle(IPC_CHANNELS.DOCGEN_SAVE_DIALOG, async (_event, { defaultName }: { defaultName: string }) => {
+    const win = BrowserWindow.getFocusedWindow()
+    if (!win) return { filePath: null }
+
+    const result = await dialog.showSaveDialog(win, {
+      title: '문서 저장 위치 선택',
+      defaultPath: defaultName,
+      filters: [
+        { name: 'Excel 파일', extensions: ['xlsx'] }
+      ]
+    })
+    return { filePath: result.canceled ? null : result.filePath || null }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DOCGEN_GENERATE, async (_event, req: DocGenRequest): Promise<DocGenResult> => {
+    try {
+      if (req.templateId === 'quality-manual') {
+        return await generateQualityManual(req, db)
+      }
+      return { success: false, error: `Unknown template: ${req.templateId}` }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
   })
 }

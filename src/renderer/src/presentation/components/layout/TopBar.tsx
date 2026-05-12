@@ -1,12 +1,13 @@
 import { useUIStore, type TabId } from '../../stores/uiStore'
-import { LayoutDashboard, FileText, ListTodo, GanttChart, Users } from 'lucide-react'
+import { LayoutDashboard, FileText, ListTodo, GanttChart, Users, FilePlus } from 'lucide-react'
 
 const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: '대시보드', icon: LayoutDashboard },
   { id: 'detail', label: '항목 상세', icon: FileText },
   { id: 'tasks', label: '전체 업무', icon: ListTodo },
   { id: 'gantt', label: '일정표', icon: GanttChart },
-  { id: 'team', label: '팀별 현황', icon: Users }
+  { id: 'team', label: '팀별 현황', icon: Users },
+  { id: 'docgen', label: '문서생성', icon: FilePlus }
 ]
 
 export function TopBar(): JSX.Element {
@@ -45,12 +46,11 @@ export function TopBar(): JSX.Element {
           className="bg-background border border-border rounded-md px-2 py-1 text-[11px] text-foreground outline-none focus:border-primary"
         >
           <option value="전체">전체</option>
-          <option value="team-qc">품질관리팀</option>
-          <option value="team-pe">생산기술팀</option>
-          <option value="team-pu">구매팀</option>
-          <option value="team-de">설계팀</option>
+          <option value="team-mg">관리지원팀</option>
+          <option value="team-pu">자재/납품팀</option>
           <option value="team-pr">생산팀</option>
-          <option value="team-mg">경영지원팀</option>
+          <option value="team-qc">품질팀</option>
+          <option value="team-de">개발팀</option>
         </select>
         <select
           value={filterStatus}

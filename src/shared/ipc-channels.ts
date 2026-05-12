@@ -27,6 +27,15 @@ export const IPC_CHANNELS = {
 
   // Dashboard
   DASHBOARD_STATS: 'dashboard:stats',
+  DASHBOARD_FULL: 'dashboard:full',
+
+  // Company Profile
+  COMPANY_PROFILE_GET: 'company:profileGet',
+  COMPANY_PROFILE_SAVE: 'company:profileSave',
+
+  // Document Generation
+  DOCGEN_GENERATE: 'docgen:generate',
+  DOCGEN_SAVE_DIALOG: 'docgen:saveDialog',
 
   // Database
   DB_STATUS: 'db:status'

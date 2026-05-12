@@ -42,6 +42,9 @@ interface RegulationSeed {
 export function seedDatabase(): void {
   const db = getSqlite()
 
+  // Always seed company profile if missing (runs on both new and existing DBs)
+  seedCompanyProfile(db)
+
   // Check if already seeded
   const existing = db.prepare('SELECT COUNT(*) as count FROM clauses').get() as { count: number }
   if (existing.count > 0) {
@@ -126,4 +129,31 @@ export function seedDatabase(): void {
   }
 
   console.log('Database seeding complete!')
+}
+
+function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {
+  try {
+    const profileExists = db.prepare('SELECT COUNT(*) as count FROM company_profile').get() as { count: number }
+    if (profileExists.count > 0) return
+  } catch {
+    // Table doesn't exist yet (migration not run), skip
+    return
+  }
+
+  const profileDefaults: Record<string, string> = {
+    companyName: '주식회사 티피씨',
+    ceoName: '이정훈',
+    address: '경상북도 경산시 진량읍 공단6로 55',
+    phone: '(053)854-7500',
+    fax: '',
+    factoryName: '2공장 AM사업부',
+    revisionNumber: 'REV.8',
+    revisionDate: new Date().toISOString().split('T')[0]
+  }
+
+  const insertProfile = db.prepare('INSERT OR IGNORE INTO company_profile (key, value) VALUES (?, ?)')
+  for (const [key, value] of Object.entries(profileDefaults)) {
+    insertProfile.run(key, value)
+  }
+  console.log('Seeded company profile defaults')
 }

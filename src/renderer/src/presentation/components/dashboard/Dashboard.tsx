@@ -1,198 +1,147 @@
-import { useEffect, useState } from 'react'
-import { useClauseStore } from '../../stores/clauseStore'
-import { BarChart3, CheckCircle2, Clock, AlertTriangle, Database, Zap, Loader2 } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
+import type { DashboardFullData, PersonSummary } from '@shared/ipc-types'
+import { AlertTriangle, Shield } from 'lucide-react'
+import { DashboardOverview } from './DashboardOverview'
+import { DashboardTeamView } from './DashboardTeamView'
+
+const TEAM_COLORS: Record<string, string> = {
+  'team-qc': '#F59E0B',
+  'team-pu': '#8B5CF6',
+  'team-de': '#EF4444',
+  'team-pr': '#3B82F6',
+  'team-mg': '#6B7280'
+}
+
+const TEAM_ICONS: Record<string, string> = {
+  'team-qc': '🔍',
+  'team-pu': '📦',
+  'team-de': '🛠️',
+  'team-pr': '🏭',
+  'team-mg': '📋'
+}
+
+// Chapter IDs for progress display (4~7 top-level, 8.x, 9.x, 10)
+const CHAPTER_IDS = ['4', '5', '6', '7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '9.1', '9.2', '9.3', '10']
+
+export { TEAM_COLORS, TEAM_ICONS, CHAPTER_IDS }
 
 export function Dashboard(): JSX.Element {
-  const { dashboardStats, dbStatus, loadDashboardStats, loadDbStatus } = useClauseStore()
-  const [bulkDeadline, setBulkDeadline] = useState('')
-  const [bulkLoading, setBulkLoading] = useState(false)
-  const [bulkResult, setBulkResult] = useState<{ created: number } | null>(null)
+  const [data, setData] = useState<DashboardFullData | null>(null)
+  const [activeTeam, setActiveTeam] = useState<string>('all')
 
   useEffect(() => {
-    loadDashboardStats()
-    loadDbStatus()
-  }, [loadDashboardStats, loadDbStatus])
+    loadData()
+  }, [])
 
-  const handleBulkCreate = async (): Promise<void> => {
-    if (!bulkDeadline) return
-    setBulkLoading(true)
-    setBulkResult(null)
-    try {
-      const result = await window.api.invoke(window.api.channels.TASK_BULK_CREATE, { deadline: bulkDeadline })
-      setBulkResult(result)
-      loadDashboardStats()
-      loadDbStatus()
-    } finally {
-      setBulkLoading(false)
+  const loadData = async (): Promise<void> => {
+    const result = await window.api.invoke(window.api.channels.DASHBOARD_FULL)
+    setData(result)
+  }
+
+  const tabs = useMemo(() => {
+    if (!data) return []
+    return [
+      { id: 'all', name: '전체 현황', icon: '📊' },
+      ...data.teams.map((t) => ({
+        id: t.id,
+        name: t.name,
+        icon: TEAM_ICONS[t.id] || '👥'
+      }))
+    ]
+  }, [data])
+
+  const filteredTasks = useMemo(() => {
+    if (!data) return []
+    if (activeTeam === 'all') return data.tasks
+    return data.tasks.filter((t) => t.teamId === activeTeam)
+  }, [data, activeTeam])
+
+  const filteredStats = useMemo(() => {
+    const now = new Date().toISOString().split('T')[0]
+    const tasks = filteredTasks
+    return {
+      total: tasks.length,
+      done: tasks.filter((t) => t.status === 'done').length,
+      inProgress: tasks.filter((t) => t.status === 'do').length,
+      overdue: tasks.filter((t) => {
+        if (!t.deadline || t.status === 'done') return false
+        return t.deadline < now
+      }).length,
+      pending: tasks.filter((t) => t.status === 'plan').length,
+      plan: tasks.filter((t) => t.status === 'plan').length,
+      check: tasks.filter((t) => t.status === 'check').length,
+      act: tasks.filter((t) => t.status === 'act').length
     }
+  }, [filteredTasks])
+
+  const teamMembers = useMemo((): PersonSummary[] => {
+    if (!data || activeTeam === 'all') return data?.members || []
+    return data.members.filter((m) => m.teamId === activeTeam)
+  }, [data, activeTeam])
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-muted-foreground text-sm">대시보드 로딩 중...</div>
+      </div>
+    )
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-bold mb-6">대시보드</h2>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <StatCard
-          icon={<BarChart3 className="w-5 h-5" />}
-          label="전체 업무"
-          value={dashboardStats?.total ?? 0}
-          color="#7c3aed"
-        />
-        <StatCard
-          icon={<CheckCircle2 className="w-5 h-5" />}
-          label="완료"
-          value={dashboardStats?.done ?? 0}
-          color="#16a34a"
-        />
-        <StatCard
-          icon={<Clock className="w-5 h-5" />}
-          label="진행중"
-          value={dashboardStats?.inProgress ?? 0}
-          color="#d97706"
-        />
-        <StatCard
-          icon={<AlertTriangle className="w-5 h-5" />}
-          label="기한초과"
-          value={dashboardStats?.overdue ?? 0}
-          color="#dc2626"
-        />
-      </div>
-
-      {/* DB Status */}
-      {dbStatus && (
-        <div className="bg-card rounded-lg border border-border p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Database className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold">데이터베이스 현황</h3>
+    <div className="flex flex-col gap-4">
+      {/* Badges */}
+      <div className="flex items-center gap-3">
+        {data.stats.overdue > 0 && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold"
+            style={{ background: '#FEF3C7', color: '#92400E' }}>
+            <AlertTriangle className="w-3.5 h-3.5" />
+            지연 {data.stats.overdue}건
           </div>
-          <div className="grid grid-cols-5 gap-4">
-            <DbStatItem label="조항" value={dbStatus.clauses} />
-            <DbStatItem label="양식/문서" value={dbStatus.documents} />
-            <DbStatItem label="팀" value={dbStatus.teams} />
-            <DbStatItem label="인원" value={dbStatus.persons} />
-            <DbStatItem label="업무" value={dbStatus.tasks} />
+        )}
+        {data.nextAudit && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold"
+            style={{ background: '#DBEAFE', color: '#1E40AF' }}>
+            <Shield className="w-3.5 h-3.5" />
+            {data.nextAudit.label} D-{data.nextAudit.daysUntil}
           </div>
-        </div>
-      )}
-
-      {/* Bulk Task Creation */}
-      <div className="mt-6 bg-card rounded-lg border border-border p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold">업무 일괄생성</h3>
-          <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">규정 → 업무 자동 변환</span>
-        </div>
-        <p className="text-[12px] text-muted-foreground mb-4">
-          등록된 67개 규정/프로세스를 기반으로 각 담당팀에 업무를 자동 배정합니다. 이미 생성된 업무는 건너뜁니다.
-        </p>
-        <div className="flex items-center gap-3">
-          <label className="text-[12px] text-muted-foreground">마감일:</label>
-          <input
-            type="date"
-            value={bulkDeadline}
-            onChange={(e) => setBulkDeadline(e.target.value)}
-            className="px-3 py-1.5 text-[12px] bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          <button
-            onClick={handleBulkCreate}
-            disabled={!bulkDeadline || bulkLoading}
-            className="flex items-center gap-1.5 px-4 py-1.5 text-[12px] bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {bulkLoading ? (
-              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 생성 중...</>
-            ) : (
-              <><Zap className="w-3.5 h-3.5" /> 일괄생성 실행</>
-            )}
-          </button>
-          {bulkResult && (
-            <span className="text-[12px] text-green-600 font-medium">
-              {bulkResult.created > 0
-                ? `${bulkResult.created}건 생성 완료!`
-                : '새로 생성할 업무가 없습니다 (모두 기존 등록됨)'}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Info panel */}
-      <div className="mt-6 bg-card rounded-lg border border-border p-6">
-        <h3 className="text-sm font-semibold mb-3">PDCA 상태 분포</h3>
-        {dashboardStats && dashboardStats.total > 0 ? (
-          <div className="flex gap-3">
-            <PdcaBar label="기획" value={dashboardStats.plan} total={dashboardStats.total} color="#6b7280" />
-            <PdcaBar label="실행" value={dashboardStats.inProgress} total={dashboardStats.total} color="#f59e0b" />
-            <PdcaBar label="검증" value={dashboardStats.check} total={dashboardStats.total} color="#3b82f6" />
-            <PdcaBar label="개선" value={dashboardStats.act} total={dashboardStats.total} color="#ef4444" />
-            <PdcaBar label="완료" value={dashboardStats.done} total={dashboardStats.total} color="#22c55e" />
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            아직 등록된 업무가 없습니다. 업무 탭에서 업무를 생성하면 여기에 PDCA 분포가 표시됩니다.
-          </p>
         )}
       </div>
-    </div>
-  )
-}
 
-function StatCard({
-  icon,
-  label,
-  value,
-  color
-}: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  color: string
-}): JSX.Element {
-  return (
-    <div className="bg-card rounded-lg border border-border p-4">
-      <div className="flex items-center gap-2 mb-2" style={{ color }}>
-        {icon}
-        <span className="text-[11px] text-muted-foreground">{label}</span>
+      {/* Team Tabs */}
+      <div className="flex gap-0.5 border-b border-border -mx-6 px-6">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTeam(t.id)}
+            className={`px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap transition-colors border-b-2 ${
+              activeTeam === t.id
+                ? 'text-primary border-primary'
+                : 'text-muted-foreground border-transparent hover:text-foreground'
+            }`}
+          >
+            {t.icon} {t.name}
+          </button>
+        ))}
       </div>
-      <p className="text-3xl font-bold" style={{ color }}>
-        {value}
-      </p>
-    </div>
-  )
-}
 
-function DbStatItem({ label, value }: { label: string; value: number }): JSX.Element {
-  return (
-    <div className="text-center">
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="text-[11px] text-muted-foreground mt-1">{label}</p>
-    </div>
-  )
-}
-
-function PdcaBar({
-  label,
-  value,
-  total,
-  color
-}: {
-  label: string
-  value: number
-  total: number
-  color: string
-}): JSX.Element {
-  const pct = total > 0 ? Math.round((value / total) * 100) : 0
-  return (
-    <div className="flex-1">
-      <div className="flex justify-between text-[11px] mb-1">
-        <span style={{ color }}>{label}</span>
-        <span className="text-muted-foreground">{value}</span>
-      </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, backgroundColor: color }}
+      {/* Content */}
+      {activeTeam === 'all' ? (
+        <DashboardOverview
+          stats={filteredStats}
+          tasks={data.tasks}
+          teams={data.teams}
+          calendarEvents={data.calendarEvents}
         />
-      </div>
+      ) : (
+        <DashboardTeamView
+          teamId={activeTeam}
+          teamName={tabs.find((t) => t.id === activeTeam)?.name || ''}
+          teamIcon={tabs.find((t) => t.id === activeTeam)?.icon || ''}
+          stats={filteredStats}
+          tasks={filteredTasks}
+          members={teamMembers}
+        />
+      )}
     </div>
   )
 }

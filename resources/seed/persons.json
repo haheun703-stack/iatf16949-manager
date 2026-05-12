@@ -1,145 +1,113 @@
 [
   {
     "id": "p-001",
-    "name": "김철수",
-    "teamId": "team-qc",
-    "role": "팀장",
+    "name": "서규하",
+    "teamId": "team-mg",
+    "role": "차장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-002",
-    "name": "이영희",
-    "teamId": "team-qc",
-    "role": "대리",
+    "name": "김초연",
+    "teamId": "team-mg",
+    "role": "과장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-003",
-    "name": "박민수",
-    "teamId": "team-qc",
-    "role": "사원",
+    "name": "차현수",
+    "teamId": "team-pu",
+    "role": "(선임)부장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-004",
-    "name": "정수진",
-    "teamId": "team-qc",
-    "role": "사원",
+    "name": "안진성",
+    "teamId": "team-pu",
+    "role": "과장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-005",
-    "name": "최동훈",
-    "teamId": "team-pe",
-    "role": "팀장",
+    "name": "조성민",
+    "teamId": "team-pu",
+    "role": "대리",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-006",
-    "name": "한지민",
-    "teamId": "team-pe",
-    "role": "대리",
+    "name": "김만진",
+    "teamId": "team-pu",
+    "role": "계장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-007",
-    "name": "서준호",
-    "teamId": "team-pe",
-    "role": "사원",
+    "name": "손진식",
+    "teamId": "team-pr",
+    "role": "부장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-008",
-    "name": "강미래",
-    "teamId": "team-pu",
-    "role": "팀장",
+    "name": "장석봉",
+    "teamId": "team-pr",
+    "role": "사원",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-009",
-    "name": "윤성민",
-    "teamId": "team-pu",
-    "role": "대리",
+    "name": "박민수",
+    "teamId": "team-pr",
+    "role": "사원",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-010",
-    "name": "임지호",
-    "teamId": "team-de",
-    "role": "팀장",
+    "name": "김기범",
+    "teamId": "team-qc",
+    "role": "차장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-011",
-    "name": "송현아",
-    "teamId": "team-de",
-    "role": "대리",
+    "name": "고형진",
+    "teamId": "team-qc",
+    "role": "계장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-012",
-    "name": "조태영",
+    "name": "하헌",
     "teamId": "team-de",
-    "role": "사원",
+    "role": "부장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-013",
-    "name": "오승우",
-    "teamId": "team-pr",
-    "role": "팀장",
+    "name": "김민수",
+    "teamId": "team-de",
+    "role": "과장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-014",
-    "name": "배수연",
-    "teamId": "team-pr",
-    "role": "대리",
-    "email": null,
-    "qualifications": null
-  },
-  {
-    "id": "p-015",
-    "name": "류현우",
-    "teamId": "team-pr",
-    "role": "사원",
-    "email": null,
-    "qualifications": null
-  },
-  {
-    "id": "p-016",
-    "name": "홍길동",
-    "teamId": "team-pr",
-    "role": "사원",
-    "email": null,
-    "qualifications": null
-  },
-  {
-    "id": "p-017",
-    "name": "신민정",
-    "teamId": "team-mg",
-    "role": "팀장",
-    "email": null,
-    "qualifications": null
-  },
-  {
-    "id": "p-018",
-    "name": "장도윤",
-    "teamId": "team-mg",
-    "role": "대리",
+    "name": "서명진",
+    "teamId": "team-qc",
+    "role": "과장",
     "email": null,
     "qualifications": null
   }

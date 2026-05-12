@@ -1,32 +1,27 @@
 [
   {
-    "id": "team-qc",
-    "name": "품질관리팀",
+    "id": "team-mg",
+    "name": "관리지원팀",
     "managerId": "p-001"
   },
   {
-    "id": "team-pe",
-    "name": "생산기술팀",
-    "managerId": "p-005"
-  },
-  {
     "id": "team-pu",
-    "name": "구매팀",
-    "managerId": "p-008"
-  },
-  {
-    "id": "team-de",
-    "name": "설계팀",
-    "managerId": "p-010"
+    "name": "자재/납품팀",
+    "managerId": "p-003"
   },
   {
     "id": "team-pr",
     "name": "생산팀",
-    "managerId": "p-013"
+    "managerId": "p-007"
   },
   {
-    "id": "team-mg",
-    "name": "경영지원팀",
-    "managerId": "p-017"
+    "id": "team-qc",
+    "name": "품질팀",
+    "managerId": "p-010"
+  },
+  {
+    "id": "team-de",
+    "name": "개발팀",
+    "managerId": "p-012"
   }
 ]
