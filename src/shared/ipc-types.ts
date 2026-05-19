@@ -148,6 +148,155 @@ export interface DocGenResult {
   replacedCount?: number
 }
 
+// ===== Form / Regulation DTOs (v5) =====
+
+export type FormFieldTypeDto =
+  | 'text' | 'textarea' | 'date' | 'number'
+  | 'select' | 'radio' | 'checkbox' | 'photo' | 'auto'
+
+export interface FormFieldDto {
+  id: number
+  formCode: string
+  fieldKey: string
+  label: string
+  type: FormFieldTypeDto
+  section: string | null
+  placeholder: string | null
+  options: string[] | null
+  unit: string | null
+  aiEnabled: boolean
+  aiPromptHint: string | null
+  sortOrder: number
+}
+
+export interface FormDefinitionDto {
+  code: string
+  name: string
+  regCode: string
+  description: string | null
+  approvals: string[]
+  nextFormCode: string | null
+  nextFormLabel: string | null
+  prevFormCode: string | null
+  fields: FormFieldDto[]
+}
+
+export interface FormListItemDto {
+  code: string
+  name: string
+  regCode: string
+  approvalsCount: number
+  fieldsCount: number
+  submissionsCount: number
+  draftCount: number
+}
+
+export interface FormSubmissionDto {
+  id: number
+  formCode: string
+  serialNo: string | null
+  values: Record<string, unknown>
+  status: 'draft' | 'submitted' | 'approved'
+  createdBy: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FormSubmissionListItemDto {
+  id: number
+  formCode: string
+  formName: string
+  serialNo: string | null
+  status: 'draft' | 'submitted' | 'approved'
+  updatedAt: string
+  preview: string
+}
+
+export interface RegulationSectionDto {
+  id: number
+  regCode: string
+  sectionTitle: string
+  sectionBody: string
+  sortOrder: number
+}
+
+export interface AiGenerateRequest {
+  formCode: string
+  fieldKey: string
+  currentValues: Record<string, unknown>
+}
+
+export interface AiGenerateResponse {
+  success: boolean
+  text?: string
+  error?: string
+}
+
+// ===== Process DTOs (v5 - 기본서) =====
+
+export type ProcessCategoryDto = 'CP' | 'MP' | 'SP'
+
+export interface ProcessListItemDto {
+  code: string
+  category: ProcessCategoryDto
+  name: string
+  docNo: string | null
+  pagesCount: number
+  formsCount: number
+  hasImages: boolean
+  sortOrder: number
+}
+
+export interface ProcessPageDto {
+  id: number
+  processCode: string
+  pageNo: number
+  pageLabel: string | null
+  imagePath: string | null
+}
+
+export interface ProcessFormRefDto {
+  formCode: string
+  formName: string
+  regCode: string
+  fieldsCount: number
+  submissionsCount: number
+  draftCount: number
+  sortOrder: number
+}
+
+export interface ProcessDetailDto {
+  code: string
+  category: ProcessCategoryDto
+  name: string
+  description: string | null
+  docNo: string | null
+  pages: ProcessPageDto[]
+  forms: ProcessFormRefDto[]
+}
+
+export interface ProcessPageUploadRequest {
+  pageId: number
+}
+
+export interface ProcessPageUploadResponse {
+  success: boolean
+  imagePath?: string
+  error?: string
+}
+
+export interface ProcessPageAddRequest {
+  processCode: string
+  pageLabel: string
+}
+
+export interface ProcessPageAddResponse {
+  success: boolean
+  pageId?: number
+  pageNo?: number
+  error?: string
+}
+
 // ===== IPC Channel → Request/Response Map =====
 
 export interface IpcChannelMap {
@@ -249,5 +398,65 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.DOCGEN_SAVE_DIALOG]: {
     request: { defaultName: string }
     response: { filePath: string | null }
+  }
+  [IPC_CHANNELS.FORM_LIST]: {
+    request: void
+    response: FormListItemDto[]
+  }
+  [IPC_CHANNELS.FORM_GET_DEFINITION]: {
+    request: { code: string }
+    response: FormDefinitionDto | null
+  }
+  [IPC_CHANNELS.REGULATION_GET_SECTIONS]: {
+    request: { regCode: string }
+    response: RegulationSectionDto[]
+  }
+  [IPC_CHANNELS.FORM_SUBMISSION_CREATE]: {
+    request: { formCode: string; values: Record<string, unknown>; serialNo?: string; createdBy?: string }
+    response: { id: number }
+  }
+  [IPC_CHANNELS.FORM_SUBMISSION_UPDATE]: {
+    request: { id: number; values: Record<string, unknown>; status?: 'draft' | 'submitted' | 'approved' }
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.FORM_SUBMISSION_LIST]: {
+    request: { formCode?: string }
+    response: FormSubmissionListItemDto[]
+  }
+  [IPC_CHANNELS.FORM_SUBMISSION_GET]: {
+    request: { id: number }
+    response: FormSubmissionDto | null
+  }
+  [IPC_CHANNELS.FORM_SUBMISSION_DELETE]: {
+    request: { id: number }
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.AI_GENERATE]: {
+    request: AiGenerateRequest
+    response: AiGenerateResponse
+  }
+  [IPC_CHANNELS.PROCESS_LIST]: {
+    request: void
+    response: ProcessListItemDto[]
+  }
+  [IPC_CHANNELS.PROCESS_GET_DETAIL]: {
+    request: { code: string }
+    response: ProcessDetailDto | null
+  }
+  [IPC_CHANNELS.PROCESS_PAGE_UPLOAD]: {
+    request: ProcessPageUploadRequest
+    response: ProcessPageUploadResponse
+  }
+  [IPC_CHANNELS.PROCESS_PAGE_DELETE_IMAGE]: {
+    request: { pageId: number }
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.PROCESS_PAGE_ADD]: {
+    request: ProcessPageAddRequest
+    response: ProcessPageAddResponse
+  }
+  [IPC_CHANNELS.PROCESS_PAGE_READ_IMAGE]: {
+    request: { pageId: number }
+    response: { success: boolean; dataUrl?: string; error?: string }
   }
 }

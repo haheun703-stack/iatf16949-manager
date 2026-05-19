@@ -6,6 +6,9 @@
     "src/shared/**/*",
     "src/preload/*.d.ts"
   ],
+  "exclude": [
+    "src/renderer/src/presentation_legacy/**/*"
+  ],
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",

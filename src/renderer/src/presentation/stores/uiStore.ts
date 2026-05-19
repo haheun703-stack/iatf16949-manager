@@ -1,44 +1,43 @@
 import { create } from 'zustand'
 
-export type TabId = 'dashboard' | 'detail' | 'tasks' | 'gantt' | 'team' | 'docgen'
+export type PageId =
+  | 'dashboard'
+  | 'process-workbench'
+  | 'form-builder'
+  | 'form-chain'
+  | 'clause-tree'
+  | 'team'
 
 interface UIState {
-  activeTab: TabId
-  selectedClauseId: string | null
-  sidebarSearch: string
-  expandedIds: Set<string>
-  filterTeam: string
-  filterStatus: string
+  currentPage: PageId
+  setPage: (page: PageId) => void
 
-  setActiveTab: (tab: TabId) => void
-  setSelectedClause: (id: string | null) => void
-  setSidebarSearch: (query: string) => void
-  toggleExpanded: (id: string) => void
-  setFilterTeam: (team: string) => void
-  setFilterStatus: (status: string) => void
+  sidebarCollapsed: boolean
+  toggleSidebar: () => void
+
+  selectedFormCode: string | null
+  setSelectedFormCode: (code: string | null) => void
+
+  selectedProcessCode: string | null
+  setSelectedProcessCode: (code: string | null) => void
+
+  selectedClauseId: string | null
+  setSelectedClauseId: (id: string | null) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  activeTab: 'dashboard',
-  selectedClauseId: null,
-  sidebarSearch: '',
-  expandedIds: new Set(['4', '5', '6', '7', '8', '9', '10']),
-  filterTeam: '전체',
-  filterStatus: '전체',
+  currentPage: 'dashboard',
+  setPage: (page) => set({ currentPage: page }),
 
-  setActiveTab: (tab) => set({ activeTab: tab }),
-  setSelectedClause: (id) => set({ selectedClauseId: id }),
-  setSidebarSearch: (query) => set({ sidebarSearch: query }),
-  toggleExpanded: (id) =>
-    set((state) => {
-      const next = new Set(state.expandedIds)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return { expandedIds: next }
-    }),
-  setFilterTeam: (team) => set({ filterTeam: team }),
-  setFilterStatus: (status) => set({ filterStatus: status })
+  sidebarCollapsed: false,
+  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+
+  selectedFormCode: null,
+  setSelectedFormCode: (code) => set({ selectedFormCode: code }),
+
+  selectedProcessCode: null,
+  setSelectedProcessCode: (code) => set({ selectedProcessCode: code }),
+
+  selectedClauseId: null,
+  setSelectedClauseId: (id) => set({ selectedClauseId: id })
 }))

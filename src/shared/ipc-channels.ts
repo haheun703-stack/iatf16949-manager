@@ -38,7 +38,28 @@ export const IPC_CHANNELS = {
   DOCGEN_SAVE_DIALOG: 'docgen:saveDialog',
 
   // Database
-  DB_STATUS: 'db:status'
+  DB_STATUS: 'db:status',
+
+  // Form operations (v5)
+  FORM_LIST: 'form:list',
+  FORM_GET_DEFINITION: 'form:getDefinition',
+  REGULATION_GET_SECTIONS: 'regulation:getSections',
+  FORM_SUBMISSION_CREATE: 'form:submissionCreate',
+  FORM_SUBMISSION_UPDATE: 'form:submissionUpdate',
+  FORM_SUBMISSION_LIST: 'form:submissionList',
+  FORM_SUBMISSION_GET: 'form:submissionGet',
+  FORM_SUBMISSION_DELETE: 'form:submissionDelete',
+
+  // AI (Claude API)
+  AI_GENERATE: 'ai:generate',
+
+  // Process (v5 - 기본서)
+  PROCESS_LIST: 'process:list',
+  PROCESS_GET_DETAIL: 'process:getDetail',
+  PROCESS_PAGE_UPLOAD: 'process:pageUpload',
+  PROCESS_PAGE_DELETE_IMAGE: 'process:pageDeleteImage',
+  PROCESS_PAGE_ADD: 'process:pageAdd',
+  PROCESS_PAGE_READ_IMAGE: 'process:pageReadImage'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

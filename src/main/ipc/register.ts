@@ -20,8 +20,12 @@ import type {
   DocGenResult
 } from '@shared/ipc-types'
 import { generateQualityManual } from '../docgen/quality-manual-generator'
+import { registerFormHandlers } from './form-handlers'
+import { registerProcessHandlers } from './process-handlers'
 
 export function registerAllIpcHandlers(): void {
+  registerFormHandlers()
+  registerProcessHandlers()
   const db = getSqlite()
 
   // ──── Clause Handlers ────

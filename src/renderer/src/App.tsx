@@ -1,7 +1,7 @@
-import { AppLayout } from './presentation/components/layout/AppLayout'
+import { AppShell } from './presentation/components/layout/AppShell'
 
 function App(): JSX.Element {
-  return <AppLayout />
+  return <AppShell />
 }
 
 export default App
