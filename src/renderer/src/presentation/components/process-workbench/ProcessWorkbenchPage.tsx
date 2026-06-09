@@ -5,6 +5,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { ProcessSelector } from './ProcessSelector'
 import { ProcessImageViewer } from './ProcessImageViewer'
 import { ProcessFormsPanel } from './ProcessFormsPanel'
+import { ResizableSplit } from '../shared/ResizableSplit'
 
 export function ProcessWorkbenchPage(): JSX.Element {
   const detail = useProcessStore((s) => s.detail)
@@ -60,15 +61,16 @@ export function ProcessWorkbenchPage(): JSX.Element {
         )}
       </header>
 
-      {/* Body: left (image) + right (forms) */}
-      <div className="flex-1 min-h-0 flex p-5 gap-5">
-        <div className="w-[55%] min-w-[400px]">
-          <ProcessImageViewer />
-        </div>
-        <div className="flex-1 min-w-0">
-          <ProcessFormsPanel />
-        </div>
-      </div>
+      {/* Body: left (image) + right (forms) — drag the divider to rebalance */}
+      <ResizableSplit
+        storageKey="process-workbench"
+        initial={55}
+        min={35}
+        max={70}
+        className="flex-1 min-h-0 p-5"
+        left={<ProcessImageViewer />}
+        right={<ProcessFormsPanel />}
+      />
     </div>
   )
 }

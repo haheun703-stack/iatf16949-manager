@@ -1,6 +1,7 @@
 import { FormListPanel } from './FormListPanel'
 import { RegulationViewer } from './RegulationViewer'
 import { FormCanvas } from './FormCanvas'
+import { ResizableSplit } from '../shared/ResizableSplit'
 import { useFormStore } from '../../stores/formStore'
 import { FileEdit } from 'lucide-react'
 
@@ -22,14 +23,15 @@ export function FormBuilderPage(): JSX.Element {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex min-w-0 p-5 gap-5">
-          <div className="w-[40%] min-w-[320px]">
-            <RegulationViewer />
-          </div>
-          <div className="flex-1 min-w-0">
-            <FormCanvas />
-          </div>
-        </div>
+        <ResizableSplit
+          storageKey="formbuilder"
+          initial={40}
+          min={28}
+          max={60}
+          className="flex-1 p-5"
+          left={<RegulationViewer />}
+          right={<FormCanvas />}
+        />
       )}
     </div>
   )

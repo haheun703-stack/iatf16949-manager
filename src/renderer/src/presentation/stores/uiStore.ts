@@ -5,6 +5,7 @@ export type PageId =
   | 'process-workbench'
   | 'form-builder'
   | 'document-bom'
+  | 'schedule'
   | 'form-chain'
   | 'clause-tree'
   | 'team'

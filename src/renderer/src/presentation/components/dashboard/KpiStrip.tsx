@@ -1,32 +1,64 @@
-import { CheckCircle2, AlertCircle, FileWarning, TrendingUp } from 'lucide-react'
+import { FileText, Gauge, TrendingUp, AlertTriangle } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { useDashboardStore } from '../../stores/dashboardStore'
 
-interface Kpi {
-  label: string
-  value: string
-  sub: string
-  icon: typeof CheckCircle2
-  tone: 'primary' | 'success' | 'warning' | 'destructive'
-}
-
-const KPIS: Kpi[] = [
-  { label: '전체 준비도', value: '74%', sub: '60 / 81 항목', icon: TrendingUp, tone: 'primary' },
-  { label: '완료', value: '60', sub: '전 영역 합계', icon: CheckCircle2, tone: 'success' },
-  { label: '진행 중', value: '15', sub: '14일 이내 마감', icon: AlertCircle, tone: 'warning' },
-  { label: '미착수', value: '6', sub: '긴급 점검 필요', icon: FileWarning, tone: 'destructive' }
-]
-
-const TONE_CLASS: Record<Kpi['tone'], string> = {
+const TONE_CLASS: Record<string, string> = {
   primary: 'text-primary bg-primary/10',
   success: 'text-success bg-success/10',
   warning: 'text-warning bg-warning/10',
   destructive: 'text-destructive bg-destructive/10'
 }
 
+function scoreTone(score: number | null): 'success' | 'primary' | 'warning' | 'destructive' {
+  if (score == null) return 'primary'
+  if (score >= 90) return 'success'
+  if (score >= 75) return 'primary'
+  if (score >= 60) return 'warning'
+  return 'destructive'
+}
+
 export function KpiStrip(): JSX.Element {
+  const data = useDashboardStore((s) => s.data)
+
+  const formsTotal = data?.formsTotal ?? 0
+  const formsScored = data?.formsScored ?? 0
+  const avgScore = data?.avgScore ?? null
+  const attention = data?.needsAttentionCount ?? 0
+
+  const kpis = [
+    {
+      label: '등록 양식',
+      value: formsTotal > 0 ? String(formsTotal) : '–',
+      sub: 'AI 작성·채점 대상',
+      icon: FileText,
+      tone: 'primary' as const
+    },
+    {
+      label: 'AI 채점 완료',
+      value: formsScored > 0 ? String(formsScored) : '–',
+      sub: formsTotal > 0 ? `전체 ${formsTotal}건 중` : '채점 대기',
+      icon: Gauge,
+      tone: 'success' as const
+    },
+    {
+      label: '평균 점수',
+      value: avgScore != null ? String(avgScore) : '–',
+      sub: avgScore != null ? '최신 채점 평균' : '채점 후 표시',
+      icon: TrendingUp,
+      tone: scoreTone(avgScore)
+    },
+    {
+      label: '보완 필요',
+      value: String(attention),
+      sub: '보완·부적합·미채점',
+      icon: AlertTriangle,
+      tone: (attention > 0 ? 'warning' : 'success') as 'warning' | 'success'
+    }
+  ]
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {KPIS.map((k) => {
+      {kpis.map((k) => {
         const Icon = k.icon
         return (
           <div
@@ -38,7 +70,7 @@ export function KpiStrip(): JSX.Element {
             </div>
             <div className="leading-tight">
               <div className="text-[11px] text-muted-foreground font-medium">{k.label}</div>
-              <div className="text-2xl font-bold mt-0.5">{k.value}</div>
+              <div className="text-2xl font-bold mt-0.5 tabular-nums">{k.value}</div>
               <div className="text-[11px] text-muted-foreground mt-0.5">{k.sub}</div>
             </div>
           </div>

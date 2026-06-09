@@ -31,6 +31,22 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  // Dev-only: surface renderer warnings/errors + load failures to main stdout
+  if (!app.isPackaged) {
+    mainWindow.webContents.on(
+      'console-message',
+      (_e, level: number, message: string, line: number, sourceId: string) => {
+        if (level >= 2) console.log(`[renderer:${level}] ${message}  (${sourceId}:${line})`)
+      }
+    )
+    mainWindow.webContents.on('did-fail-load', (_e, code, desc, url) => {
+      console.error(`[renderer:did-fail-load] code=${code} ${desc} url=${url}`)
+    })
+    mainWindow.webContents.on('render-process-gone', (_e, details) => {
+      console.error(`[renderer:gone] ${JSON.stringify(details)}`)
+    })
+  }
+
   // Dev server URL or production file
   if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])

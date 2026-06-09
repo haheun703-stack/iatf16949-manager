@@ -28,6 +28,7 @@ export const IPC_CHANNELS = {
   // Dashboard
   DASHBOARD_STATS: 'dashboard:stats',
   DASHBOARD_FULL: 'dashboard:full',
+  DASHBOARD_V5: 'dashboard:v5',
 
   // Company Profile
   COMPANY_PROFILE_GET: 'company:profileGet',
@@ -53,6 +54,13 @@ export const IPC_CHANNELS = {
   // AI (Claude API)
   AI_GENERATE: 'ai:generate',
 
+  // AI 작성가이드 + 채점 (v5 Stage 2)
+  AI_GENERATE_GUIDE: 'ai:generateGuide',
+  FORM_GUIDE_GET: 'form:guideGet',
+  AI_SCORE_FORM: 'ai:scoreForm',
+  FORM_SCORE_LATEST: 'form:scoreLatest',
+  FORM_SCORE_LIST: 'form:scoreList',
+
   // Process (v5 - 기본서)
   PROCESS_LIST: 'process:list',
   PROCESS_GET_DETAIL: 'process:getDetail',
@@ -65,7 +73,16 @@ export const IPC_CHANNELS = {
   BOM_STATS: 'bom:stats',
   BOM_LIST_DOCS: 'bom:listDocs',
   BOM_GET_DOC_DETAIL: 'bom:getDocDetail',
-  BOM_FORM_USAGE: 'bom:formUsage'
+  BOM_FORM_USAGE: 'bom:formUsage',
+
+  // 일정표 (v5 Stage 4 - 노션형 스케줄)
+  SCHEDULE_LIST: 'schedule:list',
+  SCHEDULE_CREATE: 'schedule:create',
+  SCHEDULE_UPDATE: 'schedule:update',
+  SCHEDULE_DELETE: 'schedule:delete',
+
+  // 리포트 내보내기 (v5 Stage 5)
+  REPORT_EXPORT_SCORES: 'report:exportScores'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

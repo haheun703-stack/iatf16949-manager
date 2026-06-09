@@ -232,6 +232,117 @@ export interface AiGenerateResponse {
   error?: string
 }
 
+// ===== AI 작성가이드 + 채점 (v5 Stage 2) =====
+
+/** 양식별 AI 작성 가이드 — "이 양식을 왜·어떻게 써야 심사를 통과하는가". */
+export interface FormGuideDto {
+  formCode: string
+  purpose: string // 이 양식의 목적 (1~2문장)
+  mustInclude: string[] // 반드시 포함해야 할 항목
+  auditPoints: string[] // 심사원이 확인하는 포인트
+  commonFindings: string[] // 자주 나오는 부적합/지적사항
+  tips: string[] // 작성 실무 팁
+  generatedAt: string | null
+}
+
+export interface AiGuideResponse {
+  success: boolean
+  guide?: FormGuideDto
+  error?: string
+}
+
+export type ScoreSeverity = '경미' | '중대' | '치명'
+
+export interface FormScoreGapDto {
+  item: string // 감점/미흡 사유
+  severity: ScoreSeverity
+  regRef?: string | null // 관련 IATF 조항/규정
+}
+
+/** AI 채점 본문 (점수 + 근거). */
+export interface FormScoreResultDto {
+  score: number // 0~100
+  grade: string // A | B | C | D (점수에서 정규화)
+  verdict: string // 적합 | 보완필요 | 부적합 (점수에서 정규화)
+  summary: string // 총평 (2~3문장)
+  strengths: string[] // 잘 작성된 점
+  gaps: FormScoreGapDto[] // 감점 사유 + 심각도
+  suggestions: string[] // 개선 지시 (그대로 반영 가능한 문장)
+  missingFields: string[] // 비어있거나 불충분한 필드 label
+}
+
+export interface FormScoreDto extends FormScoreResultDto {
+  id: number
+  formCode: string
+  submissionId: number | null
+  provider: string | null
+  model: string | null
+  scoredAt: string
+}
+
+export interface AiScoreRequest {
+  formCode: string
+  values: Record<string, unknown>
+  submissionId?: number | null
+}
+
+export interface AiScoreResponse {
+  success: boolean
+  result?: FormScoreDto
+  error?: string
+}
+
+/** 대시보드 집계용 (Stage 3에서 사용). */
+export interface FormScoreSummaryDto {
+  formCode: string
+  formName: string
+  regCode: string
+  latestScore: number | null
+  grade: string | null
+  verdict: string | null
+  scoredAt: string | null
+}
+
+// ===== 대시보드 v5 (실데이터 집계) =====
+
+export interface DashboardGradeBucket {
+  grade: string // A | B | C | D
+  count: number
+}
+
+export interface DashboardRecentScore {
+  formCode: string
+  formName: string
+  regCode: string
+  score: number
+  grade: string
+  verdict: string
+  scoredAt: string
+}
+
+export interface DashboardAttentionItem {
+  formCode: string
+  formName: string
+  regCode: string
+  score: number | null // null = 미채점(초안만 존재)
+  grade: string | null
+  verdict: string | null
+  reason: string // 보완필요 / 부적합 / 미채점 초안
+}
+
+export interface DashboardV5Dto {
+  formsTotal: number // 정의된 양식 수
+  formsScored: number // AI 채점된 양식 수(중복 제거)
+  formsWithDraft: number // 초안이 있는 양식 수
+  avgScore: number | null // 양식별 최신 점수 평균
+  gradeDist: DashboardGradeBucket[] // A/B/C/D 분포
+  needsAttentionCount: number // 보완필요+부적합+미채점초안
+  needsAttention: DashboardAttentionItem[] // 상위 N건
+  recentScores: DashboardRecentScore[] // 최근 채점 N건
+  bomTotalDocs: number
+  bomTotalForms: number
+}
+
 // ===== Process DTOs (v5 - 기본서) =====
 
 export type ProcessCategoryDto = 'CP' | 'MP' | 'SP'
@@ -295,6 +406,70 @@ export interface ProcessPageAddResponse {
   pageId?: number
   pageNo?: number
   error?: string
+}
+
+// ===== 일정표 (v5 Stage 4 - 노션형 스케줄) =====
+
+export type ScheduleStatus = '예정' | '진행' | '완료' | '보류'
+export type ScheduleCategory =
+  | '심사준비'
+  | '내부심사'
+  | '교육훈련'
+  | '문서/양식'
+  | '시정조치'
+  | '기타'
+export type SchedulePriority = '높음' | '보통' | '낮음'
+
+export const SCHEDULE_STATUSES: ScheduleStatus[] = ['예정', '진행', '완료', '보류']
+export const SCHEDULE_CATEGORIES: ScheduleCategory[] = [
+  '심사준비',
+  '내부심사',
+  '교육훈련',
+  '문서/양식',
+  '시정조치',
+  '기타'
+]
+export const SCHEDULE_PRIORITIES: SchedulePriority[] = ['높음', '보통', '낮음']
+
+export interface ScheduleItemDto {
+  id: number
+  title: string
+  category: ScheduleCategory
+  status: ScheduleStatus
+  priority: SchedulePriority
+  owner: string | null
+  startDate: string | null
+  dueDate: string | null
+  note: string | null
+  formCode: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ScheduleCreateInput {
+  title: string
+  category?: ScheduleCategory
+  status?: ScheduleStatus
+  priority?: SchedulePriority
+  owner?: string | null
+  startDate?: string | null
+  dueDate?: string | null
+  note?: string | null
+  formCode?: string | null
+}
+
+export interface ScheduleUpdateInput {
+  id: number
+  title?: string
+  category?: ScheduleCategory
+  status?: ScheduleStatus
+  priority?: SchedulePriority
+  owner?: string | null
+  startDate?: string | null
+  dueDate?: string | null
+  note?: string | null
+  formCode?: string | null
 }
 
 // ===== IPC Channel → Request/Response Map =====
@@ -435,6 +610,30 @@ export interface IpcChannelMap {
     request: AiGenerateRequest
     response: AiGenerateResponse
   }
+  [IPC_CHANNELS.AI_GENERATE_GUIDE]: {
+    request: { formCode: string; force?: boolean }
+    response: AiGuideResponse
+  }
+  [IPC_CHANNELS.FORM_GUIDE_GET]: {
+    request: { formCode: string }
+    response: FormGuideDto | null
+  }
+  [IPC_CHANNELS.AI_SCORE_FORM]: {
+    request: AiScoreRequest
+    response: AiScoreResponse
+  }
+  [IPC_CHANNELS.FORM_SCORE_LATEST]: {
+    request: { formCode: string; submissionId?: number | null }
+    response: FormScoreDto | null
+  }
+  [IPC_CHANNELS.FORM_SCORE_LIST]: {
+    request: { formCode?: string }
+    response: FormScoreSummaryDto[]
+  }
+  [IPC_CHANNELS.DASHBOARD_V5]: {
+    request: void
+    response: DashboardV5Dto
+  }
   [IPC_CHANNELS.PROCESS_LIST]: {
     request: void
     response: ProcessListItemDto[]
@@ -475,6 +674,34 @@ export interface IpcChannelMap {
     request: { formNoNorm: string }
     response: BomFormUsage
   }
+  [IPC_CHANNELS.SCHEDULE_LIST]: {
+    request: void
+    response: ScheduleItemDto[]
+  }
+  [IPC_CHANNELS.SCHEDULE_CREATE]: {
+    request: ScheduleCreateInput
+    response: { id: number }
+  }
+  [IPC_CHANNELS.SCHEDULE_UPDATE]: {
+    request: ScheduleUpdateInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.SCHEDULE_DELETE]: {
+    request: { id: number }
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.REPORT_EXPORT_SCORES]: {
+    request: void
+    response: ReportExportResult
+  }
+}
+
+export interface ReportExportResult {
+  success: boolean
+  filePath?: string
+  count?: number
+  canceled?: boolean
+  error?: string
 }
 
 // ===== Document BOM =====

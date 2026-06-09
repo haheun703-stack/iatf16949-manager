@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Save, Send, ArrowRight, AlertCircle } from 'lucide-react'
+import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2 } from 'lucide-react'
+import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
 import { ApprovalBar } from './ApprovalBar'
 import { FormFieldInput } from './FormFieldInput'
+import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
 
 export function FormCanvas(): JSX.Element {
-  const { currentForm, currentFormLoading, saveDraft, aiError } = useFormStore()
+  const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading } =
+    useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
@@ -60,27 +63,54 @@ export function FormCanvas(): JSX.Element {
   }
 
   return (
-    <section className="bg-card border border-border rounded-lg h-full flex flex-col">
+    <div className="flex h-full min-w-0 overflow-hidden rounded-lg border border-border bg-card">
+      <section className="flex min-w-0 flex-1 flex-col">
       <header className="p-5 border-b border-border">
-        <div className="flex items-baseline justify-between mb-1">
-          <div className="flex items-center gap-2">
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <div className="flex items-center gap-2 pt-1">
             <span className="text-[11px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
               {currentForm.code}
             </span>
             <span className="text-[11px] text-muted-foreground">규정 {currentForm.regCode}</span>
           </div>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saveStatus === 'saving'}
-            className="text-xs font-semibold px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
-          >
-            <Save className="w-3 h-3" />
-            {saveStatus === 'saving' && '저장 중...'}
-            {saveStatus === 'saved' && '저장됨 ✓'}
-            {saveStatus === 'error' && '저장 실패'}
-            {saveStatus === 'idle' && '초안 저장'}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => void scoreForm()}
+              disabled={scoreLoading}
+              title="작성 내용을 IATF 16949 기준으로 AI가 채점합니다"
+              className="text-xs font-semibold px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {scoreLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Gauge className="w-3 h-3" />}
+              AI 채점
+            </button>
+            <button
+              type="button"
+              onClick={toggleCopilot}
+              title="AI 작성 도우미 열기/닫기"
+              className={cn(
+                'text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1.5 border',
+                copilotOpen
+                  ? 'bg-primary/10 text-primary border-primary/30'
+                  : 'border-border hover:bg-muted text-foreground'
+              )}
+            >
+              <Sparkles className="w-3 h-3" />
+              AI 도우미
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saveStatus === 'saving'}
+              className="text-xs font-semibold px-3 py-1.5 rounded-md border border-border hover:bg-muted disabled:opacity-50 flex items-center gap-1.5"
+            >
+              <Save className="w-3 h-3" />
+              {saveStatus === 'saving' && '저장 중...'}
+              {saveStatus === 'saved' && '저장됨 ✓'}
+              {saveStatus === 'error' && '저장 실패'}
+              {saveStatus === 'idle' && '초안 저장'}
+            </button>
+          </div>
         </div>
         <h2 className="text-xl font-bold">{currentForm.name}</h2>
         {currentForm.description && (
@@ -155,6 +185,8 @@ export function FormCanvas(): JSX.Element {
           </button>
         </div>
       </div>
-    </section>
+      </section>
+      {copilotOpen && <AiCopilot />}
+    </div>
   )
 }

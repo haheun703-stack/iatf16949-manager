@@ -1,6 +1,7 @@
 import { BomStatsStrip } from './BomStatsStrip'
 import { BomDocList } from './BomDocList'
 import { BomDocDetailPanel } from './BomDocDetailPanel'
+import { ResizableSplit } from '../shared/ResizableSplit'
 
 export function DocumentBomPage(): JSX.Element {
   return (
@@ -15,14 +16,15 @@ export function DocumentBomPage(): JSX.Element {
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 flex gap-4 px-6 py-4">
-        <div className="w-[500px] shrink-0">
-          <BomDocList />
-        </div>
-        <div className="flex-1 min-w-0">
-          <BomDocDetailPanel />
-        </div>
-      </div>
+      <ResizableSplit
+        storageKey="document-bom"
+        initial={38}
+        min={26}
+        max={55}
+        className="flex-1 min-h-0 px-6 py-4"
+        left={<BomDocList />}
+        right={<BomDocDetailPanel />}
+      />
     </div>
   )
 }

@@ -23,11 +23,19 @@ import { generateQualityManual } from '../docgen/quality-manual-generator'
 import { registerFormHandlers } from './form-handlers'
 import { registerProcessHandlers } from './process-handlers'
 import { registerBomHandlers } from './bom-handlers'
+import { registerScoringHandlers } from './scoring-handlers'
+import { registerDashboardHandlers } from './dashboard-handlers'
+import { registerScheduleHandlers } from './schedule-handlers'
+import { registerReportHandlers } from './report-handlers'
 
 export function registerAllIpcHandlers(): void {
   registerFormHandlers()
   registerProcessHandlers()
   registerBomHandlers()
+  registerScoringHandlers()
+  registerDashboardHandlers()
+  registerScheduleHandlers()
+  registerReportHandlers()
   const db = getSqlite()
 
   // ──── Clause Handlers ────
