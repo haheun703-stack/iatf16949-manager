@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar'
 import { Dashboard } from '../dashboard/Dashboard'
 import { ProcessWorkbenchPage } from '../process-workbench/ProcessWorkbenchPage'
 import { FormBuilderPage } from '../form-builder/FormBuilderPage'
+import { DocumentBomPage } from '../document-bom/DocumentBomPage'
 import { ComingSoon } from '../shared/ComingSoon'
 
 export function AppShell(): JSX.Element {
@@ -16,6 +17,7 @@ export function AppShell(): JSX.Element {
         <Sidebar />
         <main className="flex-1 min-w-0 overflow-y-auto p-6">
           {currentPage === 'dashboard' && <Dashboard />}
+          {currentPage === 'document-bom' && <DocumentBomPage />}
           {currentPage === 'process-workbench' && <ProcessWorkbenchPage />}
           {currentPage === 'form-builder' && <FormBuilderPage />}
           {currentPage === 'form-chain' && (

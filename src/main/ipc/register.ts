@@ -22,10 +22,12 @@ import type {
 import { generateQualityManual } from '../docgen/quality-manual-generator'
 import { registerFormHandlers } from './form-handlers'
 import { registerProcessHandlers } from './process-handlers'
+import { registerBomHandlers } from './bom-handlers'
 
 export function registerAllIpcHandlers(): void {
   registerFormHandlers()
   registerProcessHandlers()
+  registerBomHandlers()
   const db = getSqlite()
 
   // ──── Clause Handlers ────

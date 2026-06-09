@@ -29,17 +29,28 @@ export function runMigrations(): void {
     .filter((f) => f.endsWith('.sql'))
     .sort()
 
+  console.log(`[migrate] dir=${migrationsDir}`)
+  console.log(`[migrate] files=${files.join(', ')}`)
+
   const checkStmt = db.prepare('SELECT id FROM _migrations WHERE name = ?')
   const insertStmt = db.prepare('INSERT INTO _migrations (name) VALUES (?)')
 
   for (const file of files) {
     // Check if already applied
     const applied = checkStmt.get(file)
-    if (applied) continue
+    if (applied) {
+      console.log(`[migrate] skip (already applied): ${file}`)
+      continue
+    }
 
     // Execute migration
     const sqlContent = readFileSync(join(migrationsDir, file), 'utf-8')
-    db.exec(sqlContent)
+    try {
+      db.exec(sqlContent)
+    } catch (err) {
+      console.error(`[migrate] FAILED on ${file}:`, (err as Error).message)
+      throw err
+    }
 
     // Record migration
     insertStmt.run(file)

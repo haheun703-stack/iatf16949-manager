@@ -459,4 +459,75 @@ export interface IpcChannelMap {
     request: { pageId: number }
     response: { success: boolean; dataUrl?: string; error?: string }
   }
+  [IPC_CHANNELS.BOM_STATS]: {
+    request: void
+    response: BomStats
+  }
+  [IPC_CHANNELS.BOM_LIST_DOCS]: {
+    request: { category?: BomCategory; status?: string } | void
+    response: BomDocListItem[]
+  }
+  [IPC_CHANNELS.BOM_GET_DOC_DETAIL]: {
+    request: { docNoNorm: string }
+    response: BomDocDetail | null
+  }
+  [IPC_CHANNELS.BOM_FORM_USAGE]: {
+    request: { formNoNorm: string }
+    response: BomFormUsage
+  }
+}
+
+// ===== Document BOM =====
+
+export type BomCategory = 'manual' | 'process' | 'quality' | 'safety_env' | 'other'
+
+export const BOM_CATEGORY_LABELS: Record<BomCategory, string> = {
+  manual: '품질·환경 매뉴얼',
+  process: '품질·환경 프로세스',
+  quality: 'IATF16949 규정·지침(품질)',
+  safety_env: '안전보건환경(ISO45001) 규정·지침',
+  other: '기타'
+}
+
+export type BomFormType = 'form' | 'variant' | 'appendix' | 'external_ref'
+
+export interface BomStats {
+  totalDocs: number
+  totalForms: number
+  byStatus: { status: string; count: number }[]
+  byCategory: { category: BomCategory; categoryLabel: string; count: number }[]
+  byFormType: { type: BomFormType; count: number }[]
+}
+
+export interface BomDocListItem {
+  docNoNorm: string
+  docNoRaw: string
+  category: BomCategory
+  categoryLabel: string
+  name: string
+  ownerDept: string | null
+  listRev: number | null
+  listDate: string | null
+  fileRev: number | null
+  fileDate: string | null
+  status: string
+  formsCount: number
+}
+
+export interface BomFormRef {
+  id: number
+  formType: BomFormType
+  formNoRaw: string | null
+  formNoNorm: string | null
+  label: string
+  sortOrder: number
+}
+
+export interface BomDocDetail extends BomDocListItem {
+  forms: BomFormRef[]
+}
+
+export interface BomFormUsage {
+  formNoNorm: string
+  usedBy: { docNoNorm: string; docNoRaw: string; name: string }[]
 }

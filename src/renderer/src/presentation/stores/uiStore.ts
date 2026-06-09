@@ -4,6 +4,7 @@ export type PageId =
   | 'dashboard'
   | 'process-workbench'
   | 'form-builder'
+  | 'document-bom'
   | 'form-chain'
   | 'clause-tree'
   | 'team'

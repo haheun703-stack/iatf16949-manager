@@ -59,7 +59,13 @@ export const IPC_CHANNELS = {
   PROCESS_PAGE_UPLOAD: 'process:pageUpload',
   PROCESS_PAGE_DELETE_IMAGE: 'process:pageDeleteImage',
   PROCESS_PAGE_ADD: 'process:pageAdd',
-  PROCESS_PAGE_READ_IMAGE: 'process:pageReadImage'
+  PROCESS_PAGE_READ_IMAGE: 'process:pageReadImage',
+
+  // Document BOM (105 docs + 405 form refs, 동료 작성본 기반)
+  BOM_STATS: 'bom:stats',
+  BOM_LIST_DOCS: 'bom:listDocs',
+  BOM_GET_DOC_DETAIL: 'bom:getDocDetail',
+  BOM_FORM_USAGE: 'bom:formUsage'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
