@@ -8,3 +8,6 @@ dist/
 .env.*
 .DS_Store
 Thumbs.db
+
+# 임시 디버그/유틸 스크립트 (로컬 전용, WAL·BOM 진단용)
+scripts/_*.cjs
