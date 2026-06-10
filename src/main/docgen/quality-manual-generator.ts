@@ -30,7 +30,7 @@ function applyReplacements(text: string, replacements: [string, string][]): { re
 
 export async function generateQualityManual(
   req: DocGenRequest,
-  db: Database.Database
+  _db: Database.Database
 ): Promise<DocGenResult> {
   const templatePath = getTemplatePath()
 
@@ -41,12 +41,6 @@ export async function generateQualityManual(
   } catch (err) {
     return { success: false, error: `템플릿 파일을 읽을 수 없습니다: ${err}` }
   }
-
-  // 2. Get teams and persons from DB
-  const teams = db.prepare('SELECT id, name FROM teams').all() as Array<{ id: string; name: string }>
-  const persons = db.prepare('SELECT id, name, role, team_id FROM persons').all() as Array<{
-    id: string; name: string; role: string | null; team_id: string
-  }>
 
   // 3. Build replacement map
   const replacements: [string, string][] = []

@@ -10,6 +10,7 @@
     "composite": true,
     "noEmit": false,
     "outDir": "./out",
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["./src/shared/*"],
