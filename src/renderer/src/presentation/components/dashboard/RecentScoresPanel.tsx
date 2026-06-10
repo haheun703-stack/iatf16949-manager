@@ -26,10 +26,10 @@ export function RecentScoresPanel(): JSX.Element {
   }
 
   return (
-    <section className="bg-card border border-border rounded-lg p-5 h-full">
-      <header className="flex items-center gap-2 mb-4">
+    <section className="bg-card border border-border rounded-xl shadow-sm p-6 h-full">
+      <header className="flex items-center gap-2 mb-5">
         <History className="w-4 h-4 text-primary" />
-        <h2 className="text-base font-bold">최근 AI 채점</h2>
+        <h2 className="text-lg font-bold tracking-tight">최근 AI 채점</h2>
       </header>
 
       {recent.length === 0 ? (

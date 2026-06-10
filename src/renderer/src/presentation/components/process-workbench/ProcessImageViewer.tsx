@@ -81,7 +81,7 @@ export function ProcessImageViewer(): JSX.Element {
 
   if (detail.pages.length === 0) {
     return (
-      <section className="bg-card border border-border rounded-lg p-6 h-full flex items-center justify-center">
+      <section className="bg-card border border-border rounded-xl shadow-sm p-6 h-full flex items-center justify-center">
         <div className="text-center max-w-xs">
           <ImageIcon className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-40" />
           <p className="text-sm text-muted-foreground mb-3">
@@ -120,7 +120,7 @@ export function ProcessImageViewer(): JSX.Element {
   }
 
   return (
-    <section className="bg-card border border-border rounded-lg h-full flex flex-col">
+    <section className="bg-card border border-border rounded-xl shadow-sm h-full flex flex-col">
       {/* Header with page tabs */}
       <header className="px-4 py-3 border-b border-border flex items-center gap-2 shrink-0">
         <button

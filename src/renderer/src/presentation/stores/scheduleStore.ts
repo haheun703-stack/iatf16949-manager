@@ -39,7 +39,7 @@ export const useScheduleStore = create<ScheduleState>((set, get) => ({
   items: [],
   loading: false,
   error: null,
-  view: 'board',
+  view: 'calendar',
   setView: (v) => set({ view: v }),
 
   load: async () => {

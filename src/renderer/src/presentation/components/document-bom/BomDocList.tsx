@@ -63,7 +63,7 @@ export function BomDocList(): JSX.Element {
     })
 
   return (
-    <div className="h-full flex flex-col bg-card border border-border rounded-lg">
+    <div className="h-full flex flex-col bg-card border border-border rounded-xl shadow-sm overflow-hidden">
       {/* Search */}
       <div className="px-3 pt-3 pb-2 shrink-0">
         <div className="relative">

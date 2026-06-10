@@ -43,7 +43,7 @@ export function BomDocDetailPanel(): JSX.Element {
 
   if (!detail && !detailLoading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-card border border-border rounded-lg text-sm text-muted-foreground gap-2">
+      <div className="h-full flex flex-col items-center justify-center bg-card border border-border rounded-xl shadow-sm text-sm text-muted-foreground gap-2">
         <FileText className="w-8 h-8 opacity-40" />
         <p>좌측에서 문서를 선택하세요.</p>
         <p className="text-[11px]">대항목 → 문서번호 → 관련 양식 순으로 트리가 표시됩니다.</p>
@@ -53,7 +53,7 @@ export function BomDocDetailPanel(): JSX.Element {
 
   if (detailLoading || !detail) {
     return (
-      <div className="h-full flex items-center justify-center bg-card border border-border rounded-lg text-sm text-muted-foreground">
+      <div className="h-full flex items-center justify-center bg-card border border-border rounded-xl shadow-sm text-sm text-muted-foreground">
         불러오는 중...
       </div>
     )
@@ -119,7 +119,7 @@ export function BomDocDetailPanel(): JSX.Element {
   }
 
   return (
-    <div className="h-full flex flex-col bg-card border border-border rounded-lg overflow-hidden">
+    <div className="h-full flex flex-col bg-card border border-border rounded-xl shadow-sm overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 border-b border-border shrink-0">
         <div className="flex items-start gap-3">

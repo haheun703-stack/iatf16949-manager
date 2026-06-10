@@ -53,7 +53,7 @@ export function ProcessWorkbenchPage(): JSX.Element {
         <span className="inline-flex items-center justify-center min-w-[56px] px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-primary text-primary-foreground">
           {detail.code}
         </span>
-        <h1 className="text-base font-bold">{detail.name}</h1>
+        <h1 className="text-lg font-bold tracking-tight">{detail.name}</h1>
         {detail.docNo && (
           <span className="text-[11px] text-muted-foreground font-mono ml-auto">
             {detail.docNo}

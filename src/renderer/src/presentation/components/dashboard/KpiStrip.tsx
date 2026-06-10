@@ -3,10 +3,10 @@ import { cn } from '../../../lib/utils'
 import { useDashboardStore } from '../../stores/dashboardStore'
 
 const TONE_CLASS: Record<string, string> = {
-  primary: 'text-primary bg-primary/10',
-  success: 'text-success bg-success/10',
-  warning: 'text-warning bg-warning/10',
-  destructive: 'text-destructive bg-destructive/10'
+  primary: 'text-white bg-gradient-to-br from-violet-500 to-indigo-500 shadow-sm shadow-violet-500/30',
+  success: 'text-white bg-gradient-to-br from-emerald-500 to-teal-500 shadow-sm shadow-emerald-500/30',
+  warning: 'text-white bg-gradient-to-br from-amber-500 to-orange-500 shadow-sm shadow-amber-500/30',
+  destructive: 'text-white bg-gradient-to-br from-rose-500 to-red-500 shadow-sm shadow-rose-500/30'
 }
 
 function scoreTone(score: number | null): 'success' | 'primary' | 'warning' | 'destructive' {
@@ -63,15 +63,15 @@ export function KpiStrip(): JSX.Element {
         return (
           <div
             key={k.label}
-            className="bg-card border border-border rounded-lg p-4 flex items-center gap-3"
+            className="bg-card border border-border rounded-xl shadow-sm p-5 flex items-center gap-3.5 transition-shadow hover:shadow-md"
           >
-            <div className={cn('w-10 h-10 rounded-md flex items-center justify-center', TONE_CLASS[k.tone])}>
+            <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center shrink-0', TONE_CLASS[k.tone])}>
               <Icon className="w-5 h-5" />
             </div>
-            <div className="leading-tight">
+            <div className="leading-tight min-w-0">
               <div className="text-[11px] text-muted-foreground font-medium">{k.label}</div>
-              <div className="text-2xl font-bold mt-0.5 tabular-nums">{k.value}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">{k.sub}</div>
+              <div className="text-[26px] font-bold mt-0.5 tabular-nums">{k.value}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{k.sub}</div>
             </div>
           </div>
         )

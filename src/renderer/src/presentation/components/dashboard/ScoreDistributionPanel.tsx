@@ -26,11 +26,11 @@ export function ScoreDistributionPanel(): JSX.Element {
   const maxCount = Math.max(1, ...dist.map((d) => d.count))
 
   return (
-    <section className="bg-card border border-border rounded-lg p-5 h-full">
-      <header className="flex items-baseline justify-between mb-4">
+    <section className="bg-card border border-border rounded-xl shadow-sm p-6 h-full">
+      <header className="flex items-baseline justify-between mb-5">
         <div className="flex items-center gap-2">
           <Gauge className="w-4 h-4 text-primary" />
-          <h2 className="text-base font-bold">AI 채점 준비도</h2>
+          <h2 className="text-lg font-bold tracking-tight">AI 채점 준비도</h2>
         </div>
         <span className="text-[11px] text-muted-foreground tabular-nums">
           채점 {scored} / 전체 {total} 양식

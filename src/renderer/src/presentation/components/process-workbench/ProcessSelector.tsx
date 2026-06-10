@@ -54,7 +54,7 @@ export function ProcessSelector(): JSX.Element {
 
       {(['CP', 'MP', 'SP'] as const).map((cat) => (
         <section key={cat}>
-          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-bold text-muted-foreground tracking-wide mb-3.5">
             {CATEGORY_LABEL[cat]}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -66,10 +66,10 @@ export function ProcessSelector(): JSX.Element {
                   type="button"
                   onClick={() => handleClick(p.code)}
                   className={cn(
-                    'text-left p-4 rounded-lg border transition-all',
+                    'text-left p-5 rounded-xl border transition-all',
                     active
                       ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-border bg-card hover:border-primary/40 hover:shadow-sm'
+                      : 'border-border bg-card shadow-sm hover:border-primary/40 hover:shadow-md'
                   )}
                 >
                   <div className="flex items-center justify-between mb-2">

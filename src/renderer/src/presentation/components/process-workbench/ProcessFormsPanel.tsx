@@ -22,7 +22,7 @@ export function ProcessFormsPanel(): JSX.Element {
   return (
     <div className="h-full flex flex-col gap-3">
       {/* Forms list (top) */}
-      <section className="bg-card border border-border rounded-lg shrink-0">
+      <section className="bg-card border border-border rounded-xl shadow-sm shrink-0">
         <header className="px-4 py-3 border-b border-border flex items-center justify-between">
           <h3 className="text-sm font-bold flex items-center gap-2">
             <FileText className="w-4 h-4 text-primary" />
@@ -41,7 +41,7 @@ export function ProcessFormsPanel(): JSX.Element {
             </p>
           </div>
         ) : (
-          <div className="p-2 max-h-[200px] overflow-y-auto">
+          <div className="p-2 max-h-[260px] overflow-y-auto">
             {detail.forms.map((f) => {
               const active = selectedFormCode === f.formCode
               return (
@@ -50,35 +50,41 @@ export function ProcessFormsPanel(): JSX.Element {
                   type="button"
                   onClick={() => handleFormClick(f.formCode)}
                   className={cn(
-                    'w-full text-left p-2.5 rounded-md mb-1 transition-colors flex items-center gap-3',
-                    active
-                      ? 'bg-primary/10 border border-primary/30'
-                      : 'border border-transparent hover:bg-muted'
+                    'relative w-full text-left pl-3.5 pr-2.5 py-2.5 rounded-lg mb-0.5 transition-colors flex items-center gap-2.5',
+                    active ? 'bg-muted' : 'hover:bg-muted/60'
                   )}
                 >
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-2 bottom-2 w-1 rounded-full bg-primary"
+                    />
+                  )}
                   <span
                     className={cn(
-                      'inline-flex items-center justify-center min-w-[64px] px-1.5 py-0.5 rounded text-[10px] font-mono font-bold',
-                      active ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
+                      'inline-flex items-center justify-center min-w-[60px] px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-tight shrink-0',
+                      active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
                     )}
                   >
                     {f.formCode}
                   </span>
-                  <span className={cn('flex-1 text-sm', active ? 'font-semibold text-primary' : '')}>
+                  <span className="flex-1 min-w-0 truncate text-sm font-medium text-foreground">
                     {f.formName}
                   </span>
-                  <span className="text-[11px] text-muted-foreground tabular-nums">
-                    필드 {f.fieldsCount}
-                  </span>
+                  {f.fieldsCount > 0 && (
+                    <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+                      필드 {f.fieldsCount}
+                    </span>
+                  )}
                   {f.draftCount > 0 && (
-                    <span className="text-[11px] text-warning font-semibold tabular-nums">
+                    <span className="text-[10px] font-semibold text-warning bg-warning/10 px-1.5 py-0.5 rounded shrink-0">
                       초안 {f.draftCount}
                     </span>
                   )}
                   <ChevronRight
                     className={cn(
-                      'w-3.5 h-3.5 shrink-0',
-                      active ? 'text-primary' : 'text-muted-foreground'
+                      'w-4 h-4 shrink-0',
+                      active ? 'text-primary' : 'text-muted-foreground/40'
                     )}
                   />
                 </button>
@@ -93,7 +99,7 @@ export function ProcessFormsPanel(): JSX.Element {
         {currentForm && detail.forms.some((f) => f.formCode === currentForm.code) ? (
           <FormCanvas />
         ) : (
-          <div className="h-full bg-card border border-border rounded-lg flex items-center justify-center">
+          <div className="h-full bg-card border border-border rounded-xl shadow-sm flex items-center justify-center">
             <p className="text-sm text-muted-foreground">
               위 목록에서 양식을 선택하면 작성 화면이 열립니다.
             </p>

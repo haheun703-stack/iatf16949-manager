@@ -65,10 +65,10 @@ export function FormCanvas(): JSX.Element {
   return (
     <div className="flex h-full min-w-0 overflow-hidden rounded-lg border border-border bg-card">
       <section className="flex min-w-0 flex-1 flex-col">
-      <header className="p-5 border-b border-border">
-        <div className="flex items-start justify-between gap-3 mb-1">
+      <header className="px-6 py-5 border-b border-border">
+        <div className="flex items-start justify-between gap-3 mb-2.5">
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-[11px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+            <span className="text-[11px] font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded tracking-tight">
               {currentForm.code}
             </span>
             <span className="text-[11px] text-muted-foreground">규정 {currentForm.regCode}</span>
@@ -79,9 +79,9 @@ export function FormCanvas(): JSX.Element {
               onClick={() => void scoreForm()}
               disabled={scoreLoading}
               title="작성 내용을 IATF 16949 기준으로 AI가 채점합니다"
-              className="text-xs font-semibold px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
+              className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 transition-opacity"
             >
-              {scoreLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Gauge className="w-3 h-3" />}
+              {scoreLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Gauge className="w-3.5 h-3.5" />}
               AI 채점
             </button>
             <button
@@ -89,22 +89,22 @@ export function FormCanvas(): JSX.Element {
               onClick={toggleCopilot}
               title="AI 작성 도우미 열기/닫기"
               className={cn(
-                'text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1.5 border',
+                'text-[13px] font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5 border transition-colors',
                 copilotOpen
                   ? 'bg-primary/10 text-primary border-primary/30'
                   : 'border-border hover:bg-muted text-foreground'
               )}
             >
-              <Sparkles className="w-3 h-3" />
+              <Sparkles className="w-3.5 h-3.5" />
               AI 도우미
             </button>
             <button
               type="button"
               onClick={handleSave}
               disabled={saveStatus === 'saving'}
-              className="text-xs font-semibold px-3 py-1.5 rounded-md border border-border hover:bg-muted disabled:opacity-50 flex items-center gap-1.5"
+              className="text-[13px] font-semibold px-3.5 py-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 flex items-center gap-1.5 transition-colors"
             >
-              <Save className="w-3 h-3" />
+              <Save className="w-3.5 h-3.5" />
               {saveStatus === 'saving' && '저장 중...'}
               {saveStatus === 'saved' && '저장됨 ✓'}
               {saveStatus === 'error' && '저장 실패'}
@@ -112,13 +112,13 @@ export function FormCanvas(): JSX.Element {
             </button>
           </div>
         </div>
-        <h2 className="text-xl font-bold">{currentForm.name}</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{currentForm.name}</h2>
         {currentForm.description && (
-          <p className="text-[12px] text-muted-foreground mt-1">{currentForm.description}</p>
+          <p className="text-[13px] text-muted-foreground mt-1.5">{currentForm.description}</p>
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-7">
         {/* 결재란 */}
         <ApprovalBar approvals={currentForm.approvals} />
 
@@ -136,7 +136,7 @@ export function FormCanvas(): JSX.Element {
         {/* 필드 섹션별 */}
         {sections.map(([sectionName, fields]) => (
           <div key={sectionName}>
-            <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 pb-1 border-b border-border">
+            <h3 className="text-xs font-bold text-muted-foreground tracking-wide mb-3.5 pb-1.5 border-b border-border">
               {sectionName}
             </h3>
             <div className="space-y-4">

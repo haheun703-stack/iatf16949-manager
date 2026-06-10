@@ -8,8 +8,8 @@ import { TimelineView } from './TimelineView'
 import { ScheduleItemModal } from './ScheduleItemModal'
 
 const VIEWS: { id: ScheduleView; label: string; icon: typeof LayoutGrid }[] = [
-  { id: 'board', label: '보드', icon: LayoutGrid },
   { id: 'calendar', label: '캘린더', icon: CalendarDays },
+  { id: 'board', label: '보드', icon: LayoutGrid },
   { id: 'timeline', label: '타임라인', icon: CalendarRange }
 ]
 
@@ -25,18 +25,18 @@ export function SchedulePage(): JSX.Element {
       <header className="px-6 pt-5 pb-4 border-b border-border bg-card shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               일정표
               {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
             </h1>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              심사·내부심사·교육·시정조치 일정을 보드/캘린더/타임라인으로 관리 · 총 {items.length}건
+            <p className="text-xs text-muted-foreground mt-1">
+              심사·내부심사·교육·시정조치 일정을 캘린더/보드/타임라인으로 관리 · 총 {items.length}건
             </p>
           </div>
           <button
             type="button"
             onClick={() => openCreate()}
-            className="text-xs font-semibold px-3 py-2 rounded-md bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-1.5"
+            className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5 transition-opacity"
           >
             <Plus className="w-3.5 h-3.5" />
             일정 추가

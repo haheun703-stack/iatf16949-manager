@@ -65,7 +65,7 @@ export function CalendarView(): JSX.Element {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-3 mb-3 shrink-0">
-        <h2 className="text-lg font-bold tabular-nums">
+        <h2 className="text-xl font-bold tabular-nums tracking-tight">
           {year}년 {month + 1}월
         </h2>
         <div className="flex items-center gap-1">
@@ -85,7 +85,7 @@ export function CalendarView(): JSX.Element {
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-border border border-border rounded-t-lg overflow-hidden shrink-0">
+      <div className="grid grid-cols-7 gap-px bg-border border border-border rounded-t-xl overflow-hidden shrink-0">
         {WEEKDAYS.map((w, i) => (
           <div
             key={w}
@@ -99,7 +99,7 @@ export function CalendarView(): JSX.Element {
         ))}
       </div>
 
-      <div className="flex-1 grid grid-cols-7 auto-rows-fr gap-px bg-border border-x border-b border-border rounded-b-lg overflow-hidden">
+      <div className="flex-1 grid grid-cols-7 auto-rows-fr gap-px bg-border border-x border-b border-border rounded-b-xl overflow-hidden shadow-sm">
         {cells.map((cell, idx) => {
           if (!cell) return <div key={idx} className="bg-muted/20" />
           const dayItems = byDate.get(cell.dateStr) ?? []
@@ -109,7 +109,7 @@ export function CalendarView(): JSX.Element {
             <div
               key={idx}
               onClick={() => openCreate({ dueDate: cell.dateStr })}
-              className="bg-card p-1.5 min-h-[88px] flex flex-col gap-1 cursor-pointer hover:bg-muted/30 transition-colors"
+              className="bg-card p-2 min-h-[104px] flex flex-col gap-1 cursor-pointer hover:bg-muted/30 transition-colors"
             >
               <span
                 className={cn(
@@ -135,7 +135,7 @@ export function CalendarView(): JSX.Element {
                       openEdit(it)
                     }}
                     className={cn(
-                      'w-full text-left text-[10px] text-white px-1.5 py-0.5 rounded truncate',
+                      'w-full text-left text-[10px] font-medium text-white px-1.5 py-1 rounded-md truncate',
                       CATEGORY_BAR[it.category],
                       it.status === '완료' && 'opacity-50 line-through'
                     )}

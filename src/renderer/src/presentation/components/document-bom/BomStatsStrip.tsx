@@ -52,13 +52,13 @@ export function BomStatsStrip(): JSX.Element {
       {cards.map((c) => {
         const Icon = c.icon
         return (
-          <div key={c.key} className="bg-card border border-border rounded-lg p-3 flex items-center gap-3">
-            <div className={cn('w-9 h-9 rounded-md flex items-center justify-center shrink-0', c.tone)}>
-              <Icon className="w-4 h-4" />
+          <div key={c.key} className="bg-card border border-border rounded-xl shadow-sm p-3.5 flex items-center gap-3">
+            <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center shrink-0', c.tone)}>
+              <Icon className="w-[18px] h-[18px]" />
             </div>
             <div className="leading-tight min-w-0">
               <div className="text-[11px] text-muted-foreground font-medium truncate">{c.label}</div>
-              <div className="text-xl font-bold">{c.value}</div>
+              <div className="text-[22px] font-bold tabular-nums">{c.value}</div>
               <div className="text-[10px] text-muted-foreground truncate" title={c.sub}>{c.sub}</div>
             </div>
           </div>

@@ -25,11 +25,11 @@ export function NeedsAttentionList(): JSX.Element {
   }
 
   return (
-    <section className="bg-card border border-border rounded-lg p-5">
-      <header className="flex items-baseline justify-between mb-4">
+    <section className="bg-card border border-border rounded-xl shadow-sm p-6">
+      <header className="flex items-baseline justify-between mb-5">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-warning" />
-          <h2 className="text-base font-bold">보완 필요 양식</h2>
+          <h2 className="text-lg font-bold tracking-tight">보완 필요 양식</h2>
         </div>
         <span className="text-[11px] text-muted-foreground">
           {totalCount > 0 ? `점수 낮은 순 · 총 ${totalCount}건` : ''}
