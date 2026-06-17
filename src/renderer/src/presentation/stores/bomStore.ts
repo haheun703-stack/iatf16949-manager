@@ -30,8 +30,6 @@ interface BomState {
 
   categoryFilter: BomCategory | null
   setCategoryFilter: (c: BomCategory | null) => void
-  statusFilter: string | null
-  setStatusFilter: (s: string | null) => void
 
   loadFormUsage: (formNoNorm: string) => Promise<BomFormUsage>
 }
@@ -72,18 +70,7 @@ export const useBomStore = create<BomState>((set, get) => ({
   categoryFilter: null,
   setCategoryFilter: (c) => {
     set({ categoryFilter: c })
-    void get().loadDocs({
-      category: c ?? undefined,
-      status: get().statusFilter ?? undefined
-    })
-  },
-  statusFilter: null,
-  setStatusFilter: (s) => {
-    set({ statusFilter: s })
-    void get().loadDocs({
-      category: get().categoryFilter ?? undefined,
-      status: s ?? undefined
-    })
+    void get().loadDocs({ category: c ?? undefined })
   },
 
   loadFormUsage: async (formNoNorm) => {

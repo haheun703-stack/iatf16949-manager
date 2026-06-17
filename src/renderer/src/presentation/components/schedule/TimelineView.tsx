@@ -101,8 +101,9 @@ export function TimelineView(): JSX.Element {
             const d = parse(it.dueDate) ?? parse(it.startDate)!
             const lo = Math.min(s, d)
             const hi = Math.max(s, d)
-            const leftPct = ((lo - startMs) / totalMs) * 100
-            const widthPct = Math.max(((hi - lo) / totalMs) * 100, 1.5)
+            const leftPct = Math.max(0, ((lo - startMs) / totalMs) * 100)
+            // 막대가 트랙 오른쪽 밖으로 넘치지 않도록 left+width <= 100 으로 클램프
+            const widthPct = Math.max(Math.min(((hi - lo) / totalMs) * 100, 100 - leftPct), 1.5)
             const dd = ddayLabel(it.dueDate)
             return (
               <button

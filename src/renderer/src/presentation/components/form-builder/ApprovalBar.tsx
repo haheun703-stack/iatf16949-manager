@@ -2,7 +2,9 @@ interface Props {
   approvals: string[]
 }
 
-export function ApprovalBar({ approvals }: Props): JSX.Element {
+export function ApprovalBar({ approvals }: Props): JSX.Element | null {
+  // 결재란이 없으면 빈 테두리 박스(repeat(0,1fr)) 대신 아무것도 렌더하지 않음
+  if (approvals.length === 0) return null
   return (
     <div className="border border-border rounded-md overflow-hidden">
       <div className="grid" style={{ gridTemplateColumns: `repeat(${approvals.length}, 1fr)` }}>

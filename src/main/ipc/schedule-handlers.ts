@@ -46,15 +46,15 @@ export function registerScheduleHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.SCHEDULE_CREATE,
     (_event, input: ScheduleCreateInput): { id: number } => {
-      const now = new Date().toISOString()
       const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order), 0) AS m FROM schedule_items').get() as {
         m: number
       }
+      // created_at/updated_at 는 스키마 DEFAULT(datetime('now'))에 위임 → UPDATE(datetime('now'))와 포맷 일치
       const res = db
         .prepare(
           `INSERT INTO schedule_items
-             (title, category, status, priority, owner, start_date, due_date, note, form_code, sort_order, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             (title, category, status, priority, owner, start_date, due_date, note, form_code, sort_order)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           input.title?.trim() || '제목 없음',
@@ -66,9 +66,7 @@ export function registerScheduleHandlers(): void {
           input.dueDate ?? null,
           input.note ?? null,
           input.formCode ?? null,
-          (maxOrder.m ?? 0) + 10,
-          now,
-          now
+          (maxOrder.m ?? 0) + 10
         )
       return { id: Number(res.lastInsertRowid) }
     }

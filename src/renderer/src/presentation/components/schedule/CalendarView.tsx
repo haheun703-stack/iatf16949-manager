@@ -108,8 +108,17 @@ export function CalendarView(): JSX.Element {
           return (
             <div
               key={idx}
+              role="button"
+              tabIndex={0}
+              aria-label={`${month + 1}월 ${cell.day}일 일정 추가`}
               onClick={() => openCreate({ dueDate: cell.dateStr })}
-              className="bg-card p-2 min-h-[104px] flex flex-col gap-1 cursor-pointer hover:bg-muted/30 transition-colors"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  openCreate({ dueDate: cell.dateStr })
+                }
+              }}
+              className="bg-card p-2 min-h-[104px] flex flex-col gap-1 cursor-pointer hover:bg-muted/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
             >
               <span
                 className={cn(

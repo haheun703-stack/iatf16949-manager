@@ -406,6 +406,9 @@ ${emptyLabels.length > 0 ? emptyLabels.join(', ') : '(없음)'}
                SELECT form_code, MAX(scored_at) AS max_at
                FROM form_scores GROUP BY form_code
              ) m ON fs.form_code = m.form_code AND fs.scored_at = m.max_at
+                -- 동일 scored_at 동률 시 최신 id 1건만 선택(중복행 방지)
+                AND fs.id = (SELECT MAX(z.id) FROM form_scores z
+                             WHERE z.form_code = fs.form_code AND z.scored_at = m.max_at)
            ) s ON s.form_code = f.code
            ${formCode ? 'WHERE f.code = ?' : ''}
            ORDER BY f.code`

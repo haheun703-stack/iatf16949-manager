@@ -68,10 +68,16 @@ export const useScheduleStore = create<ScheduleState>((set, get) => ({
   },
 
   setStatus: async (id, status) => {
-    // 낙관적 업데이트 후 영속화
+    // 낙관적 업데이트만으로 충분(UPDATE는 status만 변경) → 해피패스 전체 재조회 제거.
+    // 실패 시에만 이전 상태로 롤백하고 서버와 재동기화.
+    const prev = get().items
     set((s) => ({ items: s.items.map((it) => (it.id === id ? { ...it, status } : it)) }))
-    await window.api.invoke(ch('SCHEDULE_UPDATE'), { id, status })
-    await get().load()
+    try {
+      await window.api.invoke(ch('SCHEDULE_UPDATE'), { id, status })
+    } catch (err) {
+      set({ items: prev, error: err instanceof Error ? err.message : String(err) })
+      await get().load()
+    }
   },
 
   modalOpen: false,

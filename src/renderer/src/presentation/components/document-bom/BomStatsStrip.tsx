@@ -24,10 +24,16 @@ export function BomStatsStrip(): JSX.Element {
     )
   }
 
+  // "1. 품질" / "10. 안전보건환경" 등에서 번호 접두를 떼고 첫 글자만. 접두만 있거나 빈 라벨이어도 'undefined' 방지.
+  const categoryInitial = (label: string): string => {
+    const stripped = label.replace(/^\d+\.\s*/, '').trim()
+    return (stripped || label).charAt(0) || '?'
+  }
+
   const cards: { key: string; label: string; value: number; sub: string; icon: typeof CheckCircle2; tone: string }[] = [
     {
       key: 'docs', label: '전체 문서', value: stats.totalDocs,
-      sub: `${stats.byCategory.map((c) => `${c.categoryLabel.replace(/^[0-9]\.\s*/, '')[0]}${c.count}`).join('·')}`,
+      sub: `${stats.byCategory.map((c) => `${categoryInitial(c.categoryLabel)}${c.count}`).join('·')}`,
       icon: FileText, tone: 'text-primary bg-primary/10'
     },
     {
