@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
-const AUDIT_DATE = new Date('2026-06-15T00:00:00')
+// TODO: 데모용 임시 심사일. 실제 정기심사 일정 확정 시 해당 날짜로 교체할 것.
+const AUDIT_DATE = new Date('2026-12-31T00:00:00')
 
 function calcDday(): number {
   const today = new Date()
