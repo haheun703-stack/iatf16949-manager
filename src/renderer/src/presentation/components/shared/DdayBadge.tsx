@@ -20,7 +20,7 @@ export function DdayBadge(): JSX.Element {
     <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-md font-semibold', color)}>
       <CalendarClock className="w-4 h-4" />
       <div className="flex items-baseline gap-1.5">
-        <span className="text-lg leading-none">D-{dday}</span>
+        <span className="text-lg leading-none">{dday >= 0 ? 'D-' : 'D+'}{Math.abs(dday)}</span>
         <span className="text-xs opacity-90">심사 {auditDateStr}</span>
       </div>
     </div>

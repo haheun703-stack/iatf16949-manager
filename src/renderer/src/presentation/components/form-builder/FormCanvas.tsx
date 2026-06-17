@@ -9,7 +9,7 @@ import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
 
 export function FormCanvas(): JSX.Element {
-  const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading } =
+  const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition } =
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -40,7 +40,9 @@ export function FormCanvas(): JSX.Element {
 
   const handleGoToNext = (): void => {
     if (currentForm?.nextFormCode) {
-      setSelectedFormCode(currentForm.nextFormCode)
+      const next = currentForm.nextFormCode
+      setSelectedFormCode(next)
+      void loadFormDefinition(next)
     }
   }
 

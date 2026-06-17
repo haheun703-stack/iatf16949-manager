@@ -13,7 +13,7 @@ interface ProcessState {
 
   detail: ProcessDetailDto | null
   detailLoading: boolean
-  loadDetail: (code: string) => Promise<void>
+  loadDetail: (code: string, opts?: { keepPageIdx?: boolean }) => Promise<void>
 
   currentPageIdx: number
   setCurrentPageIdx: (idx: number) => void
@@ -36,12 +36,18 @@ export const useProcessStore = create<ProcessState>((set, get) => ({
 
   detail: null,
   detailLoading: false,
-  loadDetail: async (code) => {
+  loadDetail: async (code, opts) => {
     set({ detailLoading: true })
     const res = (await window.api.invoke(ch('PROCESS_GET_DETAIL'), { code })) as
       | ProcessDetailDto
       | null
-    set({ detail: res, detailLoading: false, currentPageIdx: 0 })
+    set((s) => {
+      const pageCount = res?.pages.length ?? 0
+      // 이미지 변경 후 재조회 시 현재 페이지 유지(범위 초과 시 clamp). 평소엔 0페이지.
+      let idx = opts?.keepPageIdx ? s.currentPageIdx : 0
+      if (idx > pageCount - 1) idx = Math.max(0, pageCount - 1)
+      return { detail: res, detailLoading: false, currentPageIdx: idx }
+    })
   },
 
   currentPageIdx: 0,
@@ -54,7 +60,7 @@ export const useProcessStore = create<ProcessState>((set, get) => ({
     }
     if (res.success) {
       const { detail, loadDetail } = get()
-      if (detail) await loadDetail(detail.code)
+      if (detail) await loadDetail(detail.code, { keepPageIdx: true })
     }
     return res
   },
@@ -62,7 +68,7 @@ export const useProcessStore = create<ProcessState>((set, get) => ({
   deletePageImage: async (pageId) => {
     await window.api.invoke(ch('PROCESS_PAGE_DELETE_IMAGE'), { pageId })
     const { detail, loadDetail } = get()
-    if (detail) await loadDetail(detail.code)
+    if (detail) await loadDetail(detail.code, { keepPageIdx: true })
   },
 
   addPage: async (pageLabel) => {
@@ -72,7 +78,9 @@ export const useProcessStore = create<ProcessState>((set, get) => ({
       processCode: detail.code,
       pageLabel
     })
-    await get().loadDetail(detail.code)
+    await get().loadDetail(detail.code, { keepPageIdx: true })
+    // 새로 추가된 마지막 페이지로 이동
+    set((s) => ({ currentPageIdx: Math.max(0, (s.detail?.pages.length ?? 1) - 1) }))
   },
 
   readPageImage: async (pageId) => {
