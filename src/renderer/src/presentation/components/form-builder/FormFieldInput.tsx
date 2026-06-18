@@ -75,7 +75,7 @@ function renderInput(
     case 'textarea':
       return (
         <textarea
-          className="w-full px-3 py-2 text-sm bg-input border border-border rounded-md focus:border-primary focus:outline-none resize-y min-h-[120px] whitespace-pre-wrap"
+          className="w-full px-3 py-2 text-sm bg-fillable border border-fillable-border rounded-md focus:border-primary focus:outline-none resize-y min-h-[120px] whitespace-pre-wrap"
           placeholder={ph}
           value={String(value ?? '')}
           onChange={(e) => setValue(k, e.target.value)}
@@ -85,7 +85,7 @@ function renderInput(
       return (
         <input
           type="number"
-          className="w-full px-3 py-2 text-sm bg-input border border-border rounded-md focus:border-primary focus:outline-none"
+          className="w-full px-3 py-2 text-sm bg-fillable border border-fillable-border rounded-md focus:border-primary focus:outline-none"
           placeholder={ph}
           value={String(value ?? '')}
           onChange={(e) => setValue(k, e.target.value)}
@@ -95,7 +95,7 @@ function renderInput(
       return (
         <input
           type="date"
-          className="w-full px-3 py-2 text-sm bg-input border border-border rounded-md focus:border-primary focus:outline-none"
+          className="w-full px-3 py-2 text-sm bg-fillable border border-fillable-border rounded-md focus:border-primary focus:outline-none"
           value={String(value ?? '')}
           onChange={(e) => setValue(k, e.target.value)}
         />
@@ -103,7 +103,7 @@ function renderInput(
     case 'select':
       return (
         <select
-          className="w-full px-3 py-2 text-sm bg-input border border-border rounded-md focus:border-primary focus:outline-none"
+          className="w-full px-3 py-2 text-sm bg-fillable border border-fillable-border rounded-md focus:border-primary focus:outline-none"
           value={String(value ?? '')}
           onChange={(e) => setValue(k, e.target.value)}
         >
@@ -178,7 +178,7 @@ function renderInput(
       return (
         <input
           type="text"
-          className="w-full px-3 py-2 text-sm bg-input border border-border rounded-md focus:border-primary focus:outline-none"
+          className="w-full px-3 py-2 text-sm bg-fillable border border-fillable-border rounded-md focus:border-primary focus:outline-none"
           placeholder={ph}
           value={String(value ?? '')}
           onChange={(e) => setValue(k, e.target.value)}

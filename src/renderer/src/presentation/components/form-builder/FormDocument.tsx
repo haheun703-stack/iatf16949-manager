@@ -255,8 +255,9 @@ function ApprovalGrid({ approvals }: { approvals: string[] }): JSX.Element {
   )
 }
 
-function cellClass(extra = ''): string {
-  return `w-full bg-transparent text-[13px] px-1.5 py-1 rounded focus:bg-primary/5 focus:outline-none ${extra}`
+function cellClass(extra = '', bg = 'bg-fillable'): string {
+  // 사람이 채울 칸은 베이지(bg-fillable), 자동/읽기전용은 회색. 인쇄 시 @media print 가 평면화.
+  return `w-full ${bg} text-[13px] px-1.5 py-1 rounded focus:bg-primary/5 focus:outline-none ${extra}`
 }
 
 /* 값 입력 셀(타입별) */
@@ -280,7 +281,7 @@ function DocCell({
           readOnly
           value={String(v)}
           placeholder={field.placeholder ?? ''}
-          className={cellClass('text-muted-foreground font-mono')}
+          className={cellClass('text-muted-foreground font-mono', 'bg-muted/40')}
         />
       )
     case 'date':
