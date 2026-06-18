@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste } from 'lucide-react'
+import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -7,6 +7,7 @@ import { ApprovalBar } from './ApprovalBar'
 import { FormFieldInput } from './FormFieldInput'
 import { FormDocument } from './FormDocument'
 import { ExcelPasteModal } from './ExcelPasteModal'
+import { SubmissionsModal } from './SubmissionsModal'
 import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
 
@@ -20,6 +21,7 @@ export function FormCanvas(): JSX.Element {
   const [viewMode, setViewMode] = useState<ViewMode>('input')
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
+  const [submissionsOpen, setSubmissionsOpen] = useState(false)
 
   const handlePrint = (): void => {
     window.print()
@@ -64,12 +66,17 @@ export function FormCanvas(): JSX.Element {
     }
   }
 
-  const handleGoToNext = (): void => {
-    if (currentForm?.nextFormCode) {
-      const next = currentForm.nextFormCode
-      setSelectedFormCode(next)
-      void loadFormDefinition(next)
+  const handleGoToNext = async (): Promise<void> => {
+    if (!currentForm?.nextFormCode) return
+    const next = currentForm.nextFormCode
+    // 다음 양식으로 넘어가기 전에 현재 작성 내용을 자동 저장(데이터 손실 방지)
+    try {
+      await saveDraft()
+    } catch (err) {
+      console.error('[form] 이어서 작성 전 자동 저장 실패', err)
     }
+    setSelectedFormCode(next)
+    void loadFormDefinition(next)
   }
 
   if (currentFormLoading) {
@@ -128,6 +135,15 @@ export function FormCanvas(): JSX.Element {
               </button>
             </div>
 
+            <button
+              type="button"
+              onClick={() => setSubmissionsOpen(true)}
+              title="저장된 작성본을 불러옵니다"
+              className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-border hover:bg-muted flex items-center gap-1.5 transition-colors"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              작성본
+            </button>
             <button
               type="button"
               onClick={() => setPasteOpen(true)}
@@ -255,7 +271,7 @@ export function FormCanvas(): JSX.Element {
               </div>
               <button
                 type="button"
-                onClick={handleGoToNext}
+                onClick={() => void handleGoToNext()}
                 className="text-xs font-semibold px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-1.5"
               >
                 이어서 작성
@@ -288,6 +304,7 @@ export function FormCanvas(): JSX.Element {
           onClose={() => setPasteOpen(false)}
         />
       )}
+      {submissionsOpen && <SubmissionsModal onClose={() => setSubmissionsOpen(false)} />}
     </div>
   )
 }

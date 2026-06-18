@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type {
   FormListItemDto,
   FormDefinitionDto,
+  FormSubmissionDto,
   FormSubmissionListItemDto,
   RegulationSectionDto,
   FormGuideDto,
@@ -58,6 +59,8 @@ interface FormState {
   // Submissions list (recent)
   submissions: FormSubmissionListItemDto[]
   loadSubmissions: (formCode?: string) => Promise<void>
+  // 저장된 작성본을 양식에 불러와 이어쓰기
+  loadSubmission: (id: number) => Promise<void>
 
   // Save
   saveDraft: () => Promise<number>
@@ -161,6 +164,20 @@ export const useFormStore = create<FormState>((set, get) => ({
     const res = (await window.api.invoke(ch('FORM_SUBMISSION_LIST'), { formCode })) as
       | FormSubmissionListItemDto[]
     set({ submissions: res })
+  },
+
+  loadSubmission: async (id) => {
+    const sub = (await window.api.invoke(ch('FORM_SUBMISSION_GET'), { id })) as FormSubmissionDto | null
+    if (!sub) return
+    // 해당 양식 정의를 먼저 로드(메타 기본값 주입 포함) → 그 위에 저장본 값으로 덮어씀
+    if (get().currentForm?.code !== sub.formCode) {
+      await get().loadFormDefinition(sub.formCode)
+    }
+    set({
+      values: sub.values,
+      currentSubmissionId: sub.id,
+      serialPreview: sub.serialNo ?? null
+    })
   },
 
   saveDraft: async () => {
