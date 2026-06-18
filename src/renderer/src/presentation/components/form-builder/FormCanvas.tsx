@@ -1,23 +1,25 @@
 import { useMemo, useState } from 'react'
-import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine } from 'lucide-react'
+import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
 import { ApprovalBar } from './ApprovalBar'
 import { FormFieldInput } from './FormFieldInput'
 import { FormDocument } from './FormDocument'
+import { ExcelPasteModal } from './ExcelPasteModal'
 import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
 
 type ViewMode = 'input' | 'document'
 
 export function FormCanvas(): JSX.Element {
-  const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition } =
+  const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues } =
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [viewMode, setViewMode] = useState<ViewMode>('input')
   const [pdfBusy, setPdfBusy] = useState(false)
+  const [pasteOpen, setPasteOpen] = useState(false)
 
   const handlePrint = (): void => {
     window.print()
@@ -125,6 +127,16 @@ export function FormCanvas(): JSX.Element {
                 문서
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setPasteOpen(true)}
+              title="엑셀에서 복사한 자료를 붙여넣어 항목을 자동으로 채웁니다"
+              className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-border hover:bg-muted flex items-center gap-1.5 transition-colors"
+            >
+              <ClipboardPaste className="w-3.5 h-3.5" />
+              Excel 붙여넣기
+            </button>
 
             {viewMode === 'document' && (
               <>
@@ -269,6 +281,13 @@ export function FormCanvas(): JSX.Element {
       )}
       </section>
       {copilotOpen && <AiCopilot />}
+      {pasteOpen && (
+        <ExcelPasteModal
+          fields={currentForm.fields}
+          onApply={(vals) => mergeValues(vals)}
+          onClose={() => setPasteOpen(false)}
+        />
+      )}
     </div>
   )
 }

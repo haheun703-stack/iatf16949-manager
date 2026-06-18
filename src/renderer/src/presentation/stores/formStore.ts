@@ -32,6 +32,7 @@ interface FormState {
   // Working draft (values being edited)
   values: Record<string, unknown>
   setValue: (key: string, value: unknown) => void
+  mergeValues: (partial: Record<string, unknown>) => void
   resetValues: (initial?: Record<string, unknown>) => void
 
   // 자동 메타주입(새 양식): 발행번호 미리보기(저장 시 serial_no로 확정)
@@ -136,6 +137,7 @@ export const useFormStore = create<FormState>((set, get) => ({
   values: {},
   serialPreview: null,
   setValue: (key, value) => set((s) => ({ values: { ...s.values, [key]: value } })),
+  mergeValues: (partial) => set((s) => ({ values: { ...s.values, ...partial } })),
   resetValues: (initial = {}) => set({ values: initial }),
 
   currentSubmissionId: null,
