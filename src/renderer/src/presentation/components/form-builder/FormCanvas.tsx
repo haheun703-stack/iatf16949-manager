@@ -1,18 +1,42 @@
 import { useMemo, useState } from 'react'
-import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2 } from 'lucide-react'
+import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
 import { ApprovalBar } from './ApprovalBar'
 import { FormFieldInput } from './FormFieldInput'
+import { FormDocument } from './FormDocument'
 import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
+
+type ViewMode = 'input' | 'document'
 
 export function FormCanvas(): JSX.Element {
   const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition } =
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [viewMode, setViewMode] = useState<ViewMode>('input')
+  const [pdfBusy, setPdfBusy] = useState(false)
+
+  const handlePrint = (): void => {
+    window.print()
+  }
+
+  const handleExportPdf = async (): Promise<void> => {
+    setPdfBusy(true)
+    try {
+      const code = currentForm?.code ?? '양식'
+      const stamp = new Date().toISOString().split('T')[0].replace(/-/g, '')
+      await window.api.invoke(window.api.channels.PRINT_TO_PDF, {
+        defaultName: `${code}_${stamp}.pdf`
+      })
+    } catch (err) {
+      console.error('[print:pdf]', err)
+    } finally {
+      setPdfBusy(false)
+    }
+  }
 
   // Group fields by section
   const sections = useMemo(() => {
@@ -76,6 +100,56 @@ export function FormCanvas(): JSX.Element {
             <span className="text-[11px] text-muted-foreground">규정 {currentForm.regCode}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* 입력 / 문서 보기 토글 */}
+            <div className="flex items-center rounded-lg border border-border p-0.5 bg-muted/40 mr-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('input')}
+                className={cn(
+                  'text-[12px] font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-colors',
+                  viewMode === 'input' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <PencilLine className="w-3.5 h-3.5" />
+                입력
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('document')}
+                className={cn(
+                  'text-[12px] font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-colors',
+                  viewMode === 'document' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                문서
+              </button>
+            </div>
+
+            {viewMode === 'document' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  title="문서를 인쇄합니다"
+                  className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-border hover:bg-muted flex items-center gap-1.5 transition-colors"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  인쇄
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleExportPdf()}
+                  disabled={pdfBusy}
+                  title="문서를 PDF로 저장합니다"
+                  className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+                >
+                  {pdfBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+                  PDF
+                </button>
+              </>
+            )}
+
             <button
               type="button"
               onClick={() => void scoreForm()}
@@ -120,6 +194,11 @@ export function FormCanvas(): JSX.Element {
         )}
       </header>
 
+      {viewMode === 'document' ? (
+      <div className="flex-1 overflow-y-auto bg-muted/30 px-6 py-6">
+        <FormDocument />
+      </div>
+      ) : (
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-7">
         {/* 결재란 */}
         <ApprovalBar approvals={currentForm.approvals} />
@@ -187,6 +266,7 @@ export function FormCanvas(): JSX.Element {
           </button>
         </div>
       </div>
+      )}
       </section>
       {copilotOpen && <AiCopilot />}
     </div>

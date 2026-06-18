@@ -97,3 +97,34 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── 양식 문서(인쇄) ─────────────────────────────────────────
+   화면에서는 A4 시트처럼 보이고, 인쇄 시 .print-document 영역만 출력 */
+@media print {
+  body { overflow: visible !important; }
+  body * { visibility: hidden !important; }
+  .print-document, .print-document * { visibility: visible !important; }
+  .print-document {
+    position: absolute !important;
+    left: 0; top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .no-print { display: none !important; }
+  /* 입력 컨트롤을 종이처럼 평평하게 */
+  .print-document input,
+  .print-document textarea,
+  .print-document select {
+    border: none !important;
+    background: transparent !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    resize: none !important;
+  }
+  @page { size: A4 portrait; margin: 12mm; }
+}

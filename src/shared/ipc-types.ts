@@ -606,6 +606,14 @@ export interface IpcChannelMap {
     request: { id: number }
     response: { success: boolean }
   }
+  [IPC_CHANNELS.FORM_DRAFT_DEFAULTS]: {
+    request: { formCode: string }
+    response: { values: Record<string, string>; serialPreview: string | null }
+  }
+  [IPC_CHANNELS.PRINT_TO_PDF]: {
+    request: { defaultName?: string }
+    response: { success: boolean; filePath?: string; canceled?: boolean; error?: string }
+  }
   [IPC_CHANNELS.AI_GENERATE]: {
     request: AiGenerateRequest
     response: AiGenerateResponse

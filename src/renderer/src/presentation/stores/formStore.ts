@@ -34,6 +34,9 @@ interface FormState {
   setValue: (key: string, value: unknown) => void
   resetValues: (initial?: Record<string, unknown>) => void
 
+  // 자동 메타주입(새 양식): 발행번호 미리보기(저장 시 serial_no로 확정)
+  serialPreview: string | null
+
   // Current submission id (if editing an existing one)
   currentSubmissionId: number | null
   setCurrentSubmissionId: (id: number | null) => void
@@ -92,6 +95,7 @@ export const useFormStore = create<FormState>((set, get) => ({
       currentForm: res,
       currentFormLoading: false,
       values: {},
+      serialPreview: null,
       currentSubmissionId: null,
       aiError: null,
       // reset copilot context for the new form
@@ -102,6 +106,20 @@ export const useFormStore = create<FormState>((set, get) => ({
     })
     if (res) {
       await get().loadRegulationSections(res.regCode)
+      // 새 양식 메타 자동주입(발행번호/작성일자/작성자). 폼이 바뀌었으면 무시.
+      try {
+        const defaults = (await window.api.invoke(ch('FORM_DRAFT_DEFAULTS'), {
+          formCode: res.code
+        })) as { values: Record<string, string>; serialPreview: string | null }
+        if (get().currentForm?.code === res.code && get().currentSubmissionId === null) {
+          set((s) => ({
+            values: { ...defaults.values, ...s.values },
+            serialPreview: defaults.serialPreview
+          }))
+        }
+      } catch {
+        // 메타 주입 실패는 치명적이지 않음(사람이 직접 입력 가능)
+      }
       // 캐시된 가이드/최근 채점은 조용히 미리 불러옴 (API 호출 없음)
       void get().loadGuide(res.code)
       void get().loadLatestScore(res.code)
@@ -116,6 +134,7 @@ export const useFormStore = create<FormState>((set, get) => ({
   },
 
   values: {},
+  serialPreview: null,
   setValue: (key, value) => set((s) => ({ values: { ...s.values, [key]: value } })),
   resetValues: (initial = {}) => set({ values: initial }),
 
@@ -130,7 +149,7 @@ export const useFormStore = create<FormState>((set, get) => ({
   },
 
   saveDraft: async () => {
-    const { currentForm, values, currentSubmissionId } = get()
+    const { currentForm, values, currentSubmissionId, serialPreview } = get()
     if (!currentForm) throw new Error('양식이 로드되지 않았습니다.')
 
     if (currentSubmissionId) {
@@ -141,9 +160,11 @@ export const useFormStore = create<FormState>((set, get) => ({
       return currentSubmissionId
     }
 
+    // 최초 저장 시 발행번호를 serial_no로 확정(다음 양식 넘버링이 이어지도록)
     const { id } = (await window.api.invoke(ch('FORM_SUBMISSION_CREATE'), {
       formCode: currentForm.code,
-      values
+      values,
+      serialNo: serialPreview ?? undefined
     })) as { id: number }
     set({ currentSubmissionId: id })
     return id

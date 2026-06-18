@@ -23,6 +23,38 @@ function parseJsonSafe<T>(raw: string | null | undefined, fallback: T): T {
   }
 }
 
+function getProfileValue(db: ReturnType<typeof getSqlite>, key: string): string | null {
+  try {
+    const r = db.prepare('SELECT value FROM company_profile WHERE key = ?').get(key) as
+      | { value: string }
+      | undefined
+    return r?.value ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 발행번호 자동 넘버링. prefix-year-#### 형식에서 같은 양식/연도의 최대 시퀀스+1.
+ * (단일 사용자 데스크톱 앱이라 동시성 충돌 없음. serial_no는 저장 시 확정.)
+ */
+function nextSerial(
+  db: ReturnType<typeof getSqlite>,
+  formCode: string,
+  prefix: string,
+  year: number
+): string {
+  const rows = db
+    .prepare(`SELECT serial_no FROM form_submissions WHERE form_code = ? AND serial_no LIKE ?`)
+    .all(formCode, `${prefix}-${year}-%`) as Array<{ serial_no: string | null }>
+  let max = 0
+  for (const r of rows) {
+    const m = r.serial_no?.match(/(\d+)\s*$/)
+    if (m) max = Math.max(max, parseInt(m[1], 10))
+  }
+  return `${prefix}-${year}-${String(max + 1).padStart(4, '0')}`
+}
+
 function rowToField(row: Record<string, unknown>): FormFieldDto {
   return {
     id: row.id as number,
@@ -241,6 +273,53 @@ export function registerFormHandlers(): void {
         .run(id, id)
       db.prepare('DELETE FROM form_submissions WHERE id = ?').run(id)
       return { success: true }
+    }
+  )
+
+  // ──── New-draft meta defaults (자동 메타주입) ────
+  // 새 양식을 열 때 채워줄 메타값: 발행번호(자동 넘버링 미리보기) / 작성일자(오늘) / 작성자(회사정보).
+  // 실내용은 사람이 입력. 발행번호는 저장 시 serial_no로 확정(미리보기는 다음 가용번호).
+  ipcMain.handle(
+    IPC_CHANNELS.FORM_DRAFT_DEFAULTS,
+    (
+      _event,
+      { formCode }: { formCode: string }
+    ): { values: Record<string, string>; serialPreview: string | null } => {
+      const fields = db
+        .prepare('SELECT field_key, label, type, placeholder FROM form_fields WHERE form_code = ?')
+        .all(formCode) as Array<{
+        field_key: string
+        label: string
+        type: string
+        placeholder: string | null
+      }>
+
+      const today = new Date().toISOString().split('T')[0]
+      const year = new Date().getFullYear()
+      // 로그인 도입 전 stub: 회사정보 defaultAuthor. 도입 후 로그인 사용자명으로 대체.
+      const author = getProfileValue(db, 'defaultAuthor')
+
+      const values: Record<string, string> = {}
+      let serialPreview: string | null = null
+
+      for (const f of fields) {
+        const ph = f.placeholder ?? ''
+        if (f.type === 'auto' && /자동부여/.test(ph)) {
+          // placeholder 예: "NCR-2026-XXXX (자동부여)" → prefix=NCR, 연도는 현재연도로 재생성
+          const m = ph.match(/([A-Z]{2,})-\d{4}/)
+          if (m) {
+            const s = nextSerial(db, formCode, m[1], year)
+            values[f.field_key] = s
+            serialPreview = s
+          }
+        } else if (f.type === 'auto' && /사용자/.test(ph)) {
+          if (author) values[f.field_key] = author
+        } else if (f.type === 'date' && /(작성일|발행일)/.test(f.label)) {
+          values[f.field_key] = today
+        }
+      }
+
+      return { values, serialPreview }
     }
   )
 

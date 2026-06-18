@@ -2,6 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { randomUUID } from 'crypto'
+import { writeFileSync } from 'fs'
 import type {
   ClauseTreeNode,
   ClauseDetail,
@@ -598,6 +599,31 @@ export function registerAllIpcHandlers(): void {
     }
     return profile
   })
+
+  // ──── 현재 창을 PDF로 인쇄(저장) — @media print 의 .print-document 영역만 출력 ────
+  ipcMain.handle(
+    IPC_CHANNELS.PRINT_TO_PDF,
+    async (_event, { defaultName }: { defaultName?: string } = {}) => {
+      const win = BrowserWindow.getFocusedWindow()
+      if (!win) return { success: false, error: '활성 창을 찾을 수 없습니다.' }
+      try {
+        const data = await win.webContents.printToPDF({
+          printBackground: true,
+          pageSize: 'A4'
+        })
+        const saveRes = await dialog.showSaveDialog(win, {
+          title: '양식 PDF 저장',
+          defaultPath: defaultName || '양식.pdf',
+          filters: [{ name: 'PDF 파일', extensions: ['pdf'] }]
+        })
+        if (saveRes.canceled || !saveRes.filePath) return { success: false, canceled: true }
+        writeFileSync(saveRes.filePath, data)
+        return { success: true, filePath: saveRes.filePath }
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : String(err) }
+      }
+    }
+  )
 
   ipcMain.handle(IPC_CHANNELS.COMPANY_PROFILE_SAVE, (_event, profile: CompanyProfile) => {
     const upsert = db.prepare(

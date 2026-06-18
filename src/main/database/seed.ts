@@ -133,8 +133,9 @@ export function seedDatabase(): void {
 
 function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {
   try {
-    const profileExists = db.prepare('SELECT COUNT(*) as count FROM company_profile').get() as { count: number }
-    if (profileExists.count > 0) return
+    // 테이블 존재 확인용(없으면 catch로 스킵). INSERT OR IGNORE가 멱등이라
+    // 기존 프로필이 있어도 누락된 키(예: defaultAuthor)만 안전하게 백필됨.
+    db.prepare('SELECT COUNT(*) as count FROM company_profile').get()
   } catch {
     // Table doesn't exist yet (migration not run), skip
     return
@@ -148,7 +149,9 @@ function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {
     fax: '',
     factoryName: '2공장 AM사업부',
     revisionNumber: 'REV.8',
-    revisionDate: new Date().toISOString().split('T')[0]
+    revisionDate: new Date().toISOString().split('T')[0],
+    // 양식 작성자 기본값(로그인 도입 전 stub). 로그인 후 사용자명으로 대체.
+    defaultAuthor: '하헌'
   }
 
   const insertProfile = db.prepare('INSERT OR IGNORE INTO company_profile (key, value) VALUES (?, ?)')
