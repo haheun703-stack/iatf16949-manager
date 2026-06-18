@@ -1,6 +1,7 @@
-import { Sparkles, Camera, Loader2 } from 'lucide-react'
+import { Sparkles, Loader2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
+import { PhotoField } from './PhotoField'
 import type { FormFieldDto } from '@shared/ipc-types'
 
 interface Props {
@@ -158,12 +159,7 @@ function renderInput(
       )
     }
     case 'photo':
-      return (
-        <div className="border-2 border-dashed border-border rounded-md p-6 text-center text-xs text-muted-foreground bg-muted/30">
-          <Camera className="w-6 h-6 mx-auto mb-1.5 opacity-50" />
-          사진 첨부 (구현 예정)
-        </div>
-      )
+      return <PhotoField value={value} onChange={(v) => setValue(k, v)} />
     case 'auto':
       return (
         <input

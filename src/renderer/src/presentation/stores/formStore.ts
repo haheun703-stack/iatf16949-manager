@@ -17,6 +17,19 @@ function ch<T extends ChannelKey>(k: T): (typeof window.api.channels)[T] {
   return window.api.channels[k]
 }
 
+/** AI 전송용 값 정제: photo 필드의 data URL 은 텍스트 AI에 불필요·과대 → 마커로 치환 */
+function sanitizeForAi(
+  values: Record<string, unknown>,
+  fields: Array<{ fieldKey: string; type: string }>
+): Record<string, unknown> {
+  const photoKeys = new Set(fields.filter((f) => f.type === 'photo').map((f) => f.fieldKey))
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(values)) {
+    out[k] = photoKeys.has(k) ? (v ? '[사진 첨부됨]' : '') : v
+  }
+  return out
+}
+
 interface FormState {
   formList: FormListItemDto[]
   formListLoading: boolean
@@ -182,7 +195,7 @@ export const useFormStore = create<FormState>((set, get) => ({
       const res = (await window.api.invoke(ch('AI_GENERATE'), {
         formCode: currentForm.code,
         fieldKey,
-        currentValues: values
+        currentValues: sanitizeForAi(values, currentForm.fields)
       })) as { success: boolean; text?: string; error?: string }
       if (res.success && res.text) {
         set((s) => ({ values: { ...s.values, [fieldKey]: res.text } }))
@@ -252,7 +265,7 @@ export const useFormStore = create<FormState>((set, get) => ({
     try {
       const res = (await window.api.invoke(ch('AI_SCORE_FORM'), {
         formCode: currentForm.code,
-        values,
+        values: sanitizeForAi(values, currentForm.fields),
         submissionId: currentSubmissionId
       })) as AiScoreResponse
       if (get().currentForm?.code !== currentForm.code) return

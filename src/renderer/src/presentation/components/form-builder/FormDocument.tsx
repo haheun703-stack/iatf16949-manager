@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useFormStore } from '../../stores/formStore'
+import { PhotoField } from './PhotoField'
 import type { FormFieldDto, FormLayoutBlock, FormLayoutCell } from '@shared/ipc-types'
 
 /**
@@ -358,11 +359,7 @@ function DocCell({
       )
     }
     case 'photo':
-      return (
-        <div className="border border-dashed border-border rounded h-24 flex items-center justify-center text-[11px] text-muted-foreground">
-          사진 첨부 (구현 예정)
-        </div>
-      )
+      return <PhotoField value={v} onChange={(val) => setValue(k, val)} />
     default:
       return (
         <input
