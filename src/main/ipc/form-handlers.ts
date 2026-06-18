@@ -7,6 +7,7 @@ import type {
   FormDefinitionDto,
   FormFieldDto,
   FormFieldTypeDto,
+  FormLayout,
   FormSubmissionDto,
   FormSubmissionListItemDto,
   RegulationSectionDto,
@@ -122,7 +123,8 @@ export function registerFormHandlers(): void {
         nextFormCode: (form.next_form_code as string) || null,
         nextFormLabel: (form.next_form_label as string) || null,
         prevFormCode: (form.prev_form_code as string) || null,
-        fields: fields.map(rowToField)
+        fields: fields.map(rowToField),
+        layout: parseJsonSafe<FormLayout | null>(form.layout_json as string | null, null)
       }
     }
   )

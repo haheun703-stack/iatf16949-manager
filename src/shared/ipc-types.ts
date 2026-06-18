@@ -169,6 +169,20 @@ export interface FormFieldDto {
   sortOrder: number
 }
 
+/** 양식 배치 설계도 — 범용 렌더러가 읽어 실양식처럼 그린다(향후 AI가 양식별 생성). */
+export interface FormLayoutCell {
+  fieldKey: string
+  /** 그리드에서 차지하는 라벨-값 쌍 수(기본 1) */
+  colSpan?: number
+}
+export type FormLayoutBlock =
+  | { type: 'section'; title: string }
+  | { type: 'grid'; columns: number; cells: FormLayoutCell[] }
+  | { type: 'full'; fieldKey: string }
+export interface FormLayout {
+  blocks: FormLayoutBlock[]
+}
+
 export interface FormDefinitionDto {
   code: string
   name: string
@@ -179,6 +193,8 @@ export interface FormDefinitionDto {
   nextFormLabel: string | null
   prevFormCode: string | null
   fields: FormFieldDto[]
+  /** 배치 설계도. 없으면 렌더러가 섹션 기반 auto-layout 으로 폴백. */
+  layout: FormLayout | null
 }
 
 export interface FormListItemDto {
