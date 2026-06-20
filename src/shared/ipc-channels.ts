@@ -84,7 +84,20 @@ export const IPC_CHANNELS = {
   SCHEDULE_DELETE: 'schedule:delete',
 
   // 리포트 내보내기 (v5 Stage 5)
-  REPORT_EXPORT_SCORES: 'report:exportScores'
+  REPORT_EXPORT_SCORES: 'report:exportScores',
+
+  // SQ 준비도 (SQ 평가 백본: 6대·42항목 신호등)
+  SQ_READINESS: 'sq:readiness',
+  SQ_ITEM_DETAIL: 'sq:itemDetail',
+
+  // 사건중심 8D 워크플로우 (고객 불량 케이스)
+  CASE_LIST: 'case:list',
+  CASE_GET: 'case:get',
+  CASE_CREATE: 'case:create',
+  CASE_UPDATE: 'case:update',
+  CASE_STEP_UPDATE: 'case:stepUpdate',
+  CASE_SCREENING_SAVE: 'case:screeningSave',
+  CASE_FACT_SAVE: 'case:factSave'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

@@ -2,6 +2,8 @@ import { create } from 'zustand'
 
 export type PageId =
   | 'dashboard'
+  | 'sq-readiness'
+  | 'case-work'
   | 'process-workbench'
   | 'form-builder'
   | 'document-bom'

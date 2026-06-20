@@ -359,6 +359,134 @@ export interface DashboardV5Dto {
   bomTotalForms: number
 }
 
+// ===== SQ 준비도 DTOs (SQ 평가 백본) =====
+
+export type SqSignal = 'green' | 'yellow' | 'red'
+
+export interface SqReadinessItem {
+  code: string // '2_7'
+  title: string
+  points: number
+  signal: SqSignal
+  formCount: number // reg_code로 매핑된 양식 수(N)
+  standardizedCount: number // layout_json 보유(작성가능) 양식 수
+  draftedCount: number // 작성본 1건+ 양식 수
+}
+
+export interface SqReadinessCategory {
+  id: number
+  name: string
+  points: number
+  iatfClause: string | null
+  signal: SqSignal
+  items: SqReadinessItem[]
+}
+
+export interface SqReadinessDto {
+  categories: SqReadinessCategory[]
+  totalPoints: number
+}
+
+export interface SqItemFormRef {
+  formCode: string
+  formName: string
+  regCode: string
+  standardized: boolean // layout_json 보유 → 바로 작성 가능
+  draftCount: number // 작성본 수
+}
+
+export interface SqItemDoc {
+  docCode: string | null
+  docName: string | null
+  dept: string | null
+}
+
+export interface SqItemDetailDto {
+  code: string
+  title: string
+  points: number
+  requirement: string | null
+  categoryName: string
+  docs: SqItemDoc[] // 지배규정
+  forms: SqItemFormRef[] // 매핑 양식
+  formTypes: string[] // 기대 양식유형(코워크 분류)
+}
+
+// ===== 사건중심 8D 워크플로우 DTOs =====
+
+export interface CaseIntakeInput {
+  title?: string
+  customer?: string
+  source?: string
+  partNo?: string
+  partName?: string
+  model?: string
+  defectDesc?: string
+  defectQty?: number | null
+  attributable?: string
+  occurredDate?: string
+  receivedDate?: string
+  dueDate?: string
+  owner?: string
+}
+
+export interface CaseListItem {
+  id: number
+  caseNo: string
+  title: string
+  customer: string
+  partNo: string
+  defectDesc: string
+  status: string
+  dueDate: string | null
+  createdAt: string
+}
+
+export interface CaseStepDto {
+  stepKey: string
+  label: string
+  status: string // todo | doing | done
+  doneAt: string | null
+  sortOrder: number
+}
+
+export interface CaseScreeningDto {
+  scope: 'internal' | 'customer' // 사내재고 | 고객사
+  ownerDept: string
+  totalQty: number | null
+  screenedQty: number | null
+  defectQty: number | null
+  status: string
+  note: string | null
+}
+
+export interface CaseDetailDto {
+  id: number
+  caseNo: string
+  title: string
+  customer: string
+  source: string
+  partNo: string
+  partName: string
+  model: string
+  defectDesc: string
+  defectQty: number | null
+  attributable: string
+  occurredDate: string
+  receivedDate: string
+  dueDate: string
+  status: string
+  owner: string
+  steps: CaseStepDto[]
+  screening: CaseScreeningDto[]
+  facts: Record<string, string>
+}
+
+export interface CaseCreateResult {
+  id: number
+  caseNo: string
+}
+
 // ===== Process DTOs (v5 - 기본서) =====
 
 export type ProcessCategoryDto = 'CP' | 'MP' | 'SP'
@@ -717,6 +845,51 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.REPORT_EXPORT_SCORES]: {
     request: void
     response: ReportExportResult
+  }
+  [IPC_CHANNELS.SQ_READINESS]: {
+    request: void
+    response: SqReadinessDto
+  }
+  [IPC_CHANNELS.SQ_ITEM_DETAIL]: {
+    request: { code: string }
+    response: SqItemDetailDto | null
+  }
+  [IPC_CHANNELS.CASE_LIST]: {
+    request: void
+    response: CaseListItem[]
+  }
+  [IPC_CHANNELS.CASE_GET]: {
+    request: { id: number }
+    response: CaseDetailDto | null
+  }
+  [IPC_CHANNELS.CASE_CREATE]: {
+    request: CaseIntakeInput
+    response: CaseCreateResult
+  }
+  [IPC_CHANNELS.CASE_UPDATE]: {
+    request: { id: number } & Partial<CaseIntakeInput>
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.CASE_STEP_UPDATE]: {
+    request: { id: number; stepKey: string; status: string }
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.CASE_SCREENING_SAVE]: {
+    request: {
+      id: number
+      scope: 'internal' | 'customer'
+      ownerDept?: string
+      totalQty?: number | null
+      screenedQty?: number | null
+      defectQty?: number | null
+      status?: string
+      note?: string | null
+    }
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.CASE_FACT_SAVE]: {
+    request: { id: number; key: string; value: string }
+    response: { success: boolean }
   }
 }
 

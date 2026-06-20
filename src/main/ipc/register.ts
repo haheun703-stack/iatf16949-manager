@@ -28,6 +28,8 @@ import { registerScoringHandlers } from './scoring-handlers'
 import { registerDashboardHandlers } from './dashboard-handlers'
 import { registerScheduleHandlers } from './schedule-handlers'
 import { registerReportHandlers } from './report-handlers'
+import { registerSqHandlers } from './sq-handlers'
+import { registerCaseHandlers } from './case-handlers'
 
 export function registerAllIpcHandlers(): void {
   registerFormHandlers()
@@ -37,6 +39,8 @@ export function registerAllIpcHandlers(): void {
   registerDashboardHandlers()
   registerScheduleHandlers()
   registerReportHandlers()
+  registerSqHandlers()
+  registerCaseHandlers()
   const db = getSqlite()
 
   // ──── Clause Handlers ────

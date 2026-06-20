@@ -2,6 +2,8 @@ import { useUIStore } from '../../stores/uiStore'
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { Dashboard } from '../dashboard/Dashboard'
+import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
+import { CaseWorkPage } from '../case-work/CaseWorkPage'
 import { ProcessWorkbenchPage } from '../process-workbench/ProcessWorkbenchPage'
 import { FormBuilderPage } from '../form-builder/FormBuilderPage'
 import { DocumentBomPage } from '../document-bom/DocumentBomPage'
@@ -21,6 +23,8 @@ export function AppShell(): JSX.Element {
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}
           <ErrorBoundary key={currentPage}>
             {currentPage === 'dashboard' && <Dashboard />}
+            {currentPage === 'sq-readiness' && <SqReadinessPage />}
+            {currentPage === 'case-work' && <CaseWorkPage />}
             {currentPage === 'document-bom' && <DocumentBomPage />}
             {currentPage === 'process-workbench' && <ProcessWorkbenchPage />}
             {currentPage === 'form-builder' && <FormBuilderPage />}
