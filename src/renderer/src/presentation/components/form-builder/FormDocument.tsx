@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFormStore } from '../../stores/formStore'
 import { PhotoField } from './PhotoField'
 import type { FormFieldDto, FormLayoutBlock, FormLayoutCell } from '@shared/ipc-types'
@@ -256,6 +256,44 @@ function ApprovalGrid({ approvals }: { approvals: string[] }): JSX.Element {
   )
 }
 
+/**
+ * 내용 길이에 맞춰 높이가 자동으로 늘어나는 textarea.
+ * 수동 리사이즈 핸들/스크롤바를 없애 인쇄(A4) 시 내용이 잘리지 않고 그대로 흐르게 한다.
+ */
+function AutoGrowTextarea({
+  value,
+  placeholder,
+  onChange
+}: {
+  value: string
+  placeholder: string
+  onChange: (val: string) => void
+}): JSX.Element {
+  const ref = useRef<HTMLTextAreaElement>(null)
+
+  const resize = (): void => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
+
+  // 값이 외부에서 바뀌어도(예: Excel 붙여넣기/작성본 열기) 높이 재계산
+  useEffect(resize, [value])
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      placeholder={placeholder}
+      rows={3}
+      onChange={(e) => onChange(e.target.value)}
+      onInput={resize}
+      className={cellClass('min-h-[64px] resize-none overflow-hidden whitespace-pre-wrap leading-relaxed')}
+    />
+  )
+}
+
 function cellClass(extra = '', bg = 'bg-fillable'): string {
   // 사람이 채울 칸은 베이지(bg-fillable), 자동/읽기전용은 회색. 인쇄 시 @media print 가 평면화.
   return `w-full ${bg} text-[13px] px-1.5 py-1 rounded focus:bg-primary/5 focus:outline-none ${extra}`
@@ -299,11 +337,10 @@ function DocCell({
       )
     case 'textarea':
       return (
-        <textarea
+        <AutoGrowTextarea
           value={String(v)}
           placeholder={field.placeholder ?? ''}
-          onChange={(e) => setValue(k, e.target.value)}
-          className={cellClass('min-h-[96px] resize-y whitespace-pre-wrap leading-relaxed')}
+          onChange={(val) => setValue(k, val)}
         />
       )
     case 'select':

@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { FileEdit, ChevronRight } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { FileEdit, ChevronRight, Search, X } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -7,10 +7,20 @@ import { useUIStore } from '../../stores/uiStore'
 export function FormListPanel(): JSX.Element {
   const { formList, formListLoading, loadFormList, loadFormDefinition } = useFormStore()
   const { selectedFormCode, setSelectedFormCode } = useUIStore()
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     loadFormList()
   }, [loadFormList])
+
+  // 코드·이름 동시 검색(대소문자/공백 무시). 양식이 200개+라 목록에서 바로 거른다.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return formList
+    return formList.filter(
+      (f) => f.code.toLowerCase().includes(q) || f.name.toLowerCase().includes(q)
+    )
+  }, [formList, query])
 
   // Auto-load definition when external code selection happens (e.g. from dashboard click)
   useEffect(() => {
@@ -30,7 +40,30 @@ export function FormListPanel(): JSX.Element {
           <FileEdit className="w-4 h-4 text-primary" />
           양식 목록
         </h2>
-        <p className="text-xs text-muted-foreground mt-1">총 {formList.length}개 · 클릭하여 작성</p>
+        {/* 코드·이름 검색 */}
+        <div className="relative mt-2.5">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60 pointer-events-none" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="코드 또는 이름 검색 (예: B2100, 시정조치)"
+            className="w-full pl-8 pr-7 py-3 text-sm rounded-lg bg-fillable border border-border focus:border-primary/50 focus:outline-none"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="검색 지우기"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          {query ? `${filtered.length} / ${formList.length}개` : `총 ${formList.length}개`} · 클릭하여 작성
+        </p>
       </header>
 
       <div className="flex-1 overflow-y-auto p-2.5">
@@ -42,7 +75,12 @@ export function FormListPanel(): JSX.Element {
             등록된 양식이 없습니다
           </div>
         )}
-        {formList.map((f) => {
+        {!formListLoading && formList.length > 0 && filtered.length === 0 && (
+          <div className="text-center text-xs text-muted-foreground py-8">
+            &lsquo;{query}&rsquo; 검색 결과 없음
+          </div>
+        )}
+        {filtered.map((f) => {
           const active = selectedFormCode === f.code
           return (
             <button
