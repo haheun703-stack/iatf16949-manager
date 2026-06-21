@@ -17,22 +17,26 @@ Electron + React + TypeScript + SQLite(better-sqlite3) 로 만든 로컬 데스�
 
 ### 설치 & 실행
 ```powershell
-# 1) 저장소 클론 (master가 최신본입니다)
+# 1) 저장소 클론
 git clone https://github.com/haheun703-stack/iatf16949-manager.git
 cd iatf16949-manager
 
-# 2) 의존성 설치 (better-sqlite3 네이티브 빌드 포함)
+# 2) 최신 작업 브랜치로 전환 (중요!)
+#    최신 기능은 feature/v5-soft-reset 브랜치에 있습니다. (master는 구버전)
+git checkout feature/v5-soft-reset
+
+# 3) 의존성 설치 (better-sqlite3 네이티브 빌드 포함)
 npm install
 
-# 3) 환경변수 파일 준비
+# 4) 환경변수 파일 준비
 #    .env.example 을 복사해 .env 로 만들고, 전달받은 API 키를 채웁니다.
 Copy-Item .env.example .env
 #    -> .env 를 열어 CLAUDE_API_KEY 등 실제 키 값 입력
 
-# 4) (선택) 기존 데이터 이어받기: 전달받은 iatf16949.db 를 아래 경로에 복사
-#    %APPDATA%\iatf16949-manager\iatf16949.db   (4번 항목 참고)
+# 5) (선택) 기존 데이터 이어받기: 전달받은 iatf16949.db 를 아래 경로에 복사
+#    %APPDATA%\iatf16949-manager\iatf16949.db   (6번 항목 참고)
 
-# 5) 개발 모드 실행
+# 6) 개발 모드 실행
 npm run dev
 ```
 
