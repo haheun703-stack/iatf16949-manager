@@ -16,18 +16,21 @@ import type {
  * 항목별 신호등(🟢🟡🔴)을 집계한다.
  *
  * 연결 다리: sq_reg_map.reg_code == forms.reg_code (예 'B-1100').
- * 신호 규칙(항목): std=layout 보유 양식수, drafted=작성본1건+ 양식수
- *   🟢 formCount>0 && std==formCount && drafted>=1
- *   🟡 std>=1 || drafted>=1
- *   🔴 그 외(매핑양식 0 포함) — "준비 안 됨"을 정직하게 표시
+ * 신호 규칙(항목): std=layout 보유(작성가능) 양식수, drafted=작성본1건+ 양식수
+ *   ⬜ gray  : 매핑된 양식이 0개 (측정 불가 — 규정↔양식 도메인 매핑 부재). red와 구분.
+ *   🟢 green : 대표 양식 1개+ 표준화 && 작성본 1건+ (std>=1 && drafted>=1)
+ *   🟡 yellow: 일부 표준화 또는 작성 (std>=1 || drafted>=1)
+ *   🔴 red   : 양식은 매핑됐으나 표준화·작성 전무
+ * (이전엔 green이 std===formCount를 요구해 구조적으로 도달 불가였음 — 대표양식 기준으로 정정)
  */
 function itemSignal(formCount: number, std: number, drafted: number): SqSignal {
-  if (formCount > 0 && std === formCount && drafted >= 1) return 'green'
+  if (formCount === 0) return 'gray'
+  if (std >= 1 && drafted >= 1) return 'green'
   if (std >= 1 || drafted >= 1) return 'yellow'
   return 'red'
 }
 
-const SIGNAL_SCORE: Record<SqSignal, number> = { green: 1, yellow: 0.5, red: 0 }
+const SIGNAL_SCORE: Record<SqSignal, number> = { green: 1, yellow: 0.5, red: 0, gray: 0 }
 
 export function registerSqHandlers(): void {
   const db = getSqlite()
@@ -109,10 +112,12 @@ export function registerSqHandlers(): void {
 
       const catDtos: SqReadinessCategory[] = categories.map((c) => {
         const items = itemsByCat.get(c.id) ?? []
-        // 카테고리 신호 = 항목 points 가중평균
-        const wsum = items.reduce((s, it) => s + it.points, 0) || 1
-        const ratio = items.reduce((s, it) => s + SIGNAL_SCORE[it.signal] * it.points, 0) / wsum
-        const signal: SqSignal = ratio >= 0.999 ? 'green' : ratio <= 0.001 ? 'red' : 'yellow'
+        // 카테고리 신호 = 측정가능(gray 제외) 항목의 points 가중평균
+        const scored = items.filter((it) => it.signal !== 'gray')
+        const wsum = scored.reduce((s, it) => s + it.points, 0) || 1
+        const ratio = scored.reduce((s, it) => s + SIGNAL_SCORE[it.signal] * it.points, 0) / wsum
+        const signal: SqSignal =
+          scored.length === 0 ? 'gray' : ratio >= 0.999 ? 'green' : ratio <= 0.001 ? 'red' : 'yellow'
         return {
           id: c.id,
           name: c.name,

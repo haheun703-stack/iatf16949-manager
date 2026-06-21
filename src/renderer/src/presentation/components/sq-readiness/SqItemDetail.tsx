@@ -25,12 +25,20 @@ export function SqItemDetail({
   useEffect(() => {
     let alive = true
     setLoading(true)
-    void window.api.invoke(window.api.channels.SQ_ITEM_DETAIL, { code }).then((d) => {
-      if (alive) {
-        setDetail(d)
-        setLoading(false)
-      }
-    })
+    window.api.invoke(window.api.channels.SQ_ITEM_DETAIL, { code })
+      .then((d) => {
+        if (alive) {
+          setDetail(d)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        // IPC 실패 시 무한 '불러오는 중' 방지
+        if (alive) {
+          setDetail(null)
+          setLoading(false)
+        }
+      })
     return () => {
       alive = false
     }
@@ -167,7 +175,7 @@ export function SqItemDetail({
 
       {/* 신호 범례 */}
       <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border text-[10px] text-muted-foreground">
-        {(['green', 'yellow', 'red'] as SqSignal[]).map((s) => (
+        {(['green', 'yellow', 'red', 'gray'] as SqSignal[]).map((s) => (
           <span key={s} className={cn('flex items-center gap-1', signalText[s])}>
             ● {signalLabel[s]}
           </span>

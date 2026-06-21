@@ -178,6 +178,9 @@ export const useFormStore = create<FormState>((set, get) => ({
       currentSubmissionId: sub.id,
       serialPreview: sub.serialNo ?? null
     })
+    // loadFormDefinition이 currentSubmissionId=null 상태에서 채점을 미리 불러와(submissionId=null)
+    // 이 작성본이 아닌 양식 전체 최신 채점이 잡힌다. id 확정 후 해당 작성본 채점으로 재조회.
+    void get().loadLatestScore(sub.formCode)
   },
 
   saveDraft: async () => {

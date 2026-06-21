@@ -361,7 +361,7 @@ export interface DashboardV5Dto {
 
 // ===== SQ 준비도 DTOs (SQ 평가 백본) =====
 
-export type SqSignal = 'green' | 'yellow' | 'red'
+export type SqSignal = 'green' | 'yellow' | 'red' | 'gray'
 
 export interface SqReadinessItem {
   code: string // '2_7'

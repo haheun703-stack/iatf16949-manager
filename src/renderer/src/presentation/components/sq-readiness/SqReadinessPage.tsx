@@ -7,14 +7,16 @@ import { SqItemDetail } from './SqItemDetail'
 const SIGNAL_BG: Record<SqSignal, string> = {
   green: 'bg-success',
   yellow: 'bg-warning',
-  red: 'bg-destructive'
+  red: 'bg-destructive',
+  gray: 'bg-muted-foreground/40'
 }
 const SIGNAL_TEXT: Record<SqSignal, string> = {
   green: 'text-success',
   yellow: 'text-warning',
-  red: 'text-destructive'
+  red: 'text-destructive',
+  gray: 'text-muted-foreground'
 }
-const SIGNAL_LABEL: Record<SqSignal, string> = { green: '충족', yellow: '진행', red: '미충족' }
+const SIGNAL_LABEL: Record<SqSignal, string> = { green: '충족', yellow: '진행', red: '미충족', gray: '미해당' }
 
 function Dot({ signal, className }: { signal: SqSignal; className?: string }): JSX.Element {
   return <span className={cn('inline-block rounded-full shrink-0', SIGNAL_BG[signal], className)} />
@@ -44,7 +46,7 @@ export function SqReadinessPage(): JSX.Element {
   }, [load])
 
   const summary = useMemo(() => {
-    const acc = { green: 0, yellow: 0, red: 0, total: 0 }
+    const acc = { green: 0, yellow: 0, red: 0, gray: 0, total: 0 }
     if (data) {
       for (const c of data.categories)
         for (const it of c.items) {
@@ -65,13 +67,15 @@ export function SqReadinessPage(): JSX.Element {
         <div className="flex-1">
           <h1 className="text-xl font-bold tracking-tight">SQ 준비도</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            삼보모터스(HKMC) SQ 평가 Ver4 · 6대 · {summary.total}항목 · 1000점 — 양식 작성·표준화 현황 신호등
+            삼보모터스(HKMC) SQ 평가 Ver4 · {data?.categories.length ?? 0}대 · {summary.total}항목 ·{' '}
+            {data?.totalPoints ?? 0}점 — 양식 작성·표준화 현황 신호등
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1.5"><Dot signal="green" className="w-2.5 h-2.5" /> {summary.green}</span>
           <span className="flex items-center gap-1.5"><Dot signal="yellow" className="w-2.5 h-2.5" /> {summary.yellow}</span>
           <span className="flex items-center gap-1.5"><Dot signal="red" className="w-2.5 h-2.5" /> {summary.red}</span>
+          <span className="flex items-center gap-1.5"><Dot signal="gray" className="w-2.5 h-2.5" /> {summary.gray}</span>
           <button
             type="button"
             onClick={() => void load()}

@@ -1,32 +1,34 @@
-# TODO — 사무실에서 이어서 (작성: 2026-06-18 집에서)
+# TODO — 이어서 작업 (갱신: 2026-06-21)
 
 ## 현재 상태 (콜드스타트 1순위)
-- 브랜치: `feature/v5-soft-reset`, **origin과 완전 동기화** (최신 `33901fb`)
-- 앱 실행: `cd iatf16949-manager && npm run dev`  (끌 땐 **창 닫기로 정상 종료** = WAL 안전)
-- DB 경로: `%APPDATA%/iatf16949-manager/iatf16949.db`
-  (better-sqlite3는 Electron 전용 빌드라 일반 node로 못 엶 → 점검은 `python sqlite3`)
+- 브랜치: `feature/v5-soft-reset`, origin 동기화. 최신 HEAD = 검수수정 커밋(아래 참조)
+- 앱 실행: `cd iatf16949-manager && npm run dev` (끌 땐 창 닫기 = WAL 안전)
+- DB: `%APPDATA%/iatf16949-manager/iatf16949.db` (점검은 `python sqlite3 file:...?mode=ro`)
+- 설계 단일출처: `docs/사건중심_8D흐름_분배맵_설계.md`
 
-## 오늘 한 것 — B1100-01 "부적합품 발생 통보서"를 표준형으로 완성
-원칙: **AI = 틀·가이드·채점 / 사람 = 실내용 / 시스템 = 메타자동**
-- ① 메타 자동주입: 발행번호(NCR-2026-####) 자동넘버링·작성일=오늘·작성자(회사정보 defaultAuthor)
-- ② 노션풍 문서뷰 + 인쇄/PDF: [입력|문서] 토글, 문서모드=실양식 모양
-- ③ Excel 붙여넣기: 라벨 매칭으로 필드 자동채움(세로 키-값 / 가로 헤더+값)
-- 레이아웃 엔진: `forms.layout_json`(블록 section/grid/full) + 범용 렌더러(FormDocument)
-  → 0010 마이그레이션이 B1100-01 설계도 주입. **405 확장의 기반**
-- 입력칸 베이지 시인성(`--color-fillable`), 자동칸 회색, 인쇄 시 평면화
-- 현품 사진 첨부(클릭→파일선택→1280px 축소→data URL 임베드)
-- 데이터손실 방지: '이어서작성' 자동저장 + [작성본] 목록 모달(저장본 열기/삭제)
+## 최근 완료 (2026-06-20~21)
+**SQ 평가 백본 + 사건중심 8D + 분배엔진** — 코워크 SQ Ver4 백본(6대·42항목·1000점)을 앱에 통합.
+forms.reg_code ↔ sq_reg_map 으로 218개 양식이 SQ 항목에 자동 연결.
+- **SQ 준비도**(사이드바): 42항목 신호등(🟢충족/🟡진행/🔴미충족/⬜미해당). 0012 + sq-handlers + sq-readiness/*.
+- **사건 작업**(사이드바): 고객 불량 통보 → 8D 단계 → 선별(사내재고=생산/고객사=품질) → 원인·대책.
+  0013 + case-handlers + case-work/*.
+- **분배 엔진**: 케이스 공유사실 → B1100-01·B2100-01 작성본 자동생성(case_id 연결) → SQ 작성본수 롤업.
+- **PPT 본문 추출 시드**: `scripts/seed_defect_cases.py` (대책서 PPTX 라벨 파싱, 데모 12건, owner='[샘플]').
+- **전체 검수(멀티에이전트) + 수정 반영**: SQ green 규칙 재정의(도달가능+gray), 마이그레이션 원자성,
+  채점 submissionId 경합, nextSerial 중복제거(database/serial.ts), 분배 작성일자 자동, '하헌'/'1000점' 하드코딩 제거.
 
-## 다음 할 일 (편한 것부터)
-- [ ] **다른 양식 복제**: B2100-01 시정조치요구서 등에 layout_json 작성해 같은 엔진으로 렌더
-- [ ] **405 AI 자동생성 설계**: 각 BOM 양식 원본 → AI가 form_fields + layout_json 생성하는 파이프라인
-- [ ] **로그인/작성자**: 현재 작성자=회사정보 stub('하헌'). 로그인 도입 시 사용자명 자동반영
-- [ ] **문서 모양 다듬기**: 결재란 크기·칸 비율·베이지 톤·로고 등 미세조정
-- [ ] **표(반복행) 필드 타입**: 표 있는 양식(점검표·관리대장) 만날 때 layout에 table 블록 추가
+## 다음 할 일
+- [ ] **B-2100→2_9(리크/리워크) 매핑 도메인 확인**: 시정조치 양식 1건이 리크 항목을 yellow로 점등(코워크 rules.json qms_sqmap 유래). 규정레벨 매핑 의도인지 확인 후 전용 리크/리워크 양식 매핑 검토.
+- [ ] **218 forms 마이그레이션화**: 현재 forms는 `scripts/auto-link-forms.mjs`가 live DB에 직접 INSERT → 클린설치 시 0004의 4건만 복원. 정식 시드 SQL로 덤프해 재현성 확보.
+- [ ] **8D 흐름 양식 표준화**: B2100-03(개선대책서)·B1100-05(봉쇄)·H3200-01/02 등에 form_fields+layout_json → 분배 대상 확대.
+- [ ] **PPT→필드 AI 추출**: 정규식 시드의 노이즈 한계 → Claude로 대책서 본문을 구조화 JSON 추출(앱 AI인프라 활용).
+- [ ] **LOT 입력 경로**: 분배 B1100-01 i4(LOT)는 case_facts.lot 의존인데 UI 입력칸 없음. 접수폼/상세에 추가.
+- [ ] 로그인/작성자, 다른 양식 복제.
 
 ## 주의/메모
-- AUDIT_DATE = `2026-12-31` **데모 임시값**(useDday.ts). 실제 심사일 확정 시 교체 (D-day/대시보드 공통)
-- 집에서 작성하던 B1100-01 1건은 미저장으로 유실됨(이제 자동저장돼서 재발 안 함) → 사무실서 다시 입력
-- 옛 테스트 작성본 2건(5/19)은 [작성본] 목록에서 휴지통으로 삭제 가능
-- 핵심 파일: form-builder/{FormCanvas, FormDocument, PhotoField, ExcelPasteModal, SubmissionsModal}.tsx,
-  stores/formStore.ts, ipc/form-handlers.ts, resources/migrations/0010_form_layout.sql
+- SQ평가 = 삼보(HKMC) Ver4 브레이징 단일표준 가정(시드 하드코딩). 다업종 확장 시 백본 JSON 교체.
+- 데모 시드/‘샘플 채우기’ 버튼은 dev 편의용 — 출하 시 정리 방침 필요(단일사용자 내부툴이라 현재는 low).
+- AUDIT_DATE = `2026-12-31` 데모 임시값(useDday.ts).
+- 핵심 파일: ipc/{sq-handlers,case-handlers,form-handlers}.ts, database/{migrate,serial}.ts,
+  presentation/components/{sq-readiness,case-work}/*, stores/{formStore,uiStore}.ts,
+  resources/migrations/0012_sq_backbone.sql, 0013_cases_8d.sql

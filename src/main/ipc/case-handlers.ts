@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
+import { nextFormSerial, nextCaseNo } from '../database/serial'
 import type {
   CaseIntakeInput,
   CaseListItem,
@@ -31,32 +32,6 @@ const SCREENING_DEFS: Array<{ scope: string; ownerDept: string }> = [
   { scope: 'customer', ownerDept: '품질팀' }
 ]
 
-/** 케이스 채번 QC-YYYY-#### (cases.case_no 최대 시퀀스+1). */
-function nextCaseNo(db: ReturnType<typeof getSqlite>, year: number): string {
-  const rows = db
-    .prepare(`SELECT case_no FROM cases WHERE case_no LIKE ?`)
-    .all(`QC-${year}-%`) as Array<{ case_no: string | null }>
-  let max = 0
-  for (const r of rows) {
-    const m = r.case_no?.match(/(\d+)\s*$/)
-    if (m) max = Math.max(max, parseInt(m[1], 10))
-  }
-  return `QC-${year}-${String(max + 1).padStart(4, '0')}`
-}
-
-/** 양식 발행번호 채번 PREFIX-YYYY-#### (form_submissions.serial_no 최대+1). */
-function nextFormSerial(db: ReturnType<typeof getSqlite>, formCode: string, prefix: string, year: number): string {
-  const rows = db
-    .prepare(`SELECT serial_no FROM form_submissions WHERE form_code = ? AND serial_no LIKE ?`)
-    .all(formCode, `${prefix}-${year}-%`) as Array<{ serial_no: string | null }>
-  let max = 0
-  for (const r of rows) {
-    const m = r.serial_no?.match(/(\d+)\s*$/)
-    if (m) max = Math.max(max, parseInt(m[1], 10))
-  }
-  return `${prefix}-${year}-${String(max + 1).padStart(4, '0')}`
-}
-
 interface CaseRow {
   part_no: string | null
   part_name: string | null
@@ -84,6 +59,7 @@ const DISTRIBUTION: Array<{
     prefix: 'NCR',
     autoKey: 'h1',
     build: (c, f) => ({
+      h2: today(), // 작성일자 = 분배일(오늘)
       i1: c.occurred_date, // 발생일자
       i2: c.defect_qty, // 불량수량
       i3: c.part_name, // 품명
@@ -98,6 +74,7 @@ const DISTRIBUTION: Array<{
     prefix: 'CAR',
     autoKey: 's1',
     build: (c, f) => ({
+      s2: today(), // 발행일자 = 분배일(오늘)
       s6: c.defect_desc, // 부적합 사항
       s8: c.due_date, // 회신 요구일
       s9: f.root_cause, // 원인 분석
@@ -105,6 +82,11 @@ const DISTRIBUTION: Array<{
     })
   }
 ]
+
+/** 오늘 날짜 YYYY-MM-DD (양식 작성일자/발행일자 자동값). */
+function today(): string {
+  return new Date().toISOString().slice(0, 10)
+}
 
 /** null/빈값 제거 후 문자열화(form 렌더가 String(v) 사용). */
 function cleanValues(v: Record<string, unknown>): Record<string, string> {
@@ -376,6 +358,11 @@ export function registerCaseHandlers(): void {
 
     const now = new Date().toISOString()
     const year = new Date().getFullYear()
+    // 작성자 기본값: 회사정보 defaultAuthor (form-handlers와 동일 출처. 인명 리터럴 하드코딩 제거)
+    const defaultAuthor =
+      (db.prepare("SELECT value FROM company_profile WHERE key = 'defaultAuthor'").get() as
+        | { value?: string }
+        | undefined)?.value ?? null
     let created = 0
     let updated = 0
 
@@ -393,7 +380,13 @@ export function registerCaseHandlers(): void {
           .get(id, d.formCode) as { id: number; serial_no: string; values_json: string } | undefined
 
         if (existing) {
-          const merged = { ...JSON.parse(existing.values_json || '{}'), ...values, [d.autoKey]: existing.serial_no }
+          let prev: Record<string, unknown> = {}
+          try {
+            prev = JSON.parse(existing.values_json || '{}')
+          } catch {
+            prev = {} // 손상된 values_json은 빈 값으로 폴백(throw 방지)
+          }
+          const merged = { ...prev, ...values, [d.autoKey]: existing.serial_no }
           db.prepare('UPDATE form_submissions SET values_json = ?, updated_at = ? WHERE id = ?')
             .run(JSON.stringify(merged), now, existing.id)
           updated++
@@ -403,7 +396,7 @@ export function registerCaseHandlers(): void {
           db.prepare(
             `INSERT INTO form_submissions (form_code, serial_no, values_json, status, created_by, created_at, updated_at, case_id)
              VALUES (?, ?, ?, 'draft', ?, ?, ?, ?)`
-          ).run(d.formCode, serial, JSON.stringify(withSerial), c.owner ?? '하헌', now, now, id)
+          ).run(d.formCode, serial, JSON.stringify(withSerial), c.owner || defaultAuthor, now, now, id)
           created++
         }
       }

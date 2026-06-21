@@ -43,17 +43,20 @@ export function runMigrations(): void {
       continue
     }
 
-    // Execute migration
+    // Execute migration — exec와 _migrations 기록을 한 트랜잭션으로 묶어 원자화.
+    // 부분실패(예: ALTER ADD COLUMN 직후 크래시) 시 컬럼 추가까지 롤백되어 재실행이 안전.
+    // (SQLite DDL은 트랜잭션 가능. 미적용 시 비멱등 ALTER가 재실행돼 duplicate column으로 영구 부팅불가 위험)
     const sqlContent = readFileSync(join(migrationsDir, file), 'utf-8')
     try {
-      db.exec(sqlContent)
+      const applyMigration = db.transaction(() => {
+        db.exec(sqlContent)
+        insertStmt.run(file)
+      })
+      applyMigration()
     } catch (err) {
       console.error(`[migrate] FAILED on ${file}:`, (err as Error).message)
       throw err
     }
-
-    // Record migration
-    insertStmt.run(file)
     console.log(`Migration applied: ${file}`)
   }
 }

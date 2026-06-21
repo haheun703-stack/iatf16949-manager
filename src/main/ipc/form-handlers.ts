@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
+import { nextFormSerial } from '../database/serial'
 import { generate as aiGenerate } from '../ai'
 import type {
   FormListItemDto,
@@ -33,27 +34,6 @@ function getProfileValue(db: ReturnType<typeof getSqlite>, key: string): string 
   } catch {
     return null
   }
-}
-
-/**
- * 발행번호 자동 넘버링. prefix-year-#### 형식에서 같은 양식/연도의 최대 시퀀스+1.
- * (단일 사용자 데스크톱 앱이라 동시성 충돌 없음. serial_no는 저장 시 확정.)
- */
-function nextSerial(
-  db: ReturnType<typeof getSqlite>,
-  formCode: string,
-  prefix: string,
-  year: number
-): string {
-  const rows = db
-    .prepare(`SELECT serial_no FROM form_submissions WHERE form_code = ? AND serial_no LIKE ?`)
-    .all(formCode, `${prefix}-${year}-%`) as Array<{ serial_no: string | null }>
-  let max = 0
-  for (const r of rows) {
-    const m = r.serial_no?.match(/(\d+)\s*$/)
-    if (m) max = Math.max(max, parseInt(m[1], 10))
-  }
-  return `${prefix}-${year}-${String(max + 1).padStart(4, '0')}`
 }
 
 function rowToField(row: Record<string, unknown>): FormFieldDto {
@@ -310,7 +290,7 @@ export function registerFormHandlers(): void {
           // placeholder 예: "NCR-2026-XXXX (자동부여)" → prefix=NCR, 연도는 현재연도로 재생성
           const m = ph.match(/([A-Z]{2,})-\d{4}/)
           if (m) {
-            const s = nextSerial(db, formCode, m[1], year)
+            const s = nextFormSerial(db, formCode, m[1], year)
             values[f.field_key] = s
             serialPreview = s
           }
