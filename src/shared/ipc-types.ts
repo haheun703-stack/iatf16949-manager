@@ -460,6 +460,14 @@ export interface CaseScreeningDto {
   note: string | null
 }
 
+export interface CaseLinkedForm {
+  id: number // form_submissions.id
+  formCode: string
+  formName: string
+  serialNo: string
+  status: string
+}
+
 export interface CaseDetailDto {
   id: number
   caseNo: string
@@ -480,11 +488,18 @@ export interface CaseDetailDto {
   steps: CaseStepDto[]
   screening: CaseScreeningDto[]
   facts: Record<string, string>
+  forms: CaseLinkedForm[] // 분배된 양식 작성본
 }
 
 export interface CaseCreateResult {
   id: number
   caseNo: string
+}
+
+export interface CaseDistributeResult {
+  created: number
+  updated: number
+  forms: CaseLinkedForm[]
 }
 
 // ===== Process DTOs (v5 - 기본서) =====
@@ -890,6 +905,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.CASE_FACT_SAVE]: {
     request: { id: number; key: string; value: string }
     response: { success: boolean }
+  }
+  [IPC_CHANNELS.CASE_DISTRIBUTE]: {
+    request: { id: number }
+    response: CaseDistributeResult
   }
 }
 

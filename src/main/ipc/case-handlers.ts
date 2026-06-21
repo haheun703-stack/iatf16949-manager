@@ -7,7 +7,9 @@ import type {
   CaseDetailDto,
   CaseStepDto,
   CaseScreeningDto,
-  CaseCreateResult
+  CaseCreateResult,
+  CaseLinkedForm,
+  CaseDistributeResult
 } from '@shared/ipc-types'
 
 /** 8D 흐름 단계 정의(케이스 생성 시 자동 생성). 라벨은 여기 단일원천. */
@@ -40,6 +42,96 @@ function nextCaseNo(db: ReturnType<typeof getSqlite>, year: number): string {
     if (m) max = Math.max(max, parseInt(m[1], 10))
   }
   return `QC-${year}-${String(max + 1).padStart(4, '0')}`
+}
+
+/** 양식 발행번호 채번 PREFIX-YYYY-#### (form_submissions.serial_no 최대+1). */
+function nextFormSerial(db: ReturnType<typeof getSqlite>, formCode: string, prefix: string, year: number): string {
+  const rows = db
+    .prepare(`SELECT serial_no FROM form_submissions WHERE form_code = ? AND serial_no LIKE ?`)
+    .all(formCode, `${prefix}-${year}-%`) as Array<{ serial_no: string | null }>
+  let max = 0
+  for (const r of rows) {
+    const m = r.serial_no?.match(/(\d+)\s*$/)
+    if (m) max = Math.max(max, parseInt(m[1], 10))
+  }
+  return `${prefix}-${year}-${String(max + 1).padStart(4, '0')}`
+}
+
+interface CaseRow {
+  part_no: string | null
+  part_name: string | null
+  defect_desc: string | null
+  defect_qty: number | null
+  occurred_date: string | null
+  due_date: string | null
+  customer: string | null
+  source: string | null
+  owner: string | null
+}
+
+/**
+ * 분배맵 — 케이스 공유사실을 표준화된(layout 보유) 양식의 field_key 로 매핑.
+ * autoKey = 그 양식의 발행번호(auto) 필드(serial 주입). 비표준 양식(B2100-03 등)은 표준화 후 추가.
+ */
+const DISTRIBUTION: Array<{
+  formCode: string
+  prefix: string
+  autoKey: string
+  build: (c: CaseRow, f: Record<string, string>) => Record<string, unknown>
+}> = [
+  {
+    formCode: 'B1100-01',
+    prefix: 'NCR',
+    autoKey: 'h1',
+    build: (c, f) => ({
+      i1: c.occurred_date, // 발생일자
+      i2: c.defect_qty, // 불량수량
+      i3: c.part_name, // 품명
+      i4: f.lot, // LOT NO ← PPT 추출
+      i5: c.part_no, // 품번 & 규격
+      c1: c.defect_desc, // 부적합 내용
+      c3: f.root_cause // 조사 내용 ← 근본원인
+    })
+  },
+  {
+    formCode: 'B2100-01',
+    prefix: 'CAR',
+    autoKey: 's1',
+    build: (c, f) => ({
+      s6: c.defect_desc, // 부적합 사항
+      s8: c.due_date, // 회신 요구일
+      s9: f.root_cause, // 원인 분석
+      s10: f.corrective_action // 재발방지 대책 ← 개선대책
+    })
+  }
+]
+
+/** null/빈값 제거 후 문자열화(form 렌더가 String(v) 사용). */
+function cleanValues(v: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [k, val] of Object.entries(v)) {
+    if (val === null || val === undefined || val === '') continue
+    out[k] = String(val)
+  }
+  return out
+}
+
+/** 케이스에 연결된 양식 작성본 목록. */
+function loadLinkedForms(db: ReturnType<typeof getSqlite>, caseId: number): CaseLinkedForm[] {
+  const rows = db
+    .prepare(
+      `SELECT s.id, s.form_code, s.serial_no, s.status, f.name AS form_name
+       FROM form_submissions s JOIN forms f ON f.code = s.form_code
+       WHERE s.case_id = ? ORDER BY s.form_code`
+    )
+    .all(caseId) as Array<Record<string, unknown>>
+  return rows.map((r) => ({
+    id: r.id as number,
+    formCode: r.form_code as string,
+    formName: (r.form_name as string) ?? '',
+    serialNo: (r.serial_no as string) ?? '',
+    status: (r.status as string) ?? 'draft'
+  }))
 }
 
 export function registerCaseHandlers(): void {
@@ -101,6 +193,8 @@ export function registerCaseHandlers(): void {
     const facts: Record<string, string> = {}
     for (const f of factRows) facts[f.fact_key] = f.value ?? ''
 
+    const forms = loadLinkedForms(db, id)
+
     return {
       id: c.id as number,
       caseNo: (c.case_no as string) ?? '',
@@ -120,7 +214,8 @@ export function registerCaseHandlers(): void {
       owner: (c.owner as string) ?? '',
       steps,
       screening,
-      facts
+      facts,
+      forms
     }
   })
 
@@ -265,4 +360,56 @@ export function registerCaseHandlers(): void {
       return { success: true }
     }
   )
+
+  // ──── 분배 엔진: 케이스 공유사실 → 표준화 양식 작성본 자동생성/갱신 ────
+  // 같은 (case_id, form_code) 작성본이 있으면 값만 갱신, 없으면 새로 생성(serial 채번 + case_id 연결).
+  // 산출 작성본은 form_submissions.case_id 로 묶이고, SQ 준비도(작성본수)에 자동 롤업됨.
+  ipcMain.handle(IPC_CHANNELS.CASE_DISTRIBUTE, (_e, { id }: { id: number }): CaseDistributeResult => {
+    const c = db.prepare('SELECT * FROM cases WHERE id = ?').get(id) as CaseRow | undefined
+    if (!c) return { created: 0, updated: 0, forms: [] }
+
+    const factRows = db
+      .prepare('SELECT fact_key, value FROM case_facts WHERE case_id = ?')
+      .all(id) as Array<{ fact_key: string; value: string | null }>
+    const facts: Record<string, string> = {}
+    for (const f of factRows) facts[f.fact_key] = f.value ?? ''
+
+    const now = new Date().toISOString()
+    const year = new Date().getFullYear()
+    let created = 0
+    let updated = 0
+
+    const run = db.transaction(() => {
+      for (const d of DISTRIBUTION) {
+        // 표준화(layout 보유) 양식만 분배 — 빈 껍데기엔 그릴 칸이 없음
+        const form = db
+          .prepare('SELECT code FROM forms WHERE code = ? AND layout_json IS NOT NULL')
+          .get(d.formCode) as { code: string } | undefined
+        if (!form) continue
+
+        const values = cleanValues(d.build(c, facts))
+        const existing = db
+          .prepare('SELECT id, serial_no, values_json FROM form_submissions WHERE case_id = ? AND form_code = ?')
+          .get(id, d.formCode) as { id: number; serial_no: string; values_json: string } | undefined
+
+        if (existing) {
+          const merged = { ...JSON.parse(existing.values_json || '{}'), ...values, [d.autoKey]: existing.serial_no }
+          db.prepare('UPDATE form_submissions SET values_json = ?, updated_at = ? WHERE id = ?')
+            .run(JSON.stringify(merged), now, existing.id)
+          updated++
+        } else {
+          const serial = nextFormSerial(db, d.formCode, d.prefix, year)
+          const withSerial = { ...values, [d.autoKey]: serial }
+          db.prepare(
+            `INSERT INTO form_submissions (form_code, serial_no, values_json, status, created_by, created_at, updated_at, case_id)
+             VALUES (?, ?, ?, 'draft', ?, ?, ?, ?)`
+          ).run(d.formCode, serial, JSON.stringify(withSerial), c.owner ?? '하헌', now, now, id)
+          created++
+        }
+      }
+    })
+    run()
+
+    return { created, updated, forms: loadLinkedForms(db, id) }
+  })
 }

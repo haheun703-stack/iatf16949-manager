@@ -5,8 +5,9 @@ import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
 
 export function FormListPanel(): JSX.Element {
-  const { formList, formListLoading, loadFormList, loadFormDefinition } = useFormStore()
-  const { selectedFormCode, setSelectedFormCode } = useUIStore()
+  const { formList, formListLoading, loadFormList, loadFormDefinition, loadSubmission } = useFormStore()
+  const { selectedFormCode, setSelectedFormCode, pendingSubmissionId, setPendingSubmissionId } =
+    useUIStore()
   const [query, setQuery] = useState('')
 
   useEffect(() => {
@@ -22,14 +23,19 @@ export function FormListPanel(): JSX.Element {
     )
   }, [formList, query])
 
-  // Auto-load definition when external code selection happens (e.g. from dashboard click)
+  // 외부 진입 시 자동 로드: 분배된 작성본 [열기]면 그 작성본을, 아니면 새 양식 정의를.
   useEffect(() => {
-    if (selectedFormCode) {
-      loadFormDefinition(selectedFormCode)
+    if (pendingSubmissionId != null) {
+      void loadSubmission(pendingSubmissionId)
+      setPendingSubmissionId(null)
+    } else if (selectedFormCode) {
+      void loadFormDefinition(selectedFormCode)
     }
-  }, [selectedFormCode, loadFormDefinition])
+  }, [selectedFormCode, pendingSubmissionId, loadFormDefinition, loadSubmission, setPendingSubmissionId])
 
+  // 목록에서 직접 클릭 = 새 작성(빈 양식). 혹시 남은 pending 작성본은 비운다.
   const handleClick = (code: string): void => {
+    setPendingSubmissionId(null)
     setSelectedFormCode(code)
   }
 

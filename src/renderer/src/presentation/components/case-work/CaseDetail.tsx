@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Check, Circle, Clock, Factory, ShieldAlert, AlertCircle } from 'lucide-react'
+import { Check, Circle, Clock, Factory, ShieldAlert, Send, FileText, ArrowUpRight } from 'lucide-react'
 import type { CaseDetailDto, CaseScreeningDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { useUIStore } from '../../stores/uiStore'
 
 const STATUS_NEXT: Record<string, string> = { todo: 'doing', doing: 'done', done: 'todo' }
 const FILL = 'bg-fillable text-[13px] px-2 py-1 rounded border border-border focus:border-primary/50 focus:outline-none'
@@ -26,6 +27,27 @@ export function CaseDetail({
   onReload: () => void
 }): JSX.Element {
   const dd = dday(detail.dueDate)
+  const [distributing, setDistributing] = useState(false)
+  const setPage = useUIStore((s) => s.setPage)
+  const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
+  const setPendingSubmissionId = useUIStore((s) => s.setPendingSubmissionId)
+
+  const distribute = async (): Promise<void> => {
+    setDistributing(true)
+    try {
+      await window.api.invoke(window.api.channels.CASE_DISTRIBUTE, { id: detail.id })
+      onReload()
+    } finally {
+      setDistributing(false)
+    }
+  }
+
+  // 분배된 작성본 열기 — pendingSubmissionId 로 그 작성본을 로드하게 한 뒤 양식화면으로
+  const openForm = (formCode: string, submissionId: number): void => {
+    setPendingSubmissionId(submissionId)
+    setSelectedFormCode(formCode)
+    setPage('form-builder')
+  }
 
   const cycleStep = async (stepKey: string, status: string): Promise<void> => {
     await window.api.invoke(window.api.channels.CASE_STEP_UPDATE, {
@@ -111,9 +133,51 @@ export function CaseDetail({
           <FactBox caseId={detail.id} factKey="root_cause" label="근본원인 (5Why / 8D)" value={detail.facts.root_cause ?? ''} onSaved={onReload} />
           <FactBox caseId={detail.id} factKey="corrective_action" label="개선대책 (회신용)" value={detail.facts.corrective_action ?? ''} onSaved={onReload} />
         </div>
-        <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" /> 다음 단계: 이 공유사실이 B1100-01·B2100-01·B2100-03 양식으로 자동 분배(분배 엔진은 후속).
-        </p>
+      </section>
+
+      {/* 양식 자동분배 */}
+      <section className="mt-5 pt-4 border-t border-border">
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-[12px] font-bold text-muted-foreground flex-1">
+            IATF 양식 자동분배 — 한 번 입력한 케이스 정보를 양식 칸으로
+          </h3>
+          <button
+            type="button"
+            onClick={() => void distribute()}
+            disabled={distributing}
+            className="flex items-center gap-1.5 text-[12px] font-semibold bg-primary text-primary-foreground rounded-lg px-3 py-1.5 hover:bg-primary/90 disabled:opacity-50"
+          >
+            <Send className="w-3.5 h-3.5" /> {distributing ? '분배 중...' : '양식 자동분배'}
+          </button>
+        </div>
+
+        {detail.forms.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground bg-muted/40 rounded-lg px-3 py-2.5 border border-border">
+            아직 분배된 양식이 없습니다. <b>양식 자동분배</b>를 누르면 표준화된 양식(B1100-01 부적합통보, B2100-01 시정조치요구서)에
+            품번·불량내용·근본원인·개선대책이 자동으로 채워진 작성본이 생성되고, SQ 준비도에 롤업됩니다.
+          </p>
+        ) : (
+          <div className="space-y-1.5">
+            {detail.forms.map((f) => (
+              <div key={f.id} className="flex items-center gap-2.5 rounded-lg border border-success/30 bg-success/5 px-3 py-2">
+                <FileText className="w-4 h-4 text-success shrink-0" />
+                <span className="font-mono text-[11px] text-muted-foreground w-[78px] shrink-0">{f.formCode}</span>
+                <span className="flex-1 text-[13px] truncate">{f.formName}</span>
+                <span className="font-mono text-[11px] text-success shrink-0">{f.serialNo}</span>
+                <button
+                  type="button"
+                  onClick={() => openForm(f.formCode, f.id)}
+                  className="shrink-0 flex items-center gap-1 text-[11px] font-semibold border border-border rounded px-2 py-1 hover:bg-muted"
+                >
+                  열기 <ArrowUpRight className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              ↑ 이 작성본들이 SQ 준비도의 6_6(부적합)·6_7(품질개선)·2_9(리크/리워크) 항목 <b>작성본 수</b>에 자동 반영됩니다.
+            </p>
+          </div>
+        )}
       </section>
     </div>
   )

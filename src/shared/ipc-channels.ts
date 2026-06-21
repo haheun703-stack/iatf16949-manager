@@ -97,7 +97,8 @@ export const IPC_CHANNELS = {
   CASE_UPDATE: 'case:update',
   CASE_STEP_UPDATE: 'case:stepUpdate',
   CASE_SCREENING_SAVE: 'case:screeningSave',
-  CASE_FACT_SAVE: 'case:factSave'
+  CASE_FACT_SAVE: 'case:factSave',
+  CASE_DISTRIBUTE: 'case:distribute'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

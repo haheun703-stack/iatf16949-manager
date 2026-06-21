@@ -1,131 +1,178 @@
 # -*- coding: utf-8 -*-
 """
-3. 품질불량/01 불량개선대책서 의 실제 대책서 폴더·파일명을 파싱해
-사건(cases) 샘플로 자동 적재한다. 데모용 — owner='[샘플]' 마커로 재실행 가능.
+3. 품질불량/01 불량개선대책서 의 실제 대책서 PPTX *본문 라벨*을 읽어
+사건(cases) 샘플로 적재. 라벨(품번/품명/현상/원인/근본대책/발생지역/발생수량/발생일자/LOT)을
+경계 기반으로 정확히 추출한다. 데모용 — owner='[샘플]' 마커로 재실행 가능.
 """
-import sqlite3, os, re, sys, glob
+import sqlite3, os, re, sys, glob, zipfile
 sys.stdout.reconfigure(encoding='utf-8')
 
 ROOT = r'D:/IATF16949,SQ 자동작성 봇/TPC AM사업부 품질폴더/3. 품질불량/01 불량개선대책서'
 DB = os.path.expandvars(r'%APPDATA%/iatf16949-manager/iatf16949.db')
 
 PART_RE = re.compile(r'(\d{4,5}-[0-9A-Z]{3,6}(?:-\d)?)')
-DATE_PAREN = re.compile(r'\((\d{2})[.\-](\d{1,2})[.\-](\d{1,2})\)')
-DATE_YYMMDD = re.compile(r'\b(1[0-9])(0[1-9]|1[0-2])([0-3]\d)\b')
 CUSTOMERS = [('JATCO','자트코(JATCO)'),('자트코','자트코(JATCO)'),('HPT','현대파워텍(HPT)'),
-             ('HMC','현대자동차(HMC)'),('기아','기아'),('삼보','삼보모터스'),
-             ('화승','화승'),('위아','현대위아'),('필드','필드(현대)')]
-STATUS_WORDS = ['대책발표','발표없슴','발표 없슴','등록 없슴','등록 됨','등록없슴','대책 발표',
-                '발표없음','완료','대책서','불량 등록','불량등록','수입검사','개선대책','삼보2',
-                '발표','없슴','없음','안됨','됨','모토스','모터스','피일드 문제','피일드','관련','보고',
-                '발생으로 인한','로 인한','발생','대책','문제']
-# 지명/공장(불량명에서 제거)
-PLACES = ['전주','명촌','매암동','울산','소하리','일본','강동','2공장','1공장','소하리','매암','전주']
+             ('KMI','삼보 KMI'),('INLINE','삼보 INLINE'),('HMC','현대자동차(HMC)'),
+             ('기아','기아'),('삼보','삼보모터스'),('화승','화승'),('위아','현대위아')]
 
-def parse(name):
-    m = PART_RE.search(name)
-    if not m: return None
-    part = m.group(1)
-    # 날짜
-    d = DATE_PAREN.search(name)
-    if d:
-        yy,mm,dd = d.group(1),d.group(2),d.group(3)
-        date = f'20{yy}-{int(mm):02d}-{int(dd):02d}'
-    else:
-        d2 = DATE_YYMMDD.search(name)
-        date = f'20{d2.group(1)}-{d2.group(2)}-{d2.group(3)}' if d2 else None
-    # 고객
-    cust = ''
-    for kw,label in CUSTOMERS:
-        if kw in name: cust = label; break
-    # 불량내용: 품번 뒤 ~ 날짜/고객/상태어 앞
-    after = name[m.end():]
-    after = DATE_PAREN.sub(' ', after)
-    after = re.sub(r'\b1[0-9](0[1-9]|1[0-2])[0-3]\d\b',' ',after)  # YYMMDD 제거
-    for w in STATUS_WORDS: after = after.replace(w,' ')
-    for pl in PLACES: after = after.replace(pl,' ')
-    for kw,_ in CUSTOMERS: after = after.replace(kw,' ')
-    after = re.sub(r'[_()]+',' ',after)
-    after = re.sub(r'\b\d{1,2}\b',' ',after)        # 잔여 일련번호
-    after = re.sub(r'[xX]\s*$','',after)
-    defect = re.sub(r'\s+',' ',after).strip(' -·')
-    if len(defect) < 2: defect = '불량(상세 대책서 참조)'
-    defect = defect[:40]
-    closed = ('완료' in name)
-    return dict(part=part, date=date, customer=cust, defect=defect, closed=closed, raw=name)
+# 모든 라벨(경계로 사용) — 한 라벨 값은 다음 라벨 전까지
+LABELS = ['품번','품 명','품명','보고자','보고','현 상','현상','원 인','원인','발생지역','발생 지역',
+          '발생장소','발생수량','발생 수량','발생일자','발생 일자','근본 대책','근본대책','개선 내용',
+          '개선내용','문제점','첨부','제조 공정도','P/NO','PRODUCE','LOT','로트','일정','조치']
 
-# ── 후보 수집(고객사 2011/2012 + 사내 폴더명) ──
-cands = []
-for sub in ['00 고객사/2011년 대책 자료','00 고객사/2012년 대책 자료']:
-    p = os.path.join(ROOT, sub)
-    if os.path.isdir(p):
-        for n in os.listdir(p):
-            if PART_RE.search(n): cands.append(('고객사', n))
-for n in (os.listdir(os.path.join(ROOT,'01 사내')) if os.path.isdir(os.path.join(ROOT,'01 사내')) else []):
-    if PART_RE.search(n) and os.path.isdir(os.path.join(ROOT,'01 사내',n)): cands.append(('사내', n))
+def pptx_text(f):
+    try:
+        z = zipfile.ZipFile(f)
+        slides = sorted([n for n in z.namelist() if re.match(r'ppt/slides/slide\d+\.xml', n)],
+                        key=lambda x: int(re.search(r'(\d+)', x).group()))
+        out = []
+        for n in slides:
+            out += re.findall(r'<a:t>(.*?)</a:t>', z.read(n).decode('utf-8', 'ignore'))
+        t = ' '.join(out)
+        for a, b in [('&amp;', '&'), ('&lt;', '<'), ('&gt;', '>'), ('&#10;', ' ')]:
+            t = t.replace(a, b)
+        return re.sub(r'\s+', ' ', t).strip()
+    except Exception:
+        return ''
 
-parsed = []
+def field(text, keys, n=200, extra_stops=()):
+    """라벨 keys 뒤 ~ 다음 라벨(또는 extra_stops) 전까지."""
+    stops = [s for s in LABELS] + list(extra_stops)
+    best = ''
+    for k in keys:
+        i = text.find(k)
+        if i < 0:
+            continue
+        seg = text[i + len(k): i + len(k) + n]
+        cut = len(seg)
+        for st in stops:
+            j = seg.find(st)
+            if 0 <= j < cut:
+                cut = j
+        s = seg[:cut].strip(' :：.-◆▣▶▷●○■◈/')
+        s = re.sub(r'\s+', ' ', s)
+        if len(s) >= 2 and len(s) > len(best):
+            best = s
+    return best
+
+def to_date(s):
+    m = re.search(r'(\d{2,4})[.\-/](\d{1,2})[.\-/](\d{1,2})', s)
+    if not m:
+        return None
+    y = m.group(1)
+    if len(y) == 2:
+        y = '20' + y
+    return f'{y}-{int(m.group(2)):02d}-{int(m.group(3)):02d}'
+
+files = glob.glob(os.path.join(ROOT, '**', '*.pptx'), recursive=True)
+cand = []
 seen = set()
-for attr, n in cands:
-    r = parse(n)
-    if not r or not r['date']: continue
-    key = (r['part'], r['defect'][:10])
-    if key in seen: continue
+for f in files:
+    name = os.path.basename(f)
+    pm = PART_RE.search(name)
+    if not pm:
+        continue
+    part = pm.group(1)
+    txt = pptx_text(f)
+    if len(txt) < 350:
+        continue
+    # ◆형식(헤더 라벨) 구조화 대책서만 — 발생일자/지역/수량 중 하나라도 있어야 깔끔하게 뽑힘
+    if not any(lbl in txt for lbl in ['발생일자', '발생 일자', '발생지역', '발생 지역', '발생수량', '발생 수량']):
+        continue
+    root = field(txt, ['원 인', '원인'], 220)
+    corr = field(txt, ['근본 대책', '근본대책', '개선 내용', '개선내용'], 220)
+    if len(root) < 8 and len(corr) < 8:
+        continue
+    # 품명 정제: 품번/슬래시/P|NO 제거 + 숫자·잡음 있으면 버림
+    pname = field(txt, ['품 명', '품명'], 40)
+    pname = PART_RE.sub('', pname)
+    pname = re.sub(r'P\s*/?\s*NO.*$', '', pname, flags=re.I).strip(' /-:')
+    if re.search(r'\d', pname) or pname in ('불량 내용', '불량내용', '추 진') or len(pname) < 3:
+        pname = ''
+    symptom = field(txt, ['현 상', '현상'], 50)
+    symptom = symptom.split('◆')[0].strip()
+    if re.search(r'\d{6}|_|\.ppt|차 종|구 분|봉쇄|^\)', symptom) or len(symptom) < 3:
+        symptom = ''
+    loc = field(txt, ['발생지역', '발생 지역', '발생장소'], 24).split('◆')[0].strip()
+    qm = re.search(r'\d+', field(txt, ['발생수량', '발생 수량'], 12))
+    qty = int(qm.group()) if qm else None
+    if qty and qty > 500:        # 품번 조각이 수량으로 잡힌 경우 제거
+        qty = None
+    date = to_date(field(txt, ['발생일자', '발생 일자'], 16)) or to_date(name)
+    lot = field(txt, ['LOT NO', 'LOT', '로트'], 18)
+    lot = lot.strip() if re.match(r'^[A-Z]{2,}\d', lot) else ''   # 영문+숫자 LOT만(날짜 제외)
+    cust = next((lbl for kw, lbl in CUSTOMERS if kw in (loc + ' ' + name + ' ' + txt[:300])), '')
+    defect = symptom if 2 < len(symptom) < 40 else re.sub(r'\s+', ' ', re.sub(r'\.pptx?$', '', re.sub(r'[_\d]', ' ', name))).strip()[:30]
+    # 품명/현상 둘 다 비면(식별 불가) 스킵
+    if not pname and not symptom:
+        continue
+
+    # 완성도 점수(깔끔한 라벨 많은 PPT 우선)
+    score = sum([1 if 2 < len(pname) < 30 else 0, 2 if symptom else 0, 1 if loc else 0,
+                 1 if qty else 0, 1 if date else 0, 1 if lot else 0,
+                 1 if len(root) > 15 else 0, 1 if len(corr) > 15 else 0])
+
+    key = (part, defect[:8])
+    if key in seen:
+        continue
     seen.add(key)
-    r['attr'] = attr
-    parsed.append(r)
+    cand.append(dict(part=part, pname=pname[:40], defect=defect, root=root, corr=corr,
+                     loc=loc, qty=qty, date=date, lot=lot, customer=cust, file=name, score=score))
 
-# 날짜 순 정렬 후 12건 샘플(고르게)
-parsed.sort(key=lambda x: x['date'])
-sample = parsed[:: max(1, len(parsed)//12)][:12]
+cand.sort(key=lambda x: x['score'], reverse=True)
+sample = cand[:12]
+print(f'본문 보유 대책서 {len(cand)}건 → 샘플 {len(sample)}건 적재')
 
-print(f'후보 {len(parsed)}건 → 샘플 {len(sample)}건 적재')
-
-# ── 적재 ──
 con = sqlite3.connect(DB, timeout=10)
 con.execute('PRAGMA busy_timeout=8000')
 cur = con.cursor()
-# 기존 샘플 제거(재실행)
 old = [r[0] for r in cur.execute("SELECT id FROM cases WHERE owner='[샘플]'")]
 for cid in old:
-    cur.execute('DELETE FROM case_facts WHERE case_id=?',(cid,))
-    cur.execute('DELETE FROM case_steps WHERE case_id=?',(cid,))
-    cur.execute('DELETE FROM case_screening WHERE case_id=?',(cid,))
+    cur.execute('DELETE FROM form_submissions WHERE case_id=?', (cid,))
+    cur.execute('DELETE FROM case_facts WHERE case_id=?', (cid,))
+    cur.execute('DELETE FROM case_steps WHERE case_id=?', (cid,))
+    cur.execute('DELETE FROM case_screening WHERE case_id=?', (cid,))
 cur.execute("DELETE FROM cases WHERE owner='[샘플]'")
 
+# 남은(비샘플) 번호와 충돌하지 않게 채번
+existing = set(r[0] for r in cur.execute('SELECT case_no FROM cases'))
+def make_no(yr):
+    n = 1
+    while f'QC-{yr}-{n:04d}' in existing:
+        n += 1
+    no = f'QC-{yr}-{n:04d}'
+    existing.add(no)
+    return no
+
 STEPS = ['intake','containment','investigate','corrective','verify','horizontal','change4m','close']
-now = '2026-06-20T13:40:00.000Z'
-seq = {}
+now = '2026-06-21T09:00:00.000Z'
 ins = 0
 for r in sample:
-    yr = r['date'][:4]
-    seq[yr] = seq.get(yr,0)+1
-    case_no = f"QC-{yr}-{seq[yr]:04d}"
+    yr = (r['date'] or '2024')[:4]
+    case_no = make_no(yr)
     title = f"{r['customer'] or '고객'} {r['defect']}".strip()
     cur.execute('''INSERT INTO cases
       (case_no,title,customer,source,part_no,part_name,model,defect_desc,defect_qty,
        attributable,occurred_date,received_date,due_date,status,owner,created_at,updated_at)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-      (case_no, title, r['customer'], r['customer'], r['part'], '', '', r['defect'], None,
-       'TPC 2공장' if r['attr']=='고객사' else 'TPC(사내)', r['date'], r['date'], None,
-       'closed' if r['closed'] else 'in_progress', '[샘플]', now, now))
+      (case_no, title, r['customer'], r['loc'] or r['customer'], r['part'], r['pname'], '',
+       r['defect'], r['qty'], 'TPC 2공장', r['date'], r['date'], None, 'in_progress', '[샘플]', now, now))
     cid = cur.lastrowid
-    for i,sk in enumerate(STEPS):
-        if r['closed']:
-            st='done'
-        else:
-            st = 'done' if i<=2 else ('doing' if i==3 else 'todo')
+    for i, sk in enumerate(STEPS):
+        st = 'done' if i <= 2 else ('doing' if i == 3 else 'todo')
         cur.execute('INSERT INTO case_steps (case_id,step_key,status,done_at,sort_order) VALUES (?,?,?,?,?)',
-                    (cid, sk, st, now if st=='done' else None, i))
-    for scope,owner in [('internal','생산 / 공장'),('customer','품질팀')]:
-        cur.execute("INSERT INTO case_screening (case_id,scope,owner_dept,status,done_at) VALUES (?,?,?,?,?)",
-                    (cid, scope, owner, 'done' if r['closed'] else 'doing', now if r['closed'] else None))
-    cur.execute('INSERT INTO case_facts (case_id,fact_key,value) VALUES (?,?,?)',
-                (cid,'root_cause', f"{r['defect']} 관련 근본원인 — 대책서 본문 참조 ({r['raw'][:60]})"))
-    cur.execute('INSERT INTO case_facts (case_id,fact_key,value) VALUES (?,?,?)',
-                (cid,'corrective_action', f"개선대책 수립·발표: {r['raw'][:70]}"))
+                    (cid, sk, st, now if st == 'done' else None, i))
+    for scope, owner in [('internal', '생산 / 공장'), ('customer', '품질팀')]:
+        cur.execute("INSERT INTO case_screening (case_id,scope,owner_dept,status) VALUES (?,?,?, 'doing')",
+                    (cid, scope, owner))
+    facts = {'root_cause': r['root'] or f"{r['defect']} (대책서: {r['file'][:50]})",
+             'corrective_action': r['corr'] or f"개선대책 (대책서: {r['file'][:50]})"}
+    if r['lot']:
+        facts['lot'] = r['lot']
+    for k, v in facts.items():
+        cur.execute('INSERT INTO case_facts (case_id,fact_key,value) VALUES (?,?,?)', (cid, k, v))
     ins += 1
-    print(f"  {case_no} | {r['part']:14} | {r['customer'][:10]:10} | {r['defect'][:24]:24} | {r['date']} | {'종결' if r['closed'] else '진행'}")
+    print(f"  {case_no} | {r['part']:13} | 품명:{r['pname'][:16]:16} | 현상:{r['defect'][:16]:16} | 지역:{r['loc'][:10]:10} | 수량:{r['qty']} | LOT:{r['lot'][:10]}")
 
 con.commit(); con.close()
-print(f'✅ {ins}건 적재 완료')
+print(f'✅ {ins}건 적재 완료 (라벨 기반 추출)')
