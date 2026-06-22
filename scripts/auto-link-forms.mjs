@@ -3,6 +3,14 @@
  * Scan each regulation xlsx, extract form codes from sheet names,
  * insert into forms table, and link to processes via the process<->regulation map.
  *
+ * ⚠️ 재현성 주의(2026-06-23):
+ *   이 스크립트는 live DB에 직접 INSERT 한다. 현재 218개 양식 상태는
+ *   resources/migrations/0014_seed_all_forms.sql 에 시드로 고정돼 있다(클린설치 재현용).
+ *   새 xlsx로 양식을 추가했다면, 이 스크립트 실행 후 반드시
+ *     node scripts/dump-forms-seed.mjs   (0014 재생성)
+ *     node scripts/verify-migrations.mjs (클린설치 재현 검증)
+ *   를 돌려 마이그레이션을 갱신할 것. 안 그러면 live DB와 클린설치가 다시 어긋난다.
+ *
  * What it does:
  *   1. For each xlsx in mapping.json (category=regulation):
  *      - Open with exceljs, get worksheet names

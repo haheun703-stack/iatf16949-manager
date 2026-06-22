@@ -19,7 +19,8 @@ forms.reg_code ↔ sq_reg_map 으로 218개 양식이 SQ 항목에 자동 연결
 
 ## 다음 할 일
 - [ ] **B-2100→2_9(리크/리워크) 매핑 도메인 확인**: 시정조치 양식 1건이 리크 항목을 yellow로 점등(코워크 rules.json qms_sqmap 유래). 규정레벨 매핑 의도인지 확인 후 전용 리크/리워크 양식 매핑 검토.
-- [ ] **218 forms 마이그레이션화**: 현재 forms는 `scripts/auto-link-forms.mjs`가 live DB에 직접 INSERT → 클린설치 시 0004의 4건만 복원. 정식 시드 SQL로 덤프해 재현성 확보.
+- [x] ~~**218 forms 마이그레이션화**~~ (2026-06-23 완료): `0014_seed_all_forms.sql` 로 forms 218 + process_forms 218 시드 고정.
+  생성기 `scripts/dump-forms-seed.mjs`, 검증기 `scripts/verify-migrations.mjs`. 클린설치 재현 = live와 parity(forms/pf/fields/layout 일치, orphan 0).
 - [ ] **8D 흐름 양식 표준화**: B2100-03(개선대책서)·B1100-05(봉쇄)·H3200-01/02 등에 form_fields+layout_json → 분배 대상 확대.
 - [ ] **PPT→필드 AI 추출**: 정규식 시드의 노이즈 한계 → Claude로 대책서 본문을 구조화 JSON 추출(앱 AI인프라 활용).
 - [ ] **LOT 입력 경로**: 분배 B1100-01 i4(LOT)는 case_facts.lot 의존인데 UI 입력칸 없음. 접수폼/상세에 추가.
