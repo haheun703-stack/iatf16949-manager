@@ -17,10 +17,10 @@ export function DocumentBomPage(): JSX.Element {
       </header>
 
       <ResizableSplit
-        storageKey="document-bom"
-        initial={38}
-        min={26}
-        max={55}
+        storageKey="document-bom-v3"
+        initial={22}
+        min={17}
+        max={42}
         className="flex-1 min-h-0 px-6 py-4"
         left={<BomDocList />}
         right={<BomDocDetailPanel />}

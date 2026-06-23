@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useBomStore } from '../../stores/bomStore'
+import { BomProcessDetail } from './BomProcessDetail'
 import type { BomFormRef, BomFormType, BomFormUsage } from '@shared/ipc-types'
 
 const STATUS_TONE: Record<string, string> = {
@@ -57,6 +58,11 @@ export function BomDocDetailPanel(): JSX.Element {
         불러오는 중...
       </div>
     )
+  }
+
+  // 프로세스(CP/MP/SP)는 process_forms 기반 교과서식 상세로 분기 (규정 문서와 데이터 모델이 다름)
+  if (detail.category === 'process') {
+    return <BomProcessDetail code={detail.docNoRaw} />
   }
 
   const tone = STATUS_TONE[detail.status] || 'bg-muted text-muted-foreground border-border'
