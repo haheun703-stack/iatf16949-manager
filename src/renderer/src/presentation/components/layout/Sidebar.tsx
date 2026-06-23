@@ -81,13 +81,13 @@ export function Sidebar(): JSX.Element {
         {sidebarCollapsed ? (
           <div
             className="w-8 h-8 mx-auto rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold"
-            title="하헌 부장 · 품질/개발팀장 · AM사업부"
+            title="홍길동 부장 · 품질/개발팀장 · AM사업부"
           >
-            하
+            홍
           </div>
         ) : (
           <div className="text-[11px] text-muted-foreground leading-relaxed">
-            <div className="font-semibold text-foreground mb-0.5">하헌 부장</div>
+            <div className="font-semibold text-foreground mb-0.5">홍길동 부장</div>
             <div>품질/개발팀장 · AM사업부</div>
           </div>
         )}

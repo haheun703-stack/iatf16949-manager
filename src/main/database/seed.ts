@@ -151,7 +151,7 @@ function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {
     revisionNumber: 'REV.8',
     revisionDate: new Date().toISOString().split('T')[0],
     // 양식 작성자 기본값(로그인 도입 전 stub). 로그인 후 사용자명으로 대체.
-    defaultAuthor: '하헌'
+    defaultAuthor: '홍길동'
   }
 
   const insertProfile = db.prepare('INSERT OR IGNORE INTO company_profile (key, value) VALUES (?, ?)')

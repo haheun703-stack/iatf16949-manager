@@ -16,7 +16,7 @@ const SAMPLE: CaseIntakeInput = {
   occurredDate: '2026-06-17',
   receivedDate: '2026-06-17',
   dueDate: '2026-06-19',
-  owner: '하헌'
+  owner: '홍길동'
 }
 
 const EMPTY: CaseIntakeInput = {
