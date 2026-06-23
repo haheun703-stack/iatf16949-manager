@@ -164,6 +164,9 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
     )
   }
 
+  // 개요(표지 데이터)가 있으면 1페이지(표지)는 개요로 대체 → 흐름도는 2페이지부터
+  const flowPages = docInfo ? detail.pages.slice(1) : detail.pages
+
   return (
     <div className="h-full flex flex-col bg-card border border-border rounded-xl shadow-sm overflow-hidden">
       {/* Header */}
@@ -223,12 +226,12 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
               </p>
             )}
 
-            {/* 흐름도 이미지 — 전체 페이지를 세로로 쌓아 스크롤 */}
+            {/* 흐름도 이미지 — 표지(1p)는 개요로 대체, 2페이지부터 세로 스크롤 */}
             <div className="mt-3">
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5 flex items-center justify-between">
-                <span>프로세스 흐름도</span>
-                {detail.pages.length > 0 && (
-                  <span className="text-muted-foreground/70 normal-case">{detail.pages.length}페이지</span>
+                <span>프로세스 흐름도{docInfo ? ' (표지 제외)' : ''}</span>
+                {flowPages.length > 0 && (
+                  <span className="text-muted-foreground/70 normal-case">{flowPages.length}페이지</span>
                 )}
               </div>
               {imgsLoading ? (
@@ -238,16 +241,16 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
                     흐름도 불러오는 중...
                   </span>
                 </div>
-              ) : detail.pages.length === 0 ? (
+              ) : flowPages.length === 0 ? (
                 <div className="rounded-lg border border-border bg-muted/30 flex items-center justify-center min-h-[140px]">
-                  <span className="text-xs text-muted-foreground flex flex-col items-center gap-1.5 py-8">
+                  <span className="text-xs text-muted-foreground flex flex-col items-center gap-1.5 py-8 text-center px-2">
                     <ImageOff className="w-6 h-6 opacity-40" />
-                    등록된 페이지가 없습니다.
+                    흐름도 페이지가 없습니다. &lsquo;프로세스 작업장&rsquo;에서 등록하세요.
                   </span>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {detail.pages.map((p) => (
+                  {flowPages.map((p) => (
                     <div key={p.id}>
                       <div className="text-[10.5px] text-muted-foreground mb-1 font-medium">
                         {p.pageNo}. {p.pageLabel || '페이지'}
