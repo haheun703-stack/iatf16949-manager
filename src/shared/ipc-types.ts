@@ -582,6 +582,10 @@ export interface ProcessPageExtractedRevision {
   date: string
   reason: string
   author: string
+  kpi: string
+  formula: string
+  cycle: string
+  owner: string
 }
 export interface ProcessPageExtractedApproval {
   role: string
@@ -606,6 +610,45 @@ export interface ProcessPageAiExtractResponse {
   provider?: string
   model?: string
   error?: string
+}
+
+// ── 프로세스 문서 구조화(표지 + 개정이력) ──
+export interface ProcessDocRevision {
+  no: string
+  date: string
+  reason: string
+  author: string
+  kpi: string
+  formula: string
+  cycle: string
+  owner: string
+}
+export interface ProcessDocApproval {
+  role: string
+  title: string
+  name: string
+}
+export interface ProcessDocDto {
+  processCode: string
+  docNo: string | null
+  title: string | null
+  revNo: string | null
+  revDate: string | null
+  scope: string | null
+  purpose: string | null
+  approvals: ProcessDocApproval[]
+  revisions: ProcessDocRevision[]
+}
+export interface ProcessDocSaveRequest {
+  processCode: string
+  docNo: string | null
+  title: string | null
+  revNo: string | null
+  revDate: string | null
+  scope: string | null
+  purpose: string | null
+  approvals: ProcessDocApproval[]
+  revisions: ProcessDocRevision[]
 }
 
 // ===== 일정표 (v5 Stage 4 - 노션형 스케줄) =====
@@ -873,6 +916,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.PROCESS_PAGE_AI_EXTRACT]: {
     request: { pageId: number }
     response: ProcessPageAiExtractResponse
+  }
+  [IPC_CHANNELS.PROCESS_DOC_GET]: {
+    request: { processCode: string }
+    response: ProcessDocDto | null
+  }
+  [IPC_CHANNELS.PROCESS_DOC_SAVE]: {
+    request: ProcessDocSaveRequest
+    response: { success: boolean }
   }
   [IPC_CHANNELS.BOM_STATS]: {
     request: void

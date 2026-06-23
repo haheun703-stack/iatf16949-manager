@@ -3,7 +3,9 @@ import { Layers, FileText, ChevronRight, Loader2, ImageOff, Files, X, PencilLine
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { FormCanvas } from '../form-builder/FormCanvas'
-import type { ProcessDetailDto, FormDefinitionDto } from '@shared/ipc-types'
+import { ProcessDocEditor } from './ProcessDocEditor'
+import { ProcessCoverDocument } from './ProcessCoverDocument'
+import type { ProcessDetailDto, FormDefinitionDto, ProcessDocDto } from '@shared/ipc-types'
 
 type ChannelKey = keyof typeof window.api.channels
 function ch<T extends ChannelKey>(k: T): (typeof window.api.channels)[T] {
@@ -32,6 +34,18 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
   const [form, setForm] = useState<FormDefinitionDto | null>(null)
   const [formLoading, setFormLoading] = useState(false)
 
+  // 구조화 개요(표지+개정이력) + 편집기
+  const [docInfo, setDocInfo] = useState<ProcessDocDto | null>(null)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const reloadDoc = (): void => {
+    void (async () => {
+      const d = (await window.api.invoke(ch('PROCESS_DOC_GET'), { processCode: code })) as
+        | ProcessDocDto
+        | null
+      setDocInfo(d)
+    })()
+  }
+
   // 작성 드로어 (실제 편집기 FormCanvas를 넓게 띄움)
   const [writeOpen, setWriteOpen] = useState(false)
   const loadFormDefinition = useFormStore((s) => s.loadFormDefinition)
@@ -41,15 +55,20 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
     setWriteOpen(true)
   }
 
-  // ESC로 드로어 닫기
+  // 흐름도 이미지 확대(라이트박스)
+  const [zoomImg, setZoomImg] = useState<string | null>(null)
+
+  // ESC로 드로어/확대 닫기
   useEffect(() => {
-    if (!writeOpen) return
+    if (!writeOpen && !zoomImg) return
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setWriteOpen(false)
+      if (e.key !== 'Escape') return
+      if (zoomImg) setZoomImg(null)
+      else if (writeOpen) setWriteOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [writeOpen])
+  }, [writeOpen, zoomImg])
 
   // 프로세스 상세 로드 (+ 모든 페이지 이미지를 한꺼번에 로드 → 세로 스크롤)
   useEffect(() => {
@@ -85,6 +104,21 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
     }
   }, [code])
 
+  // 구조화 개요 로드
+  useEffect(() => {
+    let alive = true
+    setDocInfo(null)
+    void (async () => {
+      const d = (await window.api.invoke(ch('PROCESS_DOC_GET'), { processCode: code })) as
+        | ProcessDocDto
+        | null
+      if (alive) setDocInfo(d)
+    })()
+    return () => {
+      alive = false
+    }
+  }, [code])
+
   const handleFormClick = async (formCode: string): Promise<void> => {
     setActiveFormCode(formCode)
     setFormLoading(true)
@@ -94,6 +128,12 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
     setForm(res)
     setFormLoading(false)
   }
+
+  // AI 채움용: 흐름도 첫 이미지 페이지
+  const firstImagePageId = useMemo(
+    () => detail?.pages.find((p) => p.imagePath)?.id ?? null,
+    [detail]
+  )
 
   // 양식 필드를 섹션별로 묶기
   const fieldSections = useMemo(() => {
@@ -146,6 +186,35 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
       {/* Body: 교과서식(설명+흐름도) + 관련양식  |  양식상세 */}
       <div className="flex-1 min-h-0 flex">
         <div className="flex-1 min-w-0 overflow-y-auto px-5 py-4 space-y-5">
+          {/* 프로세스 개요 (구조화: 표지+개정이력) */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-primary" /> 프로세스 개요
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditorOpen(true)}
+                className="text-[11.5px] font-semibold text-primary border border-primary/40 hover:bg-primary/10 px-2.5 py-1 rounded-md flex items-center gap-1.5"
+              >
+                <PencilLine className="w-3.5 h-3.5" />
+                {docInfo ? '편집' : '개요 작성'}
+              </button>
+            </div>
+            {docInfo ? (
+              <div className="rounded-lg border border-border overflow-hidden shadow-sm">
+                <ProcessCoverDocument doc={docInfo} page={`1/${detail.pages.length || 1}`} />
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border bg-muted/10 p-4 text-center text-xs text-muted-foreground leading-relaxed">
+                아직 구조화된 개요가 없습니다.
+                <br />
+                <span className="text-foreground font-medium">[개요 작성]</span> → AI 추출로 흐름도에서
+                자동 채우거나 직접 입력하세요.
+              </div>
+            )}
+          </section>
+
           {/* 교과서식 설명 */}
           <section>
             {detail.description && (
@@ -183,12 +252,14 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
                       <div className="text-[10.5px] text-muted-foreground mb-1 font-medium">
                         {p.pageNo}. {p.pageLabel || '페이지'}
                       </div>
-                      <div className="rounded-lg border border-border bg-muted/30 overflow-hidden flex items-center justify-center min-h-[120px]">
+                      <div className="rounded-lg border border-border bg-white overflow-hidden flex items-center justify-center min-h-[120px]">
                         {pageImgs[p.id] ? (
                           <img
                             src={pageImgs[p.id] as string}
                             alt={`${detail.code} ${p.pageNo}페이지`}
-                            className="w-full h-auto select-none"
+                            onClick={() => setZoomImg(pageImgs[p.id] as string)}
+                            title="클릭하여 확대"
+                            className="w-full h-auto select-none cursor-zoom-in mx-auto"
                             draggable={false}
                           />
                         ) : (
@@ -404,6 +475,42 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
             <div className="flex-1 min-h-0 p-3 bg-muted/20">
               <FormCanvas />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 프로세스 개요 편집기 */}
+      {editorOpen && (
+        <ProcessDocEditor
+          processCode={code}
+          firstImagePageId={firstImagePageId}
+          onClose={() => setEditorOpen(false)}
+          onSaved={reloadDoc}
+        />
+      )}
+
+      {/* 흐름도 확대(라이트박스) */}
+      {zoomImg && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setZoomImg(null)}
+        >
+          <img
+            src={zoomImg}
+            alt="흐름도 확대"
+            className="max-w-full max-h-full object-contain shadow-2xl rounded"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            onClick={() => setZoomImg(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white"
+            aria-label="닫기"
+          >
+            <X className="w-7 h-7" />
+          </button>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-xs">
+            클릭 또는 Esc로 닫기
           </div>
         </div>
       )}

@@ -72,6 +72,8 @@ export const IPC_CHANNELS = {
   PROCESS_PAGE_READ_IMAGE: 'process:pageReadImage',
   PROCESS_PAGES_BULK_UPLOAD: 'process:pagesBulkUpload',
   PROCESS_PAGE_AI_EXTRACT: 'process:pageAiExtract',
+  PROCESS_DOC_GET: 'process:docGet',
+  PROCESS_DOC_SAVE: 'process:docSave',
 
   // Document BOM (105 docs + 405 form refs, 동료 작성본 기반)
   BOM_STATS: 'bom:stats',

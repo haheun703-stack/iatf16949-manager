@@ -14,7 +14,10 @@ import type {
   ProcessPageAddResponse,
   ProcessPagesBulkUploadResponse,
   ProcessPageAiExtractResponse,
-  ProcessPageExtracted
+  ProcessPageExtracted,
+  ProcessDocDto,
+  ProcessDocSaveRequest,
+  ProcessDocApproval
 } from '@shared/ipc-types'
 import { generate } from '../ai'
 
@@ -31,16 +34,24 @@ const EXTRACT_SYSTEM_PROMPT = `당신은 한국 제조업 IATF 16949 품질경�
 {
   "docNo": "문서번호(예: TPC-CP-03) | null",
   "title": "문서 제목(예: 생산관리 프로세스) | null",
-  "revNo": "개정번호 | null",
-  "revDate": "재/개정일자(YYYY-MM-DD) | null",
+  "revNo": "최신 개정번호 | null",
+  "revDate": "최신 재/개정일자(YYYY-MM-DD) | null",
   "scope": "적용범위 본문 | null",
   "purpose": "목적 본문 | null",
-  "revisions": [ { "no": "개정번호", "date": "YYYY-MM-DD", "reason": "재개정 사유 및 내용", "author": "작성자" } ],
+  "revisions": [ { "no": "개정번호", "date": "YYYY-MM-DD", "reason": "재개정 사유 및 내용", "author": "작성부서 성명 직책(한 줄)", "kpi": "프로세스 성과지표", "formula": "산출식", "cycle": "측정주기", "owner": "측정책임자" } ],
   "approvals": [ { "role": "작성|검토|승인 등", "title": "직책", "name": "성명" } ]
-}`
+}
+
+[개정이력 표 주의 — 매우 중요]
+- 개정이력 표는 컬럼이 많다: 개정번호 | 재.개정일/시행일자 | 재.개정사유 및 내용 | (작성사업부&부서 / 작성자) | 프로세스성과지표 | 산출식 | 측정주기 | 측정책임자.
+- "author"는 반드시 '작성자' 칸에서만 가져온다. 그 칸은 보통 두 줄(작성사업부·부서 + 작성자 성명·직책)이며, 예: "정밀인발튜브사업부 생산 이인창 계장".
+- 표 오른쪽 끝의 '측정책임자'(예: 생산팀장)나 '프로세스성과지표/산출식/측정주기' 칸을 author로 쓰지 말 것. 절대 혼동 금지.
+- 모든 행의 author를 빠짐없이 채운다(작성자 칸이 실제로 비었을 때만 ""). 행마다 작성자가 다를 수 있으니 행별로 정확히 매칭한다.
+- "reason"은 '재.개정사유 및 내용' 칸 내용만(여러 줄이면 한 줄로 합침). 다른 컬럼(성과지표·산출식 등) 내용을 reason/author에 섞지 말 것.
+- 한글은 보이는 그대로 정확히 읽는다(예: 윤리/부가/원격 같은 글자를 임의로 바꾸지 말 것).`
 
 const EXTRACT_USER_PROMPT =
-  '이 페이지에서 위 스키마대로 데이터를 추출해 JSON만 출력하라. 표의 모든 행을 빠짐없이 포함하고, 날짜는 YYYY-MM-DD로 정규화하라.'
+  '이 페이지에서 위 스키마대로 데이터를 추출해 JSON만 출력하라. 개정이력은 모든 행을 빠짐없이, 각 행의 author는 반드시 "작성자" 칸(측정책임자 아님)에서 가져오고, 날짜는 YYYY-MM-DD로 정규화하라.'
 
 function strOf(v: unknown): string {
   return v == null ? '' : String(v)
@@ -70,7 +81,11 @@ function parseExtractJson(text: string): ProcessPageExtracted | null {
         no: strOf(r.no),
         date: strOf(r.date),
         reason: strOf(r.reason),
-        author: strOf(r.author)
+        author: strOf(r.author),
+        kpi: strOf(r.kpi),
+        formula: strOf(r.formula),
+        cycle: strOf(r.cycle),
+        owner: strOf(r.owner)
       })),
       approvals: apps.map((a) => ({
         role: strOf(a.role),
@@ -431,6 +446,102 @@ export function registerProcessHandlers(): void {
         console.error('[process:pageAiExtract] error', msg)
         return { success: false, error: msg }
       }
+    }
+  )
+
+  // ──── Process doc: 구조화 표지/개정이력 조회 ────
+  ipcMain.handle(
+    IPC_CHANNELS.PROCESS_DOC_GET,
+    (_event, { processCode }: { processCode: string }): ProcessDocDto | null => {
+      const doc = db.prepare('SELECT * FROM process_doc WHERE process_code = ?').get(processCode) as
+        | Record<string, unknown>
+        | undefined
+      const revs = db
+        .prepare(
+          'SELECT rev_no, rev_date, reason, author, kpi, formula, cycle, owner FROM process_revisions WHERE process_code = ? ORDER BY sort_order ASC, id ASC'
+        )
+        .all(processCode) as Array<Record<string, unknown>>
+      if (!doc && revs.length === 0) return null
+
+      let approvals: ProcessDocApproval[] = []
+      if (doc?.approvals_json) {
+        try {
+          approvals = JSON.parse(doc.approvals_json as string) as ProcessDocApproval[]
+        } catch {
+          approvals = []
+        }
+      }
+      return {
+        processCode,
+        docNo: (doc?.doc_no as string) ?? null,
+        title: (doc?.title as string) ?? null,
+        revNo: (doc?.rev_no as string) ?? null,
+        revDate: (doc?.rev_date as string) ?? null,
+        scope: (doc?.scope as string) ?? null,
+        purpose: (doc?.purpose as string) ?? null,
+        approvals,
+        revisions: revs.map((r) => ({
+          no: (r.rev_no as string) ?? '',
+          date: (r.rev_date as string) ?? '',
+          reason: (r.reason as string) ?? '',
+          author: (r.author as string) ?? '',
+          kpi: (r.kpi as string) ?? '',
+          formula: (r.formula as string) ?? '',
+          cycle: (r.cycle as string) ?? '',
+          owner: (r.owner as string) ?? ''
+        }))
+      }
+    }
+  )
+
+  // ──── Process doc: 저장(표지 upsert + 개정이력 교체) ────
+  ipcMain.handle(
+    IPC_CHANNELS.PROCESS_DOC_SAVE,
+    (_event, req: ProcessDocSaveRequest): { success: boolean } => {
+      const upsert = db.prepare(
+        `INSERT INTO process_doc
+           (process_code, doc_no, title, rev_no, rev_date, scope, purpose, approvals_json, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+         ON CONFLICT(process_code) DO UPDATE SET
+           doc_no = excluded.doc_no, title = excluded.title, rev_no = excluded.rev_no,
+           rev_date = excluded.rev_date, scope = excluded.scope, purpose = excluded.purpose,
+           approvals_json = excluded.approvals_json, updated_at = datetime('now')`
+      )
+      const delRev = db.prepare('DELETE FROM process_revisions WHERE process_code = ?')
+      const insRev = db.prepare(
+        `INSERT INTO process_revisions
+           (process_code, rev_no, rev_date, reason, author, kpi, formula, cycle, owner, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      const tx = db.transaction(() => {
+        upsert.run(
+          req.processCode,
+          req.docNo,
+          req.title,
+          req.revNo,
+          req.revDate,
+          req.scope,
+          req.purpose,
+          JSON.stringify(req.approvals ?? [])
+        )
+        delRev.run(req.processCode)
+        ;(req.revisions ?? []).forEach((r, i) =>
+          insRev.run(
+            req.processCode,
+            r.no,
+            r.date,
+            r.reason,
+            r.author,
+            r.kpi ?? '',
+            r.formula ?? '',
+            r.cycle ?? '',
+            r.owner ?? '',
+            i
+          )
+        )
+      })
+      tx()
+      return { success: true }
     }
   )
 }
