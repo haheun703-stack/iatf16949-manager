@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
-import { ImagePlus, Trash2, Plus, ChevronLeft, ChevronRight, Loader2, ImageIcon, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
+import { ImagePlus, Images, Trash2, Plus, ChevronLeft, ChevronRight, Loader2, ImageIcon, ZoomIn, ZoomOut, Maximize2, Sparkles, X } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useProcessStore } from '../../stores/processStore'
+import type { ProcessPageAiExtractResponse } from '@shared/ipc-types'
 
 const ZOOM_MIN = 0.5
 const ZOOM_MAX = 4
@@ -16,6 +17,8 @@ export function ProcessImageViewer(): JSX.Element {
     uploadPageImage,
     deletePageImage,
     addPage,
+    bulkUploadPages,
+    extractPage,
     readPageImage
   } = useProcessStore()
 
@@ -77,6 +80,27 @@ export function ProcessImageViewer(): JSX.Element {
     setShowAddPage(false)
   }
 
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const handleBulkUpload = async (): Promise<void> => {
+    if (!detail) return
+    setBulkBusy(true)
+    const res = await bulkUploadPages(detail.code)
+    setBulkBusy(false)
+    if (!res.success) alert(res.error || '업로드에 실패했습니다.')
+  }
+
+  // AI 추출 (캡쳐 → 구조화 JSON) PoC
+  const [extractBusy, setExtractBusy] = useState(false)
+  const [extractResult, setExtractResult] = useState<ProcessPageAiExtractResponse | null>(null)
+  const handleExtract = async (): Promise<void> => {
+    if (!currentPage) return
+    setExtractBusy(true)
+    setExtractResult(null)
+    const res = await extractPage(currentPage.id)
+    setExtractResult(res)
+    setExtractBusy(false)
+  }
+
   if (!detail) return <></>
 
   if (detail.pages.length === 0) {
@@ -87,13 +111,24 @@ export function ProcessImageViewer(): JSX.Element {
           <p className="text-sm text-muted-foreground mb-3">
             이 프로세스에 등록된 페이지가 없습니다.
           </p>
-          <button
-            type="button"
-            onClick={() => setShowAddPage(true)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-1.5 mx-auto"
-          >
-            <Plus className="w-3 h-3" />첫 페이지 추가
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={handleBulkUpload}
+              disabled={bulkBusy}
+              className="text-xs font-semibold px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 mx-auto"
+            >
+              {bulkBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Images className="w-3 h-3" />}
+              여러 장 한 번에 업로드
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddPage(true)}
+              className="text-[11px] font-semibold px-3 py-1 rounded-md border border-border hover:bg-muted flex items-center gap-1.5 mx-auto"
+            >
+              <Plus className="w-3 h-3" />빈 페이지 추가
+            </button>
+          </div>
           {showAddPage && (
             <div className="mt-3 flex gap-1">
               <input
@@ -153,10 +188,20 @@ export function ProcessImageViewer(): JSX.Element {
             type="button"
             onClick={() => setShowAddPage(true)}
             className="text-[11px] text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted flex items-center gap-1"
-            title="페이지 추가"
+            title="빈 페이지 추가"
           >
             <Plus className="w-3 h-3" />
             추가
+          </button>
+          <button
+            type="button"
+            onClick={handleBulkUpload}
+            disabled={bulkBusy}
+            className="text-[11px] font-semibold text-primary px-2 py-1 rounded hover:bg-primary/10 disabled:opacity-50 flex items-center gap-1 whitespace-nowrap"
+            title="이미지 여러 장을 한 번에 선택해 페이지로 등록 (빈 페이지부터 채움)"
+          >
+            {bulkBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Images className="w-3 h-3" />}
+            여러 장
           </button>
         </div>
 
@@ -312,6 +357,20 @@ export function ProcessImageViewer(): JSX.Element {
           <div className="flex items-center gap-2 ml-auto">
             <button
               type="button"
+              onClick={handleExtract}
+              disabled={extractBusy}
+              className="text-[11px] font-semibold px-2 py-1 rounded-md text-primary hover:bg-primary/10 disabled:opacity-50 flex items-center gap-1"
+              title="이 캡쳐 이미지에서 표·정보를 AI로 구조화 추출 (개정이력 등)"
+            >
+              {extractBusy ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              AI 추출
+            </button>
+            <button
+              type="button"
               onClick={handleUpload}
               className="text-[11px] font-semibold px-2 py-1 rounded-md hover:bg-muted flex items-center gap-1"
             >
@@ -328,6 +387,143 @@ export function ProcessImageViewer(): JSX.Element {
             </button>
           </div>
         </footer>
+      )}
+
+      {/* AI 추출 결과 모달 (PoC) */}
+      {extractResult && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6"
+          onClick={() => setExtractResult(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
+              <div className="text-sm font-bold flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" /> AI 추출 결과
+                {extractResult.provider && (
+                  <span className="text-[10.5px] font-normal text-muted-foreground">
+                    {extractResult.provider} · {extractResult.model}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setExtractResult(null)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="닫기"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
+              {!extractResult.success || !extractResult.data ? (
+                <div className="text-xs text-destructive">
+                  추출 실패: {extractResult.error}
+                  {extractResult.raw && (
+                    <pre className="mt-2 text-[10px] text-muted-foreground whitespace-pre-wrap bg-muted/40 p-2 rounded">
+                      {extractResult.raw}
+                    </pre>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-2 text-[12px]">
+                    <div>
+                      <span className="text-muted-foreground">문서번호 </span>
+                      {extractResult.data.docNo || '—'}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">제목 </span>
+                      {extractResult.data.title || '—'}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">개정번호 </span>
+                      {extractResult.data.revNo || '—'}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">개정일자 </span>
+                      {extractResult.data.revDate || '—'}
+                    </div>
+                  </div>
+                  {extractResult.data.scope && (
+                    <div className="text-[12px]">
+                      <span className="text-muted-foreground">적용범위 </span>
+                      {extractResult.data.scope}
+                    </div>
+                  )}
+                  {extractResult.data.purpose && (
+                    <div className="text-[12px]">
+                      <span className="text-muted-foreground">목적 </span>
+                      {extractResult.data.purpose}
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="text-[11px] font-semibold text-muted-foreground mb-1">
+                      개정이력 ({extractResult.data.revisions.length})
+                    </div>
+                    <table className="w-full text-[11px] border-collapse">
+                      <thead>
+                        <tr className="bg-muted/50">
+                          <th className="border border-border px-1.5 py-1">No</th>
+                          <th className="border border-border px-1.5 py-1">일자</th>
+                          <th className="border border-border px-1.5 py-1 text-left">사유/내용</th>
+                          <th className="border border-border px-1.5 py-1">작성자</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {extractResult.data.revisions.map((r, i) => (
+                          <tr key={i}>
+                            <td className="border border-border px-1.5 py-1 text-center">{r.no}</td>
+                            <td className="border border-border px-1.5 py-1 text-center whitespace-nowrap">
+                              {r.date}
+                            </td>
+                            <td className="border border-border px-1.5 py-1">{r.reason}</td>
+                            <td className="border border-border px-1.5 py-1 text-center whitespace-nowrap">
+                              {r.author}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {extractResult.data.approvals.length > 0 && (
+                    <div>
+                      <div className="text-[11px] font-semibold text-muted-foreground mb-1">
+                        결재 ({extractResult.data.approvals.length})
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 text-[11px]">
+                        {extractResult.data.approvals.map((a, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-0.5 rounded border border-border bg-muted/40"
+                          >
+                            {a.role}: {a.name} {a.title && `(${a.title})`}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <details className="text-[10.5px]">
+                    <summary className="cursor-pointer text-muted-foreground">원본 JSON</summary>
+                    <pre className="mt-1 whitespace-pre-wrap bg-muted/40 p-2 rounded">
+                      {extractResult.raw}
+                    </pre>
+                  </details>
+                </>
+              )}
+            </div>
+
+            <div className="px-4 py-2.5 border-t border-border text-[11px] text-muted-foreground shrink-0">
+              ※ PoC — 추출 결과 확인용. 다음 단계: 이 데이터를 구조화 양식으로 저장·편집.
+            </div>
+          </div>
+        </div>
       )}
     </section>
   )

@@ -1,9 +1,18 @@
 export type AiProviderId = 'claude' | 'openai' | 'gemini'
 
+export interface AiImageInput {
+  /** base64 인코딩된 이미지 데이터 (data URL 접두사 제외) */
+  base64: string
+  /** image/png | image/jpeg | image/webp | image/gif */
+  mediaType: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif'
+}
+
 export interface AiGenerateOptions {
   systemPrompt: string
   userMessage: string
   maxTokens?: number
+  /** 비전(이미지) 입력 — 있으면 멀티모달 호출 (캡쳐 → 구조화 추출 등) */
+  image?: AiImageInput
 }
 
 export interface AiProvider {

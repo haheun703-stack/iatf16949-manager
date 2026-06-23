@@ -26,12 +26,21 @@ export const openaiProvider: AiProvider = {
     const got = getClient()
     if (!got) throw new Error('OpenAI API 키가 설정되지 않았습니다.')
 
+    const userContent: OpenAI.Chat.ChatCompletionUserMessageParam['content'] = opts.image
+      ? [
+          { type: 'text', text: opts.userMessage },
+          {
+            type: 'image_url',
+            image_url: { url: `data:${opts.image.mediaType};base64,${opts.image.base64}` }
+          }
+        ]
+      : opts.userMessage
     const response = await got.client.chat.completions.create({
       model: got.model,
       max_tokens: opts.maxTokens ?? 1024,
       messages: [
         { role: 'system', content: opts.systemPrompt },
-        { role: 'user', content: opts.userMessage }
+        { role: 'user', content: userContent }
       ]
     })
 

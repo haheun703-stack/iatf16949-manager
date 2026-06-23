@@ -567,6 +567,47 @@ export interface ProcessPageAddResponse {
   error?: string
 }
 
+export interface ProcessPagesBulkUploadResponse {
+  success: boolean
+  /** 이미지가 등록된 페이지 수(기존 빈 페이지 채움 + 신규 생성 합계) */
+  added: number
+  /** 취소(파일 미선택)인지 여부 */
+  canceled?: boolean
+  error?: string
+}
+
+// ── 캡쳐 이미지 → 구조화 추출(AI 비전) PoC ──
+export interface ProcessPageExtractedRevision {
+  no: string
+  date: string
+  reason: string
+  author: string
+}
+export interface ProcessPageExtractedApproval {
+  role: string
+  title: string
+  name: string
+}
+export interface ProcessPageExtracted {
+  docNo: string | null
+  title: string | null
+  revNo: string | null
+  revDate: string | null
+  scope: string | null
+  purpose: string | null
+  revisions: ProcessPageExtractedRevision[]
+  approvals: ProcessPageExtractedApproval[]
+}
+export interface ProcessPageAiExtractResponse {
+  success: boolean
+  data?: ProcessPageExtracted
+  /** 모델 원문 응답(파싱 실패 시 디버그용) */
+  raw?: string
+  provider?: string
+  model?: string
+  error?: string
+}
+
 // ===== 일정표 (v5 Stage 4 - 노션형 스케줄) =====
 
 export type ScheduleStatus = '예정' | '진행' | '완료' | '보류'
@@ -824,6 +865,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.PROCESS_PAGE_READ_IMAGE]: {
     request: { pageId: number }
     response: { success: boolean; dataUrl?: string; error?: string }
+  }
+  [IPC_CHANNELS.PROCESS_PAGES_BULK_UPLOAD]: {
+    request: { processCode: string }
+    response: ProcessPagesBulkUploadResponse
+  }
+  [IPC_CHANNELS.PROCESS_PAGE_AI_EXTRACT]: {
+    request: { pageId: number }
+    response: ProcessPageAiExtractResponse
   }
   [IPC_CHANNELS.BOM_STATS]: {
     request: void

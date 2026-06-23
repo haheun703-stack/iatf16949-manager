@@ -27,9 +27,20 @@ export const geminiProvider: AiProvider = {
     if (!got) throw new Error('Gemini API 키가 설정되지 않았습니다.')
 
     // Gemini combines system + user into a single user-turn (system instruction via config)
+    const contents = opts.image
+      ? [
+          {
+            role: 'user',
+            parts: [
+              { text: opts.userMessage },
+              { inlineData: { mimeType: opts.image.mediaType, data: opts.image.base64 } }
+            ]
+          }
+        ]
+      : opts.userMessage
     const response = await got.client.models.generateContent({
       model: got.model,
-      contents: opts.userMessage,
+      contents,
       config: {
         systemInstruction: opts.systemPrompt,
         maxOutputTokens: opts.maxTokens ?? 1024

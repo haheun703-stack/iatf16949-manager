@@ -1,5 +1,9 @@
 import { create } from 'zustand'
-import type { ProcessListItemDto, ProcessDetailDto } from '@shared/ipc-types'
+import type {
+  ProcessListItemDto,
+  ProcessDetailDto,
+  ProcessPageAiExtractResponse
+} from '@shared/ipc-types'
 
 type ChannelKey = keyof typeof window.api.channels
 function ch<T extends ChannelKey>(k: T): (typeof window.api.channels)[T] {
@@ -21,6 +25,10 @@ interface ProcessState {
   uploadPageImage: (pageId: number) => Promise<{ success: boolean; error?: string }>
   deletePageImage: (pageId: number) => Promise<void>
   addPage: (pageLabel: string) => Promise<void>
+  bulkUploadPages: (
+    processCode: string
+  ) => Promise<{ success: boolean; added: number; canceled?: boolean; error?: string }>
+  extractPage: (pageId: number) => Promise<ProcessPageAiExtractResponse>
 
   readPageImage: (pageId: number) => Promise<string | null>
 }
@@ -81,6 +89,26 @@ export const useProcessStore = create<ProcessState>((set, get) => ({
     await get().loadDetail(detail.code, { keepPageIdx: true })
     // 새로 추가된 마지막 페이지로 이동
     set((s) => ({ currentPageIdx: Math.max(0, (s.detail?.pages.length ?? 1) - 1) }))
+  },
+
+  bulkUploadPages: async (processCode) => {
+    const res = (await window.api.invoke(ch('PROCESS_PAGES_BULK_UPLOAD'), { processCode })) as {
+      success: boolean
+      added: number
+      canceled?: boolean
+      error?: string
+    }
+    if (res.success && res.added > 0) {
+      const { detail, loadDetail } = get()
+      if (detail) await loadDetail(detail.code, { keepPageIdx: true })
+    }
+    return res
+  },
+
+  extractPage: async (pageId) => {
+    return (await window.api.invoke(ch('PROCESS_PAGE_AI_EXTRACT'), {
+      pageId
+    })) as ProcessPageAiExtractResponse
   },
 
   readPageImage: async (pageId) => {

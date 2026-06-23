@@ -24,8 +24,9 @@ const CATEGORY_LABEL: Record<string, string> = {
 export function BomProcessDetail({ code }: { code: string }): JSX.Element {
   const [detail, setDetail] = useState<ProcessDetailDto | null>(null)
   const [loading, setLoading] = useState(false)
-  const [imgUrl, setImgUrl] = useState<string | null>(null)
-  const [imgLoading, setImgLoading] = useState(false)
+  // 페이지별 이미지(전체 페이지를 세로로 쌓아 스크롤로 본다)
+  const [pageImgs, setPageImgs] = useState<Record<number, string | null>>({})
+  const [imgsLoading, setImgsLoading] = useState(false)
 
   const [activeFormCode, setActiveFormCode] = useState<string | null>(null)
   const [form, setForm] = useState<FormDefinitionDto | null>(null)
@@ -50,12 +51,12 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
     return () => window.removeEventListener('keydown', onKey)
   }, [writeOpen])
 
-  // 프로세스 상세 로드 (+ 첫 이미지 페이지를 흐름도로)
+  // 프로세스 상세 로드 (+ 모든 페이지 이미지를 한꺼번에 로드 → 세로 스크롤)
   useEffect(() => {
     let alive = true
     setLoading(true)
     setDetail(null)
-    setImgUrl(null)
+    setPageImgs({})
     setActiveFormCode(null)
     setForm(null)
     void (async () => {
@@ -63,15 +64,20 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
       if (!alive) return
       setDetail(res)
       setLoading(false)
-      const pageWithImg = res?.pages.find((p) => p.imagePath)
-      if (pageWithImg) {
-        setImgLoading(true)
-        const r = (await window.api.invoke(ch('PROCESS_PAGE_READ_IMAGE'), {
-          pageId: pageWithImg.id
-        })) as { success: boolean; dataUrl?: string }
+      if (res && res.pages.length > 0) {
+        setImgsLoading(true)
+        const entries = await Promise.all(
+          res.pages.map(async (p) => {
+            if (!p.imagePath) return [p.id, null] as const
+            const r = (await window.api.invoke(ch('PROCESS_PAGE_READ_IMAGE'), {
+              pageId: p.id
+            })) as { success: boolean; dataUrl?: string }
+            return [p.id, r.success ? r.dataUrl ?? null : null] as const
+          })
+        )
         if (!alive) return
-        setImgUrl(r.success ? r.dataUrl ?? null : null)
-        setImgLoading(false)
+        setPageImgs(Object.fromEntries(entries))
+        setImgsLoading(false)
       }
     })()
     return () => {
@@ -148,31 +154,54 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
               </p>
             )}
 
-            {/* 흐름도 이미지 */}
+            {/* 흐름도 이미지 — 전체 페이지를 세로로 쌓아 스크롤 */}
             <div className="mt-3">
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5">
-                프로세스 흐름도
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1.5 flex items-center justify-between">
+                <span>프로세스 흐름도</span>
+                {detail.pages.length > 0 && (
+                  <span className="text-muted-foreground/70 normal-case">{detail.pages.length}페이지</span>
+                )}
               </div>
-              <div className="rounded-lg border border-border bg-muted/30 overflow-hidden flex items-center justify-center min-h-[140px]">
-                {imgLoading ? (
+              {imgsLoading ? (
+                <div className="rounded-lg border border-border bg-muted/30 flex items-center justify-center min-h-[140px]">
                   <span className="text-xs text-muted-foreground flex items-center gap-2 py-8">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     흐름도 불러오는 중...
                   </span>
-                ) : imgUrl ? (
-                  <img
-                    src={imgUrl}
-                    alt={`${detail.code} 흐름도`}
-                    className="w-full h-auto select-none"
-                    draggable={false}
-                  />
-                ) : (
+                </div>
+              ) : detail.pages.length === 0 ? (
+                <div className="rounded-lg border border-border bg-muted/30 flex items-center justify-center min-h-[140px]">
                   <span className="text-xs text-muted-foreground flex flex-col items-center gap-1.5 py-8">
                     <ImageOff className="w-6 h-6 opacity-40" />
-                    등록된 흐름도 이미지가 없습니다.
+                    등록된 페이지가 없습니다.
                   </span>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {detail.pages.map((p) => (
+                    <div key={p.id}>
+                      <div className="text-[10.5px] text-muted-foreground mb-1 font-medium">
+                        {p.pageNo}. {p.pageLabel || '페이지'}
+                      </div>
+                      <div className="rounded-lg border border-border bg-muted/30 overflow-hidden flex items-center justify-center min-h-[120px]">
+                        {pageImgs[p.id] ? (
+                          <img
+                            src={pageImgs[p.id] as string}
+                            alt={`${detail.code} ${p.pageNo}페이지`}
+                            className="w-full h-auto select-none"
+                            draggable={false}
+                          />
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground flex flex-col items-center gap-1.5 py-8 text-center px-2">
+                            <ImageOff className="w-5 h-5 opacity-40" />
+                            이미지 미등록 — &lsquo;프로세스 작업장&rsquo;에서 등록
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 

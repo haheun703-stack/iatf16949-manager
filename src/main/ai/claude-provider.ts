@@ -25,11 +25,20 @@ export const claudeProvider: AiProvider = {
   async generate(opts: AiGenerateOptions): Promise<string> {
     const got = getClient()
     if (!got) throw new Error('Claude API 키가 설정되지 않았습니다.')
+    const content: Anthropic.MessageParam['content'] = opts.image
+      ? [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: opts.image.mediaType, data: opts.image.base64 }
+          },
+          { type: 'text', text: opts.userMessage }
+        ]
+      : opts.userMessage
     const response = await got.client.messages.create({
       model: got.model,
       max_tokens: opts.maxTokens ?? 1024,
       system: opts.systemPrompt,
-      messages: [{ role: 'user', content: opts.userMessage }]
+      messages: [{ role: 'user', content }]
     })
     const textBlock = response.content.find((b) => b.type === 'text')
     if (!textBlock || textBlock.type !== 'text') {
