@@ -1,4 +1,6 @@
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, GitBranch, ListTree, Users, CalendarDays } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, GitBranch, ListTree, Users, CalendarDays, Pencil, Check } from 'lucide-react'
+import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 
@@ -24,6 +26,42 @@ const MENU: MenuItem[] = [
 
 export function Sidebar(): JSX.Element {
   const { currentPage, setPage, sidebarCollapsed } = useUIStore()
+  const [profile, setProfile] = useState<CompanyProfile | null>(null)
+  const [author, setAuthor] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const p = (await window.api.invoke(window.api.channels.COMPANY_PROFILE_GET)) as CompanyProfile
+        if (alive) {
+          setProfile(p)
+          setAuthor(p?.defaultAuthor || '')
+        }
+      } catch {
+        /* 프로필 없으면 빈 값 */
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const saveAuthor = async (): Promise<void> => {
+    const name = draft.trim()
+    setEditing(false)
+    if (!name || !profile || name === author) return
+    const next = { ...profile, defaultAuthor: name }
+    try {
+      await window.api.invoke(window.api.channels.COMPANY_PROFILE_SAVE, next)
+      setProfile(next)
+      setAuthor(name)
+    } catch {
+      /* 저장 실패 시 이전 값 유지 */
+    }
+  }
 
   return (
     <aside
@@ -81,15 +119,50 @@ export function Sidebar(): JSX.Element {
         {sidebarCollapsed ? (
           <div
             className="w-8 h-8 mx-auto rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold"
-            title="홍길동 부장 · 품질/개발팀장 · AM사업부"
+            title={`${author || '작성자 미설정'} · 품질/개발팀장 · AM사업부`}
           >
-            홍
+            {(author || '?').slice(0, 1)}
+          </div>
+        ) : editing ? (
+          <div className="flex items-center gap-1">
+            <input
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={() => void saveAuthor()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void saveAuthor()
+                else if (e.key === 'Escape') setEditing(false)
+              }}
+              placeholder="작성자명"
+              className="flex-1 min-w-0 bg-fillable text-[12px] px-2 py-1 rounded border border-primary/50 focus:outline-none"
+            />
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => void saveAuthor()}
+              className="shrink-0 text-primary hover:bg-primary/10 rounded p-1"
+              title="저장"
+            >
+              <Check className="w-3.5 h-3.5" />
+            </button>
           </div>
         ) : (
-          <div className="text-[11px] text-muted-foreground leading-relaxed">
-            <div className="font-semibold text-foreground mb-0.5">홍길동 부장</div>
-            <div>품질/개발팀장 · AM사업부</div>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(author)
+              setEditing(true)
+            }}
+            className="group w-full text-left text-[11px] text-muted-foreground leading-relaxed hover:bg-muted rounded px-1.5 py-1 -mx-1.5"
+            title="양식 작성자 변경"
+          >
+            <div className="font-semibold text-foreground mb-0.5 flex items-center gap-1">
+              {author || '작성자 미설정'}
+              <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+            </div>
+            <div>품질/개발팀장 · AM사업부 · 양식 작성자</div>
+          </button>
         )}
       </div>
     </aside>

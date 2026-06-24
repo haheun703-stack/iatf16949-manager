@@ -133,6 +133,8 @@ export interface CompanyProfile {
   factoryName: string
   revisionNumber: string
   revisionDate: string
+  /** 양식 자동채움 작성자(로그인 도입 전 stub). Sidebar 에서 설정. */
+  defaultAuthor: string
 }
 
 export interface DocGenRequest {
