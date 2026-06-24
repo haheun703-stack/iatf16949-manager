@@ -23,8 +23,8 @@ forms.reg_code ↔ sq_reg_map 으로 218개 양식이 SQ 항목에 자동 연결
   생성기 `scripts/dump-forms-seed.mjs`, 검증기 `scripts/verify-migrations.mjs`. 클린설치 재현 = live와 parity(forms/pf/fields/layout 일치, orphan 0).
 - [~] **8D 흐름 양식 표준화** (진행중): B2100-03(개선대책서) ✅완료(2026-06-24, `0020`) — 21필드 실용 8D 선형셋+layout(15블록)+DISTRIBUTION(prefix IMP) 추가로 8D 분배 체인(B1100-01→B2100-01→B2100-03) 종착 완성. 남음: B1100-05(봉쇄)·H3200-01/02. (렌더러가 2D매트릭스/사진전후 미지원 → 픽셀충실 대신 실용형 방침)
 - [~] **PPT→필드 AI 추출** (파이프라인 완성, 적재 교체 대기): 2단 — `scripts/dump-defect-texts.py`(PPTX→원문 텍스트 JSON, 무과금) → `scripts/ai-extract-cases.mjs`(@anthropic-ai/sdk 구조화 추출, OS temp 출력). 42건 코퍼스, 5건 샘플 품질 정규식 압도(원인·근본대책이 완결 문장으로 정제). 남음: 전체 42건 배치(과금) + AI JSON → cases 적재(seed_defect_cases.py를 AI소스로 교체, DB 변경). env-loader가 electron 결합이라 generate() 직접 import 불가 → 동일 SDK 직접 호출로 우회.
-- [ ] **LOT 입력 경로**: 분배 B1100-01 i4(LOT)는 case_facts.lot 의존인데 UI 입력칸 없음. 접수폼/상세에 추가.
-- [ ] 로그인/작성자, 다른 양식 복제.
+- [x] ~~**LOT 입력 경로**~~ (2026-06-24 완료, `eb7a26b`): 접수폼에 'LOT NO' 필드 + CASE_CREATE가 case_facts.lot upsert + 상세 LOT FactBox. 분배 B1100-01 i4 갭 해소. CaseIntakeInput.lot 타입 추가.
+- [ ] **로그인/작성자**, 다른 양식 복제. (작성자 현재 '홍길동' 하드코딩 — 로그인 도입 시 세션 사용자로 교체)
 
 ## 주의/메모
 - SQ평가 = 삼보(HKMC) Ver4 브레이징 단일표준 가정(시드 하드코딩). 다업종 확장 시 백본 JSON 교체.
