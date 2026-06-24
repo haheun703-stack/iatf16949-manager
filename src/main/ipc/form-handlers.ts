@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
+import { FORM_SCOPES } from '@shared/ipc-types'
 import { getSqlite } from '../database/connection'
 import { nextFormSerial } from '../database/serial'
 import { generate as aiGenerate } from '../ai'
@@ -82,11 +83,12 @@ export function registerFormHandlers(): void {
   })
 
   // ──── Form scope 설정 (사업부 분류: 공통 또는 사업부 명칭) ────
-  const VALID_SCOPES = ['공통', '조관', '인발', '필라넥', 'AM', '쇼바']
+  // 유효 라벨 목록은 ipc-types 의 FORM_SCOPES 단일 출처 사용(사업부 추가 시 한 곳만 수정).
+  const validScopes = FORM_SCOPES as readonly string[]
   ipcMain.handle(
     IPC_CHANNELS.FORM_SET_SCOPE,
     (_event, { formCode, scope }: { formCode: string; scope: string }) => {
-      const next = VALID_SCOPES.includes(scope) ? scope : '공통'
+      const next = validScopes.includes(scope) ? scope : '공통'
       const info = db.prepare('UPDATE forms SET scope = ? WHERE code = ?').run(next, formCode)
       return { success: info.changes > 0, scope: next }
     }
