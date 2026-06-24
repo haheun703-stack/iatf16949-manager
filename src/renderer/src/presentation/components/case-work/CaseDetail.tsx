@@ -130,6 +130,7 @@ export function CaseDetail({
       <section>
         <h3 className="text-[12px] font-bold text-muted-foreground mb-2">8D 조사 · 개선대책 (공유 사실)</h3>
         <div className="space-y-3">
+          <FactBox caseId={detail.id} factKey="lot" label="LOT NO (분배 → B1100-01)" value={detail.facts.lot ?? ''} onSaved={onReload} />
           <FactBox caseId={detail.id} factKey="root_cause" label="근본원인 (5Why / 8D)" value={detail.facts.root_cause ?? ''} onSaved={onReload} />
           <FactBox caseId={detail.id} factKey="corrective_action" label="개선대책 (회신용)" value={detail.facts.corrective_action ?? ''} onSaved={onReload} />
         </div>

@@ -265,6 +265,14 @@ export function registerCaseHandlers(): void {
       )
       for (const sc of SCREENING_DEFS) insScr.run(caseId, sc.scope, sc.ownerDept)
 
+      // LOT — cases 컬럼이 아니라 case_facts.lot 로 저장(분배 B1100-01 i4 의존)
+      if (input.lot && input.lot.trim()) {
+        db.prepare(
+          `INSERT INTO case_facts (case_id, fact_key, value) VALUES (?, 'lot', ?)
+           ON CONFLICT(case_id, fact_key) DO UPDATE SET value = excluded.value`
+        ).run(caseId, input.lot.trim())
+      }
+
       return caseId
     })
 

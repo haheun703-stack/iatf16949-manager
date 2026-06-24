@@ -428,6 +428,8 @@ export interface CaseIntakeInput {
   receivedDate?: string
   dueDate?: string
   owner?: string
+  /** LOT NO — cases 컬럼이 아니라 case_facts.lot 로 저장(분배 B1100-01 i4 의존). */
+  lot?: string
 }
 
 export interface CaseListItem {

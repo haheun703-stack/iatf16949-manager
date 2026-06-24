@@ -16,13 +16,14 @@ const SAMPLE: CaseIntakeInput = {
   occurredDate: '2026-06-17',
   receivedDate: '2026-06-17',
   dueDate: '2026-06-19',
-  owner: '홍길동'
+  owner: '홍길동',
+  lot: 'L26-0617A'
 }
 
 const EMPTY: CaseIntakeInput = {
   title: '', customer: '', source: '', partNo: '', partName: '', model: '',
   defectDesc: '', defectQty: null, attributable: '', occurredDate: '',
-  receivedDate: '', dueDate: '', owner: ''
+  receivedDate: '', dueDate: '', owner: '', lot: ''
 }
 
 // 필드 정의(모듈 레벨) — 렌더 시 input을 직접 그려 포커스/한글조합 유지
@@ -33,6 +34,7 @@ const FIELDS: Array<{ label: string; k: keyof CaseIntakeInput; type?: string; wi
   { label: '품번', k: 'partNo' },
   { label: '품명', k: 'partName' },
   { label: '차종', k: 'model' },
+  { label: 'LOT NO', k: 'lot' },
   { label: '불량 수량', k: 'defectQty', type: 'number' },
   { label: '불량 내용', k: 'defectDesc', wide: true },
   { label: '귀책처', k: 'attributable' },
