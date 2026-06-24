@@ -18,7 +18,7 @@ forms.reg_code ↔ sq_reg_map 으로 218개 양식이 SQ 항목에 자동 연결
   채점 submissionId 경합, nextSerial 중복제거(database/serial.ts), 분배 작성일자 자동, '하헌'/'1000점' 하드코딩 제거.
 
 ## 다음 할 일
-- [ ] **B-2100→2_9(리크/리워크) 매핑 도메인 확인**: 시정조치 양식 1건이 리크 항목을 yellow로 점등(코워크 rules.json qms_sqmap 유래). 규정레벨 매핑 의도인지 확인 후 전용 리크/리워크 양식 매핑 검토.
+- [x] ~~**B-2100→2_9(리크/리워크) 매핑 도메인 확인**~~ (2026-06-24 완료): 진단 결과 B2100-01「시정/예방조치 요구서」가 2_9를 **거짓 green**(분배엔진 자동작성본) 점등. 실제 증거인 리크/리워크 검사양식은 forms에 0건. 도메인 결정=매핑 제거 → `0019_unmap_b2100_leak.sql`로 B-2100→2_9만 삭제(6_7은 유지). 2_9는 전용 양식 생길 때까지 gray(측정불가)=정직신호. 향후 전용 리크/리워크 양식 신설 시 sq_reg_map에 그 reg_code→2_9 추가하면 실증거 점등.
 - [x] ~~**218 forms 마이그레이션화**~~ (2026-06-23 완료): `0014_seed_all_forms.sql` 로 forms 218 + process_forms 218 시드 고정.
   생성기 `scripts/dump-forms-seed.mjs`, 검증기 `scripts/verify-migrations.mjs`. 클린설치 재현 = live와 parity(forms/pf/fields/layout 일치, orphan 0).
 - [ ] **8D 흐름 양식 표준화**: B2100-03(개선대책서)·B1100-05(봉쇄)·H3200-01/02 등에 form_fields+layout_json → 분배 대상 확대.
