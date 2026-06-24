@@ -45,6 +45,18 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
   const [form, setForm] = useState<FormDefinitionDto | null>(null)
   const [formLoading, setFormLoading] = useState(false)
 
+  // 사업부 필터(관련양식 목록을 사업부로 좁혀 보기)
+  const [scopeFilter, setScopeFilter] = useState<FormScope | 'all'>('all')
+  const scopeCounts = useMemo(() => {
+    const m = new Map<FormScope, number>()
+    for (const f of detail?.forms ?? []) m.set(f.scope, (m.get(f.scope) ?? 0) + 1)
+    return m
+  }, [detail])
+  const filteredForms = useMemo(() => {
+    const forms = detail?.forms ?? []
+    return scopeFilter === 'all' ? forms : forms.filter((f) => f.scope === scopeFilter)
+  }, [detail, scopeFilter])
+
   // 구조화 개요(표지+개정이력) + 편집기
   const [docInfo, setDocInfo] = useState<ProcessDocDto | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
@@ -101,6 +113,7 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
     setPageImgs({})
     setActiveFormCode(null)
     setForm(null)
+    setScopeFilter('all')
     void (async () => {
       const res = (await window.api.invoke(ch('PROCESS_GET_DETAIL'), { code })) as ProcessDetailDto | null
       if (!alive) return
@@ -306,13 +319,47 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
           <section>
             <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
               <Files className="w-4 h-4 text-primary" />
-              관련 양식 <span className="text-muted-foreground">({detail.forms.length})</span>
+              관련 양식{' '}
+              <span className="text-muted-foreground">
+                ({scopeFilter === 'all' ? detail.forms.length : `${filteredForms.length}/${detail.forms.length}`})
+              </span>
             </h3>
             {detail.forms.length === 0 ? (
               <p className="text-sm text-muted-foreground py-3">연결된 양식이 없습니다.</p>
             ) : (
-              <ul className="space-y-1">
-                {detail.forms.map((f) => {
+              <>
+                {/* 사업부 필터 칩 (요약 = 사업부별 개수) */}
+                <div className="flex flex-wrap gap-1 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setScopeFilter('all')}
+                    className={cn(
+                      'px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-colors',
+                      scopeFilter === 'all'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'text-muted-foreground border-border hover:bg-muted'
+                    )}
+                  >
+                    전체 {detail.forms.length}
+                  </button>
+                  {FORM_SCOPES.filter((s) => (scopeCounts.get(s) ?? 0) > 0).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setScopeFilter(s)}
+                      className={cn(
+                        'px-2 py-0.5 rounded-full border text-[11px] font-semibold transition-colors',
+                        scopeFilter === s
+                          ? SCOPE_STYLE[s]
+                          : 'text-muted-foreground border-border hover:bg-muted'
+                      )}
+                    >
+                      {s} {scopeCounts.get(s)}
+                    </button>
+                  ))}
+                </div>
+                <ul className="space-y-1">
+                  {filteredForms.map((f) => {
                   const active = activeFormCode === f.formCode
                   return (
                     <li key={f.formCode} className="flex items-stretch gap-1">
@@ -365,7 +412,8 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
                     </li>
                   )
                 })}
-              </ul>
+                </ul>
+              </>
             )}
           </section>
         </div>
