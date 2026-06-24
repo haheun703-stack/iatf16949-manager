@@ -109,6 +109,21 @@ const DISTRIBUTION: Array<{
       a7: c.part_name, // 품 명
       a8: c.defect_desc // 부적합 내용
     })
+  },
+  {
+    // 고객불만(VOC) 대응 결과 보고서(H3200-02). 0022 에서 표준화됨.
+    formCode: 'H3200-02',
+    prefix: 'CCR',
+    autoKey: 'a1',
+    build: (c, f) => ({
+      a2: today(), // 작성일 = 분배일(오늘)
+      r1: c.occurred_date, // 고객불만 접수일자(발생일 근사)
+      r5: c.customer, // 고객불만 제기처
+      m1: c.defect_desc, // 고객불만 내용(부적합 내용)
+      i3: f.lot, // 불량 LOT ← case_facts.lot
+      i5: f.root_cause, // 불량 발생 원인 ← 근본원인
+      c3: f.corrective_action // 고객불만 개선방안 ← 개선대책
+    })
   }
 ]
 
