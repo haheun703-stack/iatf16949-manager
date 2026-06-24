@@ -24,7 +24,7 @@ forms.reg_code ↔ sq_reg_map 으로 218개 양식이 SQ 항목에 자동 연결
 - [x] ~~**8D 흐름 양식 표준화**~~ (2026-06-24 완료): B2100-03(개선대책서,`0020`,IMP) + B1100-05(봉쇄 작업표,`0021`,CTN) + H3200-02(고객불만 대응결과,`0022`,CCR) 표준화+분배. 표준화 양식 2→5개. H3200-01은 다행 관리대장이라 단일레코드 폼 모델 부적합 → 스킵. (렌더러 2D매트릭스/사진전후 미지원 → 실용 선형 필드셋 방침). 라이브는 다음 앱 재시작 시 0021/0022 자동 적용.
 - [~] **PPT→필드 AI 추출** (파이프라인 완성, 적재 교체 대기): 2단 — `scripts/dump-defect-texts.py`(PPTX→원문 텍스트 JSON, 무과금) → `scripts/ai-extract-cases.mjs`(@anthropic-ai/sdk 구조화 추출, OS temp 출력). 42건 코퍼스, 5건 샘플 품질 정규식 압도(원인·근본대책이 완결 문장으로 정제). 남음: 전체 42건 배치(과금) + AI JSON → cases 적재(seed_defect_cases.py를 AI소스로 교체, DB 변경). env-loader가 electron 결합이라 generate() 직접 import 불가 → 동일 SDK 직접 호출로 우회.
 - [x] ~~**LOT 입력 경로**~~ (2026-06-24 완료, `eb7a26b`): 접수폼에 'LOT NO' 필드 + CASE_CREATE가 case_facts.lot upsert + 상세 LOT FactBox. 분배 B1100-01 i4 갭 해소. CaseIntakeInput.lot 타입 추가.
-- [ ] **로그인/작성자**, 다른 양식 복제. (작성자 현재 '홍길동' 하드코딩 — 로그인 도입 시 세션 사용자로 교체)
+- [~] **로그인/작성자**: 작성자 설정 ✅완료(2026-06-24, `b10ac80`) — Sidebar 인라인 편집으로 company_profile.defaultAuthor 변경(양식 자동채움/분배 즉시 반영). 단일사용자 내부툴이라 풀 로그인은 보류(과잉). 남음: (선택) 풀 로그인 시스템, 다른 양식 복제, AI프롬프트 내 인명 컨텍스트 동기화.
 
 ## 주의/메모
 - SQ평가 = 삼보(HKMC) Ver4 브레이징 단일표준 가정(시드 하드코딩). 다업종 확장 시 백본 JSON 교체.
