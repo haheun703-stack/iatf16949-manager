@@ -35,6 +35,7 @@ const SCREENING_DEFS: Array<{ scope: string; ownerDept: string }> = [
 interface CaseRow {
   part_no: string | null
   part_name: string | null
+  model: string | null
   defect_desc: string | null
   defect_qty: number | null
   occurred_date: string | null
@@ -94,6 +95,19 @@ const DISTRIBUTION: Array<{
       p3: c.occurred_date, // 발생일자
       p5: f.root_cause, // 발생원인(고품분석) ← 근본원인
       d1: f.corrective_action // 봉쇄(단기) 대책 ← 개선대책
+    })
+  },
+  {
+    // 8D 봉쇄(D3): 불량유출 봉쇄 작업표(B1100-05). 0021 에서 표준화됨.
+    formCode: 'B1100-05',
+    prefix: 'CTN',
+    autoKey: 'a1',
+    build: (c) => ({
+      a4: today(), // 일자 = 분배일(오늘)
+      a5: c.model, // 모델명
+      a6: c.part_no, // 품 번
+      a7: c.part_name, // 품 명
+      a8: c.defect_desc // 부적합 내용
     })
   }
 ]
