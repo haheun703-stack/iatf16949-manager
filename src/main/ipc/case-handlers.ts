@@ -80,6 +80,21 @@ const DISTRIBUTION: Array<{
       s9: f.root_cause, // 원인 분석
       s10: f.corrective_action // 재발방지 대책 ← 개선대책
     })
+  },
+  {
+    // 8D 체인 종착: 개선 대책서(B2100-03). 0020 에서 표준화됨.
+    formCode: 'B2100-03',
+    prefix: 'IMP',
+    autoKey: 'a1',
+    build: (c, f) => ({
+      a2: today(), // 작성일자 = 분배일(오늘)
+      a5: c.part_name, // 품 명
+      a6: c.part_no, // 품 번
+      p1: c.defect_desc, // 문제부위 및 불량현상
+      p3: c.occurred_date, // 발생일자
+      p5: f.root_cause, // 발생원인(고품분석) ← 근본원인
+      d1: f.corrective_action // 봉쇄(단기) 대책 ← 개선대책
+    })
   }
 ]
 
