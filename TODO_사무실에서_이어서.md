@@ -22,7 +22,7 @@ forms.reg_code ↔ sq_reg_map 으로 218개 양식이 SQ 항목에 자동 연결
 - [x] ~~**218 forms 마이그레이션화**~~ (2026-06-23 완료): `0014_seed_all_forms.sql` 로 forms 218 + process_forms 218 시드 고정.
   생성기 `scripts/dump-forms-seed.mjs`, 검증기 `scripts/verify-migrations.mjs`. 클린설치 재현 = live와 parity(forms/pf/fields/layout 일치, orphan 0).
 - [~] **8D 흐름 양식 표준화** (진행중): B2100-03(개선대책서) ✅완료(2026-06-24, `0020`) — 21필드 실용 8D 선형셋+layout(15블록)+DISTRIBUTION(prefix IMP) 추가로 8D 분배 체인(B1100-01→B2100-01→B2100-03) 종착 완성. 남음: B1100-05(봉쇄)·H3200-01/02. (렌더러가 2D매트릭스/사진전후 미지원 → 픽셀충실 대신 실용형 방침)
-- [ ] **PPT→필드 AI 추출**: 정규식 시드의 노이즈 한계 → Claude로 대책서 본문을 구조화 JSON 추출(앱 AI인프라 활용).
+- [~] **PPT→필드 AI 추출** (파이프라인 완성, 적재 교체 대기): 2단 — `scripts/dump-defect-texts.py`(PPTX→원문 텍스트 JSON, 무과금) → `scripts/ai-extract-cases.mjs`(@anthropic-ai/sdk 구조화 추출, OS temp 출력). 42건 코퍼스, 5건 샘플 품질 정규식 압도(원인·근본대책이 완결 문장으로 정제). 남음: 전체 42건 배치(과금) + AI JSON → cases 적재(seed_defect_cases.py를 AI소스로 교체, DB 변경). env-loader가 electron 결합이라 generate() 직접 import 불가 → 동일 SDK 직접 호출로 우회.
 - [ ] **LOT 입력 경로**: 분배 B1100-01 i4(LOT)는 case_facts.lot 의존인데 UI 입력칸 없음. 접수폼/상세에 추가.
 - [ ] 로그인/작성자, 다른 양식 복제.
 
