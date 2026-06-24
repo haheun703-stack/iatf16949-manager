@@ -25,6 +25,7 @@ forms.reg_code ↔ sq_reg_map 으로 218개 양식이 SQ 항목에 자동 연결
 - [~] **PPT→필드 AI 추출** (파이프라인 완성, 적재 교체 대기): 2단 — `scripts/dump-defect-texts.py`(PPTX→원문 텍스트 JSON, 무과금) → `scripts/ai-extract-cases.mjs`(@anthropic-ai/sdk 구조화 추출, OS temp 출력). 42건 코퍼스, 5건 샘플 품질 정규식 압도(원인·근본대책이 완결 문장으로 정제). 남음: 전체 42건 배치(과금) + AI JSON → cases 적재(seed_defect_cases.py를 AI소스로 교체, DB 변경). env-loader가 electron 결합이라 generate() 직접 import 불가 → 동일 SDK 직접 호출로 우회.
 - [x] ~~**LOT 입력 경로**~~ (2026-06-24 완료, `eb7a26b`): 접수폼에 'LOT NO' 필드 + CASE_CREATE가 case_facts.lot upsert + 상세 LOT FactBox. 분배 B1100-01 i4 갭 해소. CaseIntakeInput.lot 타입 추가.
 - [~] **로그인/작성자**: 작성자 설정 ✅완료(2026-06-24, `b10ac80`) — Sidebar 인라인 편집으로 company_profile.defaultAuthor 변경(양식 자동채움/분배 즉시 반영). 단일사용자 내부툴이라 풀 로그인은 보류(과잉). 남음: (선택) 풀 로그인 시스템, 다른 양식 복제, AI프롬프트 내 인명 컨텍스트 동기화.
+- [~] **양식 공통/사업부별 분류** (1단계 완료, `ba7896f`): 프로세스 관련양식이 사업부마다 공통/전용 갈리는데 모델에 차원 없던 것. `forms.scope`(common/division, 0023) + FORM_SET_SCOPE + BomProcessDetail 배지(🔵공통/🟠사업부별) 클릭 토글. 기본 전부 common, 사업부별만 flip. **2단계(향후)**: 사업부 테이블 + division_forms(사업부×양식 적용 매트릭스) — 공통=전 사업부, 전용=일부. 용접팩→타업종 일반화 기반. 라이브는 다음 앱 재시작 시 0023 자동 적용.
 
 ## 주의/메모
 - SQ평가 = 삼보(HKMC) Ver4 브레이징 단일표준 가정(시드 하드코딩). 다업종 확장 시 백본 JSON 교체.
