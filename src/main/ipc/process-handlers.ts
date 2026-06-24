@@ -141,7 +141,7 @@ export function registerProcessHandlers(): void {
 
       const forms = db
         .prepare(
-          `SELECT pf.form_code, pf.sort_order, f.name AS form_name, f.reg_code,
+          `SELECT pf.form_code, pf.sort_order, f.name AS form_name, f.reg_code, f.scope,
                   (SELECT COUNT(*) FROM form_fields ff WHERE ff.form_code = f.code) AS fields_count,
                   (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code) AS submissions_count,
                   (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code AND fs.status = 'draft') AS draft_count
@@ -167,7 +167,8 @@ export function registerProcessHandlers(): void {
         fieldsCount: (f.fields_count as number) ?? 0,
         submissionsCount: (f.submissions_count as number) ?? 0,
         draftCount: (f.draft_count as number) ?? 0,
-        sortOrder: (f.sort_order as number) ?? 0
+        sortOrder: (f.sort_order as number) ?? 0,
+        scope: (f.scope as 'common' | 'division') || 'common'
       }))
 
       return {

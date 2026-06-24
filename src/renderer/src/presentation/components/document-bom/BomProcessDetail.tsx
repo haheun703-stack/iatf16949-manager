@@ -5,7 +5,7 @@ import { useFormStore } from '../../stores/formStore'
 import { FormCanvas } from '../form-builder/FormCanvas'
 import { ProcessDocEditor } from './ProcessDocEditor'
 import { ProcessCoverDocument } from './ProcessCoverDocument'
-import type { ProcessDetailDto, FormDefinitionDto, ProcessDocDto } from '@shared/ipc-types'
+import type { ProcessDetailDto, FormDefinitionDto, ProcessDocDto, FormScope } from '@shared/ipc-types'
 
 type ChannelKey = keyof typeof window.api.channels
 function ch<T extends ChannelKey>(k: T): (typeof window.api.channels)[T] {
@@ -53,6 +53,19 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
   const openWriter = async (formCode: string): Promise<void> => {
     await loadFormDefinition(formCode)
     setWriteOpen(true)
+  }
+
+  // 양식 분류 토글(전사 공통 ↔ 사업부별 전용). 낙관적 로컬 갱신.
+  const toggleScope = (formCode: string, current: FormScope): void => {
+    const next: FormScope = current === 'division' ? 'common' : 'division'
+    void (async () => {
+      await window.api.invoke(ch('FORM_SET_SCOPE'), { formCode, scope: next })
+      setDetail((d) =>
+        d
+          ? { ...d, forms: d.forms.map((x) => (x.formCode === formCode ? { ...x, scope: next } : x)) }
+          : d
+      )
+    })()
   }
 
   // 흐름도 이미지 확대(라이트박스)
@@ -292,12 +305,29 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
                 {detail.forms.map((f) => {
                   const active = activeFormCode === f.formCode
                   return (
-                    <li key={f.formCode}>
+                    <li key={f.formCode} className="flex items-stretch gap-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleScope(f.formCode, f.scope)}
+                        title={
+                          f.scope === 'division'
+                            ? '사업부별 전용 — 클릭하면 전사 공통으로'
+                            : '전사 공통 — 클릭하면 사업부별 전용으로'
+                        }
+                        className={cn(
+                          'shrink-0 w-[58px] rounded border text-[10.5px] font-semibold transition-colors',
+                          f.scope === 'division'
+                            ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                            : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                        )}
+                      >
+                        {f.scope === 'division' ? '사업부별' : '공통'}
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleFormClick(f.formCode)}
                         className={cn(
-                          'w-full text-left px-2.5 py-2 rounded border flex items-center gap-2.5 transition-colors',
+                          'flex-1 min-w-0 text-left px-2.5 py-2 rounded border flex items-center gap-2.5 transition-colors',
                           active ? 'bg-primary/10 border-primary' : 'border-border hover:bg-muted'
                         )}
                       >

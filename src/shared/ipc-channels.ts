@@ -44,6 +44,7 @@ export const IPC_CHANNELS = {
   // Form operations (v5)
   FORM_LIST: 'form:list',
   FORM_GET_DEFINITION: 'form:getDefinition',
+  FORM_SET_SCOPE: 'form:setScope',
   REGULATION_GET_SECTIONS: 'regulation:getSections',
   FORM_SUBMISSION_CREATE: 'form:submissionCreate',
   FORM_SUBMISSION_UPDATE: 'form:submissionUpdate',

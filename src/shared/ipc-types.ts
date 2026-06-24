@@ -529,6 +529,9 @@ export interface ProcessPageDto {
   imagePath: string | null
 }
 
+/** 양식 분류: 전사 공통 / 사업부별 전용 (1단계 경량 태그). */
+export type FormScope = 'common' | 'division'
+
 export interface ProcessFormRefDto {
   formCode: string
   formName: string
@@ -537,6 +540,8 @@ export interface ProcessFormRefDto {
   submissionsCount: number
   draftCount: number
   sortOrder: number
+  /** 전사 공통(common) / 사업부별 전용(division). */
+  scope: FormScope
 }
 
 export interface ProcessDetailDto {
@@ -828,6 +833,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.FORM_GET_DEFINITION]: {
     request: { code: string }
     response: FormDefinitionDto | null
+  }
+  [IPC_CHANNELS.FORM_SET_SCOPE]: {
+    request: { formCode: string; scope: FormScope }
+    response: { success: boolean; scope: FormScope }
   }
   [IPC_CHANNELS.REGULATION_GET_SECTIONS]: {
     request: { regCode: string }

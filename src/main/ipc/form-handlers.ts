@@ -81,6 +81,16 @@ export function registerFormHandlers(): void {
     })
   })
 
+  // ──── Form scope 설정 (전사 공통 / 사업부별 전용 분류) ────
+  ipcMain.handle(
+    IPC_CHANNELS.FORM_SET_SCOPE,
+    (_event, { formCode, scope }: { formCode: string; scope: 'common' | 'division' }) => {
+      const next = scope === 'division' ? 'division' : 'common'
+      const info = db.prepare('UPDATE forms SET scope = ? WHERE code = ?').run(next, formCode)
+      return { success: info.changes > 0, scope: next }
+    }
+  )
+
   // ──── Form definition (with fields) ────
   ipcMain.handle(
     IPC_CHANNELS.FORM_GET_DEFINITION,
