@@ -19,6 +19,16 @@ const CATEGORY_LABEL: Record<string, string> = {
   SP: '지원 프로세스 (Support)'
 }
 
+// 사업부별 배지 색 (공통=뉴트럴, 각 사업부 고유색)
+const SCOPE_STYLE: Record<FormScope, string> = {
+  공통: 'bg-muted/40 text-muted-foreground/70 border-border hover:bg-muted',
+  조관: 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100',
+  인발: 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100',
+  필라넥: 'bg-violet-50 text-violet-700 border-violet-300 hover:bg-violet-100',
+  AM: 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100',
+  쇼바: 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100'
+}
+
 /**
  * 문서 BOM에서 프로세스(CP/MP/SP)를 선택했을 때의 우측 상세.
  * 규정 문서와 달리 process_forms 기반 매핑 + 흐름도 이미지를 "교과서식"으로 보여준다.
@@ -312,9 +322,7 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
                         title="사업부 분류 — 공통 또는 해당 사업부 선택"
                         className={cn(
                           'shrink-0 w-[64px] rounded border text-[10.5px] font-semibold text-center cursor-pointer appearance-none px-1 transition-colors',
-                          f.scope === '공통'
-                            ? 'bg-muted/40 text-muted-foreground/70 border-border hover:bg-muted'
-                            : 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                          SCOPE_STYLE[f.scope] ?? SCOPE_STYLE['공통']
                         )}
                       >
                         {FORM_SCOPES.map((s) => (
