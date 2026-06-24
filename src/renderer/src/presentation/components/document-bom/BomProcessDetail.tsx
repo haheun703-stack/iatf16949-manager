@@ -6,6 +6,7 @@ import { FormCanvas } from '../form-builder/FormCanvas'
 import { ProcessDocEditor } from './ProcessDocEditor'
 import { ProcessCoverDocument } from './ProcessCoverDocument'
 import type { ProcessDetailDto, FormDefinitionDto, ProcessDocDto, FormScope } from '@shared/ipc-types'
+import { FORM_SCOPES } from '@shared/ipc-types'
 
 type ChannelKey = keyof typeof window.api.channels
 function ch<T extends ChannelKey>(k: T): (typeof window.api.channels)[T] {
@@ -55,14 +56,13 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
     setWriteOpen(true)
   }
 
-  // 양식 분류 토글(전사 공통 ↔ 사업부별 전용). 낙관적 로컬 갱신.
-  const toggleScope = (formCode: string, current: FormScope): void => {
-    const next: FormScope = current === 'division' ? 'common' : 'division'
+  // 양식 사업부 분류 지정(공통/조관/인발/필라넥/AM/쇼바). 낙관적 로컬 갱신.
+  const setDivision = (formCode: string, division: FormScope): void => {
     void (async () => {
-      await window.api.invoke(ch('FORM_SET_SCOPE'), { formCode, scope: next })
+      await window.api.invoke(ch('FORM_SET_SCOPE'), { formCode, scope: division })
       setDetail((d) =>
         d
-          ? { ...d, forms: d.forms.map((x) => (x.formCode === formCode ? { ...x, scope: next } : x)) }
+          ? { ...d, forms: d.forms.map((x) => (x.formCode === formCode ? { ...x, scope: division } : x)) }
           : d
       )
     })()
@@ -306,23 +306,23 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
                   const active = activeFormCode === f.formCode
                   return (
                     <li key={f.formCode} className="flex items-stretch gap-1">
-                      <button
-                        type="button"
-                        onClick={() => toggleScope(f.formCode, f.scope)}
-                        title={
-                          f.scope === 'division'
-                            ? '사업부별 전용 — 클릭하면 전사 공통으로'
-                            : '전사 공통 — 클릭하면 사업부별 전용으로'
-                        }
+                      <select
+                        value={f.scope}
+                        onChange={(e) => setDivision(f.formCode, e.target.value as FormScope)}
+                        title="사업부 분류 — 공통 또는 해당 사업부 선택"
                         className={cn(
-                          'shrink-0 w-[58px] rounded border text-[10.5px] font-semibold transition-colors',
-                          f.scope === 'division'
-                            ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
-                            : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                          'shrink-0 w-[64px] rounded border text-[10.5px] font-semibold text-center cursor-pointer appearance-none px-1 transition-colors',
+                          f.scope === '공통'
+                            ? 'bg-muted/40 text-muted-foreground/70 border-border hover:bg-muted'
+                            : 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
                         )}
                       >
-                        {f.scope === 'division' ? '사업부별' : '공통'}
-                      </button>
+                        {FORM_SCOPES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
                       <button
                         type="button"
                         onClick={() => handleFormClick(f.formCode)}

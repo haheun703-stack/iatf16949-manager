@@ -529,8 +529,11 @@ export interface ProcessPageDto {
   imagePath: string | null
 }
 
-/** 양식 분류: 전사 공통 / 사업부별 전용 (1단계 경량 태그). */
-export type FormScope = 'common' | 'division'
+/** 양식 분류 라벨: 전사 공통 또는 사업부 명칭(TPC 5개 사업부). */
+export type FormScope = '공통' | '조관' | '인발' | '필라넥' | 'AM' | '쇼바'
+
+/** picker 선택지 순서 (공통 우선, 이후 사업부). */
+export const FORM_SCOPES: FormScope[] = ['공통', '조관', '인발', '필라넥', 'AM', '쇼바']
 
 export interface ProcessFormRefDto {
   formCode: string
@@ -540,7 +543,7 @@ export interface ProcessFormRefDto {
   submissionsCount: number
   draftCount: number
   sortOrder: number
-  /** 전사 공통(common) / 사업부별 전용(division). */
+  /** 사업부 분류 라벨: '공통' 또는 사업부 명칭. */
   scope: FormScope
 }
 

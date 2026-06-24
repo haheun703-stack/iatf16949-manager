@@ -168,7 +168,7 @@ export function registerProcessHandlers(): void {
         submissionsCount: (f.submissions_count as number) ?? 0,
         draftCount: (f.draft_count as number) ?? 0,
         sortOrder: (f.sort_order as number) ?? 0,
-        scope: (f.scope as 'common' | 'division') || 'common'
+        scope: (f.scope as ProcessFormRefDto['scope']) || '공통'
       }))
 
       return {

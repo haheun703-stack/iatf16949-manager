@@ -81,11 +81,12 @@ export function registerFormHandlers(): void {
     })
   })
 
-  // ──── Form scope 설정 (전사 공통 / 사업부별 전용 분류) ────
+  // ──── Form scope 설정 (사업부 분류: 공통 또는 사업부 명칭) ────
+  const VALID_SCOPES = ['공통', '조관', '인발', '필라넥', 'AM', '쇼바']
   ipcMain.handle(
     IPC_CHANNELS.FORM_SET_SCOPE,
-    (_event, { formCode, scope }: { formCode: string; scope: 'common' | 'division' }) => {
-      const next = scope === 'division' ? 'division' : 'common'
+    (_event, { formCode, scope }: { formCode: string; scope: string }) => {
+      const next = VALID_SCOPES.includes(scope) ? scope : '공통'
       const info = db.prepare('UPDATE forms SET scope = ? WHERE code = ?').run(next, formCode)
       return { success: info.changes > 0, scope: next }
     }
