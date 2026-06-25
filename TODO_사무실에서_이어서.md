@@ -4,9 +4,12 @@
 > 양식 출력엔진(방향B) 작업을 이어받을 땐 **그 문서부터** 읽을 것. 완료보고·자산위치·다음지시·함정 전부 정리됨.
 
 ## ⚠️ 미적용 마이그레이션 — 다음 앱 재시작 시 자동 적용
-- **0026_remap_process_forms.sql** (갭2 정합성 교정): process_forms를 정본 0.6 매트릭스(프로세스 매트릭스/부서) 기준으로 재배치. 56건 이동 — 검사·계측(L계열)→SP-02, 자재(K-2100)→SP-01, 문서·기록·심사·제안·분임조(A계열)→MP-01. 0.6에 없는 A-6300 1개는 기존 유지.
-  - **적용 후 검증**: 문서BOM에서 SP-02 검사및시험 열어 L-2100(인수검사성적서) 등 검사양식 보이면 성공.
-  - 생성기 `scripts/gen-process-forms.mjs`, 비교 `scripts/compare-gap2.mjs`. ⚠️BEGIN/COMMIT 없음(migrate.ts가 db.transaction()으로 감쌈).
+- **0034_clean_seeded_labels.sql** ((f) 자동시드 라벨 자간 정규화): "소 속"→"소속" 등 460건. field_key 불변, 브리지 norm()이 공백 무시 → 출력 무영향(표시 개선). 생성기 `scripts/clean-seeded-labels.py`(python read-only). 오프라인 시뮬 검증 완료.
+- **0035_form_submission_revisions.sql** ((g) 개정관리): form_submission_revisions 테이블+인덱스. 작성본 개정 스냅샷(rev_no·values·사유·작성자·상태). IPC 3개+RevisionsModal+툴바버튼. 시뮬 검증 완료.
+  - ⚠️BEGIN/COMMIT 없음(migrate.ts가 db.transaction()으로 감쌈).
+  - **적용 후 스팟체크**: ① 양식 입력화면 라벨에서 글자사이 공백 사라졌는지 ② 작성본 열고 `개정 이력` 버튼→개정저장→목록→불러오기 동작 ③ 격자(J3100-03)/분리셀(H3200-02) 출력 토스트에 "격자 N행·선택셀 N개" 뜨는지.
+
+> 0026~0033 은 적용 완료(검증: process_forms 219·form_fields 161·form_option_cells 4).
 
 ## ✅ 2026-06-25 완료 (이 세션): B2100-01 증명 + 도메인지도 + 갭2 교정
 - B2100-01 end-to-end 증명(ExcelJS 보존 무손실 + 값주입 + Excel COM PDF). 매핑=CSV(가) 확정.
