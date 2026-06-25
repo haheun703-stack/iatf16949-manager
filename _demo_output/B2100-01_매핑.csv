@@ -1,0 +1,12 @@
+﻿reg_code,field_key,label,cell,type,note
+B2100-01,issue_no,발행번호,F4,text,
+B2100-01,issue_date,발행일자,V4,date,
+B2100-01,recipient,수신처,F5,text,
+B2100-01,issuer,발행자,V5,text,company_profile.defaultAuthor 자동채움
+B2100-01,issue_type,발행구분,F6,checkbox,□중 택1 → ■
+B2100-01,nonconformity,부적합사항,A8,textarea,wrapText 필요(긴 줄)
+B2100-01,related_doc,관련규격또는문서,F13,text,
+B2100-01,reply_due,회신요구일,AA12,date,
+B2100-01,auditee,피감사자,AA13,text,
+B2100-01,auditor,감사자,AA14,text,
+B2100-01,complete_due,완료예정일,V28,date,추정-검증필요

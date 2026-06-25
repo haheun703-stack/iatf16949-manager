@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen } from 'lucide-react'
+import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -14,7 +14,7 @@ import type { FormFieldDto } from '@shared/ipc-types'
 type ViewMode = 'input' | 'document'
 
 export function FormCanvas(): JSX.Element {
-  const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues } =
+  const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -22,6 +22,20 @@ export function FormCanvas(): JSX.Element {
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [submissionsOpen, setSubmissionsOpen] = useState(false)
+  const [xlsxMsg, setXlsxMsg] = useState<string | null>(null)
+
+  const handleExportXlsx = async (): Promise<void> => {
+    setXlsxMsg(null)
+    const res = await exportOfficialXlsx(false)
+    if (res.canceled) return
+    if (!res.success) {
+      setXlsxMsg(`출력 실패: ${res.error ?? '알 수 없는 오류'}`)
+      return
+    }
+    const warn = res.unmapped && res.unmapped.length ? ` · 미매칭 ${res.unmapped.length}` : ''
+    setXlsxMsg(`출력 완료 — ${res.applied ?? 0}개 항목 주입${warn}`)
+    setTimeout(() => setXlsxMsg(null), 6000)
+  }
 
   const handlePrint = (): void => {
     window.print()
@@ -153,6 +167,16 @@ export function FormCanvas(): JSX.Element {
               <ClipboardPaste className="w-3.5 h-3.5" />
               Excel 붙여넣기
             </button>
+            <button
+              type="button"
+              onClick={() => void handleExportXlsx()}
+              disabled={exportingXlsx}
+              title="입력값을 원본 공식 양식(.xlsx)에 주입해 출력합니다"
+              className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+            >
+              {exportingXlsx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+              공식 엑셀 출력
+            </button>
 
             {viewMode === 'document' && (
               <>
@@ -219,6 +243,16 @@ export function FormCanvas(): JSX.Element {
         <h2 className="text-2xl font-bold tracking-tight">{currentForm.name}</h2>
         {currentForm.description && (
           <p className="text-[13px] text-muted-foreground mt-1.5">{currentForm.description}</p>
+        )}
+        {xlsxMsg && (
+          <p
+            className={cn(
+              'text-[12px] mt-2 font-medium',
+              xlsxMsg.startsWith('출력 실패') ? 'text-destructive' : 'text-emerald-700'
+            )}
+          >
+            {xlsxMsg}
+          </p>
         )}
       </header>
 

@@ -52,6 +52,7 @@ export const IPC_CHANNELS = {
   FORM_SUBMISSION_GET: 'form:submissionGet',
   FORM_SUBMISSION_DELETE: 'form:submissionDelete',
   FORM_DRAFT_DEFAULTS: 'form:draftDefaults',
+  FORM_EXPORT_XLSX: 'form:exportXlsx',
   PRINT_TO_PDF: 'print:toPdf',
 
   // AI (Claude API)

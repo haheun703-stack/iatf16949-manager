@@ -12,3 +12,12 @@ Thumbs.db
 
 # 임시 디버그/유틸 스크립트 (로컬 전용, WAL·BOM 진단용)
 scripts/_*.cjs
+
+# 데모/탐색 산출물 — 대용량 검증물(xlsx/pdf)은 제외(재생성 가능), CSV 재료만 커밋
+_demo_output/*.xlsx
+_demo_output/*.pdf
+_demo_output/0026_remap_process_forms.sql
+
+# 루트 임시 디버그 스크립트 (로컬 전용)
+/_*.mjs
+/_*.cjs

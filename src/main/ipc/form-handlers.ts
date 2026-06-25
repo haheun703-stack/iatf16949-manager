@@ -1,9 +1,10 @@
-import { ipcMain } from 'electron'
+import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { FORM_SCOPES } from '@shared/ipc-types'
 import { getSqlite } from '../database/connection'
 import { nextFormSerial } from '../database/serial'
 import { generate as aiGenerate } from '../ai'
+import { exportSubmissionXlsx, type FormFieldLite } from '../docgen/form-export-engine'
 import type {
   FormListItemDto,
   FormDefinitionDto,
@@ -107,6 +108,22 @@ export function registerFormHandlers(): void {
         .prepare('SELECT * FROM form_fields WHERE form_code = ? ORDER BY sort_order ASC')
         .all(code) as Array<Record<string, unknown>>
 
+      // 격자/대장형(type='grid') 필드에 컬럼 정의 첨부(렌더러 grid 에디터용)
+      const fieldDtos = fields.map(rowToField)
+      for (const fd of fieldDtos) {
+        if (fd.type === 'grid') {
+          try {
+            fd.gridColumns = db
+              .prepare(
+                'SELECT col_key AS colKey, label, type FROM form_grid_columns WHERE form_code = ? AND grid_key = ? ORDER BY sort_order'
+              )
+              .all(code, fd.fieldKey) as FormDefinitionDto['fields'][number]['gridColumns']
+          } catch {
+            /* form_grid_columns 미존재(구버전 DB) */
+          }
+        }
+      }
+
       return {
         code: form.code as string,
         name: form.name as string,
@@ -116,7 +133,7 @@ export function registerFormHandlers(): void {
         nextFormCode: (form.next_form_code as string) || null,
         nextFormLabel: (form.next_form_label as string) || null,
         prevFormCode: (form.prev_form_code as string) || null,
-        fields: fields.map(rowToField),
+        fields: fieldDtos,
         layout: parseJsonSafe<FormLayout | null>(form.layout_json as string | null, null)
       }
     }
@@ -315,6 +332,92 @@ export function registerFormHandlers(): void {
       }
 
       return { values, serialPreview }
+    }
+  )
+
+  // ──── Submission → 공식 엑셀(원본양식 주입) 출력 ────
+  // 제출값(values_json) + form_fields(라벨) + form_cell_map(셀맵) → 원본 .xlsx 주입 → 공식 양식 출력.
+  ipcMain.handle(
+    IPC_CHANNELS.FORM_EXPORT_XLSX,
+    async (
+      _event,
+      { submissionId, pdf }: { submissionId: number; pdf?: boolean }
+    ): Promise<{
+      success: boolean
+      filePath?: string
+      error?: string
+      canceled?: boolean
+      applied?: number
+      unmapped?: string[]
+      verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
+    }> => {
+      try {
+        const sub = db.prepare('SELECT * FROM form_submissions WHERE id = ?').get(submissionId) as
+          | Record<string, unknown>
+          | undefined
+        if (!sub) return { success: false, error: '제출 기록을 찾을 수 없습니다.' }
+
+        const formCode = sub.form_code as string
+        const values = parseJsonSafe<Record<string, unknown>>(sub.values_json as string, {})
+
+        const form = db.prepare('SELECT code, name, reg_code FROM forms WHERE code = ?').get(formCode) as
+          | { code: string; name: string; reg_code: string }
+          | undefined
+        if (!form) return { success: false, error: `양식 ${formCode} 정의가 없습니다.` }
+
+        const fieldRows = db
+          .prepare('SELECT field_key, label, type FROM form_fields WHERE form_code = ? ORDER BY sort_order')
+          .all(formCode) as Array<{ field_key: string; label: string; type: string }>
+        const formFields: FormFieldLite[] = fieldRows.map((r) => ({
+          fieldKey: r.field_key,
+          label: r.label,
+          type: r.type
+        }))
+
+        const win = BrowserWindow.getFocusedWindow()
+        const stamp = new Date().toISOString().split('T')[0].replace(/-/g, '')
+        const serial = (sub.serial_no as string) || stamp
+        const defaultName = `${formCode}_${serial}.xlsx`
+        const saveRes = await dialog.showSaveDialog(win ?? undefined!, {
+          title: '공식 양식 엑셀 저장',
+          defaultPath: defaultName,
+          filters: [{ name: 'Excel 파일', extensions: ['xlsx'] }]
+        })
+        if (saveRes.canceled || !saveRes.filePath) return { success: false, canceled: true }
+
+        const result = await exportSubmissionXlsx({
+          db,
+          formCode,
+          regCode: form.reg_code,
+          appValues: values,
+          formFields,
+          outPath: saveRes.filePath,
+          pdf: pdf === true
+        })
+
+        // 생성 파일 폴더 열기(검수 편의)
+        try {
+          shell.showItemInFolder(result.out)
+        } catch {
+          /* noop */
+        }
+
+        return {
+          success: true,
+          filePath: result.pdf || result.out,
+          applied: result.applied.length,
+          unmapped: result.unmapped,
+          verify: {
+            values: result.verify.values,
+            mediaOk: result.verify.mediaOk,
+            mergesOk: result.verify.mergesOk
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[form:exportXlsx] error', msg)
+        return { success: false, error: msg }
+      }
     }
   )
 

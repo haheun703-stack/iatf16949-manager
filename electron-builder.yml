@@ -16,6 +16,12 @@ extraResources:
     to: migrations
   - from: resources/seed
     to: seed
+  # 양식 출력엔진 마스터 원본(있을 때만 번들). 배포 시 원본 72양식을 resources/forms 에 복사.
+  # 엔진은 process.resourcesPath/forms 를 자동 탐색(form-export-engine.ts resolveMastersDir).
+  - from: resources/forms
+    to: forms
+    filter:
+      - "**/*.xlsx"
 
 win:
   icon: build/icon.ico

@@ -65,6 +65,18 @@ interface FormState {
   // Save
   saveDraft: () => Promise<number>
 
+  // 공식 엑셀 출력(원본양식에 값 주입 → .xlsx, 선택 PDF). 출력 전 자동 저장.
+  exportingXlsx: boolean
+  exportOfficialXlsx: (pdf?: boolean) => Promise<{
+    success: boolean
+    filePath?: string
+    error?: string
+    canceled?: boolean
+    applied?: number
+    unmapped?: string[]
+    verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
+  }>
+
   // AI generate (per-field)
   aiLoadingFieldKey: string | null
   aiError: string | null
@@ -203,6 +215,34 @@ export const useFormStore = create<FormState>((set, get) => ({
     })) as { id: number }
     set({ currentSubmissionId: id })
     return id
+  },
+
+  exportingXlsx: false,
+  exportOfficialXlsx: async (pdf) => {
+    const { currentForm } = get()
+    if (!currentForm) return { success: false, error: '양식이 로드되지 않았습니다.' }
+    set({ exportingXlsx: true })
+    try {
+      // 출력 전 현재 입력을 저장해 제출 id 확보(엔진은 저장된 values_json 을 읽음)
+      const id = await get().saveDraft()
+      const res = (await window.api.invoke(ch('FORM_EXPORT_XLSX'), {
+        submissionId: id,
+        pdf: pdf === true
+      })) as {
+        success: boolean
+        filePath?: string
+        error?: string
+        canceled?: boolean
+        applied?: number
+        unmapped?: string[]
+        verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
+      }
+      return res
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) }
+    } finally {
+      set({ exportingXlsx: false })
+    }
   },
 
   aiLoadingFieldKey: null,

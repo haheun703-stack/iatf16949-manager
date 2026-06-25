@@ -154,7 +154,14 @@ export interface DocGenResult {
 
 export type FormFieldTypeDto =
   | 'text' | 'textarea' | 'date' | 'number'
-  | 'select' | 'radio' | 'checkbox' | 'photo' | 'auto'
+  | 'select' | 'radio' | 'checkbox' | 'photo' | 'auto' | 'grid'
+
+/** 격자/대장형 필드의 컬럼 정의(렌더러 grid 에디터용) */
+export interface GridColumnDto {
+  colKey: string
+  label: string
+  type: string
+}
 
 export interface FormFieldDto {
   id: number
@@ -169,6 +176,7 @@ export interface FormFieldDto {
   aiEnabled: boolean
   aiPromptHint: string | null
   sortOrder: number
+  gridColumns?: GridColumnDto[] // type='grid' 일 때만
 }
 
 /** 양식 배치 설계도 — 범용 렌더러가 읽어 실양식처럼 그린다(향후 AI가 양식별 생성). */
@@ -868,6 +876,18 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.FORM_DRAFT_DEFAULTS]: {
     request: { formCode: string }
     response: { values: Record<string, string>; serialPreview: string | null }
+  }
+  [IPC_CHANNELS.FORM_EXPORT_XLSX]: {
+    request: { submissionId: number; pdf?: boolean }
+    response: {
+      success: boolean
+      filePath?: string
+      error?: string
+      canceled?: boolean
+      applied?: number
+      unmapped?: string[]
+      verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
+    }
   }
   [IPC_CHANNELS.PRINT_TO_PDF]: {
     request: { defaultName?: string }

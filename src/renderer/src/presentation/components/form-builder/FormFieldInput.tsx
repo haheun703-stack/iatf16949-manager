@@ -158,6 +158,8 @@ function renderInput(
         </div>
       )
     }
+    case 'grid':
+      return <GridField field={field} value={value} setValue={setValue} />
     case 'photo':
       return <PhotoField value={value} onChange={(v) => setValue(k, v)} />
     case 'auto':
@@ -181,4 +183,91 @@ function renderInput(
         />
       )
   }
+}
+
+/** 격자/대장형 입력 — 행 추가/삭제 가능한 표. 값 = 레코드 배열(values_json[grid_key]). */
+function GridField({
+  field,
+  value,
+  setValue
+}: {
+  field: FormFieldDto
+  value: unknown
+  setValue: (key: string, value: unknown) => void
+}): JSX.Element {
+  const cols = field.gridColumns ?? []
+  const rows: Array<Record<string, unknown>> = Array.isArray(value)
+    ? (value as Array<Record<string, unknown>>)
+    : []
+
+  const commit = (next: Array<Record<string, unknown>>): void => setValue(field.fieldKey, next)
+  const update = (rowIdx: number, colKey: string, v: string): void =>
+    commit(rows.map((r, i) => (i === rowIdx ? { ...r, [colKey]: v } : r)))
+  const addRow = (): void => commit([...rows, {}])
+  const removeRow = (i: number): void => commit(rows.filter((_, idx) => idx !== i))
+
+  if (cols.length === 0) {
+    return <p className="text-xs text-muted-foreground">격자 컬럼 정의가 없습니다.</p>
+  }
+
+  return (
+    <div className="border border-fillable-border rounded-md overflow-x-auto">
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr className="bg-muted/50">
+            <th className="px-2 py-1.5 text-left font-semibold text-muted-foreground w-8">#</th>
+            {cols.map((c) => (
+              <th key={c.colKey} className="px-2 py-1.5 text-left font-semibold whitespace-nowrap">
+                {c.label}
+              </th>
+            ))}
+            <th className="px-1 w-8" />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={cols.length + 2} className="px-2 py-3 text-center text-muted-foreground">
+                행이 없습니다. 아래 “행 추가”를 누르세요.
+              </td>
+            </tr>
+          )}
+          {rows.map((row, ri) => (
+            <tr key={ri} className="border-t border-fillable-border">
+              <td className="px-2 py-1 text-muted-foreground text-center">{ri + 1}</td>
+              {cols.map((c) => (
+                <td key={c.colKey} className="px-1 py-1">
+                  <input
+                    type={c.type === 'date' ? 'date' : 'text'}
+                    className="w-full min-w-[84px] px-1.5 py-1 text-xs bg-fillable border border-transparent hover:border-fillable-border rounded focus:border-primary focus:outline-none"
+                    value={String(row[c.colKey] ?? '')}
+                    onChange={(e) => update(ri, c.colKey, e.target.value)}
+                  />
+                </td>
+              ))}
+              <td className="px-1 text-center">
+                <button
+                  type="button"
+                  onClick={() => removeRow(ri)}
+                  title="행 삭제"
+                  className="text-muted-foreground hover:text-destructive text-base leading-none"
+                >
+                  ×
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="px-2 py-1.5 border-t border-fillable-border bg-muted/20">
+        <button
+          type="button"
+          onClick={addRow}
+          className="text-xs font-semibold text-primary hover:underline"
+        >
+          + 행 추가
+        </button>
+      </div>
+    </div>
+  )
 }
