@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet } from 'lucide-react'
+import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -8,6 +8,7 @@ import { FormFieldInput } from './FormFieldInput'
 import { FormDocument } from './FormDocument'
 import { ExcelPasteModal } from './ExcelPasteModal'
 import { SubmissionsModal } from './SubmissionsModal'
+import { RevisionsModal } from './RevisionsModal'
 import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
 
@@ -22,7 +23,9 @@ export function FormCanvas(): JSX.Element {
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [submissionsOpen, setSubmissionsOpen] = useState(false)
+  const [revisionsOpen, setRevisionsOpen] = useState(false)
   const [xlsxMsg, setXlsxMsg] = useState<string | null>(null)
+  const revisionCount = useFormStore((s) => s.revisions.length)
 
   const handleExportXlsx = async (): Promise<void> => {
     setXlsxMsg(null)
@@ -32,8 +35,17 @@ export function FormCanvas(): JSX.Element {
       setXlsxMsg(`출력 실패: ${res.error ?? '알 수 없는 오류'}`)
       return
     }
-    const warn = res.unmapped && res.unmapped.length ? ` · 미매칭 ${res.unmapped.length}` : ''
-    setXlsxMsg(`출력 완료 — ${res.applied ?? 0}개 항목 주입${warn}`)
+    // 주입 요약: 일반 필드 + 격자 행반복 + 옵션별 분리셀 마킹 + 미매칭 경고 + 무손실 여부
+    const parts: string[] = [`${res.applied ?? 0}개 항목 주입`]
+    const gridRows = (res.grids ?? []).reduce((s, g) => s + g.written, 0)
+    const gridDrop = (res.grids ?? []).reduce((s, g) => s + g.dropped, 0)
+    if (gridRows) parts.push(`격자 ${gridRows}행${gridDrop ? ` (초과 ${gridDrop}행 잘림)` : ''}`)
+    const optMarks = (res.optCells ?? []).reduce((s, o) => s + o.marked, 0)
+    if (optMarks) parts.push(`선택셀 ${optMarks}개`)
+    if (res.unmapped && res.unmapped.length) parts.push(`미매칭 ${res.unmapped.length}`)
+    // 무손실 보존 깨짐(이미지/병합)은 양식 신뢰성 직결 → 경고로 표면화
+    const lossless = res.verify ? res.verify.mediaOk && res.verify.mergesOk : true
+    setXlsxMsg(`출력 완료 — ${parts.join(' · ')}${lossless ? '' : ' · ⚠ 무손실 깨짐'}`)
     setTimeout(() => setXlsxMsg(null), 6000)
   }
 
@@ -157,6 +169,20 @@ export function FormCanvas(): JSX.Element {
             >
               <FolderOpen className="w-3.5 h-3.5" />
               작성본
+            </button>
+            <button
+              type="button"
+              onClick={() => setRevisionsOpen(true)}
+              title="개정 이력을 보거나 현재 입력을 개정으로 저장합니다"
+              className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-border hover:bg-muted flex items-center gap-1.5 transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+              개정 이력
+              {revisionCount > 0 && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                  {revisionCount}
+                </span>
+              )}
             </button>
             <button
               type="button"
@@ -339,6 +365,7 @@ export function FormCanvas(): JSX.Element {
         />
       )}
       {submissionsOpen && <SubmissionsModal onClose={() => setSubmissionsOpen(false)} />}
+      {revisionsOpen && <RevisionsModal onClose={() => setRevisionsOpen(false)} />}
     </div>
   )
 }

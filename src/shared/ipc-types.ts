@@ -879,15 +879,19 @@ export interface IpcChannelMap {
   }
   [IPC_CHANNELS.FORM_EXPORT_XLSX]: {
     request: { submissionId: number; pdf?: boolean }
-    response: {
-      success: boolean
-      filePath?: string
-      error?: string
-      canceled?: boolean
-      applied?: number
-      unmapped?: string[]
-      verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
-    }
+    response: FormExportResult
+  }
+  [IPC_CHANNELS.FORM_REVISION_SAVE]: {
+    request: { submissionId: number; changeReason?: string }
+    response: { success: boolean; revNo?: number; error?: string }
+  }
+  [IPC_CHANNELS.FORM_REVISION_LIST]: {
+    request: { submissionId: number }
+    response: FormRevisionListItemDto[]
+  }
+  [IPC_CHANNELS.FORM_REVISION_GET]: {
+    request: { id: number }
+    response: FormRevisionDto | null
   }
   [IPC_CHANNELS.PRINT_TO_PDF]: {
     request: { defaultName?: string }
@@ -1054,6 +1058,43 @@ export interface ReportExportResult {
   count?: number
   canceled?: boolean
   error?: string
+}
+
+/** 공식 엑셀(원본양식 주입) 출력 결과. 핸들러·formStore·FormCanvas 공용 단일출처. */
+export interface FormExportResult {
+  success: boolean
+  filePath?: string
+  error?: string
+  canceled?: boolean
+  applied?: number
+  unmapped?: string[]
+  /** 격자/대장형 행반복 결과(필드별 주입행수/잘림행수) */
+  grids?: Array<{ gridKey: string; written: number; dropped: number }>
+  /** 옵션별 분리셀형 라디오/체크박스 마킹 결과(필드별 마킹 셀 수) */
+  optCells?: Array<{ fieldKey: string; marked: number }>
+  verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
+}
+
+/** 개정 이력 목록 항목(값 제외 경량) */
+export interface FormRevisionListItemDto {
+  id: number
+  revNo: number
+  changeReason: string | null
+  author: string | null
+  status: string | null
+  createdAt: string
+}
+
+/** 개정 단건(스냅샷 값 포함) */
+export interface FormRevisionDto {
+  id: number
+  submissionId: number
+  revNo: number
+  values: Record<string, unknown>
+  changeReason: string | null
+  author: string | null
+  status: string | null
+  createdAt: string
 }
 
 // ===== Document BOM =====

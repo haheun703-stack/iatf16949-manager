@@ -15,7 +15,10 @@ import type {
   FormSubmissionListItemDto,
   RegulationSectionDto,
   AiGenerateRequest,
-  AiGenerateResponse
+  AiGenerateResponse,
+  FormExportResult,
+  FormRevisionListItemDto,
+  FormRevisionDto
 } from '@shared/ipc-types'
 
 function parseJsonSafe<T>(raw: string | null | undefined, fallback: T): T {
@@ -342,15 +345,7 @@ export function registerFormHandlers(): void {
     async (
       _event,
       { submissionId, pdf }: { submissionId: number; pdf?: boolean }
-    ): Promise<{
-      success: boolean
-      filePath?: string
-      error?: string
-      canceled?: boolean
-      applied?: number
-      unmapped?: string[]
-      verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
-    }> => {
+    ): Promise<FormExportResult> => {
       try {
         const sub = db.prepare('SELECT * FROM form_submissions WHERE id = ?').get(submissionId) as
           | Record<string, unknown>
@@ -407,6 +402,8 @@ export function registerFormHandlers(): void {
           filePath: result.pdf || result.out,
           applied: result.applied.length,
           unmapped: result.unmapped,
+          grids: result.grids,
+          optCells: result.optCells,
           verify: {
             values: result.verify.values,
             mediaOk: result.verify.mediaOk,
@@ -417,6 +414,80 @@ export function registerFormHandlers(): void {
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[form:exportXlsx] error', msg)
         return { success: false, error: msg }
+      }
+    }
+  )
+
+  // ──── 개정 이력: 현재 작성본 값을 개정 스냅샷으로 저장 ────
+  // form_submissions.values_json(현재 저장값)을 그대로 스냅샷. rev_no 는 작성본별 누적.
+  ipcMain.handle(
+    IPC_CHANNELS.FORM_REVISION_SAVE,
+    (
+      _event,
+      { submissionId, changeReason }: { submissionId: number; changeReason?: string }
+    ): { success: boolean; revNo?: number; error?: string } => {
+      const sub = db
+        .prepare('SELECT id, values_json, status, created_by FROM form_submissions WHERE id = ?')
+        .get(submissionId) as
+        | { id: number; values_json: string; status: string; created_by: string | null }
+        | undefined
+      if (!sub) return { success: false, error: '작성본을 찾을 수 없습니다.' }
+
+      const { maxRev } = db
+        .prepare('SELECT COALESCE(MAX(rev_no), 0) AS maxRev FROM form_submission_revisions WHERE submission_id = ?')
+        .get(submissionId) as { maxRev: number }
+      const revNo = (maxRev ?? 0) + 1
+      // 작성자: 작성본 created_by 우선, 없으면 회사정보 defaultAuthor(로그인 도입 전 stub)
+      const author = sub.created_by || getProfileValue(db, 'defaultAuthor')
+      const now = new Date().toISOString()
+
+      db.prepare(
+        `INSERT INTO form_submission_revisions
+           (submission_id, rev_no, values_json, change_reason, author, status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).run(submissionId, revNo, sub.values_json, changeReason?.trim() || null, author, sub.status, now)
+
+      return { success: true, revNo }
+    }
+  )
+
+  // ──── 개정 이력: 목록(값 제외 경량) ────
+  ipcMain.handle(
+    IPC_CHANNELS.FORM_REVISION_LIST,
+    (_event, { submissionId }: { submissionId: number }): FormRevisionListItemDto[] => {
+      const rows = db
+        .prepare(
+          'SELECT id, rev_no, change_reason, author, status, created_at FROM form_submission_revisions WHERE submission_id = ? ORDER BY rev_no DESC'
+        )
+        .all(submissionId) as Array<Record<string, unknown>>
+      return rows.map((r) => ({
+        id: r.id as number,
+        revNo: r.rev_no as number,
+        changeReason: (r.change_reason as string) || null,
+        author: (r.author as string) || null,
+        status: (r.status as string) || null,
+        createdAt: r.created_at as string
+      }))
+    }
+  )
+
+  // ──── 개정 이력: 단건(스냅샷 값 포함, 복원용) ────
+  ipcMain.handle(
+    IPC_CHANNELS.FORM_REVISION_GET,
+    (_event, { id }: { id: number }): FormRevisionDto | null => {
+      const r = db.prepare('SELECT * FROM form_submission_revisions WHERE id = ?').get(id) as
+        | Record<string, unknown>
+        | undefined
+      if (!r) return null
+      return {
+        id: r.id as number,
+        submissionId: r.submission_id as number,
+        revNo: r.rev_no as number,
+        values: parseJsonSafe<Record<string, unknown>>(r.values_json as string, {}),
+        changeReason: (r.change_reason as string) || null,
+        author: (r.author as string) || null,
+        status: (r.status as string) || null,
+        createdAt: r.created_at as string
       }
     }
   )

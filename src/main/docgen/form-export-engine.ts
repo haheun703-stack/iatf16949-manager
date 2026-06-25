@@ -69,6 +69,7 @@ export interface ExportResult {
   applied: ExportDiag[] // 셀에 주입된 필드
   unmapped: string[] // 값은 있으나 셀맵에 매칭 안 된 라벨
   grids?: Array<{ gridKey: string; written: number; dropped: number }> // 격자/대장 행반복 결과
+  optCells?: Array<{ fieldKey: string; marked: number }> // 옵션별 분리셀(H3200-02형) 마킹 결과
   verify: { values: string; valuesOk: boolean; media: string; mediaOk: boolean; merges: string; mergesOk: boolean }
   pdf?: string | null
 }
@@ -321,6 +322,7 @@ export async function exportSubmissionXlsx(opts: {
   }
 
   // 옵션별 분리셀형 라디오/체크박스(H3200-02형) 마킹
+  const optCellMarks: Array<{ fieldKey: string; marked: number }> = []
   for (const f of formFields) {
     if (f.type !== 'radio' && f.type !== 'checkbox') continue
     let optCells: Array<{ option: string; cell: string }> = []
@@ -338,7 +340,10 @@ export async function exportSubmissionXlsx(opts: {
       : raw == null || raw === ''
         ? []
         : [String(raw)]
-    if (selected.length) markOptionCells(ws, optCells, selected)
+    if (selected.length) {
+      const marked = markOptionCells(ws, optCells, selected)
+      if (marked > 0) optCellMarks.push({ fieldKey: f.fieldKey, marked })
+    }
   }
 
   mkdirSync(dirname(outPath), { recursive: true })
@@ -366,6 +371,7 @@ export async function exportSubmissionXlsx(opts: {
     applied: resolved.map((r) => ({ fieldKey: r.field.fieldKey, label: r.field.label, cell: r.cell, type: r.type, value: r.value })),
     unmapped,
     grids,
+    optCells: optCellMarks,
     verify: {
       values: `${okVals}/${resolved.length}`,
       valuesOk: okVals === resolved.length,

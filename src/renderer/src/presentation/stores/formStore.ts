@@ -8,7 +8,10 @@ import type {
   FormGuideDto,
   FormScoreDto,
   AiGuideResponse,
-  AiScoreResponse
+  AiScoreResponse,
+  FormExportResult,
+  FormRevisionListItemDto,
+  FormRevisionDto
 } from '@shared/ipc-types'
 
 export type CopilotTab = 'guide' | 'score'
@@ -67,15 +70,14 @@ interface FormState {
 
   // 공식 엑셀 출력(원본양식에 값 주입 → .xlsx, 선택 PDF). 출력 전 자동 저장.
   exportingXlsx: boolean
-  exportOfficialXlsx: (pdf?: boolean) => Promise<{
-    success: boolean
-    filePath?: string
-    error?: string
-    canceled?: boolean
-    applied?: number
-    unmapped?: string[]
-    verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
-  }>
+  exportOfficialXlsx: (pdf?: boolean) => Promise<FormExportResult>
+
+  // 개정 이력 (g 신뢰성 레이어): 현재 작성본의 개정 스냅샷 목록/저장/복원
+  revisions: FormRevisionListItemDto[]
+  revisionsLoading: boolean
+  loadRevisions: () => Promise<void>
+  saveRevision: (changeReason?: string) => Promise<{ success: boolean; revNo?: number; error?: string }>
+  restoreRevision: (id: number) => Promise<boolean>
 
   // AI generate (per-field)
   aiLoadingFieldKey: string | null
@@ -127,6 +129,7 @@ export const useFormStore = create<FormState>((set, get) => ({
       serialPreview: null,
       currentSubmissionId: null,
       aiError: null,
+      revisions: [],
       // reset copilot context for the new form
       guide: null,
       guideError: null,
@@ -193,6 +196,8 @@ export const useFormStore = create<FormState>((set, get) => ({
     // loadFormDefinition이 currentSubmissionId=null 상태에서 채점을 미리 불러와(submissionId=null)
     // 이 작성본이 아닌 양식 전체 최신 채점이 잡힌다. id 확정 후 해당 작성본 채점으로 재조회.
     void get().loadLatestScore(sub.formCode)
+    // 이 작성본의 개정 이력 로드
+    void get().loadRevisions()
   },
 
   saveDraft: async () => {
@@ -228,21 +233,56 @@ export const useFormStore = create<FormState>((set, get) => ({
       const res = (await window.api.invoke(ch('FORM_EXPORT_XLSX'), {
         submissionId: id,
         pdf: pdf === true
-      })) as {
-        success: boolean
-        filePath?: string
-        error?: string
-        canceled?: boolean
-        applied?: number
-        unmapped?: string[]
-        verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
-      }
+      })) as FormExportResult
       return res
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) }
     } finally {
       set({ exportingXlsx: false })
     }
+  },
+
+  // ──── 개정 이력 (g) ────
+  revisions: [],
+  revisionsLoading: false,
+  loadRevisions: async () => {
+    const { currentSubmissionId } = get()
+    if (!currentSubmissionId) {
+      set({ revisions: [] })
+      return
+    }
+    set({ revisionsLoading: true })
+    try {
+      const res = (await window.api.invoke(ch('FORM_REVISION_LIST'), {
+        submissionId: currentSubmissionId
+      })) as FormRevisionListItemDto[]
+      // 응답 도착 사이 작성본이 바뀌었으면 무시(경합 방지)
+      if (get().currentSubmissionId === currentSubmissionId) set({ revisions: res })
+    } finally {
+      set({ revisionsLoading: false })
+    }
+  },
+  saveRevision: async (changeReason) => {
+    const { currentForm } = get()
+    if (!currentForm) return { success: false, error: '양식이 로드되지 않았습니다.' }
+    try {
+      // 스냅샷은 저장된 values_json 을 읽으므로 현재 입력을 먼저 저장
+      const id = await get().saveDraft()
+      const res = (await window.api.invoke(ch('FORM_REVISION_SAVE'), {
+        submissionId: id,
+        changeReason
+      })) as { success: boolean; revNo?: number; error?: string }
+      if (res.success) await get().loadRevisions()
+      return res
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  },
+  restoreRevision: async (id) => {
+    const rev = (await window.api.invoke(ch('FORM_REVISION_GET'), { id })) as FormRevisionDto | null
+    if (!rev) return false
+    set({ values: rev.values })
+    return true
   },
 
   aiLoadingFieldKey: null,
