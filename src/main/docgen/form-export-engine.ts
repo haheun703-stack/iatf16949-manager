@@ -133,6 +133,24 @@ function markNumberedOption(base: string, selected: string[]): string {
   return out
 }
 
+// 옵션별 분리셀형(H3200-02): 선택 옵션의 셀을 【】로 표시
+function markOptionCells(
+  ws: ExcelJS.Worksheet,
+  optionCells: Array<{ option: string; cell: string }>,
+  selected: string[]
+): number {
+  const sel = new Set(selected.map((s) => s.replace(/\s+/g, '')))
+  let marked = 0
+  for (const oc of optionCells) {
+    if (!sel.has(oc.option.replace(/\s+/g, ''))) continue
+    const cell = ws.getCell(oc.cell)
+    const t = cellText(cell.value).trim()
+    if (!t.includes('【')) cell.value = `【${t}】`
+    marked++
+  }
+  return marked
+}
+
 function injectCell(ws: ExcelJS.Worksheet, cellAddr: string, type: string, value: string): void {
   const cell = ws.getCell(cellAddr)
   switch (type) {
@@ -300,6 +318,27 @@ export async function exportSubmissionXlsx(opts: {
     if (!spec || !Array.isArray(raw) || raw.length === 0) continue
     const rep = injectGrid(ws, spec, raw as Array<Record<string, unknown>>)
     grids.push({ gridKey: f.fieldKey, ...rep })
+  }
+
+  // 옵션별 분리셀형 라디오/체크박스(H3200-02형) 마킹
+  for (const f of formFields) {
+    if (f.type !== 'radio' && f.type !== 'checkbox') continue
+    let optCells: Array<{ option: string; cell: string }> = []
+    try {
+      optCells = db
+        .prepare('SELECT option, cell FROM form_option_cells WHERE form_code = ? AND field_key = ? ORDER BY sort_order')
+        .all(formCode, f.fieldKey) as Array<{ option: string; cell: string }>
+    } catch {
+      /* form_option_cells 미존재(구버전 DB) */
+    }
+    if (!optCells.length) continue
+    const raw = appValues[f.fieldKey]
+    const selected = Array.isArray(raw)
+      ? (raw as unknown[]).map((x) => String(x))
+      : raw == null || raw === ''
+        ? []
+        : [String(raw)]
+    if (selected.length) markOptionCells(ws, optCells, selected)
   }
 
   mkdirSync(dirname(outPath), { recursive: true })
