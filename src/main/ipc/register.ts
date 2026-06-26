@@ -30,8 +30,10 @@ import { registerScheduleHandlers } from './schedule-handlers'
 import { registerReportHandlers } from './report-handlers'
 import { registerSqHandlers } from './sq-handlers'
 import { registerCaseHandlers } from './case-handlers'
+import { registerAiHandlers } from './ai-handlers'
 
 export function registerAllIpcHandlers(): void {
+  registerAiHandlers()
   registerFormHandlers()
   registerProcessHandlers()
   registerBomHandlers()

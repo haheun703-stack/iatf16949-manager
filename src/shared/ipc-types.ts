@@ -258,6 +258,28 @@ export interface AiGenerateResponse {
   error?: string
 }
 
+// ===== AI 레이어 (Phase C) — 그라운디드 코파일럿 =====
+export interface CopilotMessage {
+  role: 'user' | 'assistant'
+  text: string
+}
+export interface CopilotSource {
+  kind: string // clause|sq_item|form_def|case|process
+  ref_key: string
+  title: string
+}
+export interface CopilotAskRequest {
+  messages: CopilotMessage[]
+}
+export interface CopilotAskResponse {
+  success: boolean
+  text?: string
+  sources?: CopilotSource[]
+  tools?: Array<{ name: string; ok: boolean }>
+  costUsd?: number | null
+  error?: string
+}
+
 // ===== AI 작성가이드 + 채점 (v5 Stage 2) =====
 
 /** 양식별 AI 작성 가이드 — "이 양식을 왜·어떻게 써야 심사를 통과하는가". */
@@ -900,6 +922,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.AI_GENERATE]: {
     request: AiGenerateRequest
     response: AiGenerateResponse
+  }
+  [IPC_CHANNELS.AI_COPILOT_ASK]: {
+    request: CopilotAskRequest
+    response: CopilotAskResponse
   }
   [IPC_CHANNELS.AI_GENERATE_GUIDE]: {
     request: { formCode: string; force?: boolean }

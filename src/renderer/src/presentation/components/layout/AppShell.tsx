@@ -10,6 +10,7 @@ import { DocumentBomPage } from '../document-bom/DocumentBomPage'
 import { SchedulePage } from '../schedule/SchedulePage'
 import { ComingSoon } from '../shared/ComingSoon'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
+import { GlobalCopilot } from '../copilot/GlobalCopilot'
 
 export function AppShell(): JSX.Element {
   const { currentPage } = useUIStore()
@@ -41,6 +42,7 @@ export function AppShell(): JSX.Element {
           </ErrorBoundary>
         </main>
       </div>
+      <GlobalCopilot />
     </div>
   )
 }

@@ -1,9 +1,12 @@
-import { Bell, Settings, Building2, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { Bell, Settings, Building2, PanelLeftClose, PanelLeft, Sparkles } from 'lucide-react'
 import { DdayBadge } from '../shared/DdayBadge'
 import { useUIStore } from '../../stores/uiStore'
+import { useCopilotStore } from '../../stores/copilotStore'
 
 export function TopBar(): JSX.Element {
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const toggleCopilot = useCopilotStore((s) => s.toggle)
+  const copilotOpen = useCopilotStore((s) => s.open)
 
   return (
     <header className="h-14 bg-card border-b border-border flex items-center justify-between px-5 shrink-0">
@@ -28,6 +31,20 @@ export function TopBar(): JSX.Element {
 
       <div className="flex items-center gap-3">
         <DdayBadge />
+        <button
+          type="button"
+          onClick={toggleCopilot}
+          aria-label="AI 코파일럿"
+          title="AI 코파일럿 — 우리 데이터에 질문(읽기전용)"
+          className={`h-8 px-2.5 rounded-md flex items-center gap-1.5 text-[12px] font-semibold transition-colors ${
+            copilotOpen
+              ? 'bg-primary/10 text-primary border border-primary/30'
+              : 'border border-border hover:bg-muted text-foreground'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          코파일럿
+        </button>
         <button
           type="button"
           className="w-8 h-8 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground"

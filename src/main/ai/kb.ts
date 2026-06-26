@@ -114,22 +114,44 @@ function makeSnippet(text: string, q: string, win = 28): string {
   return (start > 0 ? '…' : '') + text.slice(start, i) + '《' + text.slice(i, i + q.length) + '》' + text.slice(i + q.length, end) + (end < text.length ? '…' : '')
 }
 
-function likeSearch(db: Database.Database, q: string, k: number, kindFilter?: KbKind): KbHit[] {
+// term 으로 LIKE 검색(snippetTerm 으로 발췌 강조).
+function likeSearch(
+  db: Database.Database,
+  term: string,
+  k: number,
+  kindFilter: KbKind | undefined,
+  snippetTerm: string
+): KbHit[] {
   const sql = `SELECT kind, ref_key, title, text FROM kb_chunks
                WHERE text LIKE ? ${kindFilter ? 'AND kind = ?' : ''} LIMIT ?`
-  const like = `%${q}%`
+  const like = `%${term}%`
   const params = kindFilter ? [like, kindFilter, k] : [like, k]
   return (db.prepare(sql).all(...params) as Array<Record<string, string>>).map((r) => ({
     kind: r.kind as KbKind,
     ref_key: r.ref_key,
     title: r.title,
-    snippet: makeSnippet(r.text, q)
+    snippet: makeSnippet(r.text, snippetTerm)
+  }))
+}
+
+// 모든 단어가 들어간 청크(AND). 다중어 질의에서 가장 관련도 높음.
+function likeAllWords(db: Database.Database, words: string[], k: number, kindFilter?: KbKind): KbHit[] {
+  const conds = words.map(() => 'text LIKE ?').join(' AND ')
+  const sql = `SELECT kind, ref_key, title, text FROM kb_chunks
+               WHERE ${conds} ${kindFilter ? 'AND kind = ?' : ''} LIMIT ?`
+  const params = [...words.map((w) => `%${w}%`), ...(kindFilter ? [kindFilter] : []), k]
+  return (db.prepare(sql).all(...params) as Array<Record<string, string>>).map((r) => ({
+    kind: r.kind as KbKind,
+    ref_key: r.ref_key,
+    title: r.title,
+    snippet: makeSnippet(r.text, words[0])
   }))
 }
 
 /**
- * 근거 검색(하이브리드). ≥3자는 trigram FTS(랭킹+스니펫), 2자/FTS 0건은 LIKE 폴백
- * (코퍼스가 작아 저렴 — 한국어 2글자 품질용어 검사·교정·불량 등을 커버).
+ * 근거 검색(하이브리드, 다중어 견고). 우선순위로 채워 k개 모음:
+ *  1) trigram FTS(≥3자, bm25 랭킹+snippet) → 2) LIKE 구문 전체 → 3) 단어 AND LIKE → 4) 단어 OR LIKE.
+ * 한국어 2글자 용어(검사·교정·불량)와 다중어 질의("시정조치 정의") 모두 커버.
  * 결과 없으면 빈 배열(근거 없음 = 단정 금지의 토대).
  */
 export function searchKnowledge(
@@ -140,20 +162,29 @@ export function searchKnowledge(
 ): KbHit[] {
   const q = norm(query)
   if (!q) return []
-  let hits: KbHit[] = []
-  if (q.length >= 3) {
-    try {
-      hits = ftsSearch(db, q, k, kindFilter)
-    } catch {
-      hits = []
+  const out = new Map<string, KbHit>()
+  const push = (hits: KbHit[]): void => {
+    for (const h of hits) {
+      const key = `${h.kind}:${h.ref_key}`
+      if (!out.has(key)) out.set(key, h)
+      if (out.size >= k) break
     }
   }
-  if (hits.length === 0) {
+  const tryStep = (fn: () => KbHit[]): void => {
+    if (out.size >= k) return
     try {
-      hits = likeSearch(db, q, k, kindFilter)
+      push(fn())
     } catch {
-      hits = []
+      /* skip */
     }
   }
-  return hits
+
+  if (q.length >= 3) tryStep(() => ftsSearch(db, q, k, kindFilter))
+  tryStep(() => likeSearch(db, q, k, kindFilter, q))
+  const words = q.split(/\s+/).filter((w) => w.length >= 2)
+  if (words.length > 1) {
+    tryStep(() => likeAllWords(db, words, k, kindFilter))
+    for (const w of words) tryStep(() => likeSearch(db, w, k, kindFilter, w))
+  }
+  return [...out.values()].slice(0, k)
 }

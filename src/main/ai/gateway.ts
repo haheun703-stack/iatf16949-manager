@@ -81,6 +81,8 @@ export interface AiCallOpts {
 export interface AiCallResult {
   text: string
   toolCalls: Array<{ name: string; args: unknown; ok: boolean }>
+  /** search_knowledge 가 반환한 근거(인용 칩용). kind+ref_key 로 디둡. */
+  sources: Array<{ kind: string; ref_key: string; title: string }>
   usage: { input: number; output: number }
   costUsd: number | null
   model: string
@@ -104,6 +106,7 @@ export async function aiCall(opts: AiCallOpts): Promise<AiCallResult> {
   ]
   const messages: Anthropic.MessageParam[] = [...opts.messages]
   const toolCalls: AiCallResult['toolCalls'] = []
+  const sourceMap = new Map<string, { kind: string; ref_key: string; title: string }>()
   let totalIn = 0
   let totalOut = 0
   let stopReason: string | null = null
@@ -141,7 +144,15 @@ export async function aiCall(opts: AiCallOpts): Promise<AiCallResult> {
         tokensOut: totalOut,
         costUsd
       })
-      return { text, toolCalls, usage: { input: totalIn, output: totalOut }, costUsd, model, stopReason }
+      return {
+        text,
+        toolCalls,
+        sources: [...sourceMap.values()],
+        usage: { input: totalIn, output: totalOut },
+        costUsd,
+        model,
+        stopReason
+      }
     }
 
     // 도구 실행 → tool_result 회신
@@ -159,26 +170,47 @@ export async function aiCall(opts: AiCallOpts): Promise<AiCallResult> {
         ok = false
         out = { error: err instanceof Error ? err.message : String(err) }
       }
+      if (ok && tu.name === 'search_knowledge' && out && typeof out === 'object') {
+        const hits = (out as { results?: Array<{ kind: string; ref_key: string; title: string }> }).results
+        if (Array.isArray(hits)) {
+          for (const h of hits) sourceMap.set(`${h.kind}:${h.ref_key}`, { kind: h.kind, ref_key: h.ref_key, title: h.title })
+        }
+      }
       toolCalls.push({ name: tu.name, args: tu.input, ok })
       results.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(out), is_error: !ok })
     }
     messages.push({ role: 'user', content: results })
   }
 
-  // 최대 턴 도달 — 마지막 상태로 종료
+  // 최대 턴 도달 — 도구 없이 마지막 1회로 "지금까지 근거"로 답을 강제(빈 응답 방지).
+  let finalText = ''
+  try {
+    const finalParams: Anthropic.MessageCreateParamsNonStreaming = {
+      model,
+      max_tokens: opts.maxTokens ?? 1500,
+      system,
+      messages: [
+        ...messages,
+        { role: 'user', content: '추가 검색하지 말고, 지금까지 찾은 근거만으로 답하세요. 충분치 않으면 찾은 범위에서 정직히 답하세요.' }
+      ]
+    }
+    const fin: Anthropic.Message = await withRetry(() => got.client.messages.create(finalParams))
+    totalIn += fin.usage.input_tokens
+    totalOut += fin.usage.output_tokens
+    stopReason = fin.stop_reason
+    finalText = fin.content
+      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('')
+  } catch {
+    finalText = '(응답을 생성하지 못했습니다)'
+  }
   const costUsd = estimateCostUsd(model, totalIn, totalOut)
-  logAction({
-    actor: 'ai',
-    action: 'query',
-    purpose: opts.purpose,
-    model,
-    tokensIn: totalIn,
-    tokensOut: totalOut,
-    costUsd
-  })
+  logAction({ actor: 'ai', action: 'query', purpose: opts.purpose, model, tokensIn: totalIn, tokensOut: totalOut, costUsd })
   return {
-    text: '(도구 루프 최대 횟수 도달)',
+    text: finalText || '(응답 없음)',
     toolCalls,
+    sources: [...sourceMap.values()],
     usage: { input: totalIn, output: totalOut },
     costUsd,
     model,

@@ -61,6 +61,9 @@ export const IPC_CHANNELS = {
   // AI (Claude API)
   AI_GENERATE: 'ai:generate',
 
+  // AI 레이어 (Phase C) — 그라운디드 코파일럿(read-only)
+  AI_COPILOT_ASK: 'ai:copilotAsk',
+
   // AI 작성가이드 + 채점 (v5 Stage 2)
   AI_GENERATE_GUIDE: 'ai:generateGuide',
   FORM_GUIDE_GET: 'form:guideGet',
