@@ -336,6 +336,29 @@ export interface StructureCaptureResponse {
   error?: string
 }
 
+// ===== AI 레이어 (Phase E1) — SQ 준비도 예측 =====
+export interface ReadinessRed {
+  code: string
+  title: string
+  points: number
+  signal: 'red' | 'gray'
+  reason: string
+}
+export interface ReadinessPrediction {
+  score: number // 0~totalPoints (gray=미측정=0)
+  totalPoints: number
+  measurablePoints: number
+  counts: { green: number; yellow: number; red: number; gray: number }
+  categories: Array<{ name: string; points: number; signal: string; score: number }>
+  reds: ReadinessRed[]
+}
+export interface ReadinessExplainResponse {
+  success: boolean
+  text?: string
+  costUsd?: number | null
+  error?: string
+}
+
 // ===== AI 작성가이드 + 채점 (v5 Stage 2) =====
 
 /** 양식별 AI 작성 가이드 — "이 양식을 왜·어떻게 써야 심사를 통과하는가". */
@@ -1006,6 +1029,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.AI_DRAFT_REJECT]: {
     request: { id: number; note?: string }
     response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.AI_READINESS_PREDICT]: {
+    request: Record<string, never>
+    response: ReadinessPrediction
+  }
+  [IPC_CHANNELS.AI_READINESS_EXPLAIN]: {
+    request: { prediction: ReadinessPrediction }
+    response: ReadinessExplainResponse
   }
   [IPC_CHANNELS.AI_GENERATE_GUIDE]: {
     request: { formCode: string; force?: boolean }

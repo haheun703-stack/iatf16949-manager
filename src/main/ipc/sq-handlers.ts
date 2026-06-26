@@ -32,11 +32,9 @@ function itemSignal(formCount: number, std: number, drafted: number): SqSignal {
 
 const SIGNAL_SCORE: Record<SqSignal, number> = { green: 1, yellow: 0.5, red: 0, gray: 0 }
 
-export function registerSqHandlers(): void {
-  const db = getSqlite()
-
-  ipcMain.handle(IPC_CHANNELS.SQ_READINESS, (): SqReadinessDto => {
-    try {
+/** SQ 준비도 결정론 집계(신호등+가중점수). E1 예측·핸들러 공용. */
+export function computeSqReadiness(db: ReturnType<typeof getSqlite>): SqReadinessDto {
+  try {
       const categories = db
         .prepare(
           'SELECT id, name, points, iatf_clause FROM sq_categories ORDER BY sort_order'
@@ -128,13 +126,18 @@ export function registerSqHandlers(): void {
         }
       })
 
-      const totalPoints = categories.reduce((s, c) => s + c.points, 0)
-      return { categories: catDtos, totalPoints }
-    } catch (err) {
-      console.error('[sq:readiness] aggregation failed:', (err as Error).message)
-      return { categories: [], totalPoints: 0 }
-    }
-  })
+    const totalPoints = categories.reduce((s, c) => s + c.points, 0)
+    return { categories: catDtos, totalPoints }
+  } catch (err) {
+    console.error('[sq:readiness] aggregation failed:', (err as Error).message)
+    return { categories: [], totalPoints: 0 }
+  }
+}
+
+export function registerSqHandlers(): void {
+  const db = getSqlite()
+
+  ipcMain.handle(IPC_CHANNELS.SQ_READINESS, (): SqReadinessDto => computeSqReadiness(db))
 
   ipcMain.handle(
     IPC_CHANNELS.SQ_ITEM_DETAIL,

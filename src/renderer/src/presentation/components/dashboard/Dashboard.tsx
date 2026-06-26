@@ -6,6 +6,7 @@ import { useUIStore, type PageId } from '../../stores/uiStore'
 import { useDday } from '../../hooks/useDday'
 import { KpiStrip } from './KpiStrip'
 import { BriefingCard } from './BriefingCard'
+import { ReadinessCard } from './ReadinessCard'
 import { ScoreDistributionPanel } from './ScoreDistributionPanel'
 import { RecentScoresPanel } from './RecentScoresPanel'
 import { NeedsAttentionList } from './NeedsAttentionList'
@@ -124,7 +125,10 @@ export function Dashboard(): JSX.Element {
         </div>
       )}
 
-      <BriefingCard />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BriefingCard />
+        <ReadinessCard />
+      </div>
 
       <KpiStrip />
 

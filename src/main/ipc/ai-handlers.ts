@@ -9,6 +9,7 @@ import { aiCall } from '../ai/gateway'
 import { computeBriefingFacts, summarizeBriefing } from '../ai/briefing'
 import { structureCapture } from '../ai/author'
 import { listDrafts, applyDraft, rejectDraft } from '../ai/drafts'
+import { predictReadiness, explainReadiness } from '../ai/readiness'
 import type {
   CopilotAskRequest,
   CopilotAskResponse,
@@ -16,7 +17,9 @@ import type {
   BriefingSummarizeResponse,
   StructureCaptureResponse,
   AiDraftDto,
-  DraftStatus
+  DraftStatus,
+  ReadinessPrediction,
+  ReadinessExplainResponse
 } from '@shared/ipc-types'
 
 function currentUser(): string {
@@ -125,5 +128,23 @@ export function registerAiHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.AI_DRAFT_REJECT,
     (_event, { id, note }: { id: number; note?: string }) => rejectDraft(id, currentUser(), note)
+  )
+
+  // ──── E1: SQ 준비도 예측(결정론, 무API) ────
+  ipcMain.handle(IPC_CHANNELS.AI_READINESS_PREDICT, (): ReadinessPrediction => predictReadiness())
+
+  // ──── E1: AI 진단(설명+우선순위, 온디맨드) ────
+  ipcMain.handle(
+    IPC_CHANNELS.AI_READINESS_EXPLAIN,
+    async (_event, { prediction }: { prediction: ReadinessPrediction }): Promise<ReadinessExplainResponse> => {
+      try {
+        const { text, costUsd } = await explainReadiness(prediction)
+        return { success: true, text, costUsd }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[ai:readiness] error', msg)
+        return { success: false, error: msg }
+      }
+    }
   )
 }
