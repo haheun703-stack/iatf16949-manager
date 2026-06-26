@@ -280,6 +280,29 @@ export interface CopilotAskResponse {
   error?: string
 }
 
+// ===== AI 레이어 (Phase C2) — 매일 브리핑 =====
+export interface BriefingItem {
+  kind: 'schedule' | 'case'
+  ref: string
+  title: string
+  dueDate: string
+  owner: string | null
+  daysLeft: number
+}
+export interface BriefingFacts {
+  today: string
+  overdue: BriefingItem[]
+  dueSoon: BriefingItem[]
+  audit: { label: string; dday: number; date: string } | null
+  sq: { total: number; missingEvidence: number; examples: string[] }
+}
+export interface BriefingSummarizeResponse {
+  success: boolean
+  text?: string
+  costUsd?: number | null
+  error?: string
+}
+
 // ===== AI 작성가이드 + 채점 (v5 Stage 2) =====
 
 /** 양식별 AI 작성 가이드 — "이 양식을 왜·어떻게 써야 심사를 통과하는가". */
@@ -926,6 +949,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.AI_COPILOT_ASK]: {
     request: CopilotAskRequest
     response: CopilotAskResponse
+  }
+  [IPC_CHANNELS.AI_BRIEFING_FACTS]: {
+    request: Record<string, never>
+    response: BriefingFacts
+  }
+  [IPC_CHANNELS.AI_BRIEFING_SUMMARIZE]: {
+    request: { facts: BriefingFacts }
+    response: BriefingSummarizeResponse
   }
   [IPC_CHANNELS.AI_GENERATE_GUIDE]: {
     request: { formCode: string; force?: boolean }

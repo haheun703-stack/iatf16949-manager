@@ -63,6 +63,9 @@ export const IPC_CHANNELS = {
 
   // AI 레이어 (Phase C) — 그라운디드 코파일럿(read-only)
   AI_COPILOT_ASK: 'ai:copilotAsk',
+  // AI 레이어 (Phase C2) — 매일 브리핑(규칙엔진 사실 + AI 요약)
+  AI_BRIEFING_FACTS: 'ai:briefingFacts',
+  AI_BRIEFING_SUMMARIZE: 'ai:briefingSummarize',
 
   // AI 작성가이드 + 채점 (v5 Stage 2)
   AI_GENERATE_GUIDE: 'ai:generateGuide',

@@ -5,7 +5,13 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { aiCall } from '../ai/gateway'
-import type { CopilotAskRequest, CopilotAskResponse } from '@shared/ipc-types'
+import { computeBriefingFacts, summarizeBriefing } from '../ai/briefing'
+import type {
+  CopilotAskRequest,
+  CopilotAskResponse,
+  BriefingFacts,
+  BriefingSummarizeResponse
+} from '@shared/ipc-types'
 
 const COPILOT_SYSTEM = `당신은 TPC(2공장 AM사업부)의 IATF 16949 품질경영시스템 데이터 어시스턴트입니다.
 - 우리 데이터로만 답합니다. 먼저 search_knowledge 로 근거(조항 clause·SQ항목 sq_item·양식 form_def·케이스 case·프로세스 process)를 찾고, 필요하면 get_form_definition·get_open_cases·get_document_bom 으로 사실을 조회하세요.
@@ -46,6 +52,24 @@ export function registerAiHandlers(): void {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[ai:copilot] error', msg)
+        return { success: false, error: msg }
+      }
+    }
+  )
+
+  // ──── C2 브리핑: 사실(결정론, 무API) ────
+  ipcMain.handle(IPC_CHANNELS.AI_BRIEFING_FACTS, (): BriefingFacts => computeBriefingFacts())
+
+  // ──── C2 브리핑: AI 요약(사실 → 자연어, 온디맨드) ────
+  ipcMain.handle(
+    IPC_CHANNELS.AI_BRIEFING_SUMMARIZE,
+    async (_event, { facts }: { facts: BriefingFacts }): Promise<BriefingSummarizeResponse> => {
+      try {
+        const { text, costUsd } = await summarizeBriefing(facts)
+        return { success: true, text, costUsd }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[ai:briefing] error', msg)
         return { success: false, error: msg }
       }
     }

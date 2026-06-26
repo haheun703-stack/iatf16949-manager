@@ -5,6 +5,7 @@ import { useDashboardStore } from '../../stores/dashboardStore'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 import { useDday } from '../../hooks/useDday'
 import { KpiStrip } from './KpiStrip'
+import { BriefingCard } from './BriefingCard'
 import { ScoreDistributionPanel } from './ScoreDistributionPanel'
 import { RecentScoresPanel } from './RecentScoresPanel'
 import { NeedsAttentionList } from './NeedsAttentionList'
@@ -122,6 +123,8 @@ export function Dashboard(): JSX.Element {
           <span>대시보드 집계 실패: {error}</span>
         </div>
       )}
+
+      <BriefingCard />
 
       <KpiStrip />
 
