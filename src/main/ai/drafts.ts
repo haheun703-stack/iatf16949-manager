@@ -11,42 +11,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { getSqlite } from '../database/connection'
 import type Database from 'better-sqlite3'
+import type { DraftTargetKind, DraftStatus, DraftSourceRef, AiDraftDto } from '@shared/ipc-types'
 
-export type DraftTargetKind = 'form_entry' | 'case' | 'assignment' | 'schedule' | 'sq_self'
-export type DraftStatus = 'proposed' | 'approved' | 'rejected' | 'superseded' | 'expired'
-
-export interface SourceRef {
-  kind: string // clause|sq_item|form_def|entry|case …
-  key: string
-  quote_short?: string
-}
+export type { DraftTargetKind, DraftStatus, AiDraftDto } from '@shared/ipc-types'
+export type SourceRef = DraftSourceRef // 하위호환(tools.ts)
 
 export interface CreateDraftInput {
   targetKind: DraftTargetKind
   targetKey?: string | null
   payload: unknown
   rationale?: string | null
-  sourceRefs?: SourceRef[]
+  sourceRefs?: DraftSourceRef[]
   confidence?: number | null
   model?: string | null
-}
-
-export interface AiDraftDto {
-  id: number
-  targetKind: DraftTargetKind
-  targetKey: string | null
-  payload: unknown
-  rationale: string | null
-  sourceRefs: SourceRef[]
-  confidence: number | null
-  status: DraftStatus
-  createdBy: string
-  model: string | null
-  createdAt: string
-  decidedBy: string | null
-  decidedAt: string | null
-  decidedNote: string | null
-  appliedRef: string | null
 }
 
 export interface LogActionInput {

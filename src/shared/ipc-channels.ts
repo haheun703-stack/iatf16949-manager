@@ -66,6 +66,11 @@ export const IPC_CHANNELS = {
   // AI 레이어 (Phase C2) — 매일 브리핑(규칙엔진 사실 + AI 요약)
   AI_BRIEFING_FACTS: 'ai:briefingFacts',
   AI_BRIEFING_SUMMARIZE: 'ai:briefingSummarize',
+  // AI 레이어 (Phase D) — 캡처→초안→결재
+  AI_STRUCTURE_CAPTURE: 'ai:structureCapture',
+  AI_DRAFT_LIST: 'ai:draftList',
+  AI_DRAFT_APPROVE: 'ai:draftApprove',
+  AI_DRAFT_REJECT: 'ai:draftReject',
 
   // AI 작성가이드 + 채점 (v5 Stage 2)
   AI_GENERATE_GUIDE: 'ai:generateGuide',

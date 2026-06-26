@@ -1,12 +1,14 @@
-import { Bell, Settings, Building2, PanelLeftClose, PanelLeft, Sparkles } from 'lucide-react'
+import { Bell, Settings, Building2, PanelLeftClose, PanelLeft, Sparkles, Wand2 } from 'lucide-react'
 import { DdayBadge } from '../shared/DdayBadge'
 import { useUIStore } from '../../stores/uiStore'
 import { useCopilotStore } from '../../stores/copilotStore'
+import { useAiAuthorStore } from '../../stores/aiAuthorStore'
 
 export function TopBar(): JSX.Element {
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
   const toggleCopilot = useCopilotStore((s) => s.toggle)
   const copilotOpen = useCopilotStore((s) => s.open)
+  const toggleAuthor = useAiAuthorStore((s) => s.toggle)
 
   return (
     <header className="h-14 bg-card border-b border-border flex items-center justify-between px-5 shrink-0">
@@ -31,6 +33,16 @@ export function TopBar(): JSX.Element {
 
       <div className="flex items-center gap-3">
         <DdayBadge />
+        <button
+          type="button"
+          onClick={toggleAuthor}
+          aria-label="AI 초안 작성"
+          title="AI 초안 작성 — 메모를 공식 양식 초안으로(결재 필요)"
+          className="h-8 px-2.5 rounded-md flex items-center gap-1.5 text-[12px] font-semibold border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors"
+        >
+          <Wand2 className="w-3.5 h-3.5" />
+          AI 작성
+        </button>
         <button
           type="button"
           onClick={toggleCopilot}

@@ -303,6 +303,39 @@ export interface BriefingSummarizeResponse {
   error?: string
 }
 
+// ===== AI 레이어 (Phase A2/D) — draft→결재 =====
+export type DraftTargetKind = 'form_entry' | 'case' | 'assignment' | 'schedule' | 'sq_self'
+export type DraftStatus = 'proposed' | 'approved' | 'rejected' | 'superseded' | 'expired'
+export interface DraftSourceRef {
+  kind: string
+  key: string
+  quote_short?: string
+}
+export interface AiDraftDto {
+  id: number
+  targetKind: DraftTargetKind
+  targetKey: string | null
+  payload: unknown
+  rationale: string | null
+  sourceRefs: DraftSourceRef[]
+  confidence: number | null
+  status: DraftStatus
+  createdBy: string
+  model: string | null
+  createdAt: string
+  decidedBy: string | null
+  decidedAt: string | null
+  decidedNote: string | null
+  appliedRef: string | null
+}
+export interface StructureCaptureResponse {
+  success: boolean
+  draft?: AiDraftDto | null
+  aiText?: string
+  captureId?: number
+  error?: string
+}
+
 // ===== AI 작성가이드 + 채점 (v5 Stage 2) =====
 
 /** 양식별 AI 작성 가이드 — "이 양식을 왜·어떻게 써야 심사를 통과하는가". */
@@ -957,6 +990,22 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.AI_BRIEFING_SUMMARIZE]: {
     request: { facts: BriefingFacts }
     response: BriefingSummarizeResponse
+  }
+  [IPC_CHANNELS.AI_STRUCTURE_CAPTURE]: {
+    request: { memo: string; formCode: string }
+    response: StructureCaptureResponse
+  }
+  [IPC_CHANNELS.AI_DRAFT_LIST]: {
+    request: { status?: DraftStatus }
+    response: AiDraftDto[]
+  }
+  [IPC_CHANNELS.AI_DRAFT_APPROVE]: {
+    request: { id: number; editedPayload?: unknown }
+    response: { success: boolean; appliedRef?: string; error?: string }
+  }
+  [IPC_CHANNELS.AI_DRAFT_REJECT]: {
+    request: { id: number; note?: string }
+    response: { success: boolean; error?: string }
   }
   [IPC_CHANNELS.AI_GENERATE_GUIDE]: {
     request: { formCode: string; force?: boolean }

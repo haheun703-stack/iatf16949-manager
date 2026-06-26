@@ -4,14 +4,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
+import { getSqlite } from '../database/connection'
 import { aiCall } from '../ai/gateway'
 import { computeBriefingFacts, summarizeBriefing } from '../ai/briefing'
+import { structureCapture } from '../ai/author'
+import { listDrafts, applyDraft, rejectDraft } from '../ai/drafts'
 import type {
   CopilotAskRequest,
   CopilotAskResponse,
   BriefingFacts,
-  BriefingSummarizeResponse
+  BriefingSummarizeResponse,
+  StructureCaptureResponse,
+  AiDraftDto,
+  DraftStatus
 } from '@shared/ipc-types'
+
+function currentUser(): string {
+  try {
+    const r = getSqlite()
+      .prepare("SELECT value FROM company_profile WHERE key = 'defaultAuthor'")
+      .get() as { value: string } | undefined
+    return r?.value || '사용자'
+  } catch {
+    return '사용자'
+  }
+}
 
 const COPILOT_SYSTEM = `당신은 TPC(2공장 AM사업부)의 IATF 16949 품질경영시스템 데이터 어시스턴트입니다.
 - 우리 데이터로만 답합니다. 먼저 search_knowledge 로 근거(조항 clause·SQ항목 sq_item·양식 form_def·케이스 case·프로세스 process)를 찾고, 필요하면 get_form_definition·get_open_cases·get_document_bom 으로 사실을 조회하세요.
@@ -73,5 +90,40 @@ export function registerAiHandlers(): void {
         return { success: false, error: msg }
       }
     }
+  )
+
+  // ──── D: 캡처 구조화 → 양식 초안 제안(ai_drafts) ────
+  ipcMain.handle(
+    IPC_CHANNELS.AI_STRUCTURE_CAPTURE,
+    async (_event, { memo, formCode }: { memo: string; formCode: string }): Promise<StructureCaptureResponse> => {
+      try {
+        if (!memo || !memo.trim()) return { success: false, error: '메모가 비어 있습니다.' }
+        const { draft, aiText, captureId } = await structureCapture(memo.trim(), formCode)
+        return { success: true, draft, aiText, captureId }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[ai:structureCapture] error', msg)
+        return { success: false, error: msg }
+      }
+    }
+  )
+
+  // ──── D: 초안 목록 ────
+  ipcMain.handle(
+    IPC_CHANNELS.AI_DRAFT_LIST,
+    (_event, { status }: { status?: DraftStatus } = {}): AiDraftDto[] => listDrafts({ status })
+  )
+
+  // ──── D: 초안 승인(결재) → 공식 테이블 반영 ────
+  ipcMain.handle(
+    IPC_CHANNELS.AI_DRAFT_APPROVE,
+    (_event, { id, editedPayload }: { id: number; editedPayload?: unknown }) =>
+      applyDraft(id, currentUser(), editedPayload !== undefined ? { editedPayload } : {})
+  )
+
+  // ──── D: 초안 거절 ────
+  ipcMain.handle(
+    IPC_CHANNELS.AI_DRAFT_REJECT,
+    (_event, { id, note }: { id: number; note?: string }) => rejectDraft(id, currentUser(), note)
   )
 }
