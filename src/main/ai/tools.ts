@@ -10,6 +10,7 @@
 import { z } from 'zod'
 import { getSqlite } from '../database/connection'
 import { createDraft, type SourceRef } from './drafts'
+import { searchKnowledge, type KbKind } from './kb'
 
 export interface AiTool {
   name: string
@@ -73,16 +74,21 @@ const getDocumentBom: AiTool = {
   }
 }
 
-const searchKnowledge: AiTool = {
+const KB_KINDS = ['clause', 'sq_item', 'form_def', 'case', 'process'] as const
+const searchKnowledgeTool: AiTool = {
   name: 'search_knowledge',
-  description: '우리 데이터(조항·SQ·양식·과거기록)에서 근거를 검색한다. 근거 없으면 빈 결과.',
+  description:
+    '우리 데이터(조항 clause·SQ항목 sq_item·양식정의 form_def·과거케이스 case·프로세스 process)에서 근거를 검색한다. 결과의 ref_key 를 source_refs 로 인용할 것. 근거 없으면 빈 결과.',
   kind: 'read',
-  input: z.object({ query: z.string(), k: z.number().optional() }),
-  // B단계(FTS5/임베딩)에서 실제 검색으로 교체. 그 전까지는 근거 없음을 정직히 반환.
-  handler: ({ query }) => ({
-    results: [],
-    note: `근거 검색(search_knowledge)은 Phase B(FTS5)에서 구현 예정. 현재 "${String(query)}"에 대한 근거 없음.`
-  })
+  input: z.object({
+    query: z.string(),
+    k: z.number().optional(),
+    kind: z.enum(KB_KINDS).optional()
+  }),
+  handler: ({ query, k, kind }) => {
+    const hits = searchKnowledge(String(query), typeof k === 'number' ? k : 6, kind as KbKind | undefined)
+    return { results: hits, note: hits.length ? undefined : '해당 질의에 대한 근거 없음(우리 데이터에서 미발견).' }
+  }
 }
 
 // ── DRAFT 도구 (ai_drafts 에만 INSERT) ────────────────────────────────────────
@@ -194,7 +200,7 @@ const proposeSqSelfScore = draftTool(
 )
 
 // ── 레지스트리 ────────────────────────────────────────────────────────────────
-export const READ_TOOLS: AiTool[] = [getFormDefinition, getOpenCases, getDocumentBom, searchKnowledge]
+export const READ_TOOLS: AiTool[] = [getFormDefinition, getOpenCases, getDocumentBom, searchKnowledgeTool]
 export const DRAFT_TOOLS: AiTool[] = [
   proposeFormEntry,
   proposeCase,

@@ -4,6 +4,7 @@ import { runMigrations } from './database/migrate'
 import { seedDatabase } from './database/seed'
 import { registerAllIpcHandlers } from './ipc/register'
 import { closeDatabase } from './database/connection'
+import { reindexKb } from './ai/kb'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -59,6 +60,14 @@ app.whenReady().then(() => {
   // Initialize database
   runMigrations()
   seedDatabase()
+
+  // AI 지식 인덱스(FTS5) 재색인 — 코퍼스가 작아 기동 시 전체 재색인. 실패해도 앱은 계속.
+  try {
+    const { chunks } = reindexKb()
+    console.log(`[kb] reindexed ${chunks} chunks`)
+  } catch (err) {
+    console.warn('[kb] reindex 실패(검색 비활성):', (err as Error).message)
+  }
 
   // Register IPC handlers
   registerAllIpcHandlers()
