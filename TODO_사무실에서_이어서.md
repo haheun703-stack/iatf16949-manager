@@ -3,7 +3,25 @@
 > **📋 이번 세션(6/25) 핸드오프 보고서+지시서 = [docs/핸드오프_2026-06-25_양식출력엔진.md](docs/핸드오프_2026-06-25_양식출력엔진.md)**
 > 양식 출력엔진(방향B) 작업을 이어받을 땐 **그 문서부터** 읽을 것. 완료보고·자산위치·다음지시·함정 전부 정리됨.
 
-## 🌅 내일(다음) 1순위 — 정본 PDF 학습 + "쉬운 작성" 전환
+## 🤖 6/26 저녁 — AI 레이어 A→E1 전부 완료 (최신 · 콜드스타트 1순위)
+
+> 설계서 `05_AI레이어_구현플랜`(claude.ai 제공) 채택, 전제교정(pack 뺌·기존 src/main/ai 흡수·벡터→FTS5). origin HEAD `6c8e479`.
+
+**한 세션에 AI 레이어 "첫 2주" 전부 라이브** (마이그 0037~0039, 파일 `src/main/ai/{drafts,tools,gateway,kb,briefing,author,readiness}.ts` + `ipc/ai-handlers.ts`):
+- **A 레일** (0037 ai_drafts/ai_actions): AI 쓰기는 ai_drafts에만 → 사람 approve로만 공식테이블 commit → ai_actions 감사. 게이트웨이(gateway.ts tool-use루프·캐싱·재시도·비용로깅) + 도구레지스트리(tools.ts read4/draft5, zod).
+- **B 그라운딩** (0038 kb_chunks+kb_fts trigram): reindex 285청크(규정·SQ·양식·케이스·프로세스). searchKnowledge 하이브리드(FTS+다중어LIKE). 기동 시 reindex.
+- **C1 코파일럿**(GlobalCopilot, TopBar ✨버튼): 우리 데이터 자연어 Q&A, 근거칩, read-only.
+- **C2 브리핑**(BriefingCard, Dashboard): 마감초과/임박·심사Dday·SQ증빙누락 신호등 + AI요약.
+- **D 캡처→초안→결재**(AiAuthorModal, TopBar 🪄버튼): 메모→AI가 B2100-01 등 초안→검토→승인(form_submission). raw_captures(0039).
+- **E1 SQ 심사예측**(ReadinessCard, Dashboard): 결정론 점수(현재 65/1000)+손실항목+AI진단·우선순위.
+
+**검증**: 전부 typecheck node+web + 헤드리스 end-to-end(실제 Claude+실제 데이터, 환각0) + 라이브 기동(0037~0039 적용·285청크). **⚠️ 런타임 UI 클릭(코파일럿·브리핑·AI작성·심사예측 4버튼)은 사용자 스팟체크 남음.**
+
+**다음 후보**: 시크릿 회수 — **#4 부재감지 일반화(갭지도→expectedSet 룰엔진=F1, 추천1순위)** / #2 수용률 플라이휠 UI(ai_drafts.edit_diff 집계) / G 제품화(라이선스·비용대시보드) / 또는 양식 더 표준화해 실제 SQ점수↑. 상세=repo `05_AI레이어_구현플랜.md`(있으면) + 아래 정본PDF 블록(미반영분 #2 연결고리·#3 빈규정27 양식수집은 여전히 유효).
+
+---
+
+## 🌅 (이전) 정본 PDF 학습 + "쉬운 작성" 전환
 
 **맥락(사용자 피드백)**: 뷰어로는 좋은데 **실제 작성 도구로는 불편/부족**하다. 핵심 니즈 =
 ① 정본 PDF를 읽어 도메인 정확도·연결고리 업데이트 ② 작성 편하게(노션/엑셀 복붙) ③ MES 자료 복붙→CSV→항목 자동분배 ④ 중간 이미지 삽입.
