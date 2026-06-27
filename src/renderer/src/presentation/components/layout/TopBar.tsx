@@ -1,14 +1,16 @@
-import { Bell, Settings, Building2, PanelLeftClose, PanelLeft, Sparkles, Wand2 } from 'lucide-react'
+import { Bell, Settings, Building2, PanelLeftClose, PanelLeft, Sparkles, Wand2, Search } from 'lucide-react'
 import { DdayBadge } from '../shared/DdayBadge'
 import { useUIStore } from '../../stores/uiStore'
 import { useCopilotStore } from '../../stores/copilotStore'
 import { useAiAuthorStore } from '../../stores/aiAuthorStore'
+import { useSimilarStore } from '../../stores/similarStore'
 
 export function TopBar(): JSX.Element {
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
   const toggleCopilot = useCopilotStore((s) => s.toggle)
   const copilotOpen = useCopilotStore((s) => s.open)
   const toggleAuthor = useAiAuthorStore((s) => s.toggle)
+  const toggleSimilar = useSimilarStore((s) => s.toggle)
 
   return (
     <header className="h-14 bg-card border-b border-border flex items-center justify-between px-5 shrink-0">
@@ -42,6 +44,16 @@ export function TopBar(): JSX.Element {
         >
           <Wand2 className="w-3.5 h-3.5" />
           AI 작성
+        </button>
+        <button
+          type="button"
+          onClick={toggleSimilar}
+          aria-label="유사 사례·대책"
+          title="유사 사례·대책 — 과거 불량 검색 + 5Why·재발방지"
+          className="h-8 px-2.5 rounded-md flex items-center gap-1.5 text-[12px] font-semibold border border-blue-300 text-blue-700 hover:bg-blue-50 transition-colors"
+        >
+          <Search className="w-3.5 h-3.5" />
+          유사사례
         </button>
         <button
           type="button"

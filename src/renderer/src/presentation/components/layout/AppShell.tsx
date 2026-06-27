@@ -12,6 +12,7 @@ import { ComingSoon } from '../shared/ComingSoon'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
+import { SimilarCaseModal } from '../copilot/SimilarCaseModal'
 
 export function AppShell(): JSX.Element {
   const { currentPage } = useUIStore()
@@ -45,6 +46,7 @@ export function AppShell(): JSX.Element {
       </div>
       <GlobalCopilot />
       <AiAuthorModal />
+      <SimilarCaseModal />
     </div>
   )
 }

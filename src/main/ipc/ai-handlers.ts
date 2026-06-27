@@ -12,6 +12,7 @@ import { listDrafts, applyDraft, rejectDraft, getDraftStats } from '../ai/drafts
 import { predictReadiness, explainReadiness } from '../ai/readiness'
 import { computeExpectedSet, explainAbsence } from '../ai/absence'
 import { mockAudit } from '../ai/mockaudit'
+import { analyzeSimilar } from '../ai/similar'
 import type {
   CopilotAskRequest,
   CopilotAskResponse,
@@ -184,6 +185,19 @@ export function registerAiHandlers(): void {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('[ai:mockAudit] error', msg)
+      return { success: false, error: msg }
+    }
+  })
+
+  // ──── E2: 유사 케이스 + 8D/5Why 초안 ────
+  ipcMain.handle(IPC_CHANNELS.AI_SIMILAR_CASES, async (_event, { defect }: { defect: string }) => {
+    try {
+      if (!defect || !defect.trim()) return { success: false, error: '불량 내용이 비어 있습니다.' }
+      const result = await analyzeSimilar(defect.trim())
+      return { success: true, result }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[ai:similarCases] error', msg)
       return { success: false, error: msg }
     }
   })

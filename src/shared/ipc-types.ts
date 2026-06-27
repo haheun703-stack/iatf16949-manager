@@ -427,6 +427,26 @@ export interface MockAuditResponse {
   error?: string
 }
 
+// ===== AI 레이어 (Phase E2) — 유사 케이스 + 8D/5Why 초안 =====
+export interface SimilarCase {
+  caseNo: string
+  title: string
+  customer: string | null
+  partName: string | null
+  defectDesc: string | null
+  occurredDate: string | null
+}
+export interface SimilarCaseResult {
+  similar: SimilarCase[]
+  analysis: string // AI 5Why 원인 + 재발방지 대책
+  costUsd: number | null
+}
+export interface SimilarCaseResponse {
+  success: boolean
+  result?: SimilarCaseResult
+  error?: string
+}
+
 // ===== AI 작성가이드 + 채점 (v5 Stage 2) =====
 
 /** 양식별 AI 작성 가이드 — "이 양식을 왜·어떻게 써야 심사를 통과하는가". */
@@ -1121,6 +1141,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.AI_MOCK_AUDIT]: {
     request: { sqItemKey: string }
     response: MockAuditResponse
+  }
+  [IPC_CHANNELS.AI_SIMILAR_CASES]: {
+    request: { defect: string }
+    response: SimilarCaseResponse
   }
   [IPC_CHANNELS.AI_GENERATE_GUIDE]: {
     request: { formCode: string; force?: boolean }
