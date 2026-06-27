@@ -78,6 +78,8 @@ export const IPC_CHANNELS = {
   // AI 레이어 (Phase F1) — 부재 감지(expected-set)
   AI_ABSENCE_CHECK: 'ai:absenceCheck',
   AI_ABSENCE_EXPLAIN: 'ai:absenceExplain',
+  // AI 레이어 (Phase E3) — 모의 심사
+  AI_MOCK_AUDIT: 'ai:mockAudit',
 
   // AI 작성가이드 + 채점 (v5 Stage 2)
   AI_GENERATE_GUIDE: 'ai:generateGuide',

@@ -409,6 +409,24 @@ export interface AbsenceExplainResponse {
   error?: string
 }
 
+// ===== AI 레이어 (Phase E3) — 모의 심사(AI가 심사원) =====
+export interface MockAuditResult {
+  itemCode: string
+  itemTitle: string
+  category: string
+  points: number
+  formCount: number
+  submittedCount: number
+  expectedDocCount: number
+  text: string // AI 모의심사(예상질문 + 증빙 판정)
+  costUsd: number | null
+}
+export interface MockAuditResponse {
+  success: boolean
+  result?: MockAuditResult
+  error?: string
+}
+
 // ===== AI 작성가이드 + 채점 (v5 Stage 2) =====
 
 /** 양식별 AI 작성 가이드 — "이 양식을 왜·어떻게 써야 심사를 통과하는가". */
@@ -1099,6 +1117,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.AI_ABSENCE_EXPLAIN]: {
     request: { check: AbsenceCheck }
     response: AbsenceExplainResponse
+  }
+  [IPC_CHANNELS.AI_MOCK_AUDIT]: {
+    request: { sqItemKey: string }
+    response: MockAuditResponse
   }
   [IPC_CHANNELS.AI_GENERATE_GUIDE]: {
     request: { formCode: string; force?: boolean }

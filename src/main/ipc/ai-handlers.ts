@@ -11,6 +11,7 @@ import { structureCapture } from '../ai/author'
 import { listDrafts, applyDraft, rejectDraft, getDraftStats } from '../ai/drafts'
 import { predictReadiness, explainReadiness } from '../ai/readiness'
 import { computeExpectedSet, explainAbsence } from '../ai/absence'
+import { mockAudit } from '../ai/mockaudit'
 import type {
   CopilotAskRequest,
   CopilotAskResponse,
@@ -174,4 +175,16 @@ export function registerAiHandlers(): void {
       }
     }
   )
+
+  // ──── E3: 모의 심사(AI가 심사원) ────
+  ipcMain.handle(IPC_CHANNELS.AI_MOCK_AUDIT, async (_event, { sqItemKey }: { sqItemKey: string }) => {
+    try {
+      const result = await mockAudit(sqItemKey)
+      return { success: true, result }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[ai:mockAudit] error', msg)
+      return { success: false, error: msg }
+    }
+  })
 }
