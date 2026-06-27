@@ -7,6 +7,7 @@ import { useDday } from '../../hooks/useDday'
 import { KpiStrip } from './KpiStrip'
 import { BriefingCard } from './BriefingCard'
 import { ReadinessCard } from './ReadinessCard'
+import { AbsenceCard } from './AbsenceCard'
 import { ScoreDistributionPanel } from './ScoreDistributionPanel'
 import { RecentScoresPanel } from './RecentScoresPanel'
 import { NeedsAttentionList } from './NeedsAttentionList'
@@ -129,6 +130,8 @@ export function Dashboard(): JSX.Element {
         <BriefingCard />
         <ReadinessCard />
       </div>
+
+      <AbsenceCard />
 
       <KpiStrip />
 

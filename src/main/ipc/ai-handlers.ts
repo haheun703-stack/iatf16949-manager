@@ -10,6 +10,7 @@ import { computeBriefingFacts, summarizeBriefing } from '../ai/briefing'
 import { structureCapture } from '../ai/author'
 import { listDrafts, applyDraft, rejectDraft } from '../ai/drafts'
 import { predictReadiness, explainReadiness } from '../ai/readiness'
+import { computeExpectedSet, explainAbsence } from '../ai/absence'
 import type {
   CopilotAskRequest,
   CopilotAskResponse,
@@ -19,7 +20,9 @@ import type {
   AiDraftDto,
   DraftStatus,
   ReadinessPrediction,
-  ReadinessExplainResponse
+  ReadinessExplainResponse,
+  AbsenceCheck,
+  AbsenceExplainResponse
 } from '@shared/ipc-types'
 
 function currentUser(): string {
@@ -143,6 +146,27 @@ export function registerAiHandlers(): void {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[ai:readiness] error', msg)
+        return { success: false, error: msg }
+      }
+    }
+  )
+
+  // ──── F1: 부재 감지(결정론, 무API) ────
+  ipcMain.handle(
+    IPC_CHANNELS.AI_ABSENCE_CHECK,
+    (_event, { triggerKey }: { triggerKey: string }): AbsenceCheck => computeExpectedSet(getSqlite(), triggerKey)
+  )
+
+  // ──── F1: AI 진단(영향 연쇄·우선순위, 온디맨드) ────
+  ipcMain.handle(
+    IPC_CHANNELS.AI_ABSENCE_EXPLAIN,
+    async (_event, { check }: { check: AbsenceCheck }): Promise<AbsenceExplainResponse> => {
+      try {
+        const { text, costUsd } = await explainAbsence(check)
+        return { success: true, text, costUsd }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[ai:absence] error', msg)
         return { success: false, error: msg }
       }
     }

@@ -359,6 +359,39 @@ export interface ReadinessExplainResponse {
   error?: string
 }
 
+// ===== AI 레이어 (Phase F1) — 부재 감지(expected-set) =====
+export interface AbsenceTrigger {
+  key: string
+  label: string
+  description: string
+}
+export const ABSENCE_TRIGGERS: AbsenceTrigger[] = [
+  { key: '4m_change', label: '4M 변경', description: '사람·설비·자재·방법 변경 시 개정해야 할 양식' },
+  { key: 'new_mp', label: '신규 양산(PPAP)', description: '신규 양산 승인에 필요한 양식' },
+  { key: 'customer_claim', label: '고객 클레임/부적합', description: '고객 불만·부적합 발생 시 필요한 양식' }
+]
+export type AbsenceStatus = 'ok' | 'unwritten' | 'missing'
+export interface AbsenceItem {
+  regCode: string
+  expected: string // 기대 산출물 설명
+  formCount: number
+  submittedForms: number
+  status: AbsenceStatus // ok=작성됨 / unwritten=양식있으나 미작성 / missing=양식자체 없음
+  sampleForm: string | null
+}
+export interface AbsenceCheck {
+  triggerKey: string
+  triggerLabel: string
+  items: AbsenceItem[]
+  summary: { total: number; ok: number; unwritten: number; missing: number }
+}
+export interface AbsenceExplainResponse {
+  success: boolean
+  text?: string
+  costUsd?: number | null
+  error?: string
+}
+
 // ===== AI 작성가이드 + 채점 (v5 Stage 2) =====
 
 /** 양식별 AI 작성 가이드 — "이 양식을 왜·어떻게 써야 심사를 통과하는가". */
@@ -1037,6 +1070,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.AI_READINESS_EXPLAIN]: {
     request: { prediction: ReadinessPrediction }
     response: ReadinessExplainResponse
+  }
+  [IPC_CHANNELS.AI_ABSENCE_CHECK]: {
+    request: { triggerKey: string }
+    response: AbsenceCheck
+  }
+  [IPC_CHANNELS.AI_ABSENCE_EXPLAIN]: {
+    request: { check: AbsenceCheck }
+    response: AbsenceExplainResponse
   }
   [IPC_CHANNELS.AI_GENERATE_GUIDE]: {
     request: { formCode: string; force?: boolean }
