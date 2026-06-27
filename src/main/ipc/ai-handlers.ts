@@ -8,7 +8,7 @@ import { getSqlite } from '../database/connection'
 import { aiCall } from '../ai/gateway'
 import { computeBriefingFacts, summarizeBriefing } from '../ai/briefing'
 import { structureCapture } from '../ai/author'
-import { listDrafts, applyDraft, rejectDraft } from '../ai/drafts'
+import { listDrafts, applyDraft, rejectDraft, getDraftStats } from '../ai/drafts'
 import { predictReadiness, explainReadiness } from '../ai/readiness'
 import { computeExpectedSet, explainAbsence } from '../ai/absence'
 import type {
@@ -132,6 +132,9 @@ export function registerAiHandlers(): void {
     IPC_CHANNELS.AI_DRAFT_REJECT,
     (_event, { id, note }: { id: number; note?: string }) => rejectDraft(id, currentUser(), note)
   )
+
+  // ──── #2/G2: 수용률 플라이휠 + 비용 지표 ────
+  ipcMain.handle(IPC_CHANNELS.AI_DRAFT_STATS, () => getDraftStats())
 
   // ──── E1: SQ 준비도 예측(결정론, 무API) ────
   ipcMain.handle(IPC_CHANNELS.AI_READINESS_PREDICT, (): ReadinessPrediction => predictReadiness())

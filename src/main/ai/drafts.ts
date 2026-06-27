@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { getSqlite } from '../database/connection'
 import type Database from 'better-sqlite3'
-import type { DraftTargetKind, DraftStatus, DraftSourceRef, AiDraftDto } from '@shared/ipc-types'
+import type { DraftTargetKind, DraftStatus, DraftSourceRef, AiDraftDto, DraftStats } from '@shared/ipc-types'
 
 export type { DraftTargetKind, DraftStatus, AiDraftDto } from '@shared/ipc-types'
 export type SourceRef = DraftSourceRef // 하위호환(tools.ts)
@@ -136,6 +136,17 @@ export function listDrafts(
   return (db.prepare(sql).all(...params) as Array<Record<string, unknown>>).map(rowToDto)
 }
 
+// 사람이 수정한 필드 diff(form_entry: values 비교). 변경 없으면 null.
+function computeEditDiff(original: Record<string, unknown>, edited: Record<string, unknown>): string | null {
+  const ov = (original.values ?? original) as Record<string, unknown>
+  const ev = (edited.values ?? edited) as Record<string, unknown>
+  const diff: Record<string, { from: unknown; to: unknown }> = {}
+  for (const k of new Set([...Object.keys(ov || {}), ...Object.keys(ev || {})])) {
+    if (JSON.stringify(ov?.[k] ?? '') !== JSON.stringify(ev?.[k] ?? '')) diff[k] = { from: ov?.[k] ?? '', to: ev?.[k] ?? '' }
+  }
+  return Object.keys(diff).length ? JSON.stringify(diff) : null
+}
+
 // ── target_kind 별 공식 테이블 반영기 ───────────────────────────────────────────
 // 반영 후 식별 문자열("table:id")을 반환. payload 검증은 보수적으로(필수 필드 없으면 throw).
 function applyByKind(
@@ -207,10 +218,10 @@ export function applyDraft(
   if (draft.status !== 'proposed') return { success: false, error: `이미 처리된 제안입니다(status=${draft.status}).` }
 
   const kind = draft.target_kind as DraftTargetKind
-  const payload =
-    opts.editedPayload !== undefined
-      ? (opts.editedPayload as Record<string, unknown>)
-      : parseJson<Record<string, unknown>>(draft.payload_json, {})
+  const original = parseJson<Record<string, unknown>>(draft.payload_json, {})
+  const payload = opts.editedPayload !== undefined ? (opts.editedPayload as Record<string, unknown>) : original
+  // 수용률 플라이휠(#2): 사람이 수정 후 승인하면 변경 필드를 edit_diff 로 적재(자동).
+  const editDiff = opts.editDiff ?? (opts.editedPayload !== undefined ? computeEditDiff(original, payload) : null)
 
   try {
     const run = db.transaction(() => {
@@ -223,7 +234,7 @@ export function applyDraft(
       ).run(
         approver,
         new Date().toISOString(),
-        opts.editDiff ?? null,
+        editDiff,
         appliedRef,
         JSON.stringify(payload),
         id
@@ -253,4 +264,63 @@ export function rejectDraft(
   ).run(approver, new Date().toISOString(), note ?? null, id)
   logAction({ actor: 'human', action: 'reject', draftId: id }, db)
   return { success: true }
+}
+
+/** 수용률 플라이휠 지표(#2) + AI 비용(G2). 모두 결정론 집계(무API). */
+export function getDraftStats(db: Database.Database = getSqlite()): DraftStats {
+  const rows = db
+    .prepare('SELECT status, edit_diff, target_kind, target_key FROM ai_drafts')
+    .all() as Array<{ status: string; edit_diff: string | null; target_kind: string; target_key: string | null }>
+
+  let proposed = 0
+  let approved = 0
+  let approvedEdited = 0
+  let rejected = 0
+  const byForm = new Map<string, { proposed: number; approved: number; rejected: number }>()
+
+  for (const d of rows) {
+    if (d.status === 'proposed') proposed++
+    else if (d.status === 'approved') {
+      approved++
+      if (d.edit_diff) approvedEdited++
+    } else if (d.status === 'rejected') rejected++
+
+    if (d.target_kind === 'form_entry' && d.target_key) {
+      const e = byForm.get(d.target_key) ?? { proposed: 0, approved: 0, rejected: 0 }
+      if (d.status === 'proposed') e.proposed++
+      else if (d.status === 'approved') e.approved++
+      else if (d.status === 'rejected') e.rejected++
+      byForm.set(d.target_key, e)
+    }
+  }
+  const decided = approved + rejected
+
+  const purposeRows = db
+    .prepare(
+      `SELECT COALESCE(purpose,'기타') AS purpose, COUNT(*) AS calls,
+              COALESCE(SUM(tokens_in),0) AS ti, COALESCE(SUM(tokens_out),0) AS too,
+              COALESCE(SUM(cost_usd),0) AS c
+       FROM ai_actions GROUP BY COALESCE(purpose,'기타') ORDER BY c DESC`
+    )
+    .all() as Array<{ purpose: string; calls: number; ti: number; too: number; c: number }>
+  const totals = db.prepare('SELECT COALESCE(SUM(cost_usd),0) AS c, COUNT(*) AS n FROM ai_actions').get() as {
+    c: number
+    n: number
+  }
+
+  return {
+    proposed,
+    approved,
+    approvedAsIs: approved - approvedEdited,
+    approvedEdited,
+    rejected,
+    acceptanceRate: decided ? approved / decided : null,
+    editRate: approved ? approvedEdited / approved : null,
+    byForm: [...byForm.entries()].map(([formCode, v]) => ({ formCode, ...v })),
+    cost: {
+      totalUsd: +totals.c.toFixed(4),
+      totalCalls: totals.n,
+      byPurpose: purposeRows.map((r) => ({ purpose: r.purpose, calls: r.calls, tokensIn: r.ti, tokensOut: r.too, costUsd: +r.c.toFixed(4) }))
+    }
+  }
 }

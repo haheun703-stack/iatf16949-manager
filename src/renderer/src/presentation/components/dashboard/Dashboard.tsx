@@ -8,6 +8,7 @@ import { KpiStrip } from './KpiStrip'
 import { BriefingCard } from './BriefingCard'
 import { ReadinessCard } from './ReadinessCard'
 import { AbsenceCard } from './AbsenceCard'
+import { FlywheelCard } from './FlywheelCard'
 import { ScoreDistributionPanel } from './ScoreDistributionPanel'
 import { RecentScoresPanel } from './RecentScoresPanel'
 import { NeedsAttentionList } from './NeedsAttentionList'
@@ -132,6 +133,7 @@ export function Dashboard(): JSX.Element {
       </div>
 
       <AbsenceCard />
+      <FlywheelCard />
 
       <KpiStrip />
 

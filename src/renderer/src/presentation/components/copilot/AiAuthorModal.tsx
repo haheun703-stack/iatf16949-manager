@@ -25,11 +25,12 @@ export function AiAuthorModal(): JSX.Element | null {
   const [aiText, setAiText] = useState('')
   const [def, setDef] = useState<FormDefinitionDto | null>(null)
   const [appliedRef, setAppliedRef] = useState('')
+  const [edited, setEdited] = useState<Record<string, string>>({})
 
   if (!open) return null
 
   const reset = (): void => {
-    setMode('input'); setMemo(''); setDraft(null); setAiText(''); setDef(null); setErr(null); setAppliedRef('')
+    setMode('input'); setMemo(''); setDraft(null); setAiText(''); setDef(null); setErr(null); setAppliedRef(''); setEdited({})
   }
   const close = (): void => { setOpen(false); reset() }
 
@@ -47,7 +48,10 @@ export function AiAuthorModal(): JSX.Element | null {
       const d = (await window.api.invoke(window.api.channels.FORM_GET_DEFINITION, {
         code: formCode
       })) as FormDefinitionDto | null
-      setDraft(res.draft); setAiText(res.aiText || ''); setDef(d); setMode('review')
+      const v = (res.draft.payload as { values?: Record<string, unknown> } | undefined)?.values ?? {}
+      const init: Record<string, string> = {}
+      for (const f of d?.fields ?? []) init[f.fieldKey] = String(v[f.fieldKey] ?? '')
+      setDraft(res.draft); setAiText(res.aiText || ''); setDef(d); setEdited(init); setMode('review')
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e))
     } finally {
@@ -59,9 +63,12 @@ export function AiAuthorModal(): JSX.Element | null {
     if (!draft || loading) return
     setLoading(true); setErr(null)
     try {
-      const res = (await window.api.invoke(window.api.channels.AI_DRAFT_APPROVE, { id: draft.id })) as {
-        success: boolean; appliedRef?: string; error?: string
-      }
+      // 사람이 수정한 값으로 결재 → applyDraft 가 원본 대비 edit_diff 자동 적재(수용률 플라이휠 #2)
+      const editedPayload = { ...(draft.payload as Record<string, unknown>), values: edited }
+      const res = (await window.api.invoke(window.api.channels.AI_DRAFT_APPROVE, {
+        id: draft.id,
+        editedPayload
+      })) as { success: boolean; appliedRef?: string; error?: string }
       if (res.success) { setAppliedRef(res.appliedRef || ''); setMode('done') }
       else setErr(res.error || '결재 반영 실패')
     } finally {
@@ -75,8 +82,9 @@ export function AiAuthorModal(): JSX.Element | null {
     reset()
   }
 
-  const values = (draft?.payload as { values?: Record<string, unknown> } | undefined)?.values ?? {}
-  const filledCount = def ? def.fields.filter((f) => String(values[f.fieldKey] ?? '').trim()).length : 0
+  const aiValues = (draft?.payload as { values?: Record<string, unknown> } | undefined)?.values ?? {}
+  const filledCount = def ? def.fields.filter((f) => (edited[f.fieldKey] ?? '').trim()).length : 0
+  const editedCount = def ? def.fields.filter((f) => (edited[f.fieldKey] ?? '') !== String(aiValues[f.fieldKey] ?? '')).length : 0
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={close}>
@@ -139,17 +147,36 @@ export function AiAuthorModal(): JSX.Element | null {
           {mode === 'review' && draft && (
             <div className="space-y-3">
               <div className="text-[12px] text-muted-foreground">
-                <span className="font-semibold text-foreground">{formCode}</span> 초안 · {def?.fields.length ?? 0}개 항목 중 <span className="font-semibold text-primary">{filledCount}개</span> 채움
+                <span className="font-semibold text-foreground">{formCode}</span> 초안 · {def?.fields.length ?? 0}개 중 <span className="font-semibold text-primary">{filledCount}개</span> 채움
+                {editedCount > 0 && <span className="text-amber-600"> · 수정 {editedCount}</span>} · <span className="text-[11px]">검토 후 고치고 승인하세요</span>
               </div>
               {aiText && <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-[12px] whitespace-pre-wrap">{aiText}</div>}
 
               <div className="rounded-lg border border-border divide-y divide-border">
                 {(def?.fields ?? []).map((f) => {
-                  const v = String(values[f.fieldKey] ?? '')
+                  const changed = (edited[f.fieldKey] ?? '') !== String(aiValues[f.fieldKey] ?? '')
+                  const long = f.type === 'textarea'
                   return (
-                    <div key={f.fieldKey} className="flex gap-3 px-3 py-2 text-[12px]">
-                      <div className="w-28 shrink-0 text-muted-foreground">{f.label}</div>
-                      <div className={`flex-1 whitespace-pre-wrap ${v ? '' : 'text-muted-foreground/50 italic'}`}>{v || '(비움)'}</div>
+                    <div key={f.fieldKey} className="flex gap-2 px-3 py-2 text-[12px] items-start">
+                      <div className="w-24 shrink-0 text-muted-foreground pt-1.5 flex items-center gap-1">
+                        {f.label}
+                        {changed && <span className="text-[9px] text-amber-600" title="AI 값에서 수정됨">✎</span>}
+                      </div>
+                      {long ? (
+                        <textarea
+                          value={edited[f.fieldKey] ?? ''}
+                          onChange={(e) => setEdited((s) => ({ ...s, [f.fieldKey]: e.target.value }))}
+                          rows={2}
+                          className={`flex-1 resize-none text-[12px] px-2 py-1 rounded border bg-background focus:outline-none focus:ring-1 focus:ring-primary ${changed ? 'border-amber-300' : 'border-border'}`}
+                        />
+                      ) : (
+                        <input
+                          value={edited[f.fieldKey] ?? ''}
+                          onChange={(e) => setEdited((s) => ({ ...s, [f.fieldKey]: e.target.value }))}
+                          placeholder="(비움)"
+                          className={`flex-1 text-[12px] px-2 py-1 rounded border bg-background focus:outline-none focus:ring-1 focus:ring-primary ${changed ? 'border-amber-300' : 'border-border'}`}
+                        />
+                      )}
                     </div>
                   )
                 })}

@@ -71,6 +71,7 @@ export const IPC_CHANNELS = {
   AI_DRAFT_LIST: 'ai:draftList',
   AI_DRAFT_APPROVE: 'ai:draftApprove',
   AI_DRAFT_REJECT: 'ai:draftReject',
+  AI_DRAFT_STATS: 'ai:draftStats',
   // AI 레이어 (Phase E1) — SQ 준비도 예측
   AI_READINESS_PREDICT: 'ai:readinessPredict',
   AI_READINESS_EXPLAIN: 'ai:readinessExplain',

@@ -336,6 +336,23 @@ export interface StructureCaptureResponse {
   error?: string
 }
 
+// ===== AI 레이어 (시크릿 #2/G2) — 수용률 플라이휠 + 비용 =====
+export interface DraftStats {
+  proposed: number
+  approved: number
+  approvedAsIs: number
+  approvedEdited: number
+  rejected: number
+  acceptanceRate: number | null // 승인/(승인+거절)
+  editRate: number | null // 수정승인/승인
+  byForm: Array<{ formCode: string; proposed: number; approved: number; rejected: number }>
+  cost: {
+    totalUsd: number
+    totalCalls: number
+    byPurpose: Array<{ purpose: string; calls: number; tokensIn: number; tokensOut: number; costUsd: number }>
+  }
+}
+
 // ===== AI 레이어 (Phase E1) — SQ 준비도 예측 =====
 export interface ReadinessRed {
   code: string
@@ -1062,6 +1079,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.AI_DRAFT_REJECT]: {
     request: { id: number; note?: string }
     response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.AI_DRAFT_STATS]: {
+    request: Record<string, never>
+    response: DraftStats
   }
   [IPC_CHANNELS.AI_READINESS_PREDICT]: {
     request: Record<string, never>
