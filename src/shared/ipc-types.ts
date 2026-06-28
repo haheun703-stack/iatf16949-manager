@@ -409,6 +409,88 @@ export interface AbsenceExplainResponse {
   error?: string
 }
 
+// ===== 품번/ISIR 척추 — 관리계획서(Control Plan) = 부품 단위 통제 =====
+/** 제출유형 라벨(저장값 → 표시). */
+export const ISIR_SUBMIT_TYPE_LABEL: Record<string, string> = {
+  agreement: '검사협정',
+  isir_new: 'ISIR 신규개발',
+  isir_change: 'ISIR 설계변경'
+}
+export interface PartListItem {
+  partNo: string
+  partName: string | null
+  customer: string | null
+  model: string | null
+  isirCount: number // 제출본 수
+  cpItemCount: number // 관리계획서 항목 수
+  defectCount: number // 불량 케이스 수
+}
+export interface IsirPackageDto {
+  id: number
+  revCode: string | null
+  revDate: string | null
+  submitType: string | null // agreement|isir_new|isir_change
+  submitTypeLabel: string
+  customerRecipient: string | null
+  ireRisk: string | null
+  qaManager: string | null
+  submittedAt: string | null
+}
+export interface IsirDocItemDto {
+  docNo: number
+  docName: string
+  required: boolean // 현재 제출유형 기준 필수
+  present: boolean // 제출(보유) 여부
+  status: 'ok' | 'missing' // 필수인데 미제출 = missing
+}
+export interface ControlPlanItemDto {
+  seq: number
+  processNo: string | null
+  processName: string | null
+  charKind: string | null // 제품|공정
+  controlItem: string | null // 관리항목(특성)
+  special: string | null
+  spec: string | null // 규격
+  method: string | null // 확인방법
+  frequency: string | null // 주기
+  controlMethod: string | null // 관리방안
+  reaction: string | null // 이상시 조치
+  note: string | null
+}
+/** ISIR 완비도(F1 ISIR판) — 결정론. submit_type 기준 필수 26종 대비 제출 + 관리계획서 커버리지. */
+export interface IsirCompleteness {
+  partNo: string
+  partName: string | null
+  pkg: IsirPackageDto | null
+  docs: IsirDocItemDto[]
+  cpItemCount: number
+  processCount: number
+  summary: { totalRequired: number; present: number; missing: number }
+}
+export interface IsirExplainResponse {
+  success: boolean
+  text?: string
+  costUsd?: number | null
+  error?: string
+}
+export interface PartDefectDto {
+  caseNo: string | null
+  title: string | null
+  defectDesc: string | null
+  occurredDate: string | null
+  status: string | null
+}
+export interface PartDetailDto {
+  partNo: string
+  partName: string | null
+  customer: string | null
+  model: string | null
+  plant: string | null
+  completeness: IsirCompleteness
+  controlPlan: ControlPlanItemDto[]
+  defects: PartDefectDto[]
+}
+
 // ===== AI 레이어 (Phase E3) — 모의 심사(AI가 심사원) =====
 export interface MockAuditResult {
   itemCode: string
@@ -1294,6 +1376,22 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.CASE_DISTRIBUTE]: {
     request: { id: number }
     response: CaseDistributeResult
+  }
+  [IPC_CHANNELS.PARTS_LIST]: {
+    request: void
+    response: PartListItem[]
+  }
+  [IPC_CHANNELS.PART_DETAIL]: {
+    request: { partNo: string }
+    response: PartDetailDto | null
+  }
+  [IPC_CHANNELS.AI_ISIR_COMPLETENESS]: {
+    request: { partNo: string }
+    response: IsirCompleteness
+  }
+  [IPC_CHANNELS.AI_ISIR_EXPLAIN]: {
+    request: { check: IsirCompleteness }
+    response: IsirExplainResponse
   }
 }
 

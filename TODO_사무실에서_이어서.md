@@ -1,9 +1,30 @@
-# TODO — 이어서 작업 (갱신: 2026-06-25)
+# TODO — 이어서 작업 (갱신: 2026-06-27)
 
 > **📋 이번 세션(6/25) 핸드오프 보고서+지시서 = [docs/핸드오프_2026-06-25_양식출력엔진.md](docs/핸드오프_2026-06-25_양식출력엔진.md)**
 > 양식 출력엔진(방향B) 작업을 이어받을 땐 **그 문서부터** 읽을 것. 완료보고·자산위치·다음지시·함정 전부 정리됨.
 
-## 🤖 6/26 저녁 — AI 레이어 A→E1 전부 완료 (최신 · 콜드스타트 1순위)
+## 🟢 6/27 — ISIR/관리계획서 척추 P1 완료 (최신 · 콜드스타트 1순위)
+
+> 도메인 통찰(사장님): **ISIR 서류(검사협정+관리계획서) = 모든 통제의 근간/통칭** — 고객과 "이렇게 관리하겠다" 협의한 문서묶음. SQ 공정감사가 이 ISIR을 근간으로 진행. 2nd 핵심 = 불량 개선대책서. 실 ISIR xlsx(현대위아 28237-2MAA1, 24시트 = 한 부품 통제패키지 전체, 모든 핵심시트가 ISIR제출용/공정감사용 쌍)를 까서 모델링. 플랜 = `C:\Users\ASUS\.claude\plans\encapsulated-greeting-lark.md`.
+
+**라이브 완료 (레퍼런스 1품번 28237-2MAA1, end-to-end)**:
+- **스키마** `0040_isir_spine.sql`: parts / isir_packages / isir_documents(26종 체크리스트) / control_plan_items(관리계획서 을 라인아이템). `0042`: isir_packages(part_no,rev_code) UNIQUE 방어.
+- **적재** `scripts/ingest-isir.py`(원본 읽기전용 파싱→표지26종+검사협정IRE+관리계획서을 행그룹핑) → `0041_isir_28237_2maa1.sql`. 결과 = ISIR 1·관리항목 110/31공정·불량 1(QC-2026-0001 자동조인).
+- **AI/IPC** `src/main/ai/isir.ts`(computeIsirCompleteness 결정론[설변기준 필수26중 미제출2=공정감사평가표·4M변경]/explainIsirGap AI) + `ipc/isir-handlers.ts`(PARTS_LIST/PART_DETAIL/AI_ISIR_COMPLETENESS/AI_ISIR_EXPLAIN) + `kb.ts` reindex 확장(control_plan110+part1 색인, FTS "포밍 외경"→28237-2MAA1#2 그라운딩OK).
+- **UI** 사이드바 '품번/ISIR'(PartsView/PartDetail/partsStore) + 대시보드 IsirCompletenessCard.
+- **검증**: typecheck(node+web)+빌드+실DB사본 통합+라이브 재시작(마이그 적용·396청크). **검수(독립 2에이전트+직접) 후 실결함 수정**: partsStore race가드(loadingDetail/동일품번 재선택 깜빡임), 0042 UNIQUE, 죽은 db param/cell()/글리프.
+
+**▶ 내일(6/28) — P2 (우선순위순)**:
+1. **런타임 임포트 UI** — 앱 안에서 xlsx 선택→파싱→DB 적재(빌드타임 python 마이그레이션 대체). ingest-isir.py 로직을 TS 포팅 or 파이프 호출.
+2. **다품번 배치 적재** — 현대위아/삼보 승인본 다수. ★이때 검수 이월결함 해결: ingest-isir.py를 **argv화**(SRC 하드코딩 제거)·**submit_type 추정 강화**(align 휴리스틱이 agreement 오분류·동률편향)·**공정/설비 forward-fill 견고화**(cur_equip 누수)·**분담 글리프 일반화**·**latestPackage를 rev_date 정렬로**(현재 id DESC).
+3. **cases ↔ parts FK** — 불량 이력 정합(현재 part_no 문자열 조인, 표기 정규화 미보증).
+4. **FMEA 상세표** — isir_fmea_items(공정FMEA 시트, RPN).
+5. **E1/E3 재정의** — 심사예측·모의심사를 일반양식(65/1000)이 아닌 **Control Plan 준수도** 기준으로.
+6. **정기검사(1번 폴더) 연결** + **관리항목 주기 vs 성적서 freshness 부재감지**(F1 ISIR판 심화).
+
+**검수 이월(저위험, P2에서 같이)**: PartsView 전체구독→셀렉터, IsirCompletenessCard PARTS_LIST 이중호출→store 단일화, PartDetail `it.special` truthy 명시화, 불필요 `as` 캐스팅. (zustand 무한루프 함정은 이번 추가분에 없음 확인.)
+
+## 🤖 6/26 저녁 — AI 레이어 A→E1 전부 완료
 
 > 설계서 `05_AI레이어_구현플랜`(claude.ai 제공) 채택, 전제교정(pack 뺌·기존 src/main/ai 흡수·벡터→FTS5). origin HEAD `6c8e479`.
 

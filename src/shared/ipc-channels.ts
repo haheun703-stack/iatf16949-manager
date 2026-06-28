@@ -121,6 +121,13 @@ export const IPC_CHANNELS = {
   SQ_READINESS: 'sq:readiness',
   SQ_ITEM_DETAIL: 'sq:itemDetail',
 
+  // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
+  PARTS_LIST: 'parts:list',
+  PART_DETAIL: 'parts:detail',
+  // ISIR 완비도(F1 ISIR판) — 결정론 점검 + AI 진단
+  AI_ISIR_COMPLETENESS: 'ai:isirCompleteness',
+  AI_ISIR_EXPLAIN: 'ai:isirExplain',
+
   // 사건중심 8D 워크플로우 (고객 불량 케이스)
   CASE_LIST: 'case:list',
   CASE_GET: 'case:get',

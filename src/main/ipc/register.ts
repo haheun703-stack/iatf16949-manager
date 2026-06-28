@@ -31,9 +31,11 @@ import { registerReportHandlers } from './report-handlers'
 import { registerSqHandlers } from './sq-handlers'
 import { registerCaseHandlers } from './case-handlers'
 import { registerAiHandlers } from './ai-handlers'
+import { registerIsirHandlers } from './isir-handlers'
 
 export function registerAllIpcHandlers(): void {
   registerAiHandlers()
+  registerIsirHandlers()
   registerFormHandlers()
   registerProcessHandlers()
   registerBomHandlers()

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, GitBranch, ListTree, Users, CalendarDays, Pencil, Check } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, GitBranch, ListTree, Users, CalendarDays, Pencil, Check, Package } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -14,6 +14,7 @@ interface MenuItem {
 const MENU: MenuItem[] = [
   { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '심사 D-Day 현황' },
   { id: 'sq-readiness', label: 'SQ 준비도', icon: ShieldCheck, desc: '42항목 심사 준비 현황' },
+  { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
   { id: 'case-work', label: '사건 작업', icon: AlertTriangle, desc: '고객 불량 8D 흐름' },
   { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '105 문서 · 405 양식' },
   { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '기본서 + 양식 작성' },

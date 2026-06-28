@@ -8,7 +8,7 @@
 import { getSqlite } from '../database/connection'
 import type Database from 'better-sqlite3'
 
-export type KbKind = 'clause' | 'sq_item' | 'form_def' | 'case' | 'process'
+export type KbKind = 'clause' | 'sq_item' | 'form_def' | 'case' | 'process' | 'control_plan' | 'part'
 
 function norm(s: unknown): string {
   return String(s ?? '')
@@ -72,6 +72,35 @@ export function reindexKb(db: Database.Database = getSqlite()): { chunks: number
       .prepare('SELECT process_code, title, scope, purpose FROM process_doc')
       .all() as Array<Record<string, string>>) {
       add('process', p.process_code, p.title, `${p.title} ${p.scope ?? ''} ${p.purpose ?? ''}`)
+    }
+
+    // part — 품번(품명/차종/고객) — ISIR 척추(0040~)
+    const hasTable = (t: string): boolean =>
+      !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?").get(t)
+    if (hasTable('parts')) {
+      for (const p of db
+        .prepare('SELECT part_no, part_name, model, customer FROM parts')
+        .all() as Array<Record<string, string>>) {
+        add('part', p.part_no, p.part_no, `${p.part_no} ${p.part_name ?? ''} ${p.model ?? ''} ${p.customer ?? ''}`)
+      }
+    }
+
+    // control_plan — 관리계획서(을) 라인아이템(공정×관리항목×규격×방법×주기)
+    if (hasTable('control_plan_items')) {
+      for (const c of db
+        .prepare(
+          `SELECT ip.part_no AS part_no, ci.seq AS seq, ci.process_name AS process_name,
+                  ci.control_item AS control_item, ci.spec AS spec, ci.method AS method, ci.frequency AS frequency
+           FROM control_plan_items ci JOIN isir_packages ip ON ip.id = ci.isir_id`
+        )
+        .all() as Array<Record<string, string>>) {
+        add(
+          'control_plan',
+          `${c.part_no}#${c.seq}`,
+          `${c.part_no} ${c.process_name ?? ''} ${c.control_item ?? ''}`,
+          `${c.part_no} ${c.process_name ?? ''} ${c.control_item ?? ''} ${c.spec ?? ''} ${c.method ?? ''} ${c.frequency ?? ''}`
+        )
+      }
     }
   })
   run()

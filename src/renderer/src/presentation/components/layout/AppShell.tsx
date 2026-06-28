@@ -3,6 +3,7 @@ import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { Dashboard } from '../dashboard/Dashboard'
 import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
+import { PartsView } from '../parts/PartsView'
 import { CaseWorkPage } from '../case-work/CaseWorkPage'
 import { ProcessWorkbenchPage } from '../process-workbench/ProcessWorkbenchPage'
 import { FormBuilderPage } from '../form-builder/FormBuilderPage'
@@ -27,6 +28,7 @@ export function AppShell(): JSX.Element {
           <ErrorBoundary key={currentPage}>
             {currentPage === 'dashboard' && <Dashboard />}
             {currentPage === 'sq-readiness' && <SqReadinessPage />}
+            {currentPage === 'parts' && <PartsView />}
             {currentPage === 'case-work' && <CaseWorkPage />}
             {currentPage === 'document-bom' && <DocumentBomPage />}
             {currentPage === 'process-workbench' && <ProcessWorkbenchPage />}
