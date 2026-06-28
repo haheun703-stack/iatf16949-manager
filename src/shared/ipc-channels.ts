@@ -124,6 +124,7 @@ export const IPC_CHANNELS = {
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',
   PART_DETAIL: 'parts:detail',
+  PARTS_IMPORT_ISIR: 'parts:importIsir', // 런타임 ISIR xlsx 임포트(파일선택→파싱→적재)
   // ISIR 완비도(F1 ISIR판) — 결정론 점검 + AI 진단
   AI_ISIR_COMPLETENESS: 'ai:isirCompleteness',
   AI_ISIR_EXPLAIN: 'ai:isirExplain',

@@ -1,5 +1,16 @@
 import { useEffect } from 'react'
-import { Package, RefreshCw, ShieldAlert, ClipboardList, AlertTriangle } from 'lucide-react'
+import {
+  Package,
+  RefreshCw,
+  ShieldAlert,
+  ClipboardList,
+  AlertTriangle,
+  FileUp,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  X
+} from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { usePartsStore } from '../../stores/partsStore'
 import { PartDetail } from './PartDetail'
@@ -9,7 +20,19 @@ import { PartDetail } from './PartDetail'
  * ISIR = 고객과 협의한 통제 패키지(근간). 좌측 품번 선택 → 우측 완비도·관리계획서·불량 이력.
  */
 export function PartsView(): JSX.Element {
-  const { list, loadingList, loadList, selected, detail, loadingDetail, select } = usePartsStore()
+  const {
+    list,
+    loadingList,
+    loadList,
+    selected,
+    detail,
+    loadingDetail,
+    select,
+    importing,
+    importNotice,
+    dismissImportNotice,
+    importIsir
+  } = usePartsStore()
 
   useEffect(() => {
     void loadList()
@@ -34,6 +57,16 @@ export function PartsView(): JSX.Element {
         </div>
         <button
           type="button"
+          onClick={() => void importIsir()}
+          disabled={importing}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 disabled:opacity-60"
+          title="ISIR 워크북(.xlsx)을 선택해 적재합니다"
+        >
+          {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+          {importing ? '적재 중...' : 'ISIR 적재'}
+        </button>
+        <button
+          type="button"
           onClick={() => void loadList()}
           className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
           title="새로고침"
@@ -41,6 +74,32 @@ export function PartsView(): JSX.Element {
           <RefreshCw className={cn('w-4 h-4', loadingList && 'animate-spin')} />
         </button>
       </header>
+
+      {importNotice && (
+        <div
+          className={cn(
+            'flex items-start gap-2 mb-3 px-3 py-2 rounded-lg text-[13px] shrink-0 border',
+            importNotice.kind === 'ok'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+          )}
+        >
+          {importNotice.kind === 'ok' ? (
+            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          )}
+          <span className="flex-1">{importNotice.text}</span>
+          <button
+            type="button"
+            onClick={dismissImportNotice}
+            className="p-0.5 rounded hover:bg-black/5 shrink-0"
+            title="닫기"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       <div className="flex gap-4 flex-1 min-h-0">
         {/* 좌측 — 품번 목록 */}

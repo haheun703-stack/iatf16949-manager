@@ -1,7 +1,21 @@
-# TODO — 이어서 작업 (갱신: 2026-06-27)
+# TODO — 이어서 작업 (갱신: 2026-06-28)
 
 > **📋 이번 세션(6/25) 핸드오프 보고서+지시서 = [docs/핸드오프_2026-06-25_양식출력엔진.md](docs/핸드오프_2026-06-25_양식출력엔진.md)**
 > 양식 출력엔진(방향B) 작업을 이어받을 땐 **그 문서부터** 읽을 것. 완료보고·자산위치·다음지시·함정 전부 정리됨.
+
+## 🟢 6/28 — P2 #1 런타임 ISIR 임포트 UI 완료 (최신 · 콜드스타트 1순위)
+
+> 결정: ①6/27 ISIR P1 먼저 커밋(`5bf28d7`) ②임포트는 **TS 포팅(ExcelJS)** — python 런타임 의존 0.
+
+**완료 (커밋 `feat(isir): P2 #1 런타임 임포트`)**:
+- **순수 파서** `src/main/ingest/isir-parser.ts`: ingest-isir.py 충실 포팅. `parseIsirWorkbook(wb)→ParsedIsir`(표지 part메타+26종, 검사협정 IRE/QA/rev, 관리계획서을 행그룹핑). DB·electron 의존 0(독립 테스트 가능).
+  - ⚠️**병합셀 함정**: ExcelJS는 세로병합 마스터값을 슬레이브 셀까지 채움 → 항목NO(H)가 연속행마다 채워져 110→211 오분리. `cell.isMerged && cell.master.address!==cell.address` 로 슬레이브 빈값화(openpyxl read_only 복제)해 해결. S()도 \r·\n 순차치환으로 원본과 바이트 일치.
+- **임포트** `src/main/ingest/isir-import.ts`: `importIsirFromFile(db, path)` — ExcelJS read→parse→트랜잭션 적재→reindexKb. **동일(part_no,rev_code) 재임포트=교체(멱등)**, 0042 UNIQUE 호환. 고객 추정(경로 토큰→조부모폴더 "NN. " 제거→수요자), plant 기본 '2공장', 빈값→NULL(nz).
+- **IPC/UI** `PARTS_IMPORT_ISIR` 채널 + isir-handlers(파일다이얼로그) + ipc-types(IsirImportResult) + partsStore(importIsir/importing/importNotice) + PartsView('ISIR 적재' 버튼 + 성공/실패 배너).
+- **검증**: 파서=0041 골드 **바이트 일치**(헤더·26종·110항목/31공정·연속행 결합). Python sqlite 등가성 = 런타임적재 **== 마이그 0041** (parts/packages/문서26/관리항목110 행단위 일치 + 재임포트 멱등 1/26/110). typecheck(node+web)+빌드 3타깃 OK.
+- **⚠️ 남은 스팟체크(사용자)**: 런타임 UI 클릭 — '품번/ISIR' 우상단 'ISIR 적재' → xlsx 선택 → 목록갱신·배너·상세 표시. (헤드리스 검증은 끝, 실클릭만 남음.)
+
+**▶ 다음(6/28 이어서) — P2 #2~**: 아래 6/27 블록의 P2 리스트 #2부터(다품번 배치 적재 — 이제 파서가 TS로 있으니 폴더 일괄선택 multi-import 로 확장. submit_type 추정강화·forward-fill·latestPackage rev_date정렬 등 이월결함 함께).
 
 ## 🟢 6/27 — ISIR/관리계획서 척추 P1 완료 (최신 · 콜드스타트 1순위)
 

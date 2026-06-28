@@ -473,6 +473,24 @@ export interface IsirExplainResponse {
   costUsd?: number | null
   error?: string
 }
+/** 런타임 ISIR xlsx 임포트 결과(파일선택→파싱→적재). */
+export interface IsirImportResult {
+  success: boolean
+  canceled?: boolean // 사용자가 파일 선택 취소
+  error?: string
+  partNo?: string
+  partName?: string | null
+  revCode?: string | null
+  submitType?: string | null
+  submitTypeLabel?: string
+  customer?: string | null
+  docCount?: number // 표지 체크리스트 항목 수(통상 26)
+  presentCount?: number // 그중 보유(present) 수
+  cpItemCount?: number // 관리계획서 라인아이템 수
+  processCount?: number // 공정 수(distinct)
+  replaced?: boolean // 동일(part_no, rev_code) 기존 패키지 교체 여부
+  reindexChunks?: number // 임포트 후 지식 인덱스 청크 수(null 가능)
+}
 export interface PartDefectDto {
   caseNo: string | null
   title: string | null
@@ -1384,6 +1402,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.PART_DETAIL]: {
     request: { partNo: string }
     response: PartDetailDto | null
+  }
+  [IPC_CHANNELS.PARTS_IMPORT_ISIR]: {
+    request: void
+    response: IsirImportResult
   }
   [IPC_CHANNELS.AI_ISIR_COMPLETENESS]: {
     request: { partNo: string }
