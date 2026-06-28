@@ -473,11 +473,13 @@ export interface IsirExplainResponse {
   costUsd?: number | null
   error?: string
 }
-/** 런타임 ISIR xlsx 임포트 결과(파일선택→파싱→적재). */
+/** 런타임 ISIR xlsx 임포트 — 파일 1개 결과(파싱→적재). */
 export interface IsirImportResult {
   success: boolean
   canceled?: boolean // 사용자가 파일 선택 취소
   error?: string
+  file?: string // 원본 파일명(basename) — 배치에서 식별
+  warnings?: string[] // 부분 추출 경고(표지0종·관리0항목·다중시트 등) — 비었으면 clean
   partNo?: string
   partName?: string | null
   revCode?: string | null
@@ -490,6 +492,16 @@ export interface IsirImportResult {
   processCount?: number // 공정 수(distinct)
   replaced?: boolean // 동일(part_no, rev_code) 기존 패키지 교체 여부
   reindexChunks?: number // 임포트 후 지식 인덱스 청크 수(null 가능)
+}
+
+/** 다품번 배치 임포트 결과 — 파일별 결과 + 품질 집계. */
+export interface IsirImportBatchResult {
+  canceled?: boolean // 파일 선택 취소
+  total: number // 선택 파일 수
+  clean: number // 성공 & 경고 없음
+  partial: number // 성공 & 경고 있음(부분 추출)
+  failed: number // 실패(ISIR 아님 등)
+  results: IsirImportResult[] // 파일별 상세(각 .file/.warnings/.success/.error)
 }
 export interface PartDefectDto {
   caseNo: string | null
@@ -1419,7 +1431,7 @@ export interface IpcChannelMap {
   }
   [IPC_CHANNELS.PARTS_IMPORT_ISIR]: {
     request: void
-    response: IsirImportResult
+    response: IsirImportBatchResult
   }
   [IPC_CHANNELS.AI_ISIR_COMPLETENESS]: {
     request: { partNo: string }

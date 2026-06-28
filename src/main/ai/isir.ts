@@ -33,12 +33,12 @@ interface DocRow {
   present: number
 }
 
-/** 부품의 최신 ISIR 제출본(가장 최근 등록). */
+/** 부품의 최신 ISIR 제출본(사양 개정일 우선, 동률 시 최근 등록). */
 function latestPackage(db: Database.Database, partNo: string): PkgRow | undefined {
   return db
     .prepare(
       `SELECT id, part_no, rev_code, rev_date, submit_type, customer_recipient, ire_risk, qa_manager, submitted_at
-       FROM isir_packages WHERE part_no = ? ORDER BY id DESC LIMIT 1`
+       FROM isir_packages WHERE part_no = ? ORDER BY rev_date DESC, id DESC LIMIT 1`
     )
     .get(partNo) as PkgRow | undefined
 }

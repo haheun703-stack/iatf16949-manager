@@ -194,7 +194,7 @@ function loadPartControl(
   const pkg = db
     .prepare(
       `SELECT id, rev_code, submit_type, ire_risk
-       FROM isir_packages WHERE part_no = ? ORDER BY id DESC LIMIT 1`
+       FROM isir_packages WHERE part_no = ? ORDER BY rev_date DESC, id DESC LIMIT 1`
     )
     .get(part.part_no) as
     | { id: number; rev_code: string | null; submit_type: string | null; ire_risk: string | null }

@@ -29,7 +29,7 @@ export function PartsView(): JSX.Element {
     loadingDetail,
     select,
     importing,
-    importNotice,
+    importBatch,
     dismissImportNotice,
     importIsir
   } = usePartsStore()
@@ -60,7 +60,7 @@ export function PartsView(): JSX.Element {
           onClick={() => void importIsir()}
           disabled={importing}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 disabled:opacity-60"
-          title="ISIR 워크북(.xlsx)을 선택해 적재합니다"
+          title="ISIR 워크북(.xlsx) 선택 — 여러 개 한 번에 적재 가능"
         >
           {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
           {importing ? '적재 중...' : 'ISIR 적재'}
@@ -75,29 +75,60 @@ export function PartsView(): JSX.Element {
         </button>
       </header>
 
-      {importNotice && (
-        <div
-          className={cn(
-            'flex items-start gap-2 mb-3 px-3 py-2 rounded-lg text-[13px] shrink-0 border',
-            importNotice.kind === 'ok'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-red-50 border-red-200 text-red-800'
-          )}
-        >
-          {importNotice.kind === 'ok' ? (
-            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-          ) : (
-            <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
-          )}
-          <span className="flex-1">{importNotice.text}</span>
-          <button
-            type="button"
-            onClick={dismissImportNotice}
-            className="p-0.5 rounded hover:bg-black/5 shrink-0"
-            title="닫기"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+      {importBatch && (
+        <div className="mb-3 shrink-0 rounded-lg border border-border bg-card overflow-hidden">
+          {/* 요약 헤더 */}
+          <div className="flex items-center gap-2.5 px-3 py-2 border-b border-border bg-muted/40">
+            <span className="text-[13px] font-semibold">ISIR 적재 — 총 {importBatch.total}개</span>
+            {importBatch.clean + importBatch.partial > 0 && (
+              <span className="text-[12px] text-emerald-700">적재 {importBatch.clean + importBatch.partial}</span>
+            )}
+            {importBatch.partial > 0 && (
+              <span className="text-[12px] text-amber-700">경고 {importBatch.partial}</span>
+            )}
+            {importBatch.failed > 0 && (
+              <span className="text-[12px] text-red-700">실패 {importBatch.failed}</span>
+            )}
+            <button
+              type="button"
+              onClick={dismissImportNotice}
+              className="ml-auto p-0.5 rounded hover:bg-black/5"
+              title="닫기"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          {/* 파일별 결과 */}
+          <div className="max-h-[200px] overflow-y-auto divide-y divide-border/50">
+            {importBatch.results.map((r, i) => {
+              const warn = (r.warnings?.length ?? 0) > 0
+              return (
+                <div key={i} className="flex items-start gap-2 px-3 py-1.5 text-[12px]">
+                  {!r.success ? (
+                    <XCircle className="w-3.5 h-3.5 mt-0.5 text-red-600 shrink-0" />
+                  ) : warn ? (
+                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 text-amber-600 shrink-0" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 text-emerald-600 shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      {r.partNo && <span className="font-mono font-semibold">{r.partNo}</span>}
+                      {r.success && (
+                        <span className="text-muted-foreground">
+                          관리 {r.cpItemCount}·{r.processCount}공정 · 26종 보유 {r.presentCount}
+                          {r.replaced ? ' · 갱신' : ''}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-muted-foreground truncate ml-auto pl-2">{r.file}</span>
+                    </div>
+                    {!r.success && <div className="text-red-600 mt-0.5">{r.error}</div>}
+                    {warn && <div className="text-amber-700 mt-0.5">⚠ {r.warnings!.join(' · ')}</div>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 

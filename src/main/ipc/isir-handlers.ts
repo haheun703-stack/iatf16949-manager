@@ -6,7 +6,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { computeIsirCompleteness, explainIsirGap } from '../ai/isir'
-import { importIsirFromFile } from '../ingest/isir-import'
+import { importIsirBatch } from '../ingest/isir-import'
 import type {
   PartListItem,
   PartDetailDto,
@@ -14,7 +14,7 @@ import type {
   PartDefectDto,
   IsirCompleteness,
   IsirExplainResponse,
-  IsirImportResult
+  IsirImportBatchResult
 } from '@shared/ipc-types'
 
 interface CpRow {
@@ -144,23 +144,19 @@ export function registerIsirHandlers(): void {
     }
   )
 
-  // ──── 런타임 ISIR 임포트(xlsx 파일선택 → 파싱 → 적재 → 재색인) ────
-  ipcMain.handle(IPC_CHANNELS.PARTS_IMPORT_ISIR, async (): Promise<IsirImportResult> => {
+  // ──── 런타임 ISIR 배치 임포트(xlsx 다중선택 → 파싱 → 적재 → 1회 재색인) ────
+  ipcMain.handle(IPC_CHANNELS.PARTS_IMPORT_ISIR, async (): Promise<IsirImportBatchResult> => {
     const win = BrowserWindow.getFocusedWindow()
     const opts = {
-      title: 'ISIR 워크북 선택 (.xlsx)',
-      properties: ['openFile' as const],
+      title: 'ISIR 워크북 선택 (.xlsx) — 여러 개 선택 가능',
+      properties: ['openFile' as const, 'multiSelections' as const],
       filters: [{ name: 'Excel 워크북', extensions: ['xlsx'] }]
     }
     const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
-    if (res.canceled || !res.filePaths[0]) return { success: false, canceled: true }
-    try {
-      return await importIsirFromFile(db, res.filePaths[0])
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('[isir:import] error', msg)
-      return { success: false, error: msg }
+    if (res.canceled || res.filePaths.length === 0) {
+      return { canceled: true, total: 0, clean: 0, partial: 0, failed: 0, results: [] }
     }
+    return importIsirBatch(db, res.filePaths)
   })
 
   // ──── ISIR 완비도(결정론, 무API) ────

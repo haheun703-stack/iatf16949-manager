@@ -104,12 +104,30 @@ function sheetRows(ws: ExcelJS.Worksheet): string[][] {
   return rows
 }
 
+const sheetNorm = (s: string): string => s.replace(/\s/g, '')
+
 /** 시트명 정확 일치 → 부분 일치(포함) 순으로 탐색. */
 function findSheet(wb: ExcelJS.Workbook, exact: string, contains?: string): ExcelJS.Worksheet | undefined {
   const byExact = wb.getWorksheet(exact)
   if (byExact) return byExact
-  if (contains) return wb.worksheets.find((w) => w.name.replace(/\s/g, '').includes(contains))
+  if (contains) return wb.worksheets.find((w) => sheetNorm(w.name).includes(contains))
   return undefined
+}
+
+/** 관리계획서(을) 시트 탐색 — 갑(요약)·공정감사본을 피하고 을(라인아이템)을 고른다.
+ *  템플릿 변형: '관리계획서(을)' / '관리계획서(을)-1' / '관리계획서(을). ISIR제출' 등.
+ *  정확 일치를 최우선(검증된 28237 golden 보존), 없으면 '을' 포함분(공정감사 후순위). */
+function findControlPlanSheet(wb: ExcelJS.Workbook): ExcelJS.Worksheet | undefined {
+  const exact = wb.getWorksheet('관리계획서(을)')
+  if (exact) return exact
+  const eul = wb.worksheets.filter((w) => sheetNorm(w.name).includes('관리계획서(을)'))
+  if (eul.length) return eul.find((w) => !sheetNorm(w.name).includes('공정감사')) ?? eul[0]
+  // 폴백: '관리계획서' AND '을'(갑 제외)
+  const loose = wb.worksheets.filter((w) => {
+    const n = sheetNorm(w.name)
+    return n.includes('관리계획서') && n.includes('을')
+  })
+  return loose.find((w) => !sheetNorm(w.name).includes('공정감사')) ?? loose[0]
 }
 
 /** 워크북 → ParsedIsir. 필수 시트(표지·관리계획서)가 없으면 throw. */
@@ -236,7 +254,7 @@ export function parseIsirWorkbook(wb: ExcelJS.Workbook): ParsedIsir {
   const CR = 17
   const CS = 18
   const CW = 22
-  const cpWs = findSheet(wb, '관리계획서(을)', '관리계획서')
+  const cpWs = findControlPlanSheet(wb)
   if (!cpWs) throw new Error("ISIR 형식이 아닙니다: '관리계획서(을)' 시트를 찾을 수 없습니다.")
   const cpRows = sheetRows(cpWs)
 

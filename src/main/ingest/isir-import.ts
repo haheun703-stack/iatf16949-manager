@@ -3,11 +3,16 @@
 //   빌드타임 python 마이그레이션(scripts/ingest-isir.py → 0041 SQL)의 런타임 대체.
 //   동일 (part_no, rev_code) 재임포트 시 기존 패키지+자식행을 교체(idempotent). 0042 UNIQUE 호환.
 // ─────────────────────────────────────────────────────────────────────────────
+import { basename } from 'path'
 import ExcelJS from 'exceljs'
 import type Database from 'better-sqlite3'
 import { parseIsirWorkbook } from './isir-parser'
 import { reindexKb } from '../ai/kb'
-import { ISIR_SUBMIT_TYPE_LABEL, type IsirImportResult } from '@shared/ipc-types'
+import {
+  ISIR_SUBMIT_TYPE_LABEL,
+  type IsirImportResult,
+  type IsirImportBatchResult
+} from '@shared/ipc-types'
 
 const KNOWN_CUSTOMERS = [
   '현대위아',
@@ -39,14 +44,23 @@ function inferCustomer(filePath: string, recipient: string): string | null {
   return recipient || null
 }
 
-/** xlsx 파일 1개를 읽어 ISIR 패키지로 적재. 형식 불일치 시 parser 가 throw. */
+/** xlsx 파일 1개를 읽어 ISIR 패키지로 적재. 형식 불일치 시 parser 가 throw.
+ *  reindex=false: 재색인 생략(배치에서 끝에 1회만 하기 위함). */
 export async function importIsirFromFile(
   db: Database.Database,
-  filePath: string
+  filePath: string,
+  reindex = true
 ): Promise<IsirImportResult> {
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(filePath)
   const p = parseIsirWorkbook(wb) // 표지/관리계획서 없으면 throw
+
+  // 품질 경고(부분 추출 = 템플릿 변형). 비었으면 clean.
+  const warnings: string[] = []
+  const presentCount = p.docs.filter((d) => d.present).length
+  if (p.items.length === 0) warnings.push('관리계획서 0항목 (시트 인식 실패 가능)')
+  if (p.docs.length === 0) warnings.push('표지 체크리스트 0종 (레이아웃 상이)')
+  else if (presentCount === 0) warnings.push('표지 보유표시 0 (present 컬럼 상이)')
 
   const customer = inferCustomer(filePath, p.recipient)
   const plant = '2공장' // 앱 범위(2공장 AM사업부). 향후 추정/편집 대상.
@@ -131,14 +145,18 @@ export async function importIsirFromFile(
 
   // 새 부품/관리계획서를 코파일럿·검색에 그라운딩(재색인 실패는 임포트 성공을 막지 않음).
   let reindexChunks: number | undefined
-  try {
-    reindexChunks = reindexKb(db).chunks
-  } catch (err) {
-    console.error('[isir:import] reindex 실패(무시):', err instanceof Error ? err.message : err)
+  if (reindex) {
+    try {
+      reindexChunks = reindexKb(db).chunks
+    } catch (err) {
+      console.error('[isir:import] reindex 실패(무시):', err instanceof Error ? err.message : err)
+    }
   }
 
   return {
     success: true,
+    file: basename(filePath),
+    warnings,
     partNo: p.partNo,
     partName: nz(p.partName),
     revCode,
@@ -146,10 +164,48 @@ export async function importIsirFromFile(
     submitTypeLabel: ISIR_SUBMIT_TYPE_LABEL[p.submitType] ?? p.submitType,
     customer,
     docCount: p.docs.length,
-    presentCount: p.docs.filter((d) => d.present).length,
+    presentCount,
     cpItemCount: p.items.length,
     processCount: new Set(p.items.map((i) => i.processName)).size,
     replaced,
     reindexChunks
+  }
+}
+
+/** 다품번 배치 — 여러 xlsx 를 순차 적재. 파서 throw(ISIR 아님)는 파일별 실패로 수집.
+ *  재색인은 전체 끝에 1회(파일마다 하면 낭비). 품질 집계(clean/partial/failed) 반환. */
+export async function importIsirBatch(
+  db: Database.Database,
+  filePaths: string[]
+): Promise<IsirImportBatchResult> {
+  const results: IsirImportResult[] = []
+  for (const fp of filePaths) {
+    try {
+      results.push(await importIsirFromFile(db, fp, false)) // 개별 재색인 생략
+    } catch (err) {
+      results.push({
+        success: false,
+        file: basename(fp),
+        error: err instanceof Error ? err.message : String(err)
+      })
+    }
+  }
+
+  // 전체 끝에 1회 재색인
+  let reindexChunks: number | undefined
+  try {
+    reindexChunks = reindexKb(db).chunks
+  } catch (err) {
+    console.error('[isir:batch] reindex 실패(무시):', err instanceof Error ? err.message : err)
+  }
+  const succeeded = results.filter((r) => r.success)
+  if (reindexChunks !== undefined && succeeded[0]) succeeded[0].reindexChunks = reindexChunks
+
+  return {
+    total: filePaths.length,
+    clean: succeeded.filter((r) => !r.warnings || r.warnings.length === 0).length,
+    partial: succeeded.filter((r) => (r.warnings?.length ?? 0) > 0).length,
+    failed: results.filter((r) => !r.success).length,
+    results
   }
 }
