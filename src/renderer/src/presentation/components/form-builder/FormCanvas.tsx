@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Save, Send, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History } from 'lucide-react'
+import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -341,18 +341,6 @@ export function FormCanvas(): JSX.Element {
           </div>
         )}
 
-        {/* 제출 버튼 (자리만) */}
-        <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
-          <button
-            type="button"
-            className="text-xs font-semibold px-4 py-2 rounded-md bg-foreground text-background hover:opacity-90 flex items-center gap-1.5"
-            disabled
-            title="결재 시스템 연동 후 활성화"
-          >
-            <Send className="w-3 h-3" />
-            결재 상신
-          </button>
-        </div>
       </div>
       )}
       </section>

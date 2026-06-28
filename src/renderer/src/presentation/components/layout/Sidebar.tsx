@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, GitBranch, ListTree, Users, CalendarDays, Pencil, Check, Package } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, Pencil, Check, Package } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -19,10 +19,7 @@ const MENU: MenuItem[] = [
   { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '105 문서 · 405 양식' },
   { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '기본서 + 양식 작성' },
   { id: 'form-builder', label: '양식 단독 작성', icon: FileEdit, desc: '양식만 빠르게 작성' },
-  { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' },
-  { id: 'form-chain', label: '문서 연결고리', icon: GitBranch, desc: '시정조치 흐름' },
-  { id: 'clause-tree', label: '조항 트리', icon: ListTree, desc: 'IATF 0~10장' },
-  { id: 'team', label: '팀', icon: Users, desc: 'AM사업부 조직도' }
+  { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' }
 ]
 
 export function Sidebar(): JSX.Element {

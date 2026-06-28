@@ -1,24 +1,6 @@
 import { useState } from 'react'
-import { Sparkles, Inbox } from 'lucide-react'
+import { Inbox } from 'lucide-react'
 import type { CaseIntakeInput } from '@shared/ipc-types'
-
-/** 캡쳐된 실제 고객 통보서 샘플(삼보 INLINE 감마2 클립 이물 불량). 데모 1클릭 채움. */
-const SAMPLE: CaseIntakeInput = {
-  title: '삼보 INLINE 감마2 워터 아웃 파이프 클립 이물 불량',
-  customer: '삼보모터스',
-  source: '삼보 INLINE',
-  partNo: '28237-2MAA1',
-  partName: 'PIPE ASSY, B-T/C WATER, OUT',
-  model: '감마2',
-  defectDesc: '클립 이물 불량 (도면 마킹 번짐)',
-  defectQty: 1,
-  attributable: 'TPC 2공장',
-  occurredDate: '2026-06-17',
-  receivedDate: '2026-06-17',
-  dueDate: '2026-06-19',
-  owner: '홍길동',
-  lot: 'L26-0617A'
-}
 
 const EMPTY: CaseIntakeInput = {
   title: '', customer: '', source: '', partNo: '', partName: '', model: '',
@@ -75,13 +57,6 @@ export function CaseIntakeForm({
       <div className="flex items-center gap-2 mb-4">
         <Inbox className="w-5 h-5 text-primary" />
         <h2 className="text-lg font-bold">새 불량 접수</h2>
-        <button
-          type="button"
-          onClick={() => setV(SAMPLE)}
-          className="ml-auto flex items-center gap-1 text-[12px] font-semibold text-primary border border-primary/40 rounded px-2.5 py-1.5 hover:bg-primary/5"
-        >
-          <Sparkles className="w-3.5 h-3.5" /> 샘플 채우기(삼보 통보서)
-        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

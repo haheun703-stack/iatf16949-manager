@@ -9,7 +9,6 @@ import { ProcessWorkbenchPage } from '../process-workbench/ProcessWorkbenchPage'
 import { FormBuilderPage } from '../form-builder/FormBuilderPage'
 import { DocumentBomPage } from '../document-bom/DocumentBomPage'
 import { SchedulePage } from '../schedule/SchedulePage'
-import { ComingSoon } from '../shared/ComingSoon'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -34,15 +33,6 @@ export function AppShell(): JSX.Element {
             {currentPage === 'process-workbench' && <ProcessWorkbenchPage />}
             {currentPage === 'form-builder' && <FormBuilderPage />}
             {currentPage === 'schedule' && <SchedulePage />}
-            {currentPage === 'form-chain' && (
-              <ComingSoon title="문서 연결고리" subtitle="다음 단계에서 구축됩니다 (Step C)" />
-            )}
-            {currentPage === 'clause-tree' && (
-              <ComingSoon title="조항 트리" subtitle="다음 단계에서 구축됩니다 (Step D)" />
-            )}
-            {currentPage === 'team' && (
-              <ComingSoon title="팀" subtitle="다음 단계에서 구축됩니다 (Step E)" />
-            )}
           </ErrorBoundary>
         </main>
       </div>
