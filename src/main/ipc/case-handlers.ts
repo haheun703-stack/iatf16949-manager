@@ -10,8 +10,11 @@ import type {
   CaseScreeningDto,
   CaseCreateResult,
   CaseLinkedForm,
-  CaseDistributeResult
+  CaseDistributeResult,
+  CasePartControlDto,
+  ControlPlanItemDto
 } from '@shared/ipc-types'
+import { ISIR_SUBMIT_TYPE_LABEL } from '@shared/ipc-types'
 
 /** 8D 흐름 단계 정의(케이스 생성 시 자동 생성). 라벨은 여기 단일원천. */
 const STEP_DEFS: Array<{ key: string; label: string }> = [
@@ -160,6 +163,93 @@ function loadLinkedForms(db: ReturnType<typeof getSqlite>, caseId: number): Case
   }))
 }
 
+/** 케이스 부품의 관리계획서(통제 기준) 조회 — 불량 = 이 기준의 실패.
+ *  part_no 로 parts↔isir_packages(최신)↔control_plan_items 조인. 표기차 대비 TRIM 정합.
+ *  반환: part_no 없으면 null / parts 미적재면 hasIsir=false(빈 항목). */
+function loadPartControl(
+  db: ReturnType<typeof getSqlite>,
+  rawPartNo: string | null
+): CasePartControlDto | null {
+  const partNo = (rawPartNo ?? '').trim()
+  if (!partNo) return null
+
+  const part = db
+    .prepare('SELECT part_no, part_name FROM parts WHERE TRIM(part_no) = ?')
+    .get(partNo) as { part_no: string; part_name: string | null } | undefined
+  if (!part) {
+    // 불량은 있으나 ISIR 미적재 — 정직 신호(품번/ISIR에서 적재 유도).
+    return {
+      partNo,
+      partName: null,
+      hasIsir: false,
+      revCode: null,
+      submitTypeLabel: null,
+      ireRisk: null,
+      itemCount: 0,
+      processCount: 0,
+      items: []
+    }
+  }
+
+  const pkg = db
+    .prepare(
+      `SELECT id, rev_code, submit_type, ire_risk
+       FROM isir_packages WHERE part_no = ? ORDER BY id DESC LIMIT 1`
+    )
+    .get(part.part_no) as
+    | { id: number; rev_code: string | null; submit_type: string | null; ire_risk: string | null }
+    | undefined
+
+  if (!pkg) {
+    return {
+      partNo: part.part_no,
+      partName: part.part_name,
+      hasIsir: false,
+      revCode: null,
+      submitTypeLabel: null,
+      ireRisk: null,
+      itemCount: 0,
+      processCount: 0,
+      items: []
+    }
+  }
+
+  const rows = db
+    .prepare(
+      `SELECT seq, process_no, process_name, char_kind, control_item, special_char,
+              spec, method, frequency, control_method, reaction, note
+       FROM control_plan_items WHERE isir_id = ? ORDER BY seq`
+    )
+    .all(pkg.id) as Array<Record<string, unknown>>
+  const items: ControlPlanItemDto[] = rows.map((r) => ({
+    seq: r.seq as number,
+    processNo: (r.process_no as string) ?? null,
+    processName: (r.process_name as string) ?? null,
+    charKind: (r.char_kind as string) ?? null,
+    controlItem: (r.control_item as string) ?? null,
+    special: (r.special_char as string) ?? null,
+    spec: (r.spec as string) ?? null,
+    method: (r.method as string) ?? null,
+    frequency: (r.frequency as string) ?? null,
+    controlMethod: (r.control_method as string) ?? null,
+    reaction: (r.reaction as string) ?? null,
+    note: (r.note as string) ?? null
+  }))
+  const processCount = new Set(items.map((i) => i.processName).filter(Boolean)).size
+
+  return {
+    partNo: part.part_no,
+    partName: part.part_name,
+    hasIsir: true,
+    revCode: pkg.rev_code,
+    submitTypeLabel: ISIR_SUBMIT_TYPE_LABEL[pkg.submit_type ?? ''] ?? pkg.submit_type,
+    ireRisk: pkg.ire_risk,
+    itemCount: items.length,
+    processCount,
+    items
+  }
+}
+
 export function registerCaseHandlers(): void {
   const db = getSqlite()
 
@@ -220,6 +310,7 @@ export function registerCaseHandlers(): void {
     for (const f of factRows) facts[f.fact_key] = f.value ?? ''
 
     const forms = loadLinkedForms(db, id)
+    const partControl = loadPartControl(db, (c.part_no as string) ?? null)
 
     return {
       id: c.id as number,
@@ -241,7 +332,8 @@ export function registerCaseHandlers(): void {
       steps,
       screening,
       facts,
-      forms
+      forms,
+      partControl
     }
   })
 

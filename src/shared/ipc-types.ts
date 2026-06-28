@@ -769,6 +769,19 @@ export interface CaseLinkedForm {
   status: string
 }
 
+/** 불량 케이스 ↔ ISIR 연결 — 이 부품의 관리계획서(통제 기준). 불량 = 이 기준의 실패. */
+export interface CasePartControlDto {
+  partNo: string
+  partName: string | null
+  hasIsir: boolean // parts에 ISIR 제출본이 적재돼 있는가
+  revCode: string | null
+  submitTypeLabel: string | null
+  ireRisk: string | null
+  itemCount: number // 관리계획서 라인아이템 수
+  processCount: number // 공정 수(distinct)
+  items: ControlPlanItemDto[] // 관리계획서 항목(통제 기준)
+}
+
 export interface CaseDetailDto {
   id: number
   caseNo: string
@@ -790,6 +803,7 @@ export interface CaseDetailDto {
   screening: CaseScreeningDto[]
   facts: Record<string, string>
   forms: CaseLinkedForm[] // 분배된 양식 작성본
+  partControl: CasePartControlDto | null // 이 부품의 관리계획서(ISIR 연결). part_no 없으면 null
 }
 
 export interface CaseCreateResult {
