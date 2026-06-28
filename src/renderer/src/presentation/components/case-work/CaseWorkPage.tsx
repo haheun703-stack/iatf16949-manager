@@ -6,7 +6,7 @@ import { CaseIntakeForm } from './CaseIntakeForm'
 import { CaseDetail } from './CaseDetail'
 
 /**
- * 사건 작업 — 고객 불량 통보에서 시작하는 8D 흐름.
+ * 불량 대책서 — 고객 불량 통보에서 시작하는 8D 흐름(접수→선별→8D→개선대책서).
  * 좌: 케이스 목록 + 새 접수 / 우: 접수 폼 또는 케이스 상세(단계·선별·원인대책).
  */
 export function CaseWorkPage(): JSX.Element {
@@ -46,7 +46,7 @@ export function CaseWorkPage(): JSX.Element {
       <aside className="w-72 shrink-0 flex flex-col bg-card border border-border rounded-xl overflow-hidden">
         <header className="px-4 py-3 border-b border-border">
           <h2 className="text-[14px] font-bold flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-warning" /> 사건 (불량 케이스)
+            <AlertTriangle className="w-4 h-4 text-warning" /> 불량 대책서
           </h2>
           <button
             type="button"
@@ -61,7 +61,7 @@ export function CaseWorkPage(): JSX.Element {
         </header>
         <div className="flex-1 overflow-y-auto p-2">
           {list.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground py-8">접수된 사건이 없습니다</div>
+            <div className="text-center text-xs text-muted-foreground py-8">접수된 불량이 없습니다</div>
           )}
           {list.map((c) => (
             <button
