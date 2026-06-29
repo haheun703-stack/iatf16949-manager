@@ -39,11 +39,36 @@ interface RegulationSeed {
   fileName: string
 }
 
+interface ApqpPhaseSeed {
+  id: string
+  phaseNo: number
+  title: string
+  titleEn: string | null
+  description: string | null
+  sortOrder: number
+}
+
+interface ApqpElementSeed {
+  id: string
+  phaseId: string
+  seq: number
+  name: string
+  nameEn: string | null
+  io: string
+  coreTool: string | null
+  clauseId: string | null
+  teamId: string | null
+  sortOrder: number
+}
+
 export function seedDatabase(): void {
   const db = getSqlite()
 
   // Always seed company profile if missing (runs on both new and existing DBs)
   seedCompanyProfile(db)
+
+  // Always seed APQP if missing (runs on both new and existing DBs)
+  seedApqp(db)
 
   // Check if already seeded
   const existing = db.prepare('SELECT COUNT(*) as count FROM clauses').get() as { count: number }
@@ -156,4 +181,52 @@ function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {
     insertProfile.run(key, value)
   }
   console.log('Seeded company profile defaults')
+}
+
+function seedApqp(db: ReturnType<typeof getSqlite>): void {
+  try {
+    const exists = db.prepare('SELECT COUNT(*) as count FROM apqp_phases').get() as { count: number }
+    if (exists.count > 0) return
+  } catch {
+    // Table doesn't exist yet (migration not run), skip
+    return
+  }
+
+  const seedDir = !app.isPackaged
+    ? join(__dirname, '../../resources/seed')
+    : join(process.resourcesPath, 'seed')
+
+  const apqpPath = join(seedDir, 'apqp-elements.json')
+  if (!existsSync(apqpPath)) {
+    console.warn('APQP seed file not found:', apqpPath)
+    return
+  }
+
+  const data = JSON.parse(readFileSync(apqpPath, 'utf-8')) as {
+    phases: ApqpPhaseSeed[]
+    elements: ApqpElementSeed[]
+  }
+
+  const insertPhase = db.prepare(
+    'INSERT INTO apqp_phases (id, phase_no, title, title_en, description, sort_order) VALUES (?, ?, ?, ?, ?, ?)'
+  )
+  const insertElement = db.prepare(
+    `INSERT INTO apqp_elements (id, phase_id, seq, name, name_en, io, core_tool, clause_id, team_id, status, sort_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'not_started', ?)`
+  )
+
+  const seedAll = db.transaction(() => {
+    for (const p of data.phases) {
+      insertPhase.run(p.id, p.phaseNo, p.title, p.titleEn, p.description, p.sortOrder)
+    }
+    for (const e of data.elements) {
+      insertElement.run(
+        e.id, e.phaseId, e.seq, e.name, e.nameEn, e.io,
+        e.coreTool, e.clauseId, e.teamId, e.sortOrder
+      )
+    }
+  })
+  seedAll()
+
+  console.log(`Seeded ${data.phases.length} APQP phases, ${data.elements.length} elements`)
 }

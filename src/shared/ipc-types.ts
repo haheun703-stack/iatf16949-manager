@@ -148,6 +148,50 @@ export interface DocGenResult {
   replacedCount?: number
 }
 
+// ===== APQP Types =====
+
+export type ApqpStatus = 'not_started' | 'in_progress' | 'completed' | 'na'
+
+export interface ApqpElement {
+  id: string
+  phaseId: string
+  seq: number
+  name: string
+  nameEn: string | null
+  io: 'input' | 'output'
+  coreTool: string | null
+  clauseId: string | null
+  clauseTitle: string | null
+  teamId: string | null
+  teamName: string | null
+  status: ApqpStatus
+  targetDate: string | null
+  actualDate: string | null
+  note: string | null
+}
+
+export interface ApqpPhase {
+  id: string
+  phaseNo: number
+  title: string
+  titleEn: string | null
+  description: string | null
+  elements: ApqpElement[]
+  total: number
+  completed: number
+  progress: number
+}
+
+export interface ApqpBoard {
+  phases: ApqpPhase[]
+  total: number
+  completed: number
+  inProgress: number
+  notStarted: number
+  na: number
+  progress: number
+}
+
 // ===== IPC Channel → Request/Response Map =====
 
 export interface IpcChannelMap {
@@ -249,5 +293,19 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.DOCGEN_SAVE_DIALOG]: {
     request: { defaultName: string }
     response: { filePath: string | null }
+  }
+  [IPC_CHANNELS.APQP_GET_BOARD]: {
+    request: void
+    response: ApqpBoard
+  }
+  [IPC_CHANNELS.APQP_UPDATE_ELEMENT]: {
+    request: {
+      id: string
+      status?: ApqpStatus
+      targetDate?: string | null
+      actualDate?: string | null
+      note?: string | null
+    }
+    response: { success: boolean }
   }
 }

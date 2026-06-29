@@ -37,6 +37,10 @@ export const IPC_CHANNELS = {
   DOCGEN_GENERATE: 'docgen:generate',
   DOCGEN_SAVE_DIALOG: 'docgen:saveDialog',
 
+  // APQP operations
+  APQP_GET_BOARD: 'apqp:getBoard',
+  APQP_UPDATE_ELEMENT: 'apqp:updateElement',
+
   // Database
   DB_STATUS: 'db:status'
 } as const

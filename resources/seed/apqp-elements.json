@@ -1,0 +1,93 @@
+{
+  "phases": [
+    {
+      "id": "phase-1",
+      "phaseNo": 1,
+      "title": "계획 및 정의",
+      "titleEn": "Plan and Define Program",
+      "description": "고객의 소리를 바탕으로 제품 프로그램을 계획하고 설계·품질 목표를 정의한다.",
+      "sortOrder": 1
+    },
+    {
+      "id": "phase-2",
+      "phaseNo": 2,
+      "title": "제품 설계 및 개발",
+      "titleEn": "Product Design and Development",
+      "description": "설계 특성과 기술 요구사항을 구체화하고 설계 타당성을 검증한다.",
+      "sortOrder": 2
+    },
+    {
+      "id": "phase-3",
+      "phaseNo": 3,
+      "title": "공정 설계 및 개발",
+      "titleEn": "Process Design and Development",
+      "description": "양산 공정 시스템과 관리 방법을 개발하고 양산전 관리계획서를 수립한다.",
+      "sortOrder": 3
+    },
+    {
+      "id": "phase-4",
+      "phaseNo": 4,
+      "title": "제품 및 공정 검증",
+      "titleEn": "Product and Process Validation",
+      "description": "양산 시험가동을 통해 제품과 공정을 검증하고 양산부품승인(PPAP)을 완료한다.",
+      "sortOrder": 4
+    },
+    {
+      "id": "phase-5",
+      "phaseNo": 5,
+      "title": "피드백, 평가 및 시정조치",
+      "titleEn": "Feedback, Assessment and Corrective Action",
+      "description": "변동을 감소시키고 고객만족·교훈을 반영하여 지속적으로 개선한다.",
+      "sortOrder": 5
+    }
+  ],
+  "elements": [
+    { "id": "apqp-1-01", "phaseId": "phase-1", "seq": 1, "name": "고객의 소리(VOC) 수집", "nameEn": "Voice of the Customer", "io": "input", "coreTool": null, "clauseId": "8.2.1", "teamId": "team-mg", "sortOrder": 1 },
+    { "id": "apqp-1-02", "phaseId": "phase-1", "seq": 2, "name": "설계 목표", "nameEn": "Design Goals", "io": "output", "coreTool": null, "clauseId": "8.3.3", "teamId": "team-de", "sortOrder": 2 },
+    { "id": "apqp-1-03", "phaseId": "phase-1", "seq": 3, "name": "신뢰성 및 품질 목표", "nameEn": "Reliability and Quality Goals", "io": "output", "coreTool": null, "clauseId": "8.3.3", "teamId": "team-qc", "sortOrder": 3 },
+    { "id": "apqp-1-04", "phaseId": "phase-1", "seq": 4, "name": "예비 자재 명세서(BOM)", "nameEn": "Preliminary Bill of Material", "io": "output", "coreTool": null, "clauseId": "8.3.3", "teamId": "team-de", "sortOrder": 4 },
+    { "id": "apqp-1-05", "phaseId": "phase-1", "seq": 5, "name": "예비 공정 흐름도", "nameEn": "Preliminary Process Flow Chart", "io": "output", "coreTool": null, "clauseId": "8.3.3", "teamId": "team-pr", "sortOrder": 5 },
+    { "id": "apqp-1-06", "phaseId": "phase-1", "seq": 6, "name": "예비 특별특성 목록", "nameEn": "Preliminary Listing of Special Characteristics", "io": "output", "coreTool": null, "clauseId": "8.3.3.3", "teamId": "team-qc", "sortOrder": 6 },
+    { "id": "apqp-1-07", "phaseId": "phase-1", "seq": 7, "name": "제품보증계획", "nameEn": "Product Assurance Plan", "io": "output", "coreTool": null, "clauseId": "8.3.2", "teamId": "team-qc", "sortOrder": 7 },
+    { "id": "apqp-1-08", "phaseId": "phase-1", "seq": 8, "name": "경영자 지원", "nameEn": "Management Support", "io": "output", "coreTool": null, "clauseId": "5.1", "teamId": "team-mg", "sortOrder": 8 },
+
+    { "id": "apqp-2-01", "phaseId": "phase-2", "seq": 1, "name": "설계 FMEA (DFMEA)", "nameEn": "Design FMEA", "io": "output", "coreTool": "FMEA", "clauseId": "8.3.5", "teamId": "team-de", "sortOrder": 9 },
+    { "id": "apqp-2-02", "phaseId": "phase-2", "seq": 2, "name": "설계 검증(DV)", "nameEn": "Design Verification", "io": "output", "coreTool": null, "clauseId": "8.3.4", "teamId": "team-de", "sortOrder": 10 },
+    { "id": "apqp-2-03", "phaseId": "phase-2", "seq": 3, "name": "설계 검토", "nameEn": "Design Reviews", "io": "output", "coreTool": null, "clauseId": "8.3.4", "teamId": "team-de", "sortOrder": 11 },
+    { "id": "apqp-2-04", "phaseId": "phase-2", "seq": 4, "name": "시작품 관리계획서", "nameEn": "Prototype Build Control Plan", "io": "output", "coreTool": "CP", "clauseId": "8.3.5", "teamId": "team-qc", "sortOrder": 12 },
+    { "id": "apqp-2-05", "phaseId": "phase-2", "seq": 5, "name": "엔지니어링 도면", "nameEn": "Engineering Drawings", "io": "output", "coreTool": null, "clauseId": "8.3.5", "teamId": "team-de", "sortOrder": 13 },
+    { "id": "apqp-2-06", "phaseId": "phase-2", "seq": 6, "name": "엔지니어링 사양", "nameEn": "Engineering Specifications", "io": "output", "coreTool": null, "clauseId": "8.3.5", "teamId": "team-de", "sortOrder": 14 },
+    { "id": "apqp-2-07", "phaseId": "phase-2", "seq": 7, "name": "자재 사양", "nameEn": "Material Specifications", "io": "output", "coreTool": null, "clauseId": "8.3.5", "teamId": "team-de", "sortOrder": 15 },
+    { "id": "apqp-2-08", "phaseId": "phase-2", "seq": 8, "name": "신규 장비·금형·설비 요구사항", "nameEn": "New Equipment, Tooling and Facilities Requirements", "io": "output", "coreTool": null, "clauseId": "8.3.5", "teamId": "team-pr", "sortOrder": 16 },
+    { "id": "apqp-2-09", "phaseId": "phase-2", "seq": 9, "name": "제품·공정 특별특성", "nameEn": "Special Product and Process Characteristics", "io": "output", "coreTool": null, "clauseId": "8.3.3.3", "teamId": "team-qc", "sortOrder": 17 },
+    { "id": "apqp-2-10", "phaseId": "phase-2", "seq": 10, "name": "게이지·시험장비 요구사항", "nameEn": "Gages / Testing Equipment Requirements", "io": "output", "coreTool": null, "clauseId": "7.1.5", "teamId": "team-qc", "sortOrder": 18 },
+    { "id": "apqp-2-11", "phaseId": "phase-2", "seq": 11, "name": "팀 타당성 확약", "nameEn": "Team Feasibility Commitment", "io": "output", "coreTool": null, "clauseId": "8.3.4", "teamId": "team-de", "sortOrder": 19 },
+
+    { "id": "apqp-3-01", "phaseId": "phase-3", "seq": 1, "name": "포장 표준", "nameEn": "Packaging Standards", "io": "output", "coreTool": null, "clauseId": "8.5.4", "teamId": "team-pu", "sortOrder": 20 },
+    { "id": "apqp-3-02", "phaseId": "phase-3", "seq": 2, "name": "제품·공정 품질시스템 검토", "nameEn": "Product / Process Quality System Review", "io": "output", "coreTool": null, "clauseId": "8.5.1", "teamId": "team-qc", "sortOrder": 21 },
+    { "id": "apqp-3-03", "phaseId": "phase-3", "seq": 3, "name": "공정 흐름도", "nameEn": "Process Flow Chart", "io": "output", "coreTool": null, "clauseId": "8.5.1", "teamId": "team-pr", "sortOrder": 22 },
+    { "id": "apqp-3-04", "phaseId": "phase-3", "seq": 4, "name": "공장 배치도(Floor Plan)", "nameEn": "Floor Plan Layout", "io": "output", "coreTool": null, "clauseId": "8.5.1", "teamId": "team-pr", "sortOrder": 23 },
+    { "id": "apqp-3-05", "phaseId": "phase-3", "seq": 5, "name": "특성 매트릭스", "nameEn": "Characteristics Matrix", "io": "output", "coreTool": null, "clauseId": "8.5.1", "teamId": "team-qc", "sortOrder": 24 },
+    { "id": "apqp-3-06", "phaseId": "phase-3", "seq": 6, "name": "공정 FMEA (PFMEA)", "nameEn": "Process FMEA", "io": "output", "coreTool": "FMEA", "clauseId": "8.5.1", "teamId": "team-qc", "sortOrder": 25 },
+    { "id": "apqp-3-07", "phaseId": "phase-3", "seq": 7, "name": "양산전 관리계획서(Pre-Launch CP)", "nameEn": "Pre-Launch Control Plan", "io": "output", "coreTool": "CP", "clauseId": "8.5.1", "teamId": "team-qc", "sortOrder": 26 },
+    { "id": "apqp-3-08", "phaseId": "phase-3", "seq": 8, "name": "작업표준서·공정지침서", "nameEn": "Process Instructions", "io": "output", "coreTool": null, "clauseId": "8.5.1", "teamId": "team-pr", "sortOrder": 27 },
+    { "id": "apqp-3-09", "phaseId": "phase-3", "seq": 9, "name": "측정시스템분석(MSA) 계획", "nameEn": "Measurement Systems Analysis Plan", "io": "output", "coreTool": "MSA", "clauseId": "7.1.5.1.1", "teamId": "team-qc", "sortOrder": 28 },
+    { "id": "apqp-3-10", "phaseId": "phase-3", "seq": 10, "name": "초기 공정능력 연구 계획", "nameEn": "Preliminary Process Capability Study Plan", "io": "output", "coreTool": "SPC", "clauseId": "9.1.1", "teamId": "team-qc", "sortOrder": 29 },
+    { "id": "apqp-3-11", "phaseId": "phase-3", "seq": 11, "name": "경영자 지원", "nameEn": "Management Support", "io": "output", "coreTool": null, "clauseId": "5.1", "teamId": "team-mg", "sortOrder": 30 },
+
+    { "id": "apqp-4-01", "phaseId": "phase-4", "seq": 1, "name": "양산 시험가동(Production Trial Run)", "nameEn": "Production Trial Run", "io": "output", "coreTool": null, "clauseId": "8.5.1", "teamId": "team-pr", "sortOrder": 31 },
+    { "id": "apqp-4-02", "phaseId": "phase-4", "seq": 2, "name": "측정시스템분석(MSA)", "nameEn": "Measurement Systems Analysis", "io": "output", "coreTool": "MSA", "clauseId": "7.1.5.1.1", "teamId": "team-qc", "sortOrder": 32 },
+    { "id": "apqp-4-03", "phaseId": "phase-4", "seq": 3, "name": "초기 공정능력 연구", "nameEn": "Preliminary Process Capability Study", "io": "output", "coreTool": "SPC", "clauseId": "9.1.1", "teamId": "team-qc", "sortOrder": 33 },
+    { "id": "apqp-4-04", "phaseId": "phase-4", "seq": 4, "name": "양산부품승인(PPAP)", "nameEn": "Production Part Approval Process", "io": "output", "coreTool": "PPAP", "clauseId": "8.3.4.4", "teamId": "team-qc", "sortOrder": 34 },
+    { "id": "apqp-4-05", "phaseId": "phase-4", "seq": 5, "name": "양산 검증 시험", "nameEn": "Production Validation Testing", "io": "output", "coreTool": null, "clauseId": "8.6", "teamId": "team-qc", "sortOrder": 35 },
+    { "id": "apqp-4-06", "phaseId": "phase-4", "seq": 6, "name": "포장 평가", "nameEn": "Packaging Evaluation", "io": "output", "coreTool": null, "clauseId": "8.5.4", "teamId": "team-pu", "sortOrder": 36 },
+    { "id": "apqp-4-07", "phaseId": "phase-4", "seq": 7, "name": "양산 관리계획서(Production CP)", "nameEn": "Production Control Plan", "io": "output", "coreTool": "CP", "clauseId": "8.5.1", "teamId": "team-qc", "sortOrder": 37 },
+    { "id": "apqp-4-08", "phaseId": "phase-4", "seq": 8, "name": "품질계획 승인(Sign-Off)", "nameEn": "Quality Planning Sign-Off", "io": "output", "coreTool": null, "clauseId": "8.3.4", "teamId": "team-qc", "sortOrder": 38 },
+    { "id": "apqp-4-09", "phaseId": "phase-4", "seq": 9, "name": "경영자 지원", "nameEn": "Management Support", "io": "output", "coreTool": null, "clauseId": "5.1", "teamId": "team-mg", "sortOrder": 39 },
+
+    { "id": "apqp-5-01", "phaseId": "phase-5", "seq": 1, "name": "변동 감소", "nameEn": "Reduced Variation", "io": "output", "coreTool": "SPC", "clauseId": "10.2", "teamId": "team-qc", "sortOrder": 40 },
+    { "id": "apqp-5-02", "phaseId": "phase-5", "seq": 2, "name": "고객 만족", "nameEn": "Customer Satisfaction", "io": "output", "coreTool": null, "clauseId": "9.1.2", "teamId": "team-mg", "sortOrder": 41 },
+    { "id": "apqp-5-03", "phaseId": "phase-5", "seq": 3, "name": "인도 및 서비스", "nameEn": "Delivery and Service", "io": "output", "coreTool": null, "clauseId": "8.5.5", "teamId": "team-pu", "sortOrder": 42 },
+    { "id": "apqp-5-04", "phaseId": "phase-5", "seq": 4, "name": "교훈(Lessons Learned)·모범사례", "nameEn": "Lessons Learned / Best Practices", "io": "output", "coreTool": null, "clauseId": "10.3", "teamId": "team-qc", "sortOrder": 43 }
+  ]
+}

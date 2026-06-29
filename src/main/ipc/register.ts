@@ -17,7 +17,11 @@ import type {
   RegulationItem,
   CompanyProfile,
   DocGenRequest,
-  DocGenResult
+  DocGenResult,
+  ApqpBoard,
+  ApqpPhase,
+  ApqpElement,
+  ApqpStatus
 } from '@shared/ipc-types'
 import { generateQualityManual } from '../docgen/quality-manual-generator'
 
@@ -623,5 +627,108 @@ export function registerAllIpcHandlers(): void {
     } catch (err) {
       return { success: false, error: String(err) }
     }
+  })
+
+  // ──── APQP Handlers ────
+
+  ipcMain.handle(IPC_CHANNELS.APQP_GET_BOARD, (): ApqpBoard => {
+    const phases = db.prepare(
+      'SELECT id, phase_no, title, title_en, description FROM apqp_phases ORDER BY sort_order'
+    ).all() as Array<{
+      id: string; phase_no: number; title: string; title_en: string | null; description: string | null
+    }>
+
+    const elementRows = db.prepare(`
+      SELECT e.id, e.phase_id, e.seq, e.name, e.name_en, e.io, e.core_tool,
+             e.clause_id, e.team_id, e.status, e.target_date, e.actual_date, e.note,
+             c.title as clause_title, tm.name as team_name
+      FROM apqp_elements e
+      LEFT JOIN clauses c ON e.clause_id = c.id
+      LEFT JOIN teams tm ON e.team_id = tm.id
+      ORDER BY e.sort_order
+    `).all() as Array<Record<string, unknown>>
+
+    const elements: ApqpElement[] = elementRows.map((e) => ({
+      id: e.id as string,
+      phaseId: e.phase_id as string,
+      seq: e.seq as number,
+      name: e.name as string,
+      nameEn: (e.name_en as string) || null,
+      io: (e.io as 'input' | 'output') || 'output',
+      coreTool: (e.core_tool as string) || null,
+      clauseId: (e.clause_id as string) || null,
+      clauseTitle: (e.clause_title as string) || null,
+      teamId: (e.team_id as string) || null,
+      teamName: (e.team_name as string) || null,
+      status: (e.status as ApqpStatus) || 'not_started',
+      targetDate: (e.target_date as string) || null,
+      actualDate: (e.actual_date as string) || null,
+      note: (e.note as string) || null
+    }))
+
+    const phaseDtos: ApqpPhase[] = phases.map((p) => {
+      const phaseElements = elements.filter((e) => e.phaseId === p.id)
+      const completed = phaseElements.filter((e) => e.status === 'completed').length
+      const counted = phaseElements.filter((e) => e.status !== 'na').length
+      return {
+        id: p.id,
+        phaseNo: p.phase_no,
+        title: p.title,
+        titleEn: p.title_en,
+        description: p.description,
+        elements: phaseElements,
+        total: phaseElements.length,
+        completed,
+        progress: counted > 0 ? Math.round((completed / counted) * 100) : 0
+      }
+    })
+
+    const totalCounted = elements.filter((e) => e.status !== 'na').length
+    const totalCompleted = elements.filter((e) => e.status === 'completed').length
+
+    return {
+      phases: phaseDtos,
+      total: elements.length,
+      completed: totalCompleted,
+      inProgress: elements.filter((e) => e.status === 'in_progress').length,
+      notStarted: elements.filter((e) => e.status === 'not_started').length,
+      na: elements.filter((e) => e.status === 'na').length,
+      progress: totalCounted > 0 ? Math.round((totalCompleted / totalCounted) * 100) : 0
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.APQP_UPDATE_ELEMENT, (_event, data: {
+    id: string; status?: ApqpStatus; targetDate?: string | null;
+    actualDate?: string | null; note?: string | null
+  }) => {
+    const fieldMap: Record<string, string> = {
+      status: 'status', targetDate: 'target_date',
+      actualDate: 'actual_date', note: 'note'
+    }
+    const validStatus: ApqpStatus[] = ['not_started', 'in_progress', 'completed', 'na']
+
+    const sets: string[] = []
+    const values: unknown[] = []
+    for (const [key, col] of Object.entries(fieldMap)) {
+      if (key in data) {
+        if (key === 'status' && !validStatus.includes(data.status as ApqpStatus)) {
+          return { success: false }
+        }
+        sets.push(`${col} = ?`)
+        values.push((data as Record<string, unknown>)[key] ?? null)
+      }
+    }
+    if (sets.length === 0) return { success: false }
+
+    // Auto-stamp actual completion date when marked completed without an explicit date
+    if (data.status === 'completed' && !('actualDate' in data)) {
+      sets.push('actual_date = COALESCE(actual_date, ?)')
+      values.push(new Date().toISOString().split('T')[0])
+    }
+
+    sets.push("updated_at = datetime('now')")
+    values.push(data.id)
+    db.prepare(`UPDATE apqp_elements SET ${sets.join(', ')} WHERE id = ?`).run(...values)
+    return { success: true }
   })
 }

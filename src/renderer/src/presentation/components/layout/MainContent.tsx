@@ -4,6 +4,7 @@ import { ClauseDetailView } from '../clause-tree/ClauseDetailView'
 import { TaskListView } from '../tasks/TaskListView'
 import { GanttChartView } from '../gantt/GanttChartView'
 import { TeamView } from '../team/TeamView'
+import { ApqpView } from '../apqp/ApqpView'
 import { DocGenView } from '../docgen/DocGenView'
 
 export function MainContent(): JSX.Element {
@@ -16,6 +17,7 @@ export function MainContent(): JSX.Element {
       {activeTab === 'tasks' && <TaskListView />}
       {activeTab === 'gantt' && <GanttChartView />}
       {activeTab === 'team' && <TeamView />}
+      {activeTab === 'apqp' && <ApqpView />}
       {activeTab === 'docgen' && <DocGenView />}
     </div>
   )

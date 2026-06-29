@@ -1,5 +1,5 @@
 import { useUIStore, type TabId } from '../../stores/uiStore'
-import { LayoutDashboard, FileText, ListTodo, GanttChart, Users, FilePlus } from 'lucide-react'
+import { LayoutDashboard, FileText, ListTodo, GanttChart, Users, Workflow, FilePlus } from 'lucide-react'
 
 const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: '대시보드', icon: LayoutDashboard },
@@ -7,6 +7,7 @@ const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'tasks', label: '전체 업무', icon: ListTodo },
   { id: 'gantt', label: '일정표', icon: GanttChart },
   { id: 'team', label: '팀별 현황', icon: Users },
+  { id: 'apqp', label: 'APQP', icon: Workflow },
   { id: 'docgen', label: '문서생성', icon: FilePlus }
 ]
 
