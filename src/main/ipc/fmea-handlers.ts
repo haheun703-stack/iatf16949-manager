@@ -1,6 +1,7 @@
-import { ipcMain } from 'electron'
+import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
+import { exportFmeaXlsx } from '../docgen/fmea-export'
 import type {
   FmeaDocDto,
   FmeaRowDto,
@@ -241,5 +242,25 @@ export function registerFmeaHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.FMEA_ROW_DELETE, (_event, { id }: { id: number }): { success: boolean } => {
     db.prepare('DELETE FROM fmea_rows WHERE id = ?').run(id)
     return { success: true }
+  })
+
+  // ──── 신판 시트(J1101-01) 공식 xlsx 출력 ────
+  ipcMain.handle(IPC_CHANNELS.FMEA_EXPORT_XLSX, async (_event, { docId }: { docId: number }) => {
+    const doc = db.prepare('SELECT fmea_no FROM fmea_documents WHERE id = ?').get(docId) as
+      | { fmea_no: string }
+      | undefined
+    const win = BrowserWindow.getFocusedWindow()
+    if (!win) return { success: false, error: '활성 창 없음' }
+    const save = await dialog.showSaveDialog(win, {
+      title: '공정 FMEA 신판 시트 출력',
+      defaultPath: `${doc?.fmea_no || 'PFMEA'}.xlsx`,
+      filters: [{ name: 'Excel 파일', extensions: ['xlsx'] }]
+    })
+    if (save.canceled || !save.filePath) return { success: false, canceled: true }
+    try {
+      return await exportFmeaXlsx(db, docId, save.filePath)
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) }
+    }
   })
 }

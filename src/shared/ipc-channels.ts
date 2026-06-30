@@ -136,6 +136,7 @@ export const IPC_CHANNELS = {
   FMEA_ROW_CREATE: 'fmea:rowCreate',
   FMEA_ROW_UPDATE: 'fmea:rowUpdate',
   FMEA_ROW_DELETE: 'fmea:rowDelete',
+  FMEA_EXPORT_XLSX: 'fmea:exportXlsx',
 
   // 리포트 내보내기 (v5 Stage 5)
   REPORT_EXPORT_SCORES: 'report:exportScores',

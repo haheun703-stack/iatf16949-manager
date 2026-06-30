@@ -1730,6 +1730,10 @@ export interface IpcChannelMap {
     request: { id: number }
     response: { success: boolean }
   }
+  [IPC_CHANNELS.FMEA_EXPORT_XLSX]: {
+    request: { docId: number }
+    response: { success: boolean; filePath?: string; rows?: number; canceled?: boolean; error?: string }
+  }
   [IPC_CHANNELS.REPORT_EXPORT_SCORES]: {
     request: void
     response: ReportExportResult

@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { GitBranch, Loader2, Plus, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { GitBranch, Loader2, Plus, Trash2, FileSpreadsheet } from 'lucide-react'
 import { type FmeaRowDto, type FmeaActionPriority } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useFmeaStore } from '../../stores/fmeaStore'
@@ -18,11 +18,25 @@ function rpnTone(rpn: number | null): string {
 }
 
 export function FmeaView(): JSX.Element {
-  const { docs, selectedId, board, loading, load, select, updateRow, addRow, deleteRow } = useFmeaStore()
+  const { docs, selectedId, board, loading, load, select, updateRow, addRow, deleteRow, exportXlsx } =
+    useFmeaStore()
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     void load()
   }, [load])
+
+  const handleExport = async (): Promise<void> => {
+    setExporting(true)
+    try {
+      const res = await exportXlsx()
+      if (res.canceled) return
+      if (res.success) alert(`신판 시트 출력 완료 (${res.rows}행)\n${res.filePath}`)
+      else alert(`출력 실패: ${res.error}`)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <div className="-m-6 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
@@ -60,14 +74,26 @@ export function FmeaView(): JSX.Element {
             <span className="font-semibold">행 {board.summary.total}</span>
             <span className="text-rose-600 font-semibold">High AP {board.summary.highAp}</span>
             <span className="text-muted-foreground">평균 RPN {board.summary.avgRpn}</span>
-            <button
-              type="button"
-              onClick={() => void addRow()}
-              className="ml-auto text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              행 추가
-            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleExport()}
+                disabled={exporting}
+                title="신판 시트(J1101-01) 공식 xlsx 출력"
+                className="text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                {exporting ? '출력 중...' : '신판 시트 출력'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void addRow()}
+                className="text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                행 추가
+              </button>
+            </div>
           </div>
         )}
       </header>

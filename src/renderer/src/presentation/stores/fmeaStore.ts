@@ -27,6 +27,7 @@ interface FmeaState {
   deleteRow: (id: number) => Promise<void>
   createDoc: (input: FmeaDocCreateInput) => Promise<void>
   updateDoc: (input: FmeaDocUpdateInput) => Promise<void>
+  exportXlsx: () => Promise<{ success: boolean; filePath?: string; rows?: number; canceled?: boolean; error?: string }>
 }
 
 export const useFmeaStore = create<FmeaState>((set, get) => ({
@@ -106,5 +107,17 @@ export const useFmeaStore = create<FmeaState>((set, get) => ({
     await window.api.invoke(ch('FMEA_DOC_UPDATE'), input)
     await get().load()
     await get().reloadBoard()
+  },
+
+  exportXlsx: async () => {
+    const id = get().selectedId
+    if (id == null) return { success: false, error: '선택된 문서 없음' }
+    return (await window.api.invoke(ch('FMEA_EXPORT_XLSX'), { docId: id })) as {
+      success: boolean
+      filePath?: string
+      rows?: number
+      canceled?: boolean
+      error?: string
+    }
   }
 }))
