@@ -1209,6 +1209,141 @@ export interface PpapElementUpdateInput {
   note?: string | null
 }
 
+// ===== 공정 FMEA (신판 AIAG-VDA 7-step) — Core Tool #2 =====
+
+export type FmeaDocStatus = 'draft' | 'in_review' | 'approved'
+export type FmeaActionPriority = 'H' | 'M' | 'L'
+export const FMEA_DOC_STATUSES: FmeaDocStatus[] = ['draft', 'in_review', 'approved']
+export const FMEA_ACTION_PRIORITIES: FmeaActionPriority[] = ['H', 'M', 'L']
+
+export interface FmeaDocDto {
+  id: number
+  fmeaNo: string
+  partName: string | null
+  partNo: string | null
+  procOwner: string | null
+  model: string | null
+  author: string | null
+  reviewer: string | null
+  approver: string | null
+  dueDate: string | null
+  mpDate: string | null
+  teamMembers: string | null
+  revisionNote: string | null
+  status: FmeaDocStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FmeaRowDto {
+  id: number
+  docId: number
+  seq: number
+  // 구조분석
+  procItem: string | null
+  procStep: string | null
+  procElement: string | null
+  // 기능분석
+  funcItem: string | null
+  funcStep: string | null
+  funcElement: string | null
+  // 고장분석
+  failureEffect: string | null
+  severity: number | null
+  failureMode: string | null
+  failureCause: string | null
+  // 리스크분석
+  preventionCtrl: string | null
+  occurrence: number | null
+  detectionCtrl: string | null
+  detection: number | null
+  actionPriority: FmeaActionPriority | null
+  specialChar: string | null
+  // 최적화
+  preventionAction: string | null
+  detectionAction: string | null
+  responsible: string | null
+  dueDate: string | null
+  actionStatus: string | null
+  evidence: string | null
+  completedDate: string | null
+  reSeverity: number | null
+  reOccurrence: number | null
+  reDetection: number | null
+  specialProdChar: string | null
+  reActionPriority: FmeaActionPriority | null
+  note: string | null
+  sortOrder: number
+  // 파생(서버 계산)
+  rpn: number | null
+  reRpn: number | null
+}
+
+export interface FmeaBoardDto {
+  doc: FmeaDocDto
+  rows: FmeaRowDto[]
+  summary: { total: number; highAp: number; avgRpn: number }
+}
+
+export interface FmeaDocCreateInput {
+  fmeaNo: string
+  partName?: string | null
+  partNo?: string | null
+  procOwner?: string | null
+  model?: string | null
+  author?: string | null
+  teamMembers?: string | null
+}
+
+export interface FmeaDocUpdateInput {
+  id: number
+  fmeaNo?: string
+  partName?: string | null
+  partNo?: string | null
+  procOwner?: string | null
+  model?: string | null
+  author?: string | null
+  reviewer?: string | null
+  approver?: string | null
+  dueDate?: string | null
+  mpDate?: string | null
+  teamMembers?: string | null
+  revisionNote?: string | null
+  status?: FmeaDocStatus
+}
+
+/** 행 부분 수정 — 전 컬럼 선택적. id 외 전달된 필드만 화이트리스트 UPDATE. */
+export interface FmeaRowUpdateInput {
+  id: number
+  procItem?: string | null
+  procStep?: string | null
+  procElement?: string | null
+  funcItem?: string | null
+  funcStep?: string | null
+  funcElement?: string | null
+  failureEffect?: string | null
+  severity?: number | null
+  failureMode?: string | null
+  failureCause?: string | null
+  preventionCtrl?: string | null
+  occurrence?: number | null
+  detectionCtrl?: string | null
+  detection?: number | null
+  specialChar?: string | null
+  preventionAction?: string | null
+  detectionAction?: string | null
+  responsible?: string | null
+  dueDate?: string | null
+  actionStatus?: string | null
+  evidence?: string | null
+  completedDate?: string | null
+  reSeverity?: number | null
+  reOccurrence?: number | null
+  reDetection?: number | null
+  specialProdChar?: string | null
+  note?: string | null
+}
+
 // ===== IPC Channel → Request/Response Map =====
 
 export interface IpcChannelMap {
@@ -1565,6 +1700,34 @@ export interface IpcChannelMap {
   }
   [IPC_CHANNELS.PPAP_SUBMISSION_UPDATE]: {
     request: PpapSubmissionUpdateInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.FMEA_DOC_LIST]: {
+    request: void
+    response: FmeaDocDto[]
+  }
+  [IPC_CHANNELS.FMEA_BOARD]: {
+    request: { docId: number }
+    response: FmeaBoardDto | null
+  }
+  [IPC_CHANNELS.FMEA_DOC_CREATE]: {
+    request: FmeaDocCreateInput
+    response: { id: number }
+  }
+  [IPC_CHANNELS.FMEA_DOC_UPDATE]: {
+    request: FmeaDocUpdateInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.FMEA_ROW_CREATE]: {
+    request: { docId: number }
+    response: { id: number }
+  }
+  [IPC_CHANNELS.FMEA_ROW_UPDATE]: {
+    request: FmeaRowUpdateInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.FMEA_ROW_DELETE]: {
+    request: { id: number }
     response: { success: boolean }
   }
   [IPC_CHANNELS.REPORT_EXPORT_SCORES]: {

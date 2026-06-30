@@ -128,6 +128,15 @@ export const IPC_CHANNELS = {
   PPAP_SUBMISSION_CREATE: 'ppap:submissionCreate',
   PPAP_SUBMISSION_UPDATE: 'ppap:submissionUpdate',
 
+  // 공정 FMEA (신판 AIAG-VDA) — Core Tool #2
+  FMEA_DOC_LIST: 'fmea:docList',
+  FMEA_BOARD: 'fmea:board',
+  FMEA_DOC_CREATE: 'fmea:docCreate',
+  FMEA_DOC_UPDATE: 'fmea:docUpdate',
+  FMEA_ROW_CREATE: 'fmea:rowCreate',
+  FMEA_ROW_UPDATE: 'fmea:rowUpdate',
+  FMEA_ROW_DELETE: 'fmea:rowDelete',
+
   // 리포트 내보내기 (v5 Stage 5)
   REPORT_EXPORT_SCORES: 'report:exportScores',
 

@@ -29,6 +29,7 @@ import { registerDashboardHandlers } from './dashboard-handlers'
 import { registerScheduleHandlers } from './schedule-handlers'
 import { registerObligationHandlers } from './obligation-handlers'
 import { registerPpapHandlers } from './ppap-handlers'
+import { registerFmeaHandlers } from './fmea-handlers'
 import { registerReportHandlers } from './report-handlers'
 import { registerSqHandlers } from './sq-handlers'
 import { registerCaseHandlers } from './case-handlers'
@@ -46,6 +47,7 @@ export function registerAllIpcHandlers(): void {
   registerScheduleHandlers()
   registerObligationHandlers()
   registerPpapHandlers()
+  registerFmeaHandlers()
   registerReportHandlers()
   registerSqHandlers()
   registerCaseHandlers()

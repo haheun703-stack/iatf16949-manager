@@ -11,6 +11,7 @@ export type PageId =
   | 'schedule'
   | 'obligations'
   | 'ppap'
+  | 'fmea'
   | 'form-chain'
   | 'clause-tree'
   | 'team'
