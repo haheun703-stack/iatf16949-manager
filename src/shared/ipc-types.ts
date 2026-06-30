@@ -1050,6 +1050,81 @@ export interface ScheduleUpdateInput {
   formCode?: string | null
 }
 
+// ===== 정기 의무 캘린더 (반복 의무: 일/주/월/분기/년) =====
+
+export type ObligationCadence = '일' | '주' | '월' | '분기' | '년'
+export type ObligationCategory =
+  | '내부심사'
+  | '경영검토'
+  | '모니터링'
+  | '공급업체'
+  | '교육/인식'
+  | '교정/MSA'
+  | 'FMEA/관리계획서'
+  | '안전/비상'
+  | '문서관리'
+  | '기타'
+
+export const OBLIGATION_CADENCES: ObligationCadence[] = ['일', '주', '월', '분기', '년']
+export const OBLIGATION_CATEGORIES: ObligationCategory[] = [
+  '내부심사',
+  '경영검토',
+  '모니터링',
+  '공급업체',
+  '교육/인식',
+  '교정/MSA',
+  'FMEA/관리계획서',
+  '안전/비상',
+  '문서관리',
+  '기타'
+]
+
+export interface ObligationDto {
+  id: number
+  title: string
+  cadence: ObligationCadence
+  category: ObligationCategory
+  clauseRef: string | null
+  owner: string | null
+  leadDays: number
+  anchorDate: string | null
+  lastDoneDate: string | null
+  nextDueDate: string | null
+  formCode: string | null
+  active: boolean
+  note: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ObligationCreateInput {
+  title: string
+  cadence?: ObligationCadence
+  category?: ObligationCategory
+  clauseRef?: string | null
+  owner?: string | null
+  leadDays?: number
+  nextDueDate?: string | null
+  formCode?: string | null
+  active?: boolean
+  note?: string | null
+}
+
+export interface ObligationUpdateInput {
+  id: number
+  title?: string
+  cadence?: ObligationCadence
+  category?: ObligationCategory
+  clauseRef?: string | null
+  owner?: string | null
+  leadDays?: number
+  nextDueDate?: string | null
+  formCode?: string | null
+  active?: boolean
+  note?: string | null
+}
+
 // ===== IPC Channel → Request/Response Map =====
 
 export interface IpcChannelMap {
@@ -1367,6 +1442,26 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.SCHEDULE_DELETE]: {
     request: { id: number }
     response: { success: boolean }
+  }
+  [IPC_CHANNELS.OBLIGATION_LIST]: {
+    request: void
+    response: ObligationDto[]
+  }
+  [IPC_CHANNELS.OBLIGATION_CREATE]: {
+    request: ObligationCreateInput
+    response: { id: number }
+  }
+  [IPC_CHANNELS.OBLIGATION_UPDATE]: {
+    request: ObligationUpdateInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.OBLIGATION_DELETE]: {
+    request: { id: number }
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.OBLIGATION_COMPLETE]: {
+    request: { id: number; doneDate?: string }
+    response: { success: boolean; nextDueDate: string | null }
   }
   [IPC_CHANNELS.REPORT_EXPORT_SCORES]: {
     request: void

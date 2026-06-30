@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, Pencil, Check, Package } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, Pencil, Check, Package } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -19,7 +19,8 @@ const MENU: MenuItem[] = [
   { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '105 문서 · 405 양식' },
   { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '기본서 + 양식 작성' },
   { id: 'form-builder', label: '양식 단독 작성', icon: FileEdit, desc: '양식만 빠르게 작성' },
-  { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' }
+  { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' },
+  { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '일·주·월·분기·년 반복' }
 ]
 
 export function Sidebar(): JSX.Element {

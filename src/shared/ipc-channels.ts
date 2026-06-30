@@ -114,6 +114,13 @@ export const IPC_CHANNELS = {
   SCHEDULE_UPDATE: 'schedule:update',
   SCHEDULE_DELETE: 'schedule:delete',
 
+  // 정기 의무 캘린더 (반복 의무: 일/주/월/분기/년)
+  OBLIGATION_LIST: 'obligation:list',
+  OBLIGATION_CREATE: 'obligation:create',
+  OBLIGATION_UPDATE: 'obligation:update',
+  OBLIGATION_DELETE: 'obligation:delete',
+  OBLIGATION_COMPLETE: 'obligation:complete',
+
   // 리포트 내보내기 (v5 Stage 5)
   REPORT_EXPORT_SCORES: 'report:exportScores',
 

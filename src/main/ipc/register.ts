@@ -27,6 +27,7 @@ import { registerBomHandlers } from './bom-handlers'
 import { registerScoringHandlers } from './scoring-handlers'
 import { registerDashboardHandlers } from './dashboard-handlers'
 import { registerScheduleHandlers } from './schedule-handlers'
+import { registerObligationHandlers } from './obligation-handlers'
 import { registerReportHandlers } from './report-handlers'
 import { registerSqHandlers } from './sq-handlers'
 import { registerCaseHandlers } from './case-handlers'
@@ -42,6 +43,7 @@ export function registerAllIpcHandlers(): void {
   registerScoringHandlers()
   registerDashboardHandlers()
   registerScheduleHandlers()
+  registerObligationHandlers()
   registerReportHandlers()
   registerSqHandlers()
   registerCaseHandlers()

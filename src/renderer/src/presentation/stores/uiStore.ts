@@ -9,6 +9,7 @@ export type PageId =
   | 'form-builder'
   | 'document-bom'
   | 'schedule'
+  | 'obligations'
   | 'form-chain'
   | 'clause-tree'
   | 'team'
