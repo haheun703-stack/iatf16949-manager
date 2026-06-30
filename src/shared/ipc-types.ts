@@ -1125,6 +1125,90 @@ export interface ObligationUpdateInput {
   note?: string | null
 }
 
+// ===== PPAP (양산부품승인) — Core Tool #1 =====
+
+export type PpapLevel = 1 | 2 | 3 | 4 | 5
+export type PpapSubmissionStatus = 'draft' | 'submitted' | 'approved' | 'interim' | 'rejected'
+export type PpapElementStatus = 'not_started' | 'in_progress' | 'completed' | 'na'
+
+export const PPAP_SUBMISSION_STATUSES: PpapSubmissionStatus[] = [
+  'draft',
+  'submitted',
+  'approved',
+  'interim',
+  'rejected'
+]
+export const PPAP_ELEMENT_STATUSES: PpapElementStatus[] = [
+  'not_started',
+  'in_progress',
+  'completed',
+  'na'
+]
+
+export interface PpapSubmissionDto {
+  id: number
+  partNo: string
+  partName: string | null
+  customer: string | null
+  level: PpapLevel
+  status: PpapSubmissionStatus
+  submittedDate: string | null
+  approvedDate: string | null
+  note: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PpapElementDto {
+  id: number
+  submissionId: number
+  seq: number
+  name: string
+  nameEn: string | null
+  clauseId: string | null
+  teamId: string | null
+  teamName: string | null
+  status: PpapElementStatus
+  note: string | null
+  sortOrder: number
+  updatedAt: string
+}
+
+export interface PpapBoardDto {
+  submission: PpapSubmissionDto
+  elements: PpapElementDto[]
+  progress: { completed: number; applicable: number; percent: number }
+}
+
+export interface PpapSubmissionCreateInput {
+  partNo: string
+  partName?: string | null
+  customer?: string | null
+  level?: PpapLevel
+  status?: PpapSubmissionStatus
+  submittedDate?: string | null
+  approvedDate?: string | null
+  note?: string | null
+}
+
+export interface PpapSubmissionUpdateInput {
+  id: number
+  partNo?: string
+  partName?: string | null
+  customer?: string | null
+  level?: PpapLevel
+  status?: PpapSubmissionStatus
+  submittedDate?: string | null
+  approvedDate?: string | null
+  note?: string | null
+}
+
+export interface PpapElementUpdateInput {
+  id: number
+  status?: PpapElementStatus
+  note?: string | null
+}
+
 // ===== IPC Channel → Request/Response Map =====
 
 export interface IpcChannelMap {
@@ -1462,6 +1546,26 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.OBLIGATION_COMPLETE]: {
     request: { id: number; doneDate?: string }
     response: { success: boolean; nextDueDate: string | null }
+  }
+  [IPC_CHANNELS.PPAP_SUBMISSION_LIST]: {
+    request: void
+    response: PpapSubmissionDto[]
+  }
+  [IPC_CHANNELS.PPAP_BOARD]: {
+    request: { submissionId: number }
+    response: PpapBoardDto | null
+  }
+  [IPC_CHANNELS.PPAP_ELEMENT_UPDATE]: {
+    request: PpapElementUpdateInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.PPAP_SUBMISSION_CREATE]: {
+    request: PpapSubmissionCreateInput
+    response: { id: number }
+  }
+  [IPC_CHANNELS.PPAP_SUBMISSION_UPDATE]: {
+    request: PpapSubmissionUpdateInput
+    response: { success: boolean }
   }
   [IPC_CHANNELS.REPORT_EXPORT_SCORES]: {
     request: void

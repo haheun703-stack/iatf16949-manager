@@ -121,6 +121,13 @@ export const IPC_CHANNELS = {
   OBLIGATION_DELETE: 'obligation:delete',
   OBLIGATION_COMPLETE: 'obligation:complete',
 
+  // PPAP (양산부품승인) — Core Tool #1
+  PPAP_SUBMISSION_LIST: 'ppap:submissionList',
+  PPAP_BOARD: 'ppap:board',
+  PPAP_ELEMENT_UPDATE: 'ppap:elementUpdate',
+  PPAP_SUBMISSION_CREATE: 'ppap:submissionCreate',
+  PPAP_SUBMISSION_UPDATE: 'ppap:submissionUpdate',
+
   // 리포트 내보내기 (v5 Stage 5)
   REPORT_EXPORT_SCORES: 'report:exportScores',
 

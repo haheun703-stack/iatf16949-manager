@@ -10,6 +10,7 @@ export type PageId =
   | 'document-bom'
   | 'schedule'
   | 'obligations'
+  | 'ppap'
   | 'form-chain'
   | 'clause-tree'
   | 'team'

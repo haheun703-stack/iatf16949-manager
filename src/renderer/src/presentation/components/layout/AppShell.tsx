@@ -10,6 +10,7 @@ import { FormBuilderPage } from '../form-builder/FormBuilderPage'
 import { DocumentBomPage } from '../document-bom/DocumentBomPage'
 import { SchedulePage } from '../schedule/SchedulePage'
 import { ObligationPage } from '../obligation/ObligationPage'
+import { PpapView } from '../ppap/PpapView'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -35,6 +36,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'form-builder' && <FormBuilderPage />}
             {currentPage === 'schedule' && <SchedulePage />}
             {currentPage === 'obligations' && <ObligationPage />}
+            {currentPage === 'ppap' && <PpapView />}
           </ErrorBoundary>
         </main>
       </div>
