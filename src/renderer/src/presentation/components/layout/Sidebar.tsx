@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Pencil, Check, Package } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -17,6 +17,7 @@ const MENU: MenuItem[] = [
   { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
   { id: 'ppap', label: 'PPAP 승인', icon: ClipboardCheck, desc: '양산부품승인 18요구사항' },
   { id: 'fmea', label: '공정 FMEA', icon: GitBranch, desc: '신판 S·O·D·AP 리스크' },
+  { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR 분석' },
   { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
   { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '105 문서 · 405 양식' },
   { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '기본서 + 양식 작성' },

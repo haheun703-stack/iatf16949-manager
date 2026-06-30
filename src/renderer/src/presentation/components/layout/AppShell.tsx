@@ -12,6 +12,7 @@ import { SchedulePage } from '../schedule/SchedulePage'
 import { ObligationPage } from '../obligation/ObligationPage'
 import { PpapView } from '../ppap/PpapView'
 import { FmeaView } from '../fmea/FmeaView'
+import { MsaView } from '../msa/MsaView'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -39,6 +40,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'obligations' && <ObligationPage />}
             {currentPage === 'ppap' && <PpapView />}
             {currentPage === 'fmea' && <FmeaView />}
+            {currentPage === 'msa' && <MsaView />}
           </ErrorBoundary>
         </main>
       </div>

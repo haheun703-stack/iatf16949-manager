@@ -138,6 +138,12 @@ export const IPC_CHANNELS = {
   FMEA_ROW_DELETE: 'fmea:rowDelete',
   FMEA_EXPORT_XLSX: 'fmea:exportXlsx',
 
+  // MSA (측정시스템분석) — Core Tool #3
+  MSA_LIST: 'msa:list',
+  MSA_CREATE: 'msa:create',
+  MSA_UPDATE: 'msa:update',
+  MSA_DELETE: 'msa:delete',
+
   // 리포트 내보내기 (v5 Stage 5)
   REPORT_EXPORT_SCORES: 'report:exportScores',
 

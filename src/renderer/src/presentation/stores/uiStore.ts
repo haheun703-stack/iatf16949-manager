@@ -12,6 +12,7 @@ export type PageId =
   | 'obligations'
   | 'ppap'
   | 'fmea'
+  | 'msa'
   | 'form-chain'
   | 'clause-tree'
   | 'team'

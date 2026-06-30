@@ -1312,6 +1312,58 @@ export interface FmeaDocUpdateInput {
   status?: FmeaDocStatus
 }
 
+// ===== MSA (측정시스템분석) — Core Tool #3 =====
+
+export type MsaMethod = 'gage_rr' | 'bias' | 'linearity' | 'stability'
+export type MsaResult = 'acceptable' | 'marginal' | 'unacceptable' | 'pending'
+export const MSA_METHODS: MsaMethod[] = ['gage_rr', 'bias', 'linearity', 'stability']
+
+export interface MsaStudyDto {
+  id: number
+  gageName: string
+  gageNo: string | null
+  characteristic: string | null
+  method: MsaMethod
+  grrPercent: number | null
+  ndc: number | null
+  result: MsaResult
+  clauseId: string | null
+  teamId: string | null
+  teamName: string | null
+  studyDate: string | null
+  note: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MsaCreateInput {
+  gageName: string
+  gageNo?: string | null
+  characteristic?: string | null
+  method?: MsaMethod
+  grrPercent?: number | null
+  ndc?: number | null
+  clauseId?: string | null
+  teamId?: string | null
+  studyDate?: string | null
+  note?: string | null
+}
+
+export interface MsaUpdateInput {
+  id: number
+  gageName?: string
+  gageNo?: string | null
+  characteristic?: string | null
+  method?: MsaMethod
+  grrPercent?: number | null
+  ndc?: number | null
+  clauseId?: string | null
+  teamId?: string | null
+  studyDate?: string | null
+  note?: string | null
+}
+
 /** 행 부분 수정 — 전 컬럼 선택적. id 외 전달된 필드만 화이트리스트 UPDATE. */
 export interface FmeaRowUpdateInput {
   id: number
@@ -1733,6 +1785,22 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.FMEA_EXPORT_XLSX]: {
     request: { docId: number }
     response: { success: boolean; filePath?: string; rows?: number; canceled?: boolean; error?: string }
+  }
+  [IPC_CHANNELS.MSA_LIST]: {
+    request: void
+    response: MsaStudyDto[]
+  }
+  [IPC_CHANNELS.MSA_CREATE]: {
+    request: MsaCreateInput
+    response: { id: number }
+  }
+  [IPC_CHANNELS.MSA_UPDATE]: {
+    request: MsaUpdateInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.MSA_DELETE]: {
+    request: { id: number }
+    response: { success: boolean }
   }
   [IPC_CHANNELS.REPORT_EXPORT_SCORES]: {
     request: void
