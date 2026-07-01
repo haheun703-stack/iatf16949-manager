@@ -397,6 +397,14 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
                         <span className="text-xs flex-1 min-w-0 truncate" title={f.formName}>
                           {f.formName}
                         </span>
+                        {f.respDept && (
+                          <span
+                            title={`책임부서: ${f.respDept}`}
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 bg-primary/5 text-primary/80 border border-primary/20"
+                          >
+                            {f.respDept}
+                          </span>
+                        )}
                         {f.fieldsCount > 0 && (
                           <span className="text-[10.5px] text-muted-foreground tabular-nums shrink-0">
                             필드 {f.fieldsCount}

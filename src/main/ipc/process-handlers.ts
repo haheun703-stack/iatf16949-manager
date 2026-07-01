@@ -10,6 +10,8 @@ import type {
   ProcessCategoryDto,
   ProcessPageDto,
   ProcessFormRefDto,
+  ClauseCoverageDto,
+  ClauseRegRefDto,
   ProcessPageUploadResponse,
   ProcessPageAddResponse,
   ProcessPagesBulkUploadResponse,
@@ -141,7 +143,7 @@ export function registerProcessHandlers(): void {
 
       const forms = db
         .prepare(
-          `SELECT pf.form_code, pf.sort_order, f.name AS form_name, f.reg_code, f.scope,
+          `SELECT pf.form_code, pf.sort_order, f.name AS form_name, f.reg_code, f.scope, f.resp_dept,
                   (SELECT COUNT(*) FROM form_fields ff WHERE ff.form_code = f.code) AS fields_count,
                   (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code) AS submissions_count,
                   (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code AND fs.status = 'draft') AS draft_count
@@ -168,7 +170,8 @@ export function registerProcessHandlers(): void {
         submissionsCount: (f.submissions_count as number) ?? 0,
         draftCount: (f.draft_count as number) ?? 0,
         sortOrder: (f.sort_order as number) ?? 0,
-        scope: (f.scope as ProcessFormRefDto['scope']) || '공통'
+        scope: (f.scope as ProcessFormRefDto['scope']) || '공통',
+        respDept: (f.resp_dept as string) || null
       }))
 
       return {
@@ -182,6 +185,64 @@ export function registerProcessHandlers(): void {
       }
     }
   )
+
+  // ──── IATF 조항별 커버리지 (정본 0.7 매트릭스 기반) ────
+  ipcMain.handle(IPC_CHANNELS.CLAUSE_COVERAGE, (): ClauseCoverageDto[] => {
+    const TITLES: Record<string, string> = {
+      '4': '조직 상황', '5': '리더십', '6': '기획', '7': '지원',
+      '8': '운용', '9': '성과평가', '10': '개선'
+    }
+    // 조항이 기입된 규정들(대표 1행: reg-doc[code=reg_code] 우선) + 책임부서
+    const rows = db
+      .prepare(
+        `SELECT code, reg_code, name, iatf_clause, resp_dept FROM forms
+         WHERE iatf_clause IS NOT NULL AND iatf_clause <> ''`
+      )
+      .all() as Array<Record<string, unknown>>
+    const regInfo = new Map<string, { name: string; dept: string | null; clauses: string[] }>()
+    for (const r of rows) {
+      const reg = r.reg_code as string
+      const isDoc = r.code === reg
+      if (!regInfo.has(reg) || isDoc) {
+        regInfo.set(reg, {
+          name: (r.name as string) || reg,
+          dept: (r.resp_dept as string) || null,
+          clauses: String(r.iatf_clause).split(',').map((s) => s.trim()).filter(Boolean)
+        })
+      }
+    }
+    // 규정 → 참조 프로세스
+    const procRows = db
+      .prepare(
+        `SELECT DISTINCT f.reg_code AS reg, pf.process_code AS proc
+         FROM process_forms pf JOIN forms f ON f.code = pf.form_code
+         WHERE f.iatf_clause IS NOT NULL AND f.iatf_clause <> ''`
+      )
+      .all() as Array<{ reg: string; proc: string }>
+    const regProcs = new Map<string, Set<string>>()
+    for (const pr of procRows) {
+      if (!regProcs.has(pr.reg)) regProcs.set(pr.reg, new Set())
+      regProcs.get(pr.reg)!.add(pr.proc)
+    }
+    const byClause = new Map<string, ClauseRegRefDto[]>()
+    for (const [reg, info] of regInfo) {
+      const ref: ClauseRegRefDto = {
+        regCode: reg,
+        name: info.name,
+        respDept: info.dept,
+        processes: [...(regProcs.get(reg) ?? [])].sort()
+      }
+      for (const cl of info.clauses) {
+        if (!byClause.has(cl)) byClause.set(cl, [])
+        byClause.get(cl)!.push(ref)
+      }
+    }
+    return ['4', '5', '6', '7', '8', '9', '10'].map((cl) => ({
+      clause: cl,
+      title: TITLES[cl] || cl,
+      regs: (byClause.get(cl) ?? []).sort((a, b) => a.regCode.localeCompare(b.regCode))
+    }))
+  })
 
   // ──── Page: upload image (file dialog → copy → save path) ────
   ipcMain.handle(

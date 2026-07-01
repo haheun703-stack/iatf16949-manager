@@ -1,9 +1,25 @@
-# TODO — 이어서 작업 (갱신: 2026-06-28)
+# TODO — 이어서 작업 (갱신: 2026-07-01)
 
 > **📋 이번 세션(6/25) 핸드오프 보고서+지시서 = [docs/핸드오프_2026-06-25_양식출력엔진.md](docs/핸드오프_2026-06-25_양식출력엔진.md)**
 > 양식 출력엔진(방향B) 작업을 이어받을 땐 **그 문서부터** 읽을 것. 완료보고·자산위치·다음지시·함정 전부 정리됨.
 
-## 🟢 6/28 — P2 #1 런타임 ISIR 임포트 UI 완료 (최신 · 콜드스타트 1순위)
+## 🟢 7/01 — 프로세스↔규정 정본정합화 + 조항커버리지 + FMEA마무리 (최신 · 콜드스타트 1순위)
+
+> 상세 메모리: [[finding-process-reg-completeness]] · [[finding-pfmea-format]] · [[project-core-tools]].
+> ⚠️ 마이그 0049~0053 = 앱 재시작 시 자동적용(이번 세션 이미 라이브 적용·검증 완료).
+
+**이번 세션 완료 (라이브 적용·typecheck+빌드+DB사본/라이브 검증)**:
+- **FMEA 마무리**: ① in-app 출력 활성화 — fmea-export가 폼출력엔진 `resolveMastersDir`로 단일통일 + **Sidebar '정본 폴더' 설정 UI**(IPC `COMPANY_PICK_MASTERS_DIR`, company_profile.mastersDir). ② **구판 J1101-01 소프트폐기**(마이그 `0049`, forms.deprecated/replacement_page + FormCanvas 배너·'공정 FMEA 열기' 리다이렉트). ③ **C5 고객명**(마이그 `0050`, fmea_documents.customer + FmeaView 고객 입력칸 + 출력 C5).
+- **프로세스 관련규정 전면 정합화**(마이그 `0051`·`0052`·`0053`): 정답지 = **품질환경매뉴얼 REV.7 0.7 조항매트릭스**(TPC-M-07, 74튜플/69규정, `IATF 전체 자료모음_김권표이사_260501\1.품질&환경 메뉴얼_230501\…REV.7…_완료.xlsx`). SP-03 14/14 + **전 9프로세스 정본일치**. 미적재 28규정 문서등록(필드미정의, code=reg_code) + 프로세스 매핑 + `forms.resp_dept`·`iatf_clause` 컬럼·전규정 기입. **CP-03 생산관리 3→22종**(갭지도 지적 M·E·D 대량누락 해소). ⚠️MP라벨슬립 보정(0.7 인적자원=MP-02 → 앱 MP-03; 앱 MP-02=리스크).
+- **조항 커버리지 뷰(신규)**: 사이드바 **'조항 커버리지'**(유령 PageId `clause-tree` 재사용) → IATF 4~10장별 규정/프로세스/책임팀 + 빈조항🔴. IPC `CLAUSE_COVERAGE`(process-handlers) + `ClauseCoverageView.tsx`. + BomProcessDetail 관련양식에 **책임팀 배지**(ProcessFormRefDto.respDept).
+
+**▶ 사무실에서 다음 (우선순위)**:
+1. **① 규정별 하위양식 셀맵 적재 = "작성·공식출력 가능하게"** (가장 큰 실작업). 등록된 28규정 + 총 ~132 미적재양식은 현재 **"필드 미정의"**(목록만·작성/출력 불가). `scripts/extract-all-full.mjs`로 정본 xlsx 양식시트에서 (라벨·셀·타입) 추출 → `form_fields`+`form_cell_map` 시드 → 앱 작성기+공식 xlsx 출력 활성. **한 번에 X, 실무빈도·심사중요 양식부터 하나씩.** **조항 커버리지 뷰 8장 운용(36개)이 우선순위 지도.**
+2. **라이브 스팟체크(사장님)**: ① Sidebar '정본 폴더' 지정 → FMEA '신판 시트 출력' 실출력(C5 고객 포함) ② 구판 J1101-01 진입 시 배너·리다이렉트 ③ '조항 커버리지' 뷰 ④ 프로세스 상세 책임팀 배지.
+3. **FMEA 문서 헤더 편집기 부재** — 현재 FmeaView는 고객칸만 편집 가능, 나머지 헤더(FMEA번호·품명·책임·차종·팀·양산일)·새문서 버튼 없음(store엔 createDoc/updateDoc 존재, UI 미연결). 실작성 위해 후속.
+4. 앱>정본 초과 프로세스(CP-02 9>8·CP-03 22>21) = 기존 초과분 비파괴 유지 중, 정리 여부 판단.
+
+## 🟢 6/28 — P2 #1 런타임 ISIR 임포트 UI 완료
 
 > 결정: ①6/27 ISIR P1 먼저 커밋(`5bf28d7`) ②임포트는 **TS 포팅(ExcelJS)** — python 런타임 의존 0.
 

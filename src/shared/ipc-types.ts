@@ -135,6 +135,8 @@ export interface CompanyProfile {
   revisionDate: string
   /** 양식 자동채움 작성자(로그인 도입 전 stub). Sidebar 에서 설정. */
   defaultAuthor: string
+  /** 정본(마스터 양식) 폴더 경로. 공식 xlsx 출력의 원본 위치. Sidebar 에서 폴더 선택. */
+  mastersDir: string
 }
 
 export interface DocGenRequest {
@@ -205,6 +207,12 @@ export interface FormDefinitionDto {
   fields: FormFieldDto[]
   /** 배치 설계도. 없으면 렌더러가 섹션 기반 auto-layout 으로 폴백. */
   layout: FormLayout | null
+  /** 소프트 폐기(신판 등으로 대체된 구판). true 면 작성/출력 대신 대체 모듈로 안내. */
+  deprecated: boolean
+  /** 폐기 안내 문구(대체 사유·이동 안내). */
+  deprecatedNote: string | null
+  /** 대체 모듈 페이지 id(uiStore PageId). 예: 'fmea'. */
+  replacementPage: string | null
 }
 
 export interface FormListItemDto {
@@ -868,6 +876,24 @@ export interface ProcessFormRefDto {
   sortOrder: number
   /** 사업부 분류 라벨: '공통' 또는 사업부 명칭. */
   scope: FormScope
+  /** 책임부서(팀). 정본 0.7 매트릭스 기준. 총무/영업/품질보증/개발/구매/생산/생산기술. */
+  respDept: string | null
+}
+
+/** IATF 조항별 커버리지: 한 규정의 조항 내 참조. */
+export interface ClauseRegRefDto {
+  regCode: string
+  name: string
+  respDept: string | null
+  /** 이 규정을 참조하는 프로세스 코드들. */
+  processes: string[]
+}
+
+/** IATF 조항(4~10) 하나의 커버리지. */
+export interface ClauseCoverageDto {
+  clause: string
+  title: string
+  regs: ClauseRegRefDto[]
 }
 
 export interface ProcessDetailDto {
@@ -1223,6 +1249,8 @@ export interface FmeaDocDto {
   partNo: string | null
   procOwner: string | null
   model: string | null
+  /** 고객사명(제출처). 신판 시트 헤더 C5. */
+  customer: string | null
   author: string | null
   reviewer: string | null
   approver: string | null
@@ -1291,6 +1319,7 @@ export interface FmeaDocCreateInput {
   partNo?: string | null
   procOwner?: string | null
   model?: string | null
+  customer?: string | null
   author?: string | null
   teamMembers?: string | null
 }
@@ -1302,6 +1331,7 @@ export interface FmeaDocUpdateInput {
   partNo?: string | null
   procOwner?: string | null
   model?: string | null
+  customer?: string | null
   author?: string | null
   reviewer?: string | null
   approver?: string | null
@@ -1489,6 +1519,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.COMPANY_PROFILE_SAVE]: {
     request: CompanyProfile
     response: { success: boolean }
+  }
+  [IPC_CHANNELS.COMPANY_PICK_MASTERS_DIR]: {
+    request: void
+    response: { filePath: string | null; canceled?: boolean }
+  }
+  [IPC_CHANNELS.CLAUSE_COVERAGE]: {
+    request: void
+    response: ClauseCoverageDto[]
   }
   [IPC_CHANNELS.DOCGEN_GENERATE]: {
     request: DocGenRequest

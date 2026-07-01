@@ -597,7 +597,7 @@ export function registerAllIpcHandlers(): void {
 
   const PROFILE_KEYS: (keyof CompanyProfile)[] = [
     'companyName', 'ceoName', 'address', 'phone', 'fax',
-    'factoryName', 'revisionNumber', 'revisionDate', 'defaultAuthor'
+    'factoryName', 'revisionNumber', 'revisionDate', 'defaultAuthor', 'mastersDir'
   ]
 
   ipcMain.handle(IPC_CHANNELS.COMPANY_PROFILE_GET, () => {
@@ -612,9 +612,30 @@ export function registerAllIpcHandlers(): void {
       factoryName: map.get('factoryName') || '',
       revisionNumber: map.get('revisionNumber') || '',
       revisionDate: map.get('revisionDate') || '',
-      defaultAuthor: map.get('defaultAuthor') || ''
+      defaultAuthor: map.get('defaultAuthor') || '',
+      mastersDir: map.get('mastersDir') || ''
     }
     return profile
+  })
+
+  // ──── 정본(마스터 양식) 폴더 선택 → company_profile.mastersDir 저장 ────
+  ipcMain.handle(IPC_CHANNELS.COMPANY_PICK_MASTERS_DIR, async () => {
+    const win = BrowserWindow.getFocusedWindow()
+    const res = win
+      ? await dialog.showOpenDialog(win, {
+          title: '정본(마스터 양식) 폴더 선택',
+          properties: ['openDirectory']
+        })
+      : await dialog.showOpenDialog({
+          title: '정본(마스터 양식) 폴더 선택',
+          properties: ['openDirectory']
+        })
+    if (res.canceled || !res.filePaths?.[0]) return { filePath: null, canceled: true }
+    const dir = res.filePaths[0]
+    db.prepare(
+      "INSERT INTO company_profile (key, value) VALUES ('mastersDir', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    ).run(dir)
+    return { filePath: dir }
   })
 
   // ──── 현재 창을 PDF로 인쇄(저장) — @media print 의 .print-document 영역만 출력 ────

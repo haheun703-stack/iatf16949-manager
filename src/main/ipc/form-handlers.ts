@@ -137,7 +137,10 @@ export function registerFormHandlers(): void {
         nextFormLabel: (form.next_form_label as string) || null,
         prevFormCode: (form.prev_form_code as string) || null,
         fields: fieldDtos,
-        layout: parseJsonSafe<FormLayout | null>(form.layout_json as string | null, null)
+        layout: parseJsonSafe<FormLayout | null>(form.layout_json as string | null, null),
+        deprecated: Number(form.deprecated) === 1,
+        deprecatedNote: (form.deprecated_note as string) || null,
+        replacementPage: (form.replacement_page as string) || null
       }
     }
   )

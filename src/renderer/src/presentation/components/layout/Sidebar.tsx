@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package, Folder, ListChecks } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -20,6 +20,7 @@ const MENU: MenuItem[] = [
   { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR 분석' },
   { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
   { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '105 문서 · 405 양식' },
+  { id: 'clause-tree', label: '조항 커버리지', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑' },
   { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '기본서 + 양식 작성' },
   { id: 'form-builder', label: '양식 단독 작성', icon: FileEdit, desc: '양식만 빠르게 작성' },
   { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' },
@@ -62,6 +63,21 @@ export function Sidebar(): JSX.Element {
       setAuthor(name)
     } catch {
       /* 저장 실패 시 이전 값 유지 */
+    }
+  }
+
+  const masterBase = profile?.mastersDir
+    ? profile.mastersDir.split(/[\\/]/).filter(Boolean).pop() || ''
+    : ''
+
+  const pickMastersDir = async (): Promise<void> => {
+    try {
+      const res = (await window.api.invoke(window.api.channels.COMPANY_PICK_MASTERS_DIR)) as {
+        filePath: string | null
+      }
+      if (res?.filePath && profile) setProfile({ ...profile, mastersDir: res.filePath })
+    } catch {
+      /* 취소/실패 무시 */
     }
   }
 
@@ -164,6 +180,23 @@ export function Sidebar(): JSX.Element {
               <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
             </div>
             <div>품질/개발팀장 · AM사업부 · 양식 작성자</div>
+          </button>
+        )}
+
+        {!sidebarCollapsed && (
+          <button
+            type="button"
+            onClick={() => void pickMastersDir()}
+            title={profile?.mastersDir || '정본(마스터 양식) 폴더 미설정 — 클릭하여 지정. 공식 xlsx 출력의 원본 위치.'}
+            className="group mt-2 w-full flex items-center gap-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted rounded px-1.5 py-1 -mx-1.5"
+          >
+            <Folder className="w-3 h-3 shrink-0 opacity-70" />
+            <span className="truncate">
+              정본 폴더:{' '}
+              <span className={cn('font-medium', masterBase ? 'text-foreground' : 'text-amber-600')}>
+                {masterBase || '미설정'}
+              </span>
+            </span>
           </button>
         )}
       </div>

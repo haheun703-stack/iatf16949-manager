@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
-import { useUIStore } from '../../stores/uiStore'
+import { useUIStore, type PageId } from '../../stores/uiStore'
 import { ApprovalBar } from './ApprovalBar'
 import { FormFieldInput } from './FormFieldInput'
 import { FormDocument } from './FormDocument'
@@ -18,6 +18,7 @@ export function FormCanvas(): JSX.Element {
   const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
+  const setPage = useUIStore((s) => s.setPage)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [viewMode, setViewMode] = useState<ViewMode>('input')
   const [pdfBusy, setPdfBusy] = useState(false)
@@ -193,16 +194,28 @@ export function FormCanvas(): JSX.Element {
               <ClipboardPaste className="w-3.5 h-3.5" />
               Excel 붙여넣기
             </button>
-            <button
-              type="button"
-              onClick={() => void handleExportXlsx()}
-              disabled={exportingXlsx}
-              title="입력값을 원본 공식 양식(.xlsx)에 주입해 출력합니다"
-              className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
-            >
-              {exportingXlsx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
-              공식 엑셀 출력
-            </button>
+            {currentForm.deprecated ? (
+              <button
+                type="button"
+                onClick={() => setPage((currentForm.replacementPage ?? 'fmea') as PageId)}
+                title={currentForm.deprecatedNote ?? '신판 모듈로 이동합니다'}
+                className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-primary/40 text-primary hover:bg-primary/10 flex items-center gap-1.5 transition-colors"
+              >
+                <ArrowRight className="w-3.5 h-3.5" />
+                공정 FMEA(신판) 열기
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void handleExportXlsx()}
+                disabled={exportingXlsx}
+                title="입력값을 원본 공식 양식(.xlsx)에 주입해 출력합니다"
+                className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+              >
+                {exportingXlsx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+                공식 엑셀 출력
+              </button>
+            )}
 
             {viewMode === 'document' && (
               <>
@@ -269,6 +282,26 @@ export function FormCanvas(): JSX.Element {
         <h2 className="text-2xl font-bold tracking-tight">{currentForm.name}</h2>
         {currentForm.description && (
           <p className="text-[13px] text-muted-foreground mt-1.5">{currentForm.description}</p>
+        )}
+        {currentForm.deprecated && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-[13px] text-amber-900">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <div className="font-semibold">구판 양식 — 신판으로 대체됨</div>
+              <p className="mt-0.5 leading-relaxed">
+                {currentForm.deprecatedNote ??
+                  '신판(AIAG-VDA 7-step) 공정 FMEA로 대체되었습니다.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setPage((currentForm.replacementPage ?? 'fmea') as PageId)}
+                className="mt-1.5 inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+              >
+                공정 FMEA(신판) 열기
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         )}
         {xlsxMsg && (
           <p

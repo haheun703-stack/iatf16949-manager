@@ -30,9 +30,13 @@ export const IPC_CHANNELS = {
   DASHBOARD_FULL: 'dashboard:full',
   DASHBOARD_V5: 'dashboard:v5',
 
+  // IATF 조항 커버리지 (0.7 매트릭스)
+  CLAUSE_COVERAGE: 'clause:coverage',
+
   // Company Profile
   COMPANY_PROFILE_GET: 'company:profileGet',
   COMPANY_PROFILE_SAVE: 'company:profileSave',
+  COMPANY_PICK_MASTERS_DIR: 'company:pickMastersDir',
 
   // Document Generation
   DOCGEN_GENERATE: 'docgen:generate',

@@ -18,7 +18,7 @@ function rpnTone(rpn: number | null): string {
 }
 
 export function FmeaView(): JSX.Element {
-  const { docs, selectedId, board, loading, load, select, updateRow, addRow, deleteRow, exportXlsx } =
+  const { docs, selectedId, board, loading, load, select, updateDoc, updateRow, addRow, deleteRow, exportXlsx } =
     useFmeaStore()
   const [exporting, setExporting] = useState(false)
 
@@ -69,6 +69,19 @@ export function FmeaView(): JSX.Element {
 
         {board && (
           <div className="mt-3 flex items-center gap-4 flex-wrap text-xs">
+            <label className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="font-medium">고객</span>
+              <input
+                key={board.doc.id}
+                defaultValue={board.doc.customer ?? ''}
+                onBlur={(e) => {
+                  const v = e.target.value.trim() || null
+                  if (v !== (board.doc.customer ?? null)) void updateDoc({ id: board.doc.id, customer: v })
+                }}
+                placeholder="고객사명 (출력 C5)"
+                className="bg-fillable border border-border rounded px-2 py-0.5 text-xs w-40 focus:outline-none focus:border-primary/50"
+              />
+            </label>
             {board.doc.procOwner && <span className="text-muted-foreground">책임 {board.doc.procOwner}</span>}
             {board.doc.teamMembers && <span className="text-muted-foreground">팀 {board.doc.teamMembers}</span>}
             <span className="font-semibold">행 {board.summary.total}</span>

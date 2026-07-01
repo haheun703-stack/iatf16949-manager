@@ -21,6 +21,7 @@ function rowToDoc(r: Record<string, unknown>): FmeaDocDto {
     partNo: (r.part_no as string) || null,
     procOwner: (r.proc_owner as string) || null,
     model: (r.model as string) || null,
+    customer: (r.customer as string) || null,
     author: (r.author as string) || null,
     reviewer: (r.reviewer as string) || null,
     approver: (r.approver as string) || null,
@@ -155,8 +156,8 @@ export function registerFmeaHandlers(): void {
     (_event, input: FmeaDocCreateInput): { id: number } => {
       const res = db
         .prepare(
-          `INSERT INTO fmea_documents (fmea_no, part_name, part_no, proc_owner, model, author, team_members)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO fmea_documents (fmea_no, part_name, part_no, proc_owner, model, customer, author, team_members)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           input.fmeaNo?.trim() || 'PFMEA-NEW-001',
@@ -164,6 +165,7 @@ export function registerFmeaHandlers(): void {
           input.partNo ?? null,
           input.procOwner ?? null,
           input.model ?? null,
+          input.customer ?? null,
           input.author ?? null,
           input.teamMembers ?? null
         )
@@ -181,6 +183,7 @@ export function registerFmeaHandlers(): void {
         partNo: 'part_no',
         procOwner: 'proc_owner',
         model: 'model',
+        customer: 'customer',
         author: 'author',
         reviewer: 'reviewer',
         approver: 'approver',

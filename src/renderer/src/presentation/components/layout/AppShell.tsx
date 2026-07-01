@@ -13,6 +13,7 @@ import { ObligationPage } from '../obligation/ObligationPage'
 import { PpapView } from '../ppap/PpapView'
 import { FmeaView } from '../fmea/FmeaView'
 import { MsaView } from '../msa/MsaView'
+import { ClauseCoverageView } from '../clause/ClauseCoverageView'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -41,6 +42,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'ppap' && <PpapView />}
             {currentPage === 'fmea' && <FmeaView />}
             {currentPage === 'msa' && <MsaView />}
+            {currentPage === 'clause-tree' && <ClauseCoverageView />}
           </ErrorBoundary>
         </main>
       </div>

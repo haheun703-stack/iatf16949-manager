@@ -23,7 +23,7 @@ const FALLBACK_MASTERS =
 
 // 마스터 폴더 해소 우선순위: 환경변수 → DB설정(company_profile.mastersDir) → 번들 resources/forms → 개발 폴백.
 // 배포 시 resources/forms 에 원본을 넣으면 번들로 동작(electron-builder.yml extraResources).
-function resolveMastersDir(db: Database.Database): string {
+export function resolveMastersDir(db: Database.Database): string {
   const env = process.env.IATF_MASTERS_DIR
   if (env && existsSync(env)) return env
   try {

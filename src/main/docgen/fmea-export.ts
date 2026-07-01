@@ -6,6 +6,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import type Database from 'better-sqlite3'
 import { computeActionPriority } from '@shared/fmea-ap'
+import { resolveMastersDir } from './form-export-engine'
 
 const SHEET_NAME = '공정 FMEA 4판 SHEET (J1101-01)'
 const DATA_START_ROW = 10
@@ -54,20 +55,6 @@ function findMaster(dir: string): string | null {
   return null
 }
 
-function mastersDir(db: Database.Database): string | null {
-  const env = process.env.IATF_MASTERS_DIR
-  if (env && existsSync(env)) return env
-  try {
-    const r = db.prepare("SELECT value FROM company_profile WHERE key = 'mastersDir'").get() as
-      | { value: string }
-      | undefined
-    if (r?.value && existsSync(r.value)) return r.value
-  } catch {
-    /* 무시 */
-  }
-  return null
-}
-
 export interface FmeaExportResult {
   success: boolean
   filePath?: string
@@ -80,16 +67,14 @@ export async function exportFmeaXlsx(
   docId: number,
   outPath: string
 ): Promise<FmeaExportResult> {
-  const dir = mastersDir(db)
-  if (!dir) {
-    return {
-      success: false,
-      error: '마스터 폴더 미설정 — 환경변수 IATF_MASTERS_DIR 또는 회사설정(mastersDir)을 정본 폴더로 지정하세요.'
-    }
-  }
+  // 정본 폴더 해소는 폼 출력엔진과 동일(환경변수→DB설정→번들→폴백). 단일 출처.
+  const dir = resolveMastersDir(db)
   const master = findMaster(dir)
   if (!master) {
-    return { success: false, error: `J-1101 공정FMEA 마스터 .xlsx 를 찾지 못함 (검색: ${dir})` }
+    return {
+      success: false,
+      error: `J-1101 공정FMEA 마스터 .xlsx 를 찾지 못함 — 사이드바에서 '정본 폴더'를 지정하세요. (검색: ${dir})`
+    }
   }
 
   const doc = db.prepare('SELECT * FROM fmea_documents WHERE id = ?').get(docId) as
@@ -116,7 +101,7 @@ export async function exportFmeaXlsx(
   put('C6', doc.model)
   put('G6', doc.team_members)
   put('G5', doc.mp_date)
-  // C5(고객명)은 fmea_documents 에 customer 필드 추가 시 연결
+  put('C5', doc.customer)
   // 회사명(C3)은 company_profile 에서
   try {
     const cp = db.prepare("SELECT value FROM company_profile WHERE key='companyName'").get() as
