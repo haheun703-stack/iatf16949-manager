@@ -5,8 +5,13 @@ import type {
   DashboardV5Dto,
   DashboardGradeBucket,
   DashboardRecentScore,
-  DashboardAttentionItem
+  DashboardAttentionItem,
+  DailyBoardDto,
+  DailyObligationDto,
+  DailySqRedDto,
+  DailyDraftDto
 } from '@shared/ipc-types'
+import { computeSqReadiness } from './sq-handlers'
 
 function countOf(db: ReturnType<typeof getSqlite>, sql: string): number {
   try {
@@ -183,5 +188,89 @@ export function registerDashboardHandlers(): void {
        bomTotalForms: 0
      }
    }
+  })
+
+  // ──── 오늘 할 일 (매일 관리 보드) ────
+  // 정기의무 도래(연체/임박) + SQ 🔴미충족(작성으로 해결) + 작성중 draft 이어쓰기.
+  ipcMain.handle(IPC_CHANNELS.DAILY_BOARD, (): DailyBoardDto => {
+    const empty: DailyBoardDto = { overdue: [], dueSoon: [], sqRed: [], drafts: [] }
+    try {
+      // 1) 정기 의무 — 로컬 오늘 기준 남은 일수
+      const today = new Date()
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      const obs = db
+        .prepare(
+          `SELECT id, title, cadence, next_due_date, lead_days, owner, form_code
+           FROM recurring_obligations
+           WHERE active = 1 AND next_due_date IS NOT NULL
+           ORDER BY next_due_date ASC`
+        )
+        .all() as Array<Record<string, unknown>>
+      const toDto = (r: Record<string, unknown>, daysLeft: number): DailyObligationDto => ({
+        id: r.id as number,
+        title: r.title as string,
+        cadence: (r.cadence as string) || '월',
+        nextDueDate: r.next_due_date as string,
+        daysLeft,
+        owner: (r.owner as string) || null,
+        formCode: (r.form_code as string) || null
+      })
+      const overdue: DailyObligationDto[] = []
+      const dueSoon: DailyObligationDto[] = []
+      const t0 = new Date(`${todayStr}T00:00:00`)
+      for (const r of obs) {
+        const due = new Date(`${r.next_due_date as string}T00:00:00`)
+        const daysLeft = Math.round((due.getTime() - t0.getTime()) / 86400000)
+        const lead = (r.lead_days as number) ?? 7
+        if (daysLeft < 0) overdue.push(toDto(r, daysLeft))
+        else if (daysLeft <= lead) dueSoon.push(toDto(r, daysLeft))
+      }
+
+      // 2) SQ 🔴 미충족 — 양식이 매핑돼 있어 작성으로 즉시 개선 가능한 항목 (점수 큰 순)
+      const sqRed: DailySqRedDto[] = []
+      try {
+        const readiness = computeSqReadiness(db)
+        for (const cat of readiness.categories) {
+          for (const it of cat.items) {
+            if (it.signal === 'red' && it.formCount > 0) {
+              sqRed.push({
+                code: it.code,
+                title: it.title,
+                points: it.points,
+                categoryName: cat.name,
+                formCount: it.formCount
+              })
+            }
+          }
+        }
+        sqRed.sort((a, b) => b.points - a.points)
+      } catch {
+        /* SQ 백본 미구성 시 생략 */
+      }
+
+      // 3) 작성 중 초안 — 최근 수정 순
+      const drafts = db
+        .prepare(
+          `SELECT s.id, s.form_code, s.serial_no, s.updated_at, f.name AS form_name
+           FROM form_submissions s
+           JOIN forms f ON f.code = s.form_code
+           WHERE s.status = 'draft'
+           ORDER BY s.updated_at DESC
+           LIMIT 8`
+        )
+        .all() as Array<Record<string, unknown>>
+      const draftDtos: DailyDraftDto[] = drafts.map((r) => ({
+        submissionId: r.id as number,
+        formCode: r.form_code as string,
+        formName: (r.form_name as string) || (r.form_code as string),
+        serialNo: (r.serial_no as string) || null,
+        updatedAt: r.updated_at as string
+      }))
+
+      return { overdue, dueSoon, sqRed: sqRed.slice(0, 8), drafts: draftDtos }
+    } catch (err) {
+      console.error('[dashboard:dailyBoard] failed:', (err as Error).message)
+      return empty
+    }
   })
 }

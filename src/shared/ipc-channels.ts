@@ -33,6 +33,13 @@ export const IPC_CHANNELS = {
   // IATF 조항 커버리지 (0.7 매트릭스)
   CLAUSE_COVERAGE: 'clause:coverage',
 
+  // APQP (사전 제품 품질 계획) — 5단계 여정
+  APQP_BOARD: 'apqp:board',
+  APQP_ELEMENT_UPDATE: 'apqp:elementUpdate',
+
+  // 오늘 할 일 (매일 관리 보드)
+  DAILY_BOARD: 'dashboard:dailyBoard',
+
   // Company Profile
   COMPANY_PROFILE_GET: 'company:profileGet',
   COMPANY_PROFILE_SAVE: 'company:profileSave',

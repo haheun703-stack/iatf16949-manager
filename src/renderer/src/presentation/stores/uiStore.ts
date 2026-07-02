@@ -13,6 +13,7 @@ export type PageId =
   | 'ppap'
   | 'fmea'
   | 'msa'
+  | 'apqp'
   | 'form-chain'
   | 'clause-tree'
   | 'team'

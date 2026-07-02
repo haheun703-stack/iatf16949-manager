@@ -5,6 +5,7 @@ import { useDashboardStore } from '../../stores/dashboardStore'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 import { useDday } from '../../hooks/useDday'
 import { KpiStrip } from './KpiStrip'
+import { DailyBoardCard } from './DailyBoardCard'
 import { BriefingCard } from './BriefingCard'
 import { ReadinessCard } from './ReadinessCard'
 import { AbsenceCard } from './AbsenceCard'
@@ -128,6 +129,9 @@ export function Dashboard(): JSX.Element {
           <span>대시보드 집계 실패: {error}</span>
         </div>
       )}
+
+      {/* 오늘 할 일 — 매일 관리 보드 (정기의무·SQ미충족·이어쓰기) */}
+      <DailyBoardCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BriefingCard />

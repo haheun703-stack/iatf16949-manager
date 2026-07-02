@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package, Folder, ListChecks } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package, Folder, ListChecks, Route } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -11,20 +11,47 @@ interface MenuItem {
   desc: string
 }
 
-const MENU: MenuItem[] = [
-  { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '심사 D-Day 현황' },
-  { id: 'sq-readiness', label: 'SQ 준비도', icon: ShieldCheck, desc: '42항목 심사 준비 현황' },
-  { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
-  { id: 'ppap', label: 'PPAP 승인', icon: ClipboardCheck, desc: '양산부품승인 18요구사항' },
-  { id: 'fmea', label: '공정 FMEA', icon: GitBranch, desc: '신판 S·O·D·AP 리스크' },
-  { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR 분석' },
-  { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
-  { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '105 문서 · 405 양식' },
-  { id: 'clause-tree', label: '조항 커버리지', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑' },
-  { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '기본서 + 양식 작성' },
-  { id: 'form-builder', label: '양식 단독 작성', icon: FileEdit, desc: '양식만 빠르게 작성' },
-  { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' },
-  { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '일·주·월·분기·년 반복' }
+interface MenuGroup {
+  title: string
+  items: MenuItem[]
+}
+
+// 업무 흐름 기준 4그룹: 매일 돌보는 것 → 개발·양산 여정 → 심사 대비 → 문서 원장
+const MENU_GROUPS: MenuGroup[] = [
+  {
+    title: '매일 관리',
+    items: [
+      { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '오늘 할 일 · D-Day 현황' },
+      { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
+      { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' },
+      { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '일·주·월·분기·년 반복' }
+    ]
+  },
+  {
+    title: 'APQP · Core Tool',
+    items: [
+      { id: 'apqp', label: 'APQP 여정', icon: Route, desc: '5단계 43산출물 순차 진행' },
+      { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
+      { id: 'ppap', label: 'PPAP 승인', icon: ClipboardCheck, desc: '양산부품승인 18요구사항' },
+      { id: 'fmea', label: '공정 FMEA', icon: GitBranch, desc: '신판 S·O·D·AP 리스크' },
+      { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR 분석' }
+    ]
+  },
+  {
+    title: '심사 대응',
+    items: [
+      { id: 'sq-readiness', label: 'SQ 준비도', icon: ShieldCheck, desc: '42항목 심사 준비 현황' },
+      { id: 'clause-tree', label: '조항 커버리지', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑' }
+    ]
+  },
+  {
+    title: '문서 · 양식',
+    items: [
+      { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '프로세스·규정·양식 원장' },
+      { id: 'form-builder', label: '양식 단독 작성', icon: FileEdit, desc: '양식만 빠르게 작성' },
+      { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '흐름도 등록 · AI 추출' }
+    ]
+  }
 ]
 
 export function Sidebar(): JSX.Element {
@@ -89,48 +116,59 @@ export function Sidebar(): JSX.Element {
       )}
     >
       <nav className="flex-1 overflow-y-auto p-2">
-        {MENU.map((item) => {
-          const Icon = item.icon
-          const active = currentPage === item.id
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setPage(item.id)}
-              title={sidebarCollapsed ? `${item.label} · ${item.desc}` : undefined}
-              className={cn(
-                'relative w-full rounded-md mb-1 flex items-start gap-3 transition-colors',
-                sidebarCollapsed ? 'justify-center px-0 py-2.5' : 'text-left pl-4 pr-3 py-2.5',
-                active
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-foreground hover:bg-muted'
-              )}
-            >
-              {active && (
-                <span
-                  aria-hidden
-                  className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-primary"
-                />
-              )}
-              <Icon
-                className={cn('w-[18px] h-[18px] shrink-0', !sidebarCollapsed && 'mt-0.5', active && 'text-primary')}
-              />
-              {!sidebarCollapsed && (
-                <div className="leading-snug">
-                  <div className="text-sm font-semibold">{item.label}</div>
-                  <div
-                    className={cn(
-                      'text-xs mt-0.5',
-                      active ? 'text-primary/80' : 'text-foreground/55'
-                    )}
-                  >
-                    {item.desc}
-                  </div>
-                </div>
-              )}
-            </button>
-          )
-        })}
+        {MENU_GROUPS.map((group, gi) => (
+          <div key={group.title} className={cn(gi > 0 && 'mt-3')}>
+            {sidebarCollapsed ? (
+              gi > 0 && <div className="mx-2 mb-2 border-t border-border/70" aria-hidden />
+            ) : (
+              <div className="px-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                {group.title}
+              </div>
+            )}
+            {group.items.map((item) => {
+              const Icon = item.icon
+              const active = currentPage === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setPage(item.id)}
+                  title={sidebarCollapsed ? `${item.label} · ${item.desc}` : undefined}
+                  className={cn(
+                    'relative w-full rounded-md mb-0.5 flex items-start gap-3 transition-colors',
+                    sidebarCollapsed ? 'justify-center px-0 py-2.5' : 'text-left pl-4 pr-3 py-2',
+                    active
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-foreground hover:bg-muted'
+                  )}
+                >
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-primary"
+                    />
+                  )}
+                  <Icon
+                    className={cn('w-[18px] h-[18px] shrink-0', !sidebarCollapsed && 'mt-0.5', active && 'text-primary')}
+                  />
+                  {!sidebarCollapsed && (
+                    <div className="leading-snug">
+                      <div className="text-[13px] font-semibold">{item.label}</div>
+                      <div
+                        className={cn(
+                          'text-[11px] mt-0.5',
+                          active ? 'text-primary/80' : 'text-foreground/55'
+                        )}
+                      >
+                        {item.desc}
+                      </div>
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
       <div className="p-3 border-t border-border">

@@ -678,6 +678,47 @@ export interface DashboardV5Dto {
   bomTotalForms: number
 }
 
+// ===== 오늘 할 일 (매일 관리 보드) =====
+
+export interface DailyObligationDto {
+  id: number
+  title: string
+  cadence: string
+  nextDueDate: string
+  /** 오늘 기준 남은 일수. 음수 = 연체. */
+  daysLeft: number
+  owner: string | null
+  formCode: string | null
+}
+
+export interface DailySqRedDto {
+  code: string
+  title: string
+  points: number
+  categoryName: string
+  /** 매핑된 양식 수 — 이 중 하나라도 작성하면 신호 개선. */
+  formCount: number
+}
+
+export interface DailyDraftDto {
+  submissionId: number
+  formCode: string
+  formName: string
+  serialNo: string | null
+  updatedAt: string
+}
+
+export interface DailyBoardDto {
+  /** 연체된 정기 의무 (next_due_date < 오늘) */
+  overdue: DailyObligationDto[]
+  /** 임박 정기 의무 (오늘 ~ lead_days 이내) */
+  dueSoon: DailyObligationDto[]
+  /** SQ 🔴 미충족 중 양식 작성으로 해결 가능한 항목(점수 높은 순) */
+  sqRed: DailySqRedDto[]
+  /** 작성 중 초안 — 이어쓰기 */
+  drafts: DailyDraftDto[]
+}
+
 // ===== SQ 준비도 DTOs (SQ 평가 백본) =====
 
 export type SqSignal = 'green' | 'yellow' | 'red' | 'gray'
@@ -1235,6 +1276,59 @@ export interface PpapElementUpdateInput {
   note?: string | null
 }
 
+// ===== APQP (사전 제품 품질 계획) — 5단계 여정 =====
+
+export type ApqpStatus = 'not_started' | 'in_progress' | 'completed' | 'na'
+/** 산출물의 Core Tool 태그 — 기존 v5 모듈 딥링크용. */
+export type ApqpCoreTool = 'FMEA' | 'CP' | 'MSA' | 'SPC' | 'PPAP'
+
+export interface ApqpElementDto {
+  id: string
+  phaseId: string
+  seq: number
+  name: string
+  nameEn: string | null
+  io: 'input' | 'output'
+  coreTool: ApqpCoreTool | null
+  clauseId: string | null
+  clauseTitle: string | null
+  teamId: string | null
+  teamName: string | null
+  status: ApqpStatus
+  targetDate: string | null
+  actualDate: string | null
+  note: string | null
+}
+
+export interface ApqpPhaseDto {
+  id: string
+  phaseNo: number
+  title: string
+  titleEn: string | null
+  description: string | null
+  elements: ApqpElementDto[]
+  /** 진척 요약 (na 제외 완료율) */
+  total: number
+  completed: number
+  inProgress: number
+}
+
+export interface ApqpBoardDto {
+  phases: ApqpPhaseDto[]
+  /** 전체 진척률(%) — na 제외 */
+  overallPct: number
+  /** 현재 단계 = 미완료 요소가 남은 첫 단계의 phase_no (전부 완료면 5) */
+  currentPhaseNo: number
+}
+
+export interface ApqpElementUpdateInput {
+  id: string
+  status?: ApqpStatus
+  targetDate?: string | null
+  actualDate?: string | null
+  note?: string | null
+}
+
 // ===== 공정 FMEA (신판 AIAG-VDA 7-step) — Core Tool #2 =====
 
 export type FmeaDocStatus = 'draft' | 'in_review' | 'approved'
@@ -1527,6 +1621,18 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.CLAUSE_COVERAGE]: {
     request: void
     response: ClauseCoverageDto[]
+  }
+  [IPC_CHANNELS.APQP_BOARD]: {
+    request: void
+    response: ApqpBoardDto
+  }
+  [IPC_CHANNELS.APQP_ELEMENT_UPDATE]: {
+    request: ApqpElementUpdateInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.DAILY_BOARD]: {
+    request: void
+    response: DailyBoardDto
   }
   [IPC_CHANNELS.DOCGEN_GENERATE]: {
     request: DocGenRequest
