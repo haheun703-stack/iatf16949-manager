@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Check, ChevronDown, ChevronRight, ExternalLink, Loader2 } from 'lucide-react'
+import { Route, Check, ChevronDown, ChevronRight, ExternalLink, Loader2, Link2, Zap } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useApqpStore } from '../../stores/apqpStore'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -230,6 +230,33 @@ function ElementRow({
         </span>
         {e.io === 'input' && (
           <span className="ml-1.5 text-[9.5px] font-semibold px-1 py-0.5 rounded bg-sky-50 text-sky-600">입력</span>
+        )}
+        {e.evidence && (
+          <span className="mt-0.5 flex items-center gap-1.5">
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded',
+                e.evidence.suggestedStatus === e.status
+                  ? 'bg-emerald-50 text-emerald-600'
+                  : 'bg-amber-50 text-amber-700'
+              )}
+              title="앱 실데이터에서 자동 집계된 증거"
+            >
+              <Link2 className="w-3 h-3" />
+              {e.evidence.summary}
+            </span>
+            {e.evidence.suggestedStatus !== e.status && (
+              <button
+                type="button"
+                onClick={() => onUpdate({ id: e.id, status: e.evidence!.suggestedStatus })}
+                title={`실데이터 기준 '${STATUS_LABEL[e.evidence.suggestedStatus]}'로 상태 반영`}
+                className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              >
+                <Zap className="w-3 h-3" />
+                {STATUS_LABEL[e.evidence.suggestedStatus]} 반영
+              </button>
+            )}
+          </span>
         )}
       </td>
       <td className="px-2 py-1.5">

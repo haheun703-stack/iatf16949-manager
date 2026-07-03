@@ -7,11 +7,74 @@ import type {
   ApqpElementDto,
   ApqpStatus,
   ApqpCoreTool,
-  ApqpElementUpdateInput
+  ApqpElementUpdateInput,
+  ApqpEvidenceDto
 } from '@shared/ipc-types'
 
-function rowToElement(r: Record<string, unknown>): ApqpElementDto {
+type Db = ReturnType<typeof getSqlite>
+
+function count(db: Db, sql: string): number {
+  try {
+    return (db.prepare(sql).get() as { c: number } | undefined)?.c ?? 0
+  } catch {
+    return 0 // 테이블 미존재(구버전 DB) 등 — 증거 없음으로 처리
+  }
+}
+
+/**
+ * 산출물 ↔ 실데이터 연동(결정론). 데이터가 실재하는 산출물에 증거 요약+제안 상태를 계산.
+ * 상태 자체는 덮어쓰지 않음 — UI의 [반영] 원클릭으로 사람이 확정(A레일 철학).
+ */
+function computeEvidence(db: Db): Map<string, ApqpEvidenceDto> {
+  const ev = new Map<string, ApqpEvidenceDto>()
+
+  // 공정 FMEA (apqp-3-06): fmea_documents — 존재→진행중, 승인 있으면→완료
+  const fmeaTotal = count(db, 'SELECT COUNT(*) AS c FROM fmea_documents')
+  if (fmeaTotal > 0) {
+    const approved = count(db, "SELECT COUNT(*) AS c FROM fmea_documents WHERE status = 'approved'")
+    ev.set('apqp-3-06', {
+      summary: `FMEA 문서 ${fmeaTotal}건 (승인 ${approved})`,
+      suggestedStatus: approved > 0 ? 'completed' : 'in_progress'
+    })
+  }
+
+  // MSA (apqp-4-02): msa_studies — 존재→진행중, 판정된 스터디가 전부 양호면→완료
+  const msaTotal = count(db, 'SELECT COUNT(*) AS c FROM msa_studies')
+  if (msaTotal > 0) {
+    const judged = count(db, "SELECT COUNT(*) AS c FROM msa_studies WHERE result <> 'pending'")
+    const ok = count(db, "SELECT COUNT(*) AS c FROM msa_studies WHERE result = 'acceptable'")
+    ev.set('apqp-4-02', {
+      summary: `MSA 스터디 ${msaTotal}건 (양호 ${ok}/${judged})`,
+      suggestedStatus: judged > 0 && ok === judged ? 'completed' : 'in_progress'
+    })
+  }
+
+  // PPAP (apqp-4-04): ppap_submissions — 존재→진행중, 승인 있으면→완료
+  const ppapTotal = count(db, 'SELECT COUNT(*) AS c FROM ppap_submissions')
+  if (ppapTotal > 0) {
+    const approved = count(db, "SELECT COUNT(*) AS c FROM ppap_submissions WHERE status = 'approved'")
+    ev.set('apqp-4-04', {
+      summary: `PPAP 제출 ${ppapTotal}건 (승인 ${approved})`,
+      suggestedStatus: approved > 0 ? 'completed' : 'in_progress'
+    })
+  }
+
+  // 양산 관리계획서 (apqp-4-07): ISIR control_plan_items — 항목 실재=승인된 ISIR→완료
+  const cpItems = count(db, 'SELECT COUNT(*) AS c FROM control_plan_items')
+  if (cpItems > 0) {
+    const pkgs = count(db, 'SELECT COUNT(*) AS c FROM isir_packages')
+    ev.set('apqp-4-07', {
+      summary: `ISIR 관리계획서 ${cpItems}항목 (패키지 ${pkgs})`,
+      suggestedStatus: 'completed'
+    })
+  }
+
+  return ev
+}
+
+function rowToElement(r: Record<string, unknown>, evidence: ApqpEvidenceDto | null): ApqpElementDto {
   return {
+    evidence,
     id: r.id as string,
     phaseId: r.phase_id as string,
     seq: r.seq as number,
@@ -48,9 +111,10 @@ export function registerApqpHandlers(): void {
       )
       .all() as Array<Record<string, unknown>>
 
+    const evidenceMap = computeEvidence(db)
     const byPhase = new Map<string, ApqpElementDto[]>()
     for (const r of elemRows) {
-      const e = rowToElement(r)
+      const e = rowToElement(r, evidenceMap.get(r.id as string) ?? null)
       if (!byPhase.has(e.phaseId)) byPhase.set(e.phaseId, [])
       byPhase.get(e.phaseId)!.push(e)
     }
