@@ -16,6 +16,10 @@ extraResources:
     to: migrations
   - from: resources/seed
     to: seed
+  # AI 기능용 API 키(.env) — env-loader 가 패키징 시 process.resourcesPath/.env 를 읽음.
+  # 단일사용자 로컬 설치 전제(외부 배포 시 제외할 것).
+  - from: .env
+    to: .env
   # 양식 출력엔진 마스터 원본(있을 때만 번들). 배포 시 원본 72양식을 resources/forms 에 복사.
   # 엔진은 process.resourcesPath/forms 를 자동 탐색(form-export-engine.ts resolveMastersDir).
   - from: resources/forms
