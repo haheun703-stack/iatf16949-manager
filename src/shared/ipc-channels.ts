@@ -40,6 +40,9 @@ export const IPC_CHANNELS = {
   // 오늘 할 일 (매일 관리 보드)
   DAILY_BOARD: 'dashboard:dailyBoard',
 
+  // 양식 캔버스 (엑셀형 작성 화면)
+  FORM_RENDER_MODEL: 'form:renderModel',
+
   // Company Profile
   COMPANY_PROFILE_GET: 'company:profileGet',
   COMPANY_PROFILE_SAVE: 'company:profileSave',

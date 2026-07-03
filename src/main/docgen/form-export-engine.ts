@@ -75,17 +75,17 @@ export interface ExportResult {
 }
 
 // 라벨/키 정규화: 공백·구분기호 제거, 소문자화 (의미 동일·표기 차이 흡수)
-function norm(s: string | null | undefined): string {
+export function norm(s: string | null | undefined): string {
   return (s || '').replace(/[\s/&·.,()[\]·∙・]/g, '').toLowerCase()
 }
 
 // 앱 라벨(정규화) → 셀맵 키(원문). 의미는 같으나 단어가 다른 케이스 보정.
-const ALIASES: Record<string, string> = {
+export const ALIASES: Record<string, string> = {
   원인분석: '원인',
   관련규격문서: '관련규격또는관련문서'
 }
 
-function cellText(v: unknown): string {
+export function cellText(v: unknown): string {
   if (v == null) return ''
   if (typeof v === 'object' && (v as { richText?: unknown }).richText) {
     return (v as { richText: Array<{ text: string }> }).richText.map((t) => t.text).join('')
@@ -180,7 +180,7 @@ function injectCell(ws: ExcelJS.Worksheet, cellAddr: string, type: string, value
 }
 
 // 마스터 .xlsx 찾기: 파일명이 reg(예 "B-2100")로 시작
-function resolveMasterFile(reg: string, mastersDir: string): string {
+export function resolveMasterFile(reg: string, mastersDir: string): string {
   if (!existsSync(mastersDir)) throw new Error(`마스터 폴더 없음: ${mastersDir}`)
   const files = readdirSync(mastersDir).filter((f) => /\.xlsx$/i.test(f) && !f.startsWith('~$'))
   const hit = files.find((f) => f.startsWith(reg + ' ') || f.startsWith(reg))
@@ -188,7 +188,7 @@ function resolveMasterFile(reg: string, mastersDir: string): string {
   return join(mastersDir, hit)
 }
 
-function resolveSheet(wb: ExcelJS.Workbook, formCode: string): ExcelJS.Worksheet {
+export function resolveSheet(wb: ExcelJS.Workbook, formCode: string): ExcelJS.Worksheet {
   const ws = wb.worksheets.find((w) => w.name.includes(formCode))
   if (!ws) throw new Error(`시트 없음: ${formCode}`)
   return ws

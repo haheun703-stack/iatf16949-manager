@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History } from 'lucide-react'
+import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History, Table2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -8,11 +8,12 @@ import { FormFieldInput } from './FormFieldInput'
 import { FormDocument } from './FormDocument'
 import { ExcelPasteModal } from './ExcelPasteModal'
 import { SubmissionsModal } from './SubmissionsModal'
+import { ExcelSheetView } from './ExcelSheetView'
 import { RevisionsModal } from './RevisionsModal'
 import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
 
-type ViewMode = 'input' | 'document'
+type ViewMode = 'input' | 'excel' | 'document'
 
 export function FormCanvas(): JSX.Element {
   const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
@@ -148,6 +149,18 @@ export function FormCanvas(): JSX.Element {
               >
                 <PencilLine className="w-3.5 h-3.5" />
                 입력
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('excel')}
+                title="원본 양식 모양 그대로 보면서 입력 셀만 채웁니다"
+                className={cn(
+                  'text-[12px] font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-colors',
+                  viewMode === 'excel' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Table2 className="w-3.5 h-3.5" />
+                엑셀 뷰
               </button>
               <button
                 type="button"
@@ -318,6 +331,10 @@ export function FormCanvas(): JSX.Element {
       {viewMode === 'document' ? (
       <div className="flex-1 overflow-y-auto bg-muted/30 px-6 py-6">
         <FormDocument />
+      </div>
+      ) : viewMode === 'excel' ? (
+      <div className="flex-1 overflow-y-auto bg-muted/30 px-6 py-6">
+        <ExcelSheetView />
       </div>
       ) : (
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-7">

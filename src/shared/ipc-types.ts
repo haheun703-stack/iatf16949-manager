@@ -678,6 +678,52 @@ export interface DashboardV5Dto {
   bomTotalForms: number
 }
 
+// ===== 양식 캔버스 (엑셀형 작성 화면) — RenderModel =====
+
+/** 원본 마스터 시트의 셀 하나(병합 마스터만; 슬레이브는 생략). 스타일은 CSS로 미리 계산. */
+export interface RenderCellDto {
+  r: number
+  c: number
+  text: string
+  rowspan: number
+  colspan: number
+  bg?: string
+  color?: string
+  bold?: boolean
+  fontSize?: number
+  align?: 'left' | 'center' | 'right'
+  valign?: 'top' | 'middle' | 'bottom'
+  wrap?: boolean
+  /** 테두리 CSS 값 (예: '1px solid #000') */
+  bt?: string
+  br?: string
+  bb?: string
+  bl?: string
+}
+
+/** 입력 가능 셀 — form_cell_map ↔ form_fields 브리지 해소 결과. */
+export interface RenderEditCellDto {
+  cell: string
+  r: number
+  c: number
+  /** values_json 키(form_fields.field_key). */
+  fieldKey: string
+  label: string
+  type: string
+}
+
+export interface FormRenderModelDto {
+  formCode: string
+  sheetName: string
+  rowCount: number
+  colCount: number
+  colWidthsPx: number[]
+  rowHeightsPx: number[]
+  cells: RenderCellDto[]
+  editCells: RenderEditCellDto[]
+  error?: string
+}
+
 // ===== 오늘 할 일 (매일 관리 보드) =====
 
 export interface DailyObligationDto {
@@ -1282,6 +1328,13 @@ export type ApqpStatus = 'not_started' | 'in_progress' | 'completed' | 'na'
 /** 산출물의 Core Tool 태그 — 기존 v5 모듈 딥링크용. */
 export type ApqpCoreTool = 'FMEA' | 'CP' | 'MSA' | 'SPC' | 'PPAP'
 
+/** 산출물의 실데이터 증거(결정론 집계). 상태는 사람이 확정 — [반영] 원클릭 제안. */
+export interface ApqpEvidenceDto {
+  /** 예: 'FMEA 문서 1건 (승인 0)' */
+  summary: string
+  suggestedStatus: ApqpStatus
+}
+
 export interface ApqpElementDto {
   id: string
   phaseId: string
@@ -1298,6 +1351,8 @@ export interface ApqpElementDto {
   targetDate: string | null
   actualDate: string | null
   note: string | null
+  /** 연동된 실데이터 요약(FMEA/MSA/PPAP/ISIR CP). 미연동 산출물은 null. */
+  evidence: ApqpEvidenceDto | null
 }
 
 export interface ApqpPhaseDto {
@@ -1633,6 +1688,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.DAILY_BOARD]: {
     request: void
     response: DailyBoardDto
+  }
+  [IPC_CHANNELS.FORM_RENDER_MODEL]: {
+    request: { formCode: string }
+    response: FormRenderModelDto
   }
   [IPC_CHANNELS.DOCGEN_GENERATE]: {
     request: DocGenRequest

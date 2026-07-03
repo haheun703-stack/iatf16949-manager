@@ -5,6 +5,7 @@ import { getSqlite } from '../database/connection'
 import { nextFormSerial } from '../database/serial'
 import { generate as aiGenerate } from '../ai'
 import { exportSubmissionXlsx, type FormFieldLite } from '../docgen/form-export-engine'
+import { buildRenderModel } from '../docgen/render-model'
 import type {
   FormListItemDto,
   FormDefinitionDto,
@@ -141,6 +142,23 @@ export function registerFormHandlers(): void {
         deprecated: Number(form.deprecated) === 1,
         deprecatedNote: (form.deprecated_note as string) || null,
         replacementPage: (form.replacement_page as string) || null
+      }
+    }
+  )
+
+  // ──── 양식 캔버스 RenderModel (엑셀형 작성 화면) ────
+  ipcMain.handle(
+    IPC_CHANNELS.FORM_RENDER_MODEL,
+    async (_event, { formCode }: { formCode: string }) => {
+      try {
+        return await buildRenderModel(db, formCode)
+      } catch (err) {
+        return {
+          formCode,
+          sheetName: '', rowCount: 0, colCount: 0,
+          colWidthsPx: [], rowHeightsPx: [], cells: [], editCells: [],
+          error: err instanceof Error ? err.message : String(err)
+        }
       }
     }
   )
