@@ -89,7 +89,7 @@ export function a1ToRc(addr: string): { r: number; c: number } | null {
 }
 
 const MAX_ROWS = 250
-const MAX_COLS = 64
+const MAX_COLS = 80 // 65~66열 양식(A5100-02·F2100-02·L3100-04) 수용. 오염시트(만단위 열)만 잘림.
 
 // 세션 메모리 캐시 (마스터는 불변 취급 — 앱 재시작 시 리셋)
 const cache = new Map<string, FormRenderModelDto>()
