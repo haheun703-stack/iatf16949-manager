@@ -16,10 +16,8 @@ extraResources:
     to: migrations
   - from: resources/seed
     to: seed
-  # AI 기능용 API 키(.env) — env-loader 가 패키징 시 process.resourcesPath/.env 를 읽음.
-  # 단일사용자 로컬 설치 전제(외부 배포 시 제외할 것).
-  - from: .env
-    to: .env
+  # ⚠️ 보안: .env(API 키)는 절대 번들 금지 — 설치판이 곧 유출 패키지가 된다(제품화 감사 7/6).
+  # AI 키는 사용자 PC의 userData/.env 에서 읽음(env-loader 1순위). 인스톨러에 미포함.
   # 양식 출력엔진 마스터 원본(있을 때만 번들). 배포 시 원본 72양식을 resources/forms 에 복사.
   # 엔진은 process.resourcesPath/forms 를 자동 탐색(form-export-engine.ts resolveMastersDir).
   - from: resources/forms

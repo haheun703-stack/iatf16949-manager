@@ -6,10 +6,12 @@ import type { EnvMap } from './types'
 let cache: { env: EnvMap; mtime: number; path: string | null } | null = null
 
 function findEnvPath(): string | null {
-  const candidates = [
-    !app.isPackaged ? join(__dirname, '../../.env') : join(process.resourcesPath, '.env'),
-    !app.isPackaged ? join(process.cwd(), '.env') : join(process.resourcesPath, '.env')
-  ]
+  // 보안: .env(API 키)는 설치판 리소스에 절대 번들하지 않는다(유출 패키지 방지).
+  // 패키징 시 1순위 = userData/.env (사용자 PC 로컬 전용, 인스톨러에 미포함).
+  // resourcesPath 는 과거 번들판 호환용 폴백으로만 남긴다.
+  const candidates = !app.isPackaged
+    ? [join(__dirname, '../../.env'), join(process.cwd(), '.env')]
+    : [join(app.getPath('userData'), '.env'), join(process.resourcesPath, '.env')]
   for (const p of candidates) {
     if (existsSync(p)) return p
   }
