@@ -7,9 +7,11 @@
 - **🔐 .env 번들 차단**(4c9b70e): 설치판 API키 유출 경로 제거 — userData/.env로 이동, 구 인스톨러 폐기. **⚠️운영원칙: 클린 배포판 전까지 설치파일 외부 반출 금지.** 제품화 감사 전문=메모리 plan-productization(블로커9·3단계 로드맵·팩 아키텍처).
 - **★팀별 허브 UI 재편 Phase1+2**(4073be4·6081858·e0ee5c8): 사장님 지시서(06_UIUX_팀별허브_재편_지시서_260706)+7팀 확정(총무→영업→구매→생산→생산기술→품질경영보증→개발 = resp_dept 1:1). 첫 화면=7팀 컬러 허브(shared/team-theme.ts 토큰, 빨강=경고 예약) → 팀 상세(SQ 항목 번호단계, 배점순) → **단계 펼침: 요구사항→지침 본문(regulation_sections 인라인)→필요 양식(작성가능/등록만)→[작성]=form-builder·[AI 초안]=AiAuthorModal**. TEAM_SUMMARY IPC(team-handlers, computeSqReadiness 재사용 렌즈). 기존 대시보드는 '매일 관리' 방 보존. ⚠️React effect deps 함정(무한로딩) 수정=e0ee5c8.
 
-**▶ 다음 (팀원 확인 후)**:
+**추가(오후, 팀 회의 피드백)**: 사장님 "BOM에 다 따놨는데 왜 비어보이나" → 정확한 지적. 팀 상세에 **② 책임 규정·양식 섹션**(ce8e175) 추가 — TEAM_REGS IPC(forms.resp_dept 기준 규정→하위양식 트리) + 지침 펼침(본문 인라인+양식 [작성]/[AI초안]). 총무팀도 규정 26종 표시. + 무한로딩 버그 수정(e0ee5c8, React effect deps 함정).
+
+**▶ 다음 (사무실에서)**:
 1. **설치판 재빌드+재설치** — 오늘 것 반영+설치판 AI 복구(.env userData 전환으로 현 설치판 AI 임시 불능 상태). dev 닫고 `npm run build:win`+사일런트 설치.
-2. 팀원 피드백 반영 → 지시서 Phase 3(사이드바 5방+SQ⇄IATF 렌즈 토글)·Phase 4(대시보드 다이어트) 판단.
+2. 팀원 피드백 반영 → 지시서 Phase 3(사이드바 5방+SQ⇄IATF 렌즈 토글)·Phase 4(대시보드 다이어트) 판단. SQ 미배정 18항목은 카테고리→팀 폴백 배정 검토(사장님 확정 필요: 생산조건→생산·검사시험→품질·설비/금형→생산기술·자재→구매·품질경영체제→품질).
 3. 제품화 '지금 미리' 잔여: 0058부터 스키마/데이터 시드 분리 규칙 · singleInstanceLock · 마이그 전 DB 스냅샷 백업 · form_approvals 스키마 씨앗 · AUDIT_DATE→company_profile.
 
 ## 🟢 7/03 — 정본 전량적재 + 엑셀형 작성(양식 캔버스) PoC + APQP 실데이터 연동 (최신 · 콜드스타트 1순위)
