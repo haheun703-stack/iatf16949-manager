@@ -156,7 +156,9 @@ function StepCard({
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!open || detail || loading) return
+    // deps 에 loading/detail 을 넣으면 setLoading(true)가 effect 를 재실행시켜
+    // cleanup(alive=false)이 진행 중 요청을 죽임 → 영원히 '불러오는 중'. open 기준으로만.
+    if (!open || detail) return
     let alive = true
     setLoading(true)
     void (async () => {
@@ -172,7 +174,8 @@ function StepCard({
     return () => {
       alive = false
     }
-  }, [open, detail, loading, item.code])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, item.code])
 
   return (
     <div
@@ -279,7 +282,8 @@ function RegRow({ regCode, theme }: { regCode: string; theme: ReturnType<typeof 
     return () => {
       alive = false
     }
-  }, [open, secs, regCode])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, regCode])
 
   return (
     <div className="bg-card border border-border/60 rounded-lg overflow-hidden">
