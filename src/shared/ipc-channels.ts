@@ -42,6 +42,7 @@ export const IPC_CHANNELS = {
 
   // 팀별 허브 (홈)
   TEAM_SUMMARY: 'team:summary',
+  TEAM_REGS: 'team:regs',
 
   // 양식 캔버스 (엑셀형 작성 화면)
   FORM_RENDER_MODEL: 'form:renderModel',

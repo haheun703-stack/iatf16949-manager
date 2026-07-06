@@ -2,8 +2,8 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { computeSqReadiness } from './sq-handlers'
-import { TEAMS, normalizeTeam, type TeamId } from '@shared/team-theme'
-import type { TeamSummaryDto, TeamSqItemDto, SqSignal } from '@shared/ipc-types'
+import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
+import type { TeamSummaryDto, TeamSqItemDto, TeamRegDto, SqSignal } from '@shared/ipc-types'
 
 const SIGNAL_SCORE: Record<SqSignal, number> = { green: 1, yellow: 0.5, red: 0, gray: 0 }
 
@@ -152,5 +152,66 @@ export function registerTeamHandlers(): void {
         items
       }
     })
+  })
+
+  // ──── 팀 책임 규정(지침) → 하위 양식 트리 (문서 BOM 의 팀 렌즈) ────
+  ipcMain.handle(IPC_CHANNELS.TEAM_REGS, (_event, { teamId }: { teamId: string }): TeamRegDto[] => {
+    const theme = teamTheme(teamId as TeamId)
+    if (!theme) return []
+    try {
+      const rows = db
+        .prepare(
+          `SELECT f.reg_code, f.code, f.name, f.resp_dept, f.iatf_clause,
+                  (SELECT COUNT(*) FROM form_fields ff WHERE ff.form_code = f.code) AS fields_count,
+                  (SELECT COUNT(*) FROM form_submissions s WHERE s.form_code = f.code) AS draft_count
+           FROM forms f
+           WHERE f.resp_dept IS NOT NULL
+           ORDER BY f.reg_code ASC, f.code ASC`
+        )
+        .all() as Array<{
+        reg_code: string
+        code: string
+        name: string
+        resp_dept: string
+        iatf_clause: string | null
+        fields_count: number
+        draft_count: number
+      }>
+      const bodyRegs = new Set(
+        (db.prepare('SELECT DISTINCT reg_code FROM regulation_sections').all() as Array<{ reg_code: string }>).map(
+          (r) => r.reg_code
+        )
+      )
+
+      const regs = new Map<string, TeamRegDto>()
+      for (const r of rows) {
+        if (normalizeTeam(r.resp_dept) !== teamId) continue
+        if (!regs.has(r.reg_code)) {
+          regs.set(r.reg_code, {
+            regCode: r.reg_code,
+            regName: r.reg_code, // 규정문서 행(code=reg_code)을 만나면 이름 교체
+            hasBody: bodyRegs.has(r.reg_code),
+            iatfClause: r.iatf_clause,
+            forms: []
+          })
+        }
+        const reg = regs.get(r.reg_code)!
+        if (r.code === r.reg_code) {
+          reg.regName = r.name // 규정 문서 자체
+        } else {
+          reg.forms.push({
+            code: r.code,
+            name: r.name,
+            fieldsCount: r.fields_count ?? 0,
+            draftCount: r.draft_count ?? 0
+          })
+        }
+      }
+      // 규정문서 행이 없어 이름이 코드 그대로인 경우: 첫 양식 이름에서 유추하지 않고 코드 유지(정직)
+      return [...regs.values()].sort((a, b) => a.regCode.localeCompare(b.regCode))
+    } catch (err) {
+      console.error('[team:regs] failed:', (err as Error).message)
+      return []
+    }
   })
 }

@@ -753,6 +753,25 @@ export interface TeamSummaryDto {
   items: TeamSqItemDto[]
 }
 
+/** 팀 책임 규정(지침) 하위 양식 */
+export interface TeamRegFormDto {
+  code: string
+  name: string
+  /** form_fields 수 — 0이면 문서 등록만 */
+  fieldsCount: number
+  draftCount: number
+}
+
+/** 팀 책임 규정(지침) — 문서 BOM 트리의 팀 렌즈 */
+export interface TeamRegDto {
+  regCode: string
+  regName: string
+  /** regulation_sections 본문 보유 여부 */
+  hasBody: boolean
+  iatfClause: string | null
+  forms: TeamRegFormDto[]
+}
+
 // ===== 오늘 할 일 (매일 관리 보드) =====
 
 export interface DailyObligationDto {
@@ -1723,6 +1742,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.TEAM_SUMMARY]: {
     request: void
     response: TeamSummaryDto[]
+  }
+  [IPC_CHANNELS.TEAM_REGS]: {
+    request: { teamId: string }
+    response: TeamRegDto[]
   }
   [IPC_CHANNELS.FORM_RENDER_MODEL]: {
     request: { formCode: string }

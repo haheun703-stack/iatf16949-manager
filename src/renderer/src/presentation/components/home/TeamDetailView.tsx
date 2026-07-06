@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { teamTheme, ALERT_RED } from '@shared/team-theme'
 import type {
-  TeamSummaryDto, TeamSqItemDto, SqItemDetailDto, RegulationSectionDto
+  TeamSummaryDto, TeamSqItemDto, SqItemDetailDto, RegulationSectionDto, TeamRegDto
 } from '@shared/ipc-types'
 import { useUIStore } from '../../stores/uiStore'
 import { useAiAuthorStore } from '../../stores/aiAuthorStore'
@@ -97,13 +97,17 @@ export function TeamDetailView(): JSX.Element {
         <Stat label="할 일" value={String((summary?.redCount ?? 0) + (summary?.dueCount ?? 0))} />
       </div>
 
+      {/* ── ① 심사 단계 (SQ 렌즈) ── */}
+      <div className="text-[12px] font-bold text-muted-foreground pt-1">
+        심사 단계 <span className="font-normal">— SQ 점검항목, 배점 큰 순</span>
+      </div>
       {!data ? (
         <div className="flex items-center justify-center gap-2 py-14 text-sm text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin" /> 불러오는 중...
         </div>
       ) : !summary || summary.items.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card px-4 py-8 text-center text-[13px] text-muted-foreground">
-          이 팀에 배정된 SQ 항목이 아직 없습니다 (규정↔SQ 매핑 기준).
+        <div className="rounded-xl border border-border bg-card px-4 py-6 text-center text-[13px] text-muted-foreground">
+          이 팀에 배정된 SQ 항목이 없습니다 — 아래 책임 규정·양식으로 관리합니다.
         </div>
       ) : (
         <div className="space-y-2">
@@ -120,9 +124,181 @@ export function TeamDetailView(): JSX.Element {
         </div>
       )}
 
+      {/* ── ② 책임 규정·양식 (문서 BOM 의 팀 렌즈) ── */}
+      <TeamRegSection teamId={selectedTeam} theme={theme} />
+
       <p className="text-[11px] text-muted-foreground text-center pt-1">
-        번호 = 처리 순서(배점 큰 순) · 빨강 = 미충족 · 단계 클릭 → 요구사항 → 지침 → 양식
+        번호 = 처리 순서(배점 큰 순) · 빨강 = 미충족 · 지침 펼침 → 본문 → 하위 양식 → 작성
       </p>
+    </div>
+  )
+}
+
+/** 팀 책임 규정(지침) → 하위 양식 트리 — 문서 BOM 데이터 그대로 */
+function TeamRegSection({
+  teamId,
+  theme
+}: {
+  teamId: string
+  theme: ReturnType<typeof teamTheme>
+}): JSX.Element {
+  const [regs, setRegs] = useState<TeamRegDto[] | null>(null)
+  const [openReg, setOpenReg] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    setRegs(null)
+    setOpenReg(null)
+    void (async () => {
+      try {
+        const res = (await window.api.invoke(window.api.channels.TEAM_REGS, { teamId })) as TeamRegDto[]
+        if (alive) setRegs(res)
+      } catch {
+        if (alive) setRegs([])
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [teamId])
+
+  return (
+    <div>
+      <div className="text-[12px] font-bold text-muted-foreground mb-2">
+        책임 규정·양식{' '}
+        <span className="font-normal">
+          — 이 팀이 관리하는 지침과 하위 양식 {regs ? `(규정 ${regs.length}종)` : ''}
+        </span>
+      </div>
+      {!regs ? (
+        <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-6 justify-center">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> 규정 트리 불러오는 중...
+        </div>
+      ) : regs.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card px-4 py-6 text-center text-[13px] text-muted-foreground">
+          책임 규정이 없습니다.
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {regs.map((r) => (
+            <RegGroup
+              key={r.regCode}
+              reg={r}
+              theme={theme}
+              open={openReg === r.regCode}
+              onToggle={() => setOpenReg(openReg === r.regCode ? null : r.regCode)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RegGroup({
+  reg,
+  theme,
+  open,
+  onToggle
+}: {
+  reg: TeamRegDto
+  theme: ReturnType<typeof teamTheme>
+  open: boolean
+  onToggle: () => void
+}): JSX.Element {
+  const setPage = useUIStore((s) => s.setPage)
+  const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
+  const openAuthor = useAiAuthorStore((s) => s.setOpen)
+
+  const write = (code: string): void => {
+    setSelectedFormCode(code)
+    setPage('form-builder')
+  }
+
+  return (
+    <div
+      className="bg-card rounded-xl overflow-hidden"
+      style={{ border: open ? `1px solid ${theme.border}` : '1px solid var(--border, #e5e7eb)' }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-muted/30"
+      >
+        <BookOpen className="w-4 h-4 shrink-0" style={{ color: theme.darkText }} />
+        <span className="text-[12px] font-mono font-bold shrink-0" style={{ color: theme.darkText }}>
+          {reg.regCode}
+        </span>
+        <span className="text-[13px] font-semibold flex-1 min-w-0 truncate">{reg.regName}</span>
+        {reg.iatfClause && (
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+            {reg.iatfClause}장
+          </span>
+        )}
+        <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">양식 {reg.forms.length}</span>
+        {open ? (
+          <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+        )}
+      </button>
+
+      {open && (
+        <div className="border-t border-border bg-muted/20 px-3.5 py-3 space-y-3">
+          {reg.hasBody ? (
+            <RegRow regCode={reg.regCode} theme={theme} />
+          ) : (
+            <div className="text-[11.5px] text-muted-foreground">등록된 규정 본문이 없습니다.</div>
+          )}
+          {reg.forms.length > 0 && (
+            <div className="space-y-1.5">
+              {reg.forms.map((f) => {
+                const fillable = f.fieldsCount > 0
+                return (
+                  <div
+                    key={f.code}
+                    className="flex items-center gap-2.5 bg-card border rounded-lg px-3 py-2"
+                    style={{ borderColor: fillable ? 'var(--border, #e5e7eb)' : ALERT_RED.border + '66' }}
+                  >
+                    {fillable ? (
+                      <CircleCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <CircleAlert className="w-4 h-4 shrink-0" style={{ color: ALERT_RED.border }} />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12px] font-semibold truncate">
+                        <span className="font-mono text-[11px] text-muted-foreground mr-1.5">{f.code}</span>
+                        {f.name}
+                      </div>
+                      <div className="text-[10.5px] text-muted-foreground">
+                        {fillable ? `작성 가능 · 작성본 ${f.draftCount}건` : '문서 등록만 — 작성 양식 준비 전'}
+                      </div>
+                    </div>
+                    {fillable && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => write(f.code)}
+                          className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md border border-border hover:bg-muted"
+                        >
+                          <PencilLine className="w-3 h-3" /> 작성
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openAuthor(true)}
+                          className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20"
+                        >
+                          <Sparkles className="w-3 h-3" /> AI 초안
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
