@@ -828,6 +828,8 @@ export interface SqItemFormRef {
   regCode: string
   standardized: boolean // layout_json 보유 → 바로 작성 가능
   draftCount: number // 작성본 수
+  /** form_fields 수 — 0이면 문서 등록만(작성 준비 전) */
+  fieldsCount?: number
 }
 
 export interface SqItemDoc {

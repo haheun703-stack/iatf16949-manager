@@ -162,7 +162,8 @@ export function registerSqHandlers(): void {
           .prepare(
             `SELECT f.code AS form_code, f.name AS form_name, f.reg_code,
                     (f.layout_json IS NOT NULL) AS standardized,
-                    (SELECT COUNT(*) FROM form_submissions s WHERE s.form_code = f.code) AS sub_count
+                    (SELECT COUNT(*) FROM form_submissions s WHERE s.form_code = f.code) AS sub_count,
+                    (SELECT COUNT(*) FROM form_fields ff WHERE ff.form_code = f.code) AS fields_count
              FROM sq_reg_map m
              JOIN forms f ON f.reg_code = m.reg_code
              WHERE m.item_code = ?
@@ -174,6 +175,7 @@ export function registerSqHandlers(): void {
           reg_code: string
           standardized: number
           sub_count: number
+          fields_count: number
         }>
 
         const formTypes = db
@@ -190,7 +192,8 @@ export function registerSqHandlers(): void {
           formName: f.form_name,
           regCode: f.reg_code,
           standardized: !!f.standardized,
-          draftCount: f.sub_count
+          draftCount: f.sub_count,
+          fieldsCount: f.fields_count ?? 0
         }))
 
         return {
