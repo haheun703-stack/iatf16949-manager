@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package, Folder, ListChecks, Route } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package, Folder, ListChecks, Route, Home } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
@@ -21,6 +21,7 @@ const MENU_GROUPS: MenuGroup[] = [
   {
     title: '매일 관리',
     items: [
+      { id: 'home', label: '홈 (팀별 허브)', icon: Home, desc: '7팀 준비도 · 할 일 조망' },
       { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '오늘 할 일 · D-Day 현황' },
       { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
       { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' },

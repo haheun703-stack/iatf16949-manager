@@ -1,4 +1,5 @@
 import type { IPC_CHANNELS } from './ipc-channels'
+import type { TeamId } from './team-theme'
 
 // ===== DTO Types =====
 
@@ -722,6 +723,34 @@ export interface FormRenderModelDto {
   cells: RenderCellDto[]
   editCells: RenderEditCellDto[]
   error?: string
+}
+
+// ===== 팀별 허브 (홈) =====
+
+/** 팀에 배정된 SQ 항목(팀 상세 단계 리스트의 재료). */
+export interface TeamSqItemDto {
+  code: string
+  title: string
+  points: number
+  signal: SqSignal
+  /** 이 항목의 근거 규정 중 이 팀 책임인 것들 */
+  regs: string[]
+}
+
+export interface TeamSummaryDto {
+  teamId: TeamId
+  /** SQ 기반 준비도(0~100). 배정 항목 없으면 null(측정 전). */
+  readinessPct: number | null
+  itemCount: number
+  redCount: number
+  /** 도래·연체 정기의무 수(팀 책임 양식 기준 배정) */
+  dueCount: number
+  urgent: boolean
+  /** 팀 책임 양식 보유/작성가능 수 */
+  formsTotal: number
+  formsFillable: number
+  /** 배점 큰 순 SQ 항목(상세 스켈레톤용) */
+  items: TeamSqItemDto[]
 }
 
 // ===== 오늘 할 일 (매일 관리 보드) =====
@@ -1688,6 +1717,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.DAILY_BOARD]: {
     request: void
     response: DailyBoardDto
+  }
+  [IPC_CHANNELS.TEAM_SUMMARY]: {
+    request: void
+    response: TeamSummaryDto[]
   }
   [IPC_CHANNELS.FORM_RENDER_MODEL]: {
     request: { formCode: string }

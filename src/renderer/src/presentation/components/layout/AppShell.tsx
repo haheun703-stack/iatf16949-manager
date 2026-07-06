@@ -15,6 +15,8 @@ import { FmeaView } from '../fmea/FmeaView'
 import { MsaView } from '../msa/MsaView'
 import { ClauseCoverageView } from '../clause/ClauseCoverageView'
 import { ApqpView } from '../apqp/ApqpView'
+import { TeamHubView } from '../home/TeamHubView'
+import { TeamDetailView } from '../home/TeamDetailView'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -31,6 +33,8 @@ export function AppShell(): JSX.Element {
         <main className="flex-1 min-w-0 overflow-y-auto p-6">
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}
           <ErrorBoundary key={currentPage}>
+            {currentPage === 'home' && <TeamHubView />}
+            {currentPage === 'team-detail' && <TeamDetailView />}
             {currentPage === 'dashboard' && <Dashboard />}
             {currentPage === 'sq-readiness' && <SqReadinessPage />}
             {currentPage === 'parts' && <PartsView />}

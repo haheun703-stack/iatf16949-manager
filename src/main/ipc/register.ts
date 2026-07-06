@@ -31,6 +31,7 @@ import { registerObligationHandlers } from './obligation-handlers'
 import { registerPpapHandlers } from './ppap-handlers'
 import { registerFmeaHandlers } from './fmea-handlers'
 import { registerApqpHandlers } from './apqp-handlers'
+import { registerTeamHandlers } from './team-handlers'
 import { registerMsaHandlers } from './msa-handlers'
 import { registerReportHandlers } from './report-handlers'
 import { registerSqHandlers } from './sq-handlers'
@@ -51,6 +52,7 @@ export function registerAllIpcHandlers(): void {
   registerPpapHandlers()
   registerFmeaHandlers()
   registerApqpHandlers()
+  registerTeamHandlers()
   registerMsaHandlers()
   registerReportHandlers()
   registerSqHandlers()

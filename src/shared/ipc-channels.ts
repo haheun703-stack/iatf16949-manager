@@ -40,6 +40,9 @@ export const IPC_CHANNELS = {
   // 오늘 할 일 (매일 관리 보드)
   DAILY_BOARD: 'dashboard:dailyBoard',
 
+  // 팀별 허브 (홈)
+  TEAM_SUMMARY: 'team:summary',
+
   // 양식 캔버스 (엑셀형 작성 화면)
   FORM_RENDER_MODEL: 'form:renderModel',
 
