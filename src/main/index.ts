@@ -13,6 +13,22 @@ app.setPath('userData', join(app.getPath('appData'), 'iatf16949-manager'))
 
 let mainWindow: BrowserWindow | null = null
 
+// 단일 인스턴스 잠금(설치판만): 아이콘 더블클릭 2번 등으로 같은 DB(userData)를
+// 두 프로세스가 동시에 쓰는 것을 차단. 두 번째 실행은 기존 창을 앞으로 가져온다.
+// dev 는 잠금을 요청하지 않으므로 "설치판+dev 병행 확인" 워크플로우는 그대로 유지.
+// 잠금 키가 userData 경로라서 반드시 setPath 이후에 호출해야 한다.
+const gotSingleInstanceLock = !app.isPackaged || app.requestSingleInstanceLock()
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else if (app.isPackaged) {
+  app.on('second-instance', () => {
+    if (!mainWindow) return
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
+  })
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -62,6 +78,9 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  // 잠금 실패로 종료 중인 프로세스가 DB를 건드리지 않도록 방어
+  if (!gotSingleInstanceLock) return
+
   // Initialize database
   runMigrations()
   seedDatabase()

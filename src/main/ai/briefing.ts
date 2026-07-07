@@ -8,7 +8,7 @@ import { aiCall } from './gateway'
 import type Database from 'better-sqlite3'
 import type { BriefingItem, BriefingFacts } from '@shared/ipc-types'
 
-// 데모 심사일(audits 비었을 때 폴백) — useDday.ts 와 동일. 실제 일정 확정 시 audits 테이블로.
+// 심사일 최종 폴백 — audits 테이블 → company_profile.auditDate(Sidebar 설정) → 이 상수 순.
 const AUDIT_FALLBACK = '2026-12-31'
 const DONE = new Set(['done', 'closed', 'completed', '완료', 'approved'])
 
@@ -67,7 +67,18 @@ export function computeBriefingFacts(db: Database.Database = getSqlite()): Brief
   } catch {
     /* skip */
   }
-  if (!audit) audit = { label: '정기 인증심사', dday: daysBetween(today, AUDIT_FALLBACK), date: AUDIT_FALLBACK }
+  if (!audit) {
+    let fallback = AUDIT_FALLBACK
+    try {
+      const r = db
+        .prepare("SELECT value FROM company_profile WHERE key = 'auditDate'")
+        .get() as { value: string } | undefined
+      if (r?.value && /^\d{4}-\d{2}-\d{2}$/.test(r.value)) fallback = r.value
+    } catch {
+      /* company_profile 없으면 상수 폴백 */
+    }
+    audit = { label: '정기 인증심사', dday: daysBetween(today, fallback), date: fallback }
+  }
 
   // SQ 누락 증빙: 증빙 문서가 매핑 안 된 항목(부재 감지)
   const sq = { total: 0, missingEvidence: 0, examples: [] as string[] }

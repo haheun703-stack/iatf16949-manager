@@ -138,6 +138,8 @@ export interface CompanyProfile {
   defaultAuthor: string
   /** 정본(마스터 양식) 폴더 경로. 공식 xlsx 출력의 원본 위치. Sidebar 에서 폴더 선택. */
   mastersDir: string
+  /** 정기 인증심사일(YYYY-MM-DD). D-day 배지·브리핑의 기준. Sidebar 에서 설정. */
+  auditDate: string
 }
 
 export interface DocGenRequest {

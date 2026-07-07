@@ -3,6 +3,7 @@ import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderT
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
+import { setAuditDateCache } from '../../hooks/useDday'
 
 interface MenuItem {
   id: PageId
@@ -34,7 +35,9 @@ const MENU_GROUPS: MenuGroup[] = [
       { id: 'apqp', label: 'APQP 여정', icon: Route, desc: '5단계 43산출물 순차 진행' },
       { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
       { id: 'ppap', label: 'PPAP 승인', icon: ClipboardCheck, desc: '양산부품승인 18요구사항' },
-      { id: 'fmea', label: '공정 FMEA', icon: GitBranch, desc: '신판 S·O·D·AP 리스크' },
+      // 2026-07-07 회의: 고객사(삼보 외 1차사) 신판 미도입 → 제출 표준 = 구판 J1101-01(0058 복원).
+      // 신판 모듈은 고객 전환 대비용으로 보존.
+      { id: 'fmea', label: '공정 FMEA (신판)', icon: GitBranch, desc: '전환 대비 — 제출은 구판 양식' },
       { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR 분석' }
     ]
   },
@@ -61,6 +64,7 @@ export function Sidebar(): JSX.Element {
   const [author, setAuthor] = useState('')
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
+  const [editingDate, setEditingDate] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -89,6 +93,19 @@ export function Sidebar(): JSX.Element {
       await window.api.invoke(window.api.channels.COMPANY_PROFILE_SAVE, next)
       setProfile(next)
       setAuthor(name)
+    } catch {
+      /* 저장 실패 시 이전 값 유지 */
+    }
+  }
+
+  const saveAuditDate = async (value: string): Promise<void> => {
+    setEditingDate(false)
+    if (!value || !profile || value === profile.auditDate) return
+    const next = { ...profile, auditDate: value }
+    try {
+      await window.api.invoke(window.api.channels.COMPANY_PROFILE_SAVE, next)
+      setProfile(next)
+      setAuditDateCache(value) // D-day 배지·대시보드 즉시 갱신
     } catch {
       /* 저장 실패 시 이전 값 유지 */
     }
@@ -238,6 +255,37 @@ export function Sidebar(): JSX.Element {
             </span>
           </button>
         )}
+
+        {!sidebarCollapsed &&
+          (editingDate ? (
+            <input
+              autoFocus
+              type="date"
+              defaultValue={profile?.auditDate || ''}
+              onBlur={(e) => void saveAuditDate(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void saveAuditDate((e.target as HTMLInputElement).value)
+                else if (e.key === 'Escape') setEditingDate(false)
+              }}
+              className="mt-2 w-full bg-fillable text-[11px] px-1.5 py-1 rounded border border-primary/50 focus:outline-none"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditingDate(true)}
+              title="정기 인증심사일 변경 — D-day 배지·브리핑의 기준일"
+              className="group mt-2 w-full flex items-center gap-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted rounded px-1.5 py-1 -mx-1.5"
+            >
+              <CalendarClock className="w-3 h-3 shrink-0 opacity-70" />
+              <span className="truncate">
+                심사일:{' '}
+                <span className={cn('font-medium', profile?.auditDate ? 'text-foreground' : 'text-amber-600')}>
+                  {profile?.auditDate || '미설정'}
+                </span>
+              </span>
+              <Pencil className="w-3 h-3 ml-auto shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" />
+            </button>
+          ))}
       </div>
     </aside>
   )

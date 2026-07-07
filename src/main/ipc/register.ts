@@ -601,7 +601,7 @@ export function registerAllIpcHandlers(): void {
 
   const PROFILE_KEYS: (keyof CompanyProfile)[] = [
     'companyName', 'ceoName', 'address', 'phone', 'fax',
-    'factoryName', 'revisionNumber', 'revisionDate', 'defaultAuthor', 'mastersDir'
+    'factoryName', 'revisionNumber', 'revisionDate', 'defaultAuthor', 'mastersDir', 'auditDate'
   ]
 
   ipcMain.handle(IPC_CHANNELS.COMPANY_PROFILE_GET, () => {
@@ -617,7 +617,8 @@ export function registerAllIpcHandlers(): void {
       revisionNumber: map.get('revisionNumber') || '',
       revisionDate: map.get('revisionDate') || '',
       defaultAuthor: map.get('defaultAuthor') || '',
-      mastersDir: map.get('mastersDir') || ''
+      mastersDir: map.get('mastersDir') || '',
+      auditDate: map.get('auditDate') || ''
     }
     return profile
   })
