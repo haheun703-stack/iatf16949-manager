@@ -42,8 +42,9 @@ export const TEAMS: TeamTheme[] = [
     border: '#D85A30', tintBg: '#FAECE7', darkText: '#712B13'
   },
   {
+    // 수입검사는 구매 아님 — L-2100 수입검사표준·기준서 책임부서=품질보증팀(BOM, 7/7 사장님 지적)
     id: 'gumae', label: '구매팀', deptKeys: ['구매팀'],
-    desc: '발주·협력업체, 자재 입출고·수입검사',
+    desc: '발주·협력업체, 자재 입출고',
     border: '#EF9F27', tintBg: '#FAEEDA', darkText: '#633806'
   },
   {

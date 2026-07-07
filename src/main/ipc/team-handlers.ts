@@ -48,6 +48,20 @@ export function registerTeamHandlers(): void {
       /* SQ 백본 미구성 */
     }
 
+    // 근거 규정 없는 항목의 직접 팀 배정(0061 fallback_dept, 사장님 확정) — 규정 역산이 항상 우선
+    const itemFallback = new Map<string, TeamId>()
+    try {
+      const rows = db
+        .prepare('SELECT code, fallback_dept FROM sq_items WHERE fallback_dept IS NOT NULL')
+        .all() as Array<{ code: string; fallback_dept: string }>
+      for (const r of rows) {
+        const t = normalizeTeam(r.fallback_dept)
+        if (t) itemFallback.set(r.code, t)
+      }
+    } catch {
+      /* 0061 미적용(구버전) → 폴백 없음 */
+    }
+
     // SQ 준비도(신호등) — 기존 계산 재사용
     type Item = { code: string; title: string; points: number; signal: SqSignal }
     const allItems: Item[] = []
@@ -65,6 +79,10 @@ export function registerTeamHandlers(): void {
       const regs = itemRegs.get(it.code) ?? []
       const teams = new Set<TeamId>()
       for (const reg of regs) for (const t of regTeams.get(reg) ?? []) teams.add(t)
+      if (teams.size === 0) {
+        const fb = itemFallback.get(it.code)
+        if (fb) teams.add(fb)
+      }
       for (const teamId of teams) {
         const teamRegs = regs.filter((r) => regTeams.get(r)?.has(teamId))
         buckets.get(teamId)!.items.push({
