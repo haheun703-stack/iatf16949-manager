@@ -679,6 +679,13 @@ export interface DashboardV5Dto {
   recentScores: DashboardRecentScore[] // 최근 채점 N건
   bomTotalDocs: number
   bomTotalForms: number
+  // ── v3 대시보드 KPI 확장 ──
+  /** 미결 불량 케이스 수 (open·in_progress) */
+  openCases: number
+  /** 작성 가능(form_fields 정의) 양식 수 — 작성 커버리지 분자 */
+  formsFillable: number
+  /** 최근 28일 신규 작성본이 생긴 SQ 매핑 양식 수 — 준비도 궤적 '현 페이스' 근거 */
+  sqNewDrafts4w: number
 }
 
 // ===== 양식 캔버스 (엑셀형 작성 화면) — RenderModel =====

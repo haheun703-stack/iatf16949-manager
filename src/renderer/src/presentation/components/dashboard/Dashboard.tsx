@@ -1,48 +1,159 @@
-import { useEffect, useState } from 'react'
-import { Loader2, AlertCircle, FileDown, ShieldCheck, CalendarClock, FileEdit, Gauge, ChevronRight, Sparkles } from 'lucide-react'
-import { cn } from '../../../lib/utils'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Loader2, AlertCircle, FileDown, ChevronDown, ChevronRight, Gauge } from 'lucide-react'
 import { useDashboardStore } from '../../stores/dashboardStore'
-import { useUIStore, type PageId } from '../../stores/uiStore'
 import { useDday } from '../../hooks/useDday'
 import { KpiStrip } from './KpiStrip'
-import { DailyBoardCard } from './DailyBoardCard'
-import { BriefingCard } from './BriefingCard'
-import { ReadinessCard } from './ReadinessCard'
-import { AbsenceCard } from './AbsenceCard'
-import { IsirCompletenessCard } from './IsirCompletenessCard'
-import { FlywheelCard } from './FlywheelCard'
-import { MockAuditCard } from './MockAuditCard'
 import { ScoreDistributionPanel } from './ScoreDistributionPanel'
 import { RecentScoresPanel } from './RecentScoresPanel'
 import { NeedsAttentionList } from './NeedsAttentionList'
+import { HeaderBand } from './v3/HeaderBand'
+import { KpiTiles, type KpiTileSpec } from './v3/KpiTiles'
+import {
+  TeamRail,
+  DonutUnmet,
+  TeamSignalColumns,
+  UnmetHeatmap,
+  TopUnmet,
+  TrajectoryChart,
+  TeamFormsFunnel
+} from './v3/ChartPanels'
+import { TodoStrip } from './v3/TodoStrip'
+import { AiInsightsFold } from './v3/AiInsightsFold'
+import { useV3Data, overallReadinessPct, codeToCategoryIndex } from './v3/useV3Data'
 import type { ReportExportResult } from '@shared/ipc-types'
 
+/**
+ * 대시보드 v3 (2026-07-07 확정 목업 c8a47661) — Power BI 틀 + 시크릿 통합.
+ * 원칙: AI는 카드(자리)가 아니라 데이터 옆 ✦각주·버튼으로.
+ * 마이크로 인사이트는 결정론 룰(전부 산수), AI 문장은 접이식 카드 안(일 1회 캐시).
+ */
 export function Dashboard(): JSX.Element {
   const { load, loading, error, data } = useDashboardStore()
-  const [exporting, setExporting] = useState(false)
+  const { readiness, teams, board } = useV3Data()
   const { dday, auditDate } = useDday()
-  const auditDateStr = `${auditDate.getFullYear()}.${String(auditDate.getMonth() + 1).padStart(2, '0')}.${String(auditDate.getDate()).padStart(2, '0')}`
-  const scored = data?.formsScored ?? 0
-  const total = data?.formsTotal ?? 0
-  const readyPct = total > 0 ? Math.round((scored / total) * 100) : 0
-  const setPage = useUIStore((s) => s.setPage)
-
-  const nextActions: {
-    icon: typeof FileEdit
-    step: string
-    title: string
-    desc: string
-    tone: string
-    page: PageId
-  }[] = [
-    { icon: FileEdit, step: 'STEP 1', title: '양식 작성하기', desc: `${total}개 양식 중 작성을 시작하세요`, tone: 'from-violet-500 to-indigo-500', page: 'form-builder' },
-    { icon: Gauge, step: 'STEP 2', title: 'AI 채점 받기', desc: '작성본을 IATF 16949 기준으로 평가', tone: 'from-emerald-500 to-teal-500', page: 'form-builder' },
-    { icon: CalendarClock, step: 'STEP 3', title: '심사 일정 점검', desc: `D-${Math.abs(dday)} · 남은 일정을 캘린더로 확인`, tone: 'from-amber-500 to-orange-500', page: 'schedule' }
-  ]
+  const [selectedCat, setSelectedCat] = useState<number | null>(null)
+  const [aiOpen, setAiOpen] = useState(false)
+  const [scoresOpen, setScoresOpen] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const aiFoldRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     void load()
   }, [load])
+
+  const auditDateStr = `${auditDate.getFullYear()}.${String(auditDate.getMonth() + 1).padStart(2, '0')}.${String(auditDate.getDate()).padStart(2, '0')}`
+
+  const codeToCat = useMemo(() => codeToCategoryIndex(readiness), [readiness])
+  const readyPct = overallReadinessPct(readiness)
+
+  // ── 결정론 산수(✦각주 근거) ──
+  const allItems = useMemo(() => readiness?.categories.flatMap((c) => c.items) ?? [], [readiness])
+  const measurable = allItems.filter((i) => i.signal !== 'gray')
+  const metCount = measurable.filter((i) => i.signal === 'green').length
+  const redItems = measurable.filter((i) => i.signal === 'red')
+  const maxRedPoints = redItems.length > 0 ? Math.max(...redItems.map((i) => i.points)) : 0
+
+  // E1 각주: 미충족 배점이 가장 큰 카테고리 → "해소 시 +N점 사정권"
+  const topCatNote = useMemo(() => {
+    if (!readiness) return undefined
+    let best: { name: string; pts: number } | null = null
+    for (const c of readiness.categories) {
+      const pts = c.items.filter((i) => i.signal === 'red').reduce((s, i) => s + i.points, 0)
+      if (pts > 0 && (!best || pts > best.pts)) best = { name: c.name, pts }
+    }
+    return best ? `${best.name} 해소 시 +${best.pts}점 사정권` : undefined
+  }, [readiness])
+
+  // 준비도 궤적: 필요 페이스(산수) vs 현 페이스(최근 4주 SQ 작성 이력)
+  const weeksLeft = Math.max(1, Math.ceil(Math.max(0, dday) / 7))
+  const projectedPct = useMemo(() => {
+    if (readyPct == null) return 0
+    const wsum = measurable.reduce((s, i) => s + i.points, 0)
+    if (wsum === 0 || redItems.length === 0) return readyPct
+    const avgRedPts = redItems.reduce((s, i) => s + i.points, 0) / redItems.length
+    const itemsPerWeek = (data?.sqNewDrafts4w ?? 0) / 4 // 양식≈항목 1:1 근사
+    const gain = ((itemsPerWeek * weeksLeft * avgRedPts) / wsum) * 100
+    return Math.min(95, Math.round(readyPct + gain))
+  }, [readyPct, measurable, redItems, data?.sqNewDrafts4w, weeksLeft])
+
+  const monthLabels = useMemo(() => {
+    const out: string[] = []
+    const d = new Date()
+    d.setDate(1)
+    for (let i = 0; i < 12 && out.length < 6; i++) {
+      out.push(`${d.getMonth() + 1}월`)
+      if (d.getFullYear() === auditDate.getFullYear() && d.getMonth() === auditDate.getMonth()) break
+      d.setMonth(d.getMonth() + 1)
+    }
+    return out
+  }, [auditDate])
+
+  const obligationsCount = (board?.overdue.length ?? 0) + (board?.dueSoon.length ?? 0)
+  const coveragePct =
+    data && data.formsTotal > 0 ? Math.round(((data.formsFillable ?? 0) / data.formsTotal) * 100) : 0
+
+  const tiles: KpiTileSpec[] = [
+    {
+      key: 'dday',
+      label: '심사까지',
+      value: `${dday >= 0 ? 'D-' : 'D+'}${Math.abs(dday)}`,
+      sub: `${auditDateStr} 정기심사`,
+      tone: 'accent',
+      page: 'schedule'
+    },
+    {
+      key: 'readiness',
+      label: 'SQ 준비도',
+      value: readyPct != null ? String(readyPct) : '–',
+      unit: '%',
+      sub: `측정가능 ${measurable.length} 중 충족 ${metCount}`,
+      aiNote: topCatNote,
+      tone: 'accent',
+      page: 'sq-readiness'
+    },
+    {
+      key: 'unmet',
+      label: '미충족 항목',
+      value: String(redItems.length),
+      sub: `${allItems.length}항목 중 · 최고 ${maxRedPoints}점`,
+      tone: 'hot',
+      valueTone: 'crit',
+      page: 'sq-readiness'
+    },
+    {
+      key: 'obligations',
+      label: '정기 의무',
+      value: String(obligationsCount),
+      sub: `연체 ${board?.overdue.length ?? 0} · 임박 ${board?.dueSoon.length ?? 0}`,
+      tone: 'warm',
+      valueTone: obligationsCount > 0 ? 'warn' : undefined,
+      page: 'obligations'
+    },
+    {
+      key: 'cases',
+      label: '미결 불량',
+      value: String(data?.openCases ?? 0),
+      sub: '접수·처리중 케이스',
+      aiNote: (data?.openCases ?? 0) > 0 ? '과거 유사사례 매칭 가능' : undefined,
+      tone: 'hot',
+      valueTone: (data?.openCases ?? 0) > 0 ? 'crit' : undefined,
+      page: 'case-work'
+    },
+    {
+      key: 'coverage',
+      label: '작성 커버리지',
+      value: String(coveragePct),
+      unit: '%',
+      sub: `${data?.formsTotal ?? 0}양식 중 ${data?.formsFillable ?? 0} 작성가능`,
+      tone: 'accent',
+      page: 'form-builder'
+    }
+  ]
+
+  const openAiFold = (): void => {
+    setAiOpen(true)
+    setTimeout(() => aiFoldRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
 
   const handleExport = async (): Promise<void> => {
     setExporting(true)
@@ -63,65 +174,14 @@ export function Dashboard(): JSX.Element {
   }
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
-      {/* Hero — 프로그램 아이덴티티: 심사 카운트다운 */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-violet-600 to-indigo-700 text-white px-7 py-6 shadow-lg shadow-violet-600/25">
-        <div aria-hidden className="absolute -right-10 -top-24 w-72 h-72 rounded-full bg-white/10 blur-3xl" />
-        <div aria-hidden className="absolute right-52 -bottom-28 w-64 h-64 rounded-full bg-indigo-300/20 blur-3xl" />
-
-        <div className="relative flex items-start justify-between gap-6">
-          <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold bg-white/15 px-2.5 py-1 rounded-full mb-3">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              IATF 16949 품질경영시스템 · TPC AM사업부
-            </div>
-            <h1 className="text-[30px] font-bold tracking-tight leading-[1.1]">심사 준비 현황</h1>
-            <p className="text-[13px] text-white/70 mt-2">2026년 정기 IATF 16949 인증심사 대비</p>
-          </div>
-
-          <div className="shrink-0 flex flex-col items-end gap-4">
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={exporting || !data || data.formsScored === 0}
-              title={data && data.formsScored === 0 ? '채점된 양식이 있어야 내보낼 수 있습니다' : 'AI 채점 결과를 Excel로 내보냅니다'}
-              className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-white/15 hover:bg-white/25 border border-white/25 text-white disabled:opacity-50 flex items-center gap-1.5 transition-colors backdrop-blur-sm"
-            >
-              {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
-              리포트 내보내기
-            </button>
-            <div className="text-right">
-              <div className="flex items-baseline gap-0.5 justify-end leading-none">
-                <span className="text-3xl font-bold text-white/75">{dday >= 0 ? 'D-' : 'D+'}</span>
-                <span className="text-[60px] font-black tabular-nums tracking-tighter">{Math.abs(dday)}</span>
-              </div>
-              <div className="mt-1.5 flex items-center gap-1.5 justify-end text-[11px] text-white/75">
-                <CalendarClock className="w-3.5 h-3.5" />
-                정기 인증심사 · {auditDateStr}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 준비도 — AI 채점 완료율 */}
-        <div className="relative mt-6">
-          <div className="flex items-center justify-between text-[11px] text-white/75 mb-1.5">
-            <span className="flex items-center gap-1.5">
-              {loading && <Loader2 className="w-3 h-3 animate-spin" />}
-              AI 채점 완료율
-            </span>
-            <span className="tabular-nums font-semibold text-white">
-              {scored} / {total} 양식 · {readyPct}%
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-white/20 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-white/90 transition-all duration-500"
-              style={{ width: `${readyPct}%` }}
-            />
-          </div>
-        </div>
-      </div>
+    <div className="space-y-3 max-w-[1420px] mx-auto">
+      <HeaderBand
+        auditDateStr={auditDateStr}
+        dday={dday}
+        categories={readiness?.categories ?? []}
+        selectedCat={selectedCat}
+        onSelectCat={setSelectedCat}
+      />
 
       {error && (
         <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-[12px] text-destructive">
@@ -130,68 +190,102 @@ export function Dashboard(): JSX.Element {
         </div>
       )}
 
-      {/* 오늘 할 일 — 매일 관리 보드 (정기의무·SQ미충족·이어쓰기) */}
-      <DailyBoardCard />
+      <KpiTiles tiles={tiles} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BriefingCard />
-        <ReadinessCard />
-      </div>
-
-      <AbsenceCard />
-      <IsirCompletenessCard />
-      <MockAuditCard />
-      <FlywheelCard />
-
-      <KpiStrip />
-
-      {/* 지금 할 일 — 다음 액션 가이드 */}
-      <div>
-        <h2 className="text-sm font-bold text-muted-foreground mb-3 flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-primary" />
-          지금 할 일
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {nextActions.map((a) => {
-            const Icon = a.icon
-            return (
-              <button
-                key={a.title}
-                type="button"
-                onClick={() => setPage(a.page)}
-                className="group text-left bg-card border border-border rounded-xl shadow-sm p-5 hover:shadow-md hover:border-primary/30 transition-all flex items-start gap-3.5"
-              >
-                <div className={cn('w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center text-white shrink-0 shadow-sm', a.tone)}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-bold text-muted-foreground tracking-wide">{a.step}</div>
-                  <div className="text-[15px] font-bold mt-0.5">{a.title}</div>
-                  <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{a.desc}</div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
-              </button>
-            )
-          })}
+      {readiness && (
+        <div className="grid grid-cols-1 lg:grid-cols-[110px_1fr_1.1fr_1.3fr] gap-2.5">
+          <TeamRail />
+          <DonutUnmet readiness={readiness} selectedCat={selectedCat} />
+          <TeamSignalColumns teams={teams} codeToCat={codeToCat} selectedCat={selectedCat} />
+          <UnmetHeatmap
+            teams={teams}
+            readiness={readiness}
+            codeToCat={codeToCat}
+            onHotspotClick={openAiFold}
+          />
+          <TopUnmet readiness={readiness} selectedCat={selectedCat} />
+          <TrajectoryChart
+            currentPct={readyPct ?? 0}
+            projectedPct={projectedPct}
+            weeksLeft={weeksLeft}
+            redCount={redItems.length}
+            monthLabels={monthLabels}
+          />
+          <TeamFormsFunnel teams={teams} />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ScoreDistributionPanel />
-        </div>
-        <div>
-          <RecentScoresPanel />
-        </div>
-      </div>
-
-      <NeedsAttentionList />
-
-      {data && (
-        <p className="text-[11px] text-muted-foreground text-center pt-1">
-          문서 BOM {data.bomTotalDocs}건 · 관련양식 {data.bomTotalForms}건 · 작성 초안 {data.formsWithDraft}건 보유
-        </p>
       )}
+      {!readiness && (
+        <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-6 justify-center">
+          <Loader2 className="w-4 h-4 animate-spin" /> 집계 불러오는 중...
+        </div>
+      )}
+
+      {board && <TodoStrip board={board} onOpenAiFold={openAiFold} />}
+
+      <AiInsightsFold ref={aiFoldRef} open={aiOpen} onToggle={() => setAiOpen(!aiOpen)} />
+
+      {/* AI 채점 현황 — 접이식(양식 채점 파이프라인 리포트) */}
+      <div className="bg-card border border-dashed border-border rounded-xl shadow-sm overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setScoresOpen(!scoresOpen)}
+          className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+        >
+          <Gauge className="w-4 h-4 text-primary shrink-0" />
+          <span className="text-[12px] font-bold text-muted-foreground">
+            AI 채점 현황 — 평균점수 · 등급분포 · 최근채점 · 보완필요{loading && ' (집계 중...)'}
+          </span>
+          {scoresOpen ? (
+            <ChevronDown className="w-4 h-4 text-muted-foreground ml-auto shrink-0" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-muted-foreground/50 ml-auto shrink-0" />
+          )}
+        </button>
+        {scoresOpen && (
+          <div className="border-t border-border p-4 space-y-4 bg-muted/20">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={exporting || !data || data.formsScored === 0}
+                title={
+                  data && data.formsScored === 0
+                    ? '채점된 양식이 있어야 내보낼 수 있습니다'
+                    : 'AI 채점 결과를 Excel로 내보냅니다'
+                }
+                className="text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border hover:bg-muted disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+              >
+                {exporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileDown className="w-3.5 h-3.5" />
+                )}
+                리포트 내보내기
+              </button>
+            </div>
+            <KpiStrip />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
+                <ScoreDistributionPanel />
+              </div>
+              <div>
+                <RecentScoresPanel />
+              </div>
+            </div>
+            <NeedsAttentionList />
+          </div>
+        )}
+      </div>
+
+      <p className="text-[10.5px] text-muted-foreground text-center pt-1 pb-2">
+        {data && (
+          <>
+            문서 BOM {data.bomTotalDocs}건 · 관련양식 {data.bomTotalForms}건 · 작성 초안{' '}
+            {data.formsWithDraft}건 보유 ·{' '}
+          </>
+        )}
+        ✦ = AI · 마이크로 인사이트는 결정론 룰 우선, AI 문장은 접이식 안(일 1회 캐시)
+      </p>
     </div>
   )
 }

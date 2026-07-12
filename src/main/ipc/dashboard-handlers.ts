@@ -170,7 +170,23 @@ export function registerDashboardHandlers(): void {
       needsAttention: needsAttention.slice(0, 8),
       recentScores,
       bomTotalDocs: countOf(db, 'SELECT COUNT(*) AS c FROM bom_documents'),
-      bomTotalForms: countOf(db, 'SELECT COUNT(*) AS c FROM bom_form_refs')
+      bomTotalForms: countOf(db, 'SELECT COUNT(*) AS c FROM bom_form_refs'),
+      openCases: countOf(
+        db,
+        "SELECT COUNT(*) AS c FROM cases WHERE status IN ('open','in_progress')"
+      ),
+      formsFillable: countOf(
+        db,
+        'SELECT COUNT(*) AS c FROM forms f WHERE EXISTS (SELECT 1 FROM form_fields ff WHERE ff.form_code = f.code)'
+      ),
+      sqNewDrafts4w: countOf(
+        db,
+        `SELECT COUNT(DISTINCT s.form_code) AS c
+         FROM form_submissions s
+         JOIN forms f ON f.code = s.form_code
+         JOIN sq_reg_map m ON m.reg_code = f.reg_code
+         WHERE s.created_at >= datetime('now', '-28 days')`
+      )
     }
    } catch (err) {
      // 집계 중 예외 시에도 IPC가 reject되지 않도록 안전한 빈 DTO 반환(ErrorBoundary 외 2차 방어)
@@ -185,7 +201,10 @@ export function registerDashboardHandlers(): void {
        needsAttention: [],
        recentScores: [],
        bomTotalDocs: 0,
-       bomTotalForms: 0
+       bomTotalForms: 0,
+       openCases: 0,
+       formsFillable: 0,
+       sqNewDrafts4w: 0
      }
    }
   })
