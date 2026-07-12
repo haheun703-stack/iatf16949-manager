@@ -330,6 +330,8 @@ function StepCard({
   const badge = SIGNAL_BADGE[item.signal] ?? SIGNAL_BADGE.gray
   const [detail, setDetail] = useState<SqItemDetailDto | null>(null)
   const [loading, setLoading] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
 
   useEffect(() => {
     // deps 에 loading/detail 을 넣으면 setLoading(true)가 effect 를 재실행시켜
@@ -337,12 +339,18 @@ function StepCard({
     if (!open || detail) return
     let alive = true
     setLoading(true)
+    setFailed(false)
     void (async () => {
       try {
         const res = (await window.api.invoke(window.api.channels.SQ_ITEM_DETAIL, {
           code: item.code
         })) as SqItemDetailDto | null
-        if (alive) setDetail(res)
+        if (!alive) return
+        // null 응답(항목 없음)도 실패로 표시 — detail=null 로 남기면 영구 스피너
+        if (res) setDetail(res)
+        else setFailed(true)
+      } catch {
+        if (alive) setFailed(true)
       } finally {
         if (alive) setLoading(false)
       }
@@ -351,7 +359,7 @@ function StepCard({
       alive = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, item.code])
+  }, [open, item.code, retryKey])
 
   return (
     <div
@@ -396,7 +404,18 @@ function StepCard({
 
       {open && (
         <div className="border-t border-border bg-muted/20 px-4 py-3.5 space-y-4">
-          {loading || !detail ? (
+          {failed ? (
+            <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-3">
+              항목 상세를 불러오지 못했습니다.
+              <button
+                type="button"
+                onClick={() => setRetryKey((k) => k + 1)}
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                다시 시도
+              </button>
+            </div>
+          ) : loading || !detail ? (
             <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-3">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> 항목 상세 불러오는 중...
             </div>

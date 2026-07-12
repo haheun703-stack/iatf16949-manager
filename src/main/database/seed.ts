@@ -141,11 +141,13 @@ function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {
     return
   }
 
+  // ⚠️실명·실주소·실전화는 시드에 넣지 않는다(설치판 번들에 실림) — 설치 후 프로필에서 입력.
+  // 기존 설치본은 INSERT OR IGNORE 라 이미 저장된 값이 유지됨.
   const profileDefaults: Record<string, string> = {
     companyName: '주식회사 티피씨',
-    ceoName: '이정훈',
-    address: '경상북도 경산시 진량읍 공단6로 55',
-    phone: '(053)854-7500',
+    ceoName: '',
+    address: '',
+    phone: '',
     fax: '',
     factoryName: '2공장 AM사업부',
     revisionNumber: 'REV.8',

@@ -154,7 +154,7 @@ export function registerTeamHandlers(): void {
       const readinessPct =
         scored.length === 0
           ? null
-          : Math.round((scored.reduce((s, i) => s + SIGNAL_SCORE[i.signal] * i.points, 0) / wsum) * 100)
+          : Math.round((scored.reduce((s, i) => s + SIGNAL_SCORE[i.signal] * i.points, 0) / (wsum || 1)) * 100)
       const redCount = items.filter((i) => i.signal === 'red').length
       const due = dueByTeam.get(t.id)!
       const fs = formStats.get(t.id)!

@@ -17,12 +17,9 @@ import type Database from 'better-sqlite3'
 
 const execFileP = promisify(execFile)
 
-// 마스터 72개 양식 원본 폴더(읽기 전용 소스). 개발 폴백 경로.
-const FALLBACK_MASTERS =
-  'D:\\IATF16949,SQ 자동작성 봇\\IATF 전체 자료모음_김권표이사_260501\\3.IATF16949 규정&지침 _230501'
-
-// 마스터 폴더 해소 우선순위: 환경변수 → DB설정(company_profile.mastersDir) → 번들 resources/forms → 개발 폴백.
+// 마스터 폴더 해소 우선순위: 환경변수 → DB설정(company_profile.mastersDir) → 번들 resources/forms.
 // 배포 시 resources/forms 에 원본을 넣으면 번들로 동작(electron-builder.yml extraResources).
+// 하드코딩 폴백 경로 없음(실명·기밀 경로가 번들에 실리는 것 방지) — 미설정 시 안내 에러.
 export function resolveMastersDir(db: Database.Database): string {
   const env = process.env.IATF_MASTERS_DIR
   if (env && existsSync(env)) return env
@@ -39,7 +36,7 @@ export function resolveMastersDir(db: Database.Database): string {
     : join(__dirname, '../../resources/forms')
   // 번들 폴더는 실제 .xlsx 가 들어있을 때만 채택(빈 폴더/README만 있으면 폴백)
   if (existsSync(bundled) && readdirSync(bundled).some((f) => /\.xlsx$/i.test(f))) return bundled
-  return FALLBACK_MASTERS
+  throw new Error("정본(마스터) 폴더가 설정되지 않았습니다. 사이드바 '정본 폴더'에서 지정하세요.")
 }
 
 export interface CellMapRow {

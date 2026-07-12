@@ -83,8 +83,7 @@ function verdictOf(score: number): string {
 }
 
 const COMPANY_CONTEXT = `회사: TPC 2공장 AM사업부 (인발/가공/조립/검사/포장)
-주요 공정/제품: 인발, 자동차용 방진고무 INNER/OUTER PIPE류, 필라넥, 워터파이프, 쇼바파이프
-사업부장: 서상규 전무 / 품질개발팀장: 홍길동 부장`
+주요 공정/제품: 인발, 자동차용 방진고무 INNER/OUTER PIPE류, 필라넥, 워터파이프, 쇼바파이프`
 
 interface FormRow {
   code: string

@@ -1,5 +1,5 @@
 import { getSqlite } from './connection'
-import { readFileSync, readdirSync, existsSync, mkdirSync, unlinkSync } from 'fs'
+import { readFileSync, readdirSync, existsSync, mkdirSync, unlinkSync, statSync } from 'fs'
 import { join } from 'path'
 import { app } from 'electron'
 import type Database from 'better-sqlite3'
@@ -25,13 +25,21 @@ function snapshotBeforeMigrations(db: Database.Database, firstPending: string): 
     db.prepare('VACUUM INTO ?').run(dest)
     console.log(`[migrate] DB 스냅샷 생성: ${dest}`)
 
-    // 보존 정책: 최신 N개만 유지(마이그 번호가 시간순 증가라 파일명 정렬 = 시간순)
+    // 보존 정책: 최신 N개만 유지 — 생성시각(mtime) 기준.
+    // 파일명(마이그번호) 정렬은 스냅샷 복구 직후 재기동 시 방금 만든 백업(pre-낮은번호_새것)이
+    // 오래된 백업(pre-높은번호_옛것)보다 먼저 삭제되는 함정이 있음.
     const olds = readdirSync(backupsDir)
       .filter((f) => f.startsWith('pre-') && f.endsWith('.db'))
-      .sort()
-      .reverse()
+      .map((f) => {
+        try {
+          return { f, t: statSync(join(backupsDir, f)).mtimeMs }
+        } catch {
+          return { f, t: 0 } // stat 실패 파일은 가장 오래된 것으로 취급
+        }
+      })
+      .sort((a, b) => b.t - a.t)
       .slice(SNAPSHOT_KEEP)
-    for (const f of olds) {
+    for (const { f } of olds) {
       try {
         unlinkSync(join(backupsDir, f))
       } catch {
