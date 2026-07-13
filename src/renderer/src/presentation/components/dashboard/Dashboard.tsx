@@ -174,7 +174,7 @@ export function Dashboard(): JSX.Element {
   }
 
   return (
-    <div className="space-y-3 max-w-[1420px] mx-auto">
+    <div className="space-y-3 max-w-[2200px] mx-auto">
       <HeaderBand
         auditDateStr={auditDateStr}
         dday={dday}
@@ -193,7 +193,7 @@ export function Dashboard(): JSX.Element {
       <KpiTiles tiles={tiles} />
 
       {readiness && (
-        <div className="grid grid-cols-1 lg:grid-cols-[110px_1fr_1.1fr_1.3fr] gap-2.5">
+        <div className="grid grid-cols-1 lg:grid-cols-[120px_1fr_1.1fr_1.3fr] gap-3 lg:auto-rows-[minmax(320px,auto)]">
           <TeamRail />
           <DonutUnmet readiness={readiness} selectedCat={selectedCat} />
           <TeamSignalColumns teams={teams} codeToCat={codeToCat} selectedCat={selectedCat} />

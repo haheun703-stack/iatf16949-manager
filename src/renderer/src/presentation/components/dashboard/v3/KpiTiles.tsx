@@ -46,24 +46,24 @@ export function KpiTiles({ tiles }: { tiles: KpiTileSpec[] }): JSX.Element {
             type={clickable ? 'button' : undefined}
             onClick={clickable ? () => setPage(t.page!) : undefined}
             className={cn(
-              'bg-card border border-border rounded-xl shadow-sm px-3.5 py-3 flex items-center gap-3 text-left',
+              'bg-card border border-border rounded-xl shadow-sm px-5 py-4 flex items-center gap-4 text-left',
               clickable && 'hover:shadow-md hover:border-primary/30 transition-all cursor-pointer'
             )}
           >
             <div
               className={cn(
-                'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                'w-12 h-12 rounded-full flex items-center justify-center shrink-0',
                 ICON_TONE[t.tone]
               )}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <div className="text-[10.5px] font-bold text-muted-foreground tracking-wide">
+              <div className="text-[12px] font-bold text-muted-foreground tracking-wide">
                 {t.label}
               </div>
               <div
-                className="text-[24px] font-extrabold leading-tight tabular-nums"
+                className="text-[30px] font-extrabold leading-tight tabular-nums"
                 style={
                   t.valueTone === 'crit'
                     ? { color: STATUS.critical }
@@ -73,11 +73,13 @@ export function KpiTiles({ tiles }: { tiles: KpiTileSpec[] }): JSX.Element {
                 }
               >
                 {t.value}
-                {t.unit && <span className="text-[13px] font-bold text-muted-foreground ml-0.5">{t.unit}</span>}
+                {t.unit && <span className="text-[15px] font-bold text-muted-foreground ml-0.5">{t.unit}</span>}
               </div>
-              <div className="text-[10px] text-muted-foreground truncate">{t.sub}</div>
+              <div className="text-[11.5px] text-muted-foreground truncate">{t.sub}</div>
               {t.aiNote && (
-                <div className="text-[10px] font-bold text-sky-600 mt-0.5 truncate">✦ {t.aiNote}</div>
+                <div className="text-[11px] font-bold text-sky-600 mt-0.5 truncate" title={`✦ ${t.aiNote}`}>
+                  ✦ {t.aiNote}
+                </div>
               )}
             </div>
           </Tag>

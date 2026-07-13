@@ -11,7 +11,7 @@ function Pill({ tone, children }: { tone: 'crit' | 'warn' | 'info'; children: Re
       : tone === 'warn'
         ? 'bg-amber-100 text-amber-700'
         : 'bg-sky-100 text-sky-700'
-  return <span className={cn('text-[9.5px] font-extrabold px-2 py-[2px] rounded-full whitespace-nowrap', cls)}>{children}</span>
+  return <span className={cn('text-[10.5px] font-extrabold px-2 py-[2px] rounded-full whitespace-nowrap', cls)}>{children}</span>
 }
 
 // span+role=button — 칩 내부에 실제 <button>(AI 초안)이 들어갈 수 있어 button 중첩 금지
@@ -23,7 +23,7 @@ function Chip({ onClick, children }: { onClick?: () => void; children: ReactNode
       onClick={onClick}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
       className={cn(
-        'flex items-center gap-1.5 text-[11.5px] font-semibold text-muted-foreground border border-border rounded-lg px-2.5 py-1.5 bg-muted/40',
+        'flex items-center gap-1.5 text-[12.5px] font-semibold text-muted-foreground border border-border rounded-lg px-3 py-2 bg-muted/40',
         onClick && 'hover:border-primary/40 hover:text-foreground transition-colors cursor-pointer'
       )}
     >
@@ -55,12 +55,12 @@ export function TodoStrip({
     board.overdue.length === 0 && !nextDue && !topRed && board.drafts.length === 0
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-sm px-4 py-2.5 flex items-center gap-2 flex-wrap">
-      <span className="text-[12.5px] font-extrabold mr-1">오늘 할 일</span>
+    <div className="bg-card border border-border rounded-xl shadow-sm px-5 py-3 flex items-center gap-2.5 flex-wrap">
+      <span className="text-[14px] font-extrabold mr-1">오늘 할 일</span>
       <button
         type="button"
         onClick={onOpenAiFold}
-        className="text-[10px] font-bold text-sky-600 hover:underline mr-1"
+        className="text-[11px] font-bold text-sky-600 hover:underline mr-1"
         title="AI 브리핑 열기"
       >
         ✦ 브리핑이 매일 아침 우선순위로 정렬
