@@ -264,30 +264,38 @@ export function UnmetHeatmap({
         </>
       }
     >
-      <div className="overflow-x-auto flex-1">
-        <table className="w-full border-collapse tabular-nums">
+      {/* h-full + table-fixed: 본문 행이 패널 높이를 나눠 갖고, 카테고리 컬럼은 균등폭(치우침 방지) */}
+      <div className="flex-1 min-h-0 overflow-x-auto">
+        <table className="w-full h-full table-fixed border-collapse tabular-nums">
+          <colgroup>
+            <col style={{ width: 104 }} />
+            {catNames.map((n) => (
+              <col key={n} />
+            ))}
+            <col style={{ width: 44 }} />
+          </colgroup>
           <thead>
-            <tr>
+            <tr style={{ height: 30 }}>
               <th />
               {catNames.map((n) => (
-                <th key={n} className="text-[11.5px] font-extrabold text-muted-foreground px-1 py-1.5 text-center">
+                <th key={n} className="text-[11.5px] font-extrabold text-muted-foreground px-1 text-center">
                   {n.replace('관리', '').replace('체제', '')}
                 </th>
               ))}
-              <th className="text-[11.5px] font-extrabold text-muted-foreground px-1 py-1.5">계</th>
+              <th className="text-[11.5px] font-extrabold text-muted-foreground px-1">계</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <th className="text-right text-[12.5px] font-bold text-muted-foreground whitespace-nowrap pr-2 py-1">
-                  {r.label}
+                <th className="text-right text-[12px] font-bold text-muted-foreground pr-2 truncate">
+                  {r.label.replace('경영·보증', '')}
                 </th>
                 {r.cells.map((v, ci) => {
                   const { bg, ink } = heatColor(v, max)
                   const hotspot = max > 0 && v === max
                   return (
-                    <td key={ci} className="p-[3px]">
+                    <td key={ci} className="p-[3px] h-full">
                       <div
                         role={hotspot ? 'button' : undefined}
                         onClick={hotspot ? onHotspotClick : undefined}
@@ -297,7 +305,7 @@ export function UnmetHeatmap({
                             : undefined
                         }
                         className={cn(
-                          'rounded-[5px] text-center text-[12.5px] font-bold py-2',
+                          'rounded-[5px] text-[12.5px] font-bold h-full min-h-[30px] flex items-center justify-center',
                           hotspot && 'cursor-pointer'
                         )}
                         style={{
@@ -312,19 +320,19 @@ export function UnmetHeatmap({
                     </td>
                   )
                 })}
-                <td className="text-center text-[12.5px] font-extrabold py-1">{r.total}</td>
+                <td className="text-center text-[12.5px] font-extrabold">{r.total}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr>
-              <th className="text-right text-[12.5px] font-bold text-muted-foreground pr-2 py-1.5">계</th>
+            <tr style={{ height: 32 }}>
+              <th className="text-right text-[12.5px] font-bold text-muted-foreground pr-2">계</th>
               {colTotals.map((v, ci) => (
-                <td key={ci} className="text-center text-[12.5px] font-extrabold py-1.5">
+                <td key={ci} className="text-center text-[12.5px] font-extrabold">
                   {v}
                 </td>
               ))}
-              <td className="text-center text-[12.5px] font-extrabold py-1.5">
+              <td className="text-center text-[12.5px] font-extrabold">
                 {colTotals.reduce((s, v) => s + v, 0)}
               </td>
             </tr>
