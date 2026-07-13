@@ -1,17 +1,16 @@
 import { useEffect, useState } from 'react'
 import { ListChecks, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
+import { TEAMS } from '@shared/team-theme'
 import type { ClauseCoverageDto } from '@shared/ipc-types'
 
-// 책임팀 배지 색
-const DEPT_STYLE: Record<string, string> = {
-  총무팀: 'bg-slate-100 text-slate-700',
-  영업팀: 'bg-blue-100 text-blue-700',
-  품질보증팀: 'bg-emerald-100 text-emerald-700',
-  개발팀: 'bg-violet-100 text-violet-700',
-  구매팀: 'bg-amber-100 text-amber-700',
-  생산팀: 'bg-rose-100 text-rose-700',
-  생산기술팀: 'bg-cyan-100 text-cyan-700'
+// 책임팀 배지 색 — team-theme 정본에서 파생(부서명 → 팀 고유색). 임의 색 재정의 금지.
+const DEPT_STYLE: Record<string, { backgroundColor: string; color: string }> = {}
+for (const t of TEAMS) {
+  for (const dept of t.deptKeys) {
+    DEPT_STYLE[dept] = { backgroundColor: t.tintBg, color: t.darkText }
+  }
 }
 // 프로세스 코드 → 짧은 이름 칩
 const PROC_NAME: Record<string, string> = {
@@ -56,16 +55,11 @@ export function ClauseCoverageView(): JSX.Element {
 
   return (
     <div className="max-w-5xl space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <ListChecks className="w-6 h-6 text-primary" />
-          IATF 조항별 커버리지
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          품질환경매뉴얼 0.7 프로세스 매트릭스(조항) 기준 · IATF 4~10장에 어떤 규정·프로세스가
-          걸려있는지 · 총 {totalRegs}개 규정
-        </p>
-      </header>
+      <PageHeader
+        icon={<ListChecks className="w-5 h-5" />}
+        title="IATF 조항별 커버리지"
+        sub={`품질환경매뉴얼 0.7 프로세스 매트릭스(조항) 기준 · IATF 4~10장에 어떤 규정·프로세스가 걸려있는지 · 총 ${totalRegs}개 규정`}
+      />
 
       {data.map((c) => (
         <section key={c.clause} className="rounded-xl border border-border bg-card overflow-hidden">
@@ -104,8 +98,9 @@ export function ClauseCoverageView(): JSX.Element {
                     <span
                       className={cn(
                         'text-[11px] font-semibold px-2 py-0.5 rounded shrink-0',
-                        DEPT_STYLE[r.respDept] ?? 'bg-muted text-muted-foreground'
+                        !DEPT_STYLE[r.respDept] && 'bg-muted text-muted-foreground'
                       )}
+                      style={DEPT_STYLE[r.respDept]}
                     >
                       {r.respDept}
                     </span>

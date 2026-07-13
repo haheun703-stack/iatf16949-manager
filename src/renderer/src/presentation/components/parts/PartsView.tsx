@@ -12,6 +12,7 @@ import {
   X
 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
 import { usePartsStore } from '../../stores/partsStore'
 import { PartDetail } from './PartDetail'
 
@@ -45,35 +46,35 @@ export function PartsView(): JSX.Element {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <header className="flex items-center gap-3 mb-4 shrink-0">
-        <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-          <Package className="w-5 h-5" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold tracking-tight">품번 / ISIR</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            ISIR(검사협정·관리계획서) = 고객 협의 통제의 근간 · {list.length}개 품번 — SQ 공정감사가 이걸로 진행
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => void importIsir()}
-          disabled={importing}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 disabled:opacity-60"
-          title="ISIR 워크북(.xlsx) 선택 — 여러 개 한 번에 적재 가능"
-        >
-          {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
-          {importing ? '적재 중...' : 'ISIR 적재'}
-        </button>
-        <button
-          type="button"
-          onClick={() => void loadList()}
-          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
-          title="새로고침"
-        >
-          <RefreshCw className={cn('w-4 h-4', loadingList && 'animate-spin')} />
-        </button>
-      </header>
+      <div className="shrink-0">
+        <PageHeader
+          icon={<Package className="w-5 h-5" />}
+          title="품번 / ISIR"
+          sub={`ISIR(검사협정·관리계획서) = 고객 협의 통제의 근간 · ${list.length}개 품번 — SQ 공정감사가 이걸로 진행`}
+          actions={
+            <>
+              <button
+                type="button"
+                onClick={() => void importIsir()}
+                disabled={importing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 disabled:opacity-60"
+                title="ISIR 워크북(.xlsx) 선택 — 여러 개 한 번에 적재 가능"
+              >
+                {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+                {importing ? '적재 중...' : 'ISIR 적재'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void loadList()}
+                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
+                title="새로고침"
+              >
+                <RefreshCw className={cn('w-4 h-4', loadingList && 'animate-spin')} />
+              </button>
+            </>
+          }
+        />
+      </div>
 
       {importBatch && (
         <div className="mb-3 shrink-0 rounded-lg border border-border bg-card overflow-hidden">

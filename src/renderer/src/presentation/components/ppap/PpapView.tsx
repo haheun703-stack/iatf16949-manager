@@ -7,6 +7,7 @@ import {
   type PpapSubmissionStatus
 } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
 import { usePpapStore } from '../../stores/ppapStore'
 
 const ELEMENT_STATUS_META: Record<PpapElementStatus, { label: string; chip: string; dot: string }> = {
@@ -34,33 +35,30 @@ export function PpapView(): JSX.Element {
   return (
     <div className="-m-6 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
       <header className="px-6 pt-5 pb-4 border-b border-border bg-card shrink-0">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <ClipboardCheck className="w-6 h-6 text-primary" />
-              PPAP 양산부품승인
+        <PageHeader
+          icon={<ClipboardCheck className="w-5 h-5" />}
+          title="PPAP 양산부품승인"
+          sub="고객 양산부품 승인용 18 표준 요구사항 제출·진척 추적 (APQP Phase 4)"
+          actions={
+            <>
               {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              고객 양산부품 승인용 18 표준 요구사항 제출·진척 추적 (APQP Phase 4)
-            </p>
-          </div>
-
-          {/* 제출 선택 */}
-          {submissions.length > 0 && (
-            <select
-              value={selectedId ?? ''}
-              onChange={(e) => void select(Number(e.target.value))}
-              className="input-field max-w-xs text-sm"
-            >
-              {submissions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.partNo} · {s.partName ?? ''} {s.customer ? `(${s.customer})` : ''}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+              {/* 제출 선택 */}
+              {submissions.length > 0 && (
+                <select
+                  value={selectedId ?? ''}
+                  onChange={(e) => void select(Number(e.target.value))}
+                  className="input-field max-w-xs text-sm"
+                >
+                  {submissions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.partNo} · {s.partName ?? ''} {s.customer ? `(${s.customer})` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
+          }
+        />
 
         {/* 제출 헤더 정보 + 진척률 */}
         {board && (

@@ -7,6 +7,7 @@ import { TEAMS, type TeamId, type TeamTheme } from '@shared/team-theme'
 import type { TeamSummaryDto } from '@shared/ipc-types'
 import { useUIStore } from '../../stores/uiStore'
 import { useDday } from '../../hooks/useDday'
+import { PageHeader } from '../shared/PageHeader'
 
 const TEAM_ICON: Record<TeamId, typeof Briefcase> = {
   chongmu: Briefcase,
@@ -51,20 +52,16 @@ export function TeamHubView(): JSX.Element {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">무엇부터 볼까요?</h1>
-          <p className="text-[13px] text-muted-foreground mt-1.5">
-            팀마다 고유 색 · 카드를 누르면 그 팀의 심사 단계 → 지침 → 양식 순으로 열립니다
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
+      <PageHeader
+        title="무엇부터 볼까요?"
+        sub="팀마다 고유 색 · 카드를 누르면 그 팀의 심사 단계 → 지침 → 양식 순으로 열립니다"
+        actions={
           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold bg-primary/10 text-primary px-2.5 py-1 rounded-full">
             <ShieldCheck className="w-3.5 h-3.5" />
             심사 D-{Math.abs(dday)}
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {!data ? (
         <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">

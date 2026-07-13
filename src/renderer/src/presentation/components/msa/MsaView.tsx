@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Ruler, Loader2, Plus, Trash2 } from 'lucide-react'
 import { MSA_METHODS, type MsaStudyDto, type MsaResult, type MsaMethod } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
 import { useMsaStore } from '../../stores/msaStore'
 
 const RESULT_META: Record<MsaResult, { label: string; chip: string; dot: string }> = {
@@ -33,14 +34,11 @@ export function MsaView(): JSX.Element {
   return (
     <div className="-m-6 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
       <header className="px-6 pt-5 pb-4 border-b border-border bg-card shrink-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <Ruler className="w-6 h-6 text-primary" />
-              MSA 측정시스템분석
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1">
+        <PageHeader
+          icon={<Ruler className="w-5 h-5" />}
+          title="MSA 측정시스템분석"
+          sub={
+            <>
               게이지 변동(Gage R&amp;R) 평가 · %GRR 입력 시 판정 자동 (7.1.5.1.1)
               {counts.unacceptable > 0 && (
                 <span className="ml-2 text-rose-600 font-semibold">부적합 {counts.unacceptable}</span>
@@ -48,17 +46,22 @@ export function MsaView(): JSX.Element {
               {counts.marginal > 0 && (
                 <span className="ml-2 text-amber-600 font-semibold">조건부 {counts.marginal}</span>
               )}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void create({ gageName: '새 게이지' })}
-            className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            게이지 추가
-          </button>
-        </div>
+            </>
+          }
+          actions={
+            <>
+              {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              <button
+                type="button"
+                onClick={() => void create({ gageName: '새 게이지' })}
+                className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                게이지 추가
+              </button>
+            </>
+          }
+        />
 
         {/* 판정 기준 범례 */}
         <div className="mt-2 text-[11px] text-muted-foreground flex items-center gap-x-3 flex-wrap">

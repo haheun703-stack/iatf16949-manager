@@ -1,30 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  /* Notion-inspired warm-neutral palette */
-  --color-background: #f7f7f5;        /* warm light gray canvas */
-  --color-foreground: #37352f;        /* warm near-black text */
+  /* 파스텔 블루 시스템 (2026-07-13 UI 업그레이드 A안 확정)
+     원칙: 파스텔은 면(배경·틴트)에, 딥블루는 점(액션·앵커)에.
+     팀 7색(team-theme)·채움칸 베이지·빨강=경고 예약 원칙은 유지. */
+  --color-background: #eef4fa;        /* 파스텔 블루 캔버스 */
+  --color-foreground: #1f3348;        /* 네이비 잉크 */
   --color-card: #ffffff;
-  --color-card-foreground: #37352f;
-  --color-primary: #7c3aed;           /* brand accent — reserved for primary actions */
+  --color-card-foreground: #1f3348;
+  --color-primary: #2a78d6;           /* 액션 블루 — 버튼·링크·포커스(대시보드 v3와 동일) */
   --color-primary-foreground: #ffffff;
-  --color-secondary: #f1f1ef;         /* warm gray (chips/inactive) */
-  --color-secondary-foreground: #37352f;
-  --color-muted: #f1f1ef;             /* hover / subtle fill */
-  --color-muted-foreground: #6b6a64;  /* warm secondary text */
-  --color-accent: #7c3aed;
+  --color-secondary: #e7f1fc;         /* 파스텔 블루 틴트(칩/비활성) */
+  --color-secondary-foreground: #1c4d80;
+  --color-muted: #edf3fa;             /* hover / subtle fill */
+  --color-muted-foreground: #5c7288;  /* 쿨 그레이 보조 텍스트 */
+  --color-accent: #2a78d6;
   --color-accent-foreground: #ffffff;
-  --color-border: #ebebe9;            /* very subtle warm border */
-  --color-ring: #7c3aed;
-  --color-destructive: #ef4444;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
+  --color-border: #dbe6f1;            /* 파스텔 블루 보더 */
+  --color-ring: #2a78d6;
+  --color-destructive: #d03b3b;
+  --color-success: #0ca30c;
+  --color-warning: #b97707;
   --color-input: #ffffff;
-  /* 사람이 채워야 하는 칸 표시용 — 따뜻한 베이지(시인성) */
+  /* 사람이 채워야 하는 칸 표시용 — 따뜻한 베이지(시인성, 유지) */
   --color-fillable: #f8f1df;
   --color-fillable-border: #ece0bf;
   --color-popover: #ffffff;
-  --color-popover-foreground: #37352f;
+  --color-popover-foreground: #1f3348;
   --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --radius-lg: 12px;
   --radius-md: 8px;
@@ -93,7 +95,7 @@ body {
 
 .input-field:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+  box-shadow: 0 0 0 3px rgba(42, 120, 214, 0.14);
 }
 
 .input-field:disabled {

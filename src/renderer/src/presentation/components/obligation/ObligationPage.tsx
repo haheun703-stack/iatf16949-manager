@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { CalendarClock, Plus, Loader2, Check, AlertTriangle } from 'lucide-react'
 import { OBLIGATION_CADENCES, type ObligationCadence, type ObligationDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
 import { useObligationStore } from '../../stores/obligationStore'
 import { CADENCE_META, CATEGORY_CHIP, dueStatus } from './obligationMeta'
 import { ObligationModal } from './ObligationModal'
@@ -40,14 +41,11 @@ export function ObligationPage(): JSX.Element {
   return (
     <div className="-m-6 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
       <header className="px-6 pt-5 pb-4 border-b border-border bg-card shrink-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <CalendarClock className="w-6 h-6 text-primary" />
-              정기 의무
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1">
+        <PageHeader
+          icon={<CalendarClock className="w-5 h-5" />}
+          title="정기 의무"
+          sub={
+            <>
               IATF 주기적 의무(일/주/월/분기/년) 도래 관리 · 총 {items.length}건
               {summary.overdue > 0 && (
                 <span className="ml-2 text-rose-600 font-semibold inline-flex items-center gap-1">
@@ -58,17 +56,22 @@ export function ObligationPage(): JSX.Element {
               {summary.soon > 0 && (
                 <span className="ml-2 text-amber-600 font-semibold">임박 {summary.soon}</span>
               )}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => openCreate()}
-            className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5 transition-opacity"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            의무 추가
-          </button>
-        </div>
+            </>
+          }
+          actions={
+            <>
+              {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              <button
+                type="button"
+                onClick={() => openCreate()}
+                className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5 transition-opacity"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                의무 추가
+              </button>
+            </>
+          }
+        />
 
         {/* 주기 필터 */}
         <div className="mt-4 inline-flex items-center gap-1 p-1 rounded-lg bg-muted">

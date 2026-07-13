@@ -104,7 +104,7 @@ export function BriefingCard(): JSX.Element | null {
           icon={CalendarClock}
           label={`심사 · ${facts.audit?.date ?? ''}`}
           value={facts.audit ? `D-${facts.audit.dday}` : '—'}
-          tone="border-violet-200 bg-violet-50 text-violet-700"
+          tone="border-sky-200 bg-sky-50 text-sky-700"
         />
         <Stat icon={FileWarning} label={`SQ 증빙누락 / ${facts.sq.total}`} value={`${facts.sq.missingEvidence}`} tone="border-slate-200 bg-slate-50 text-slate-700" />
       </div>

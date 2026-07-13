@@ -3,7 +3,7 @@ import { cn } from '../../../lib/utils'
 import { useDashboardStore } from '../../stores/dashboardStore'
 
 const TONE_CLASS: Record<string, string> = {
-  primary: 'text-white bg-gradient-to-br from-violet-500 to-indigo-500 shadow-sm shadow-violet-500/30',
+  primary: 'text-white bg-gradient-to-br from-sky-500 to-blue-600 shadow-sm shadow-blue-500/30',
   success: 'text-white bg-gradient-to-br from-emerald-500 to-teal-500 shadow-sm shadow-emerald-500/30',
   warning: 'text-white bg-gradient-to-br from-amber-500 to-orange-500 shadow-sm shadow-amber-500/30',
   destructive: 'text-white bg-gradient-to-br from-rose-500 to-red-500 shadow-sm shadow-rose-500/30'

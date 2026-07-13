@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { CalendarDays, LayoutGrid, CalendarRange, Plus, Loader2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
 import { useScheduleStore, type ScheduleView } from '../../stores/scheduleStore'
 import { BoardView } from './BoardView'
 import { CalendarView } from './CalendarView'
@@ -23,25 +24,23 @@ export function SchedulePage(): JSX.Element {
   return (
     <div className="-m-6 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
       <header className="px-6 pt-5 pb-4 border-b border-border bg-card shrink-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              일정표
+        <PageHeader
+          title="일정표"
+          sub={`심사·내부심사·교육·시정조치 일정을 캘린더/보드/타임라인으로 관리 · 총 ${items.length}건`}
+          actions={
+            <>
               {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              심사·내부심사·교육·시정조치 일정을 캘린더/보드/타임라인으로 관리 · 총 {items.length}건
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => openCreate()}
-            className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5 transition-opacity"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            일정 추가
-          </button>
-        </div>
+              <button
+                type="button"
+                onClick={() => openCreate()}
+                className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5 transition-opacity"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                일정 추가
+              </button>
+            </>
+          }
+        />
 
         {/* View switcher */}
         <div className="mt-4 inline-flex items-center gap-1 p-1 rounded-lg bg-muted">

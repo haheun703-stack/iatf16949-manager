@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Route, Check, ChevronDown, ChevronRight, ExternalLink, Loader2, Link2, Zap } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
 import { useApqpStore } from '../../stores/apqpStore'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 import type { ApqpCoreTool, ApqpElementDto, ApqpPhaseDto, ApqpStatus } from '@shared/ipc-types'
@@ -50,22 +51,17 @@ export function ApqpView(): JSX.Element {
 
   return (
     <div className="max-w-6xl space-y-5">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Route className="w-6 h-6 text-primary" />
-            APQP 여정
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            사전 제품 품질 계획 — 계획→설계→공정→검증→피드백 순서로 산출물을 채웁니다 · Core Tool은
-            배지 클릭으로 바로 작성
-          </p>
-        </div>
-        <div className="text-right shrink-0">
-          <div className="text-2xl font-bold tabular-nums">{board.overallPct}%</div>
-          <div className="text-[11px] text-muted-foreground">전체 진척률</div>
-        </div>
-      </header>
+      <PageHeader
+        icon={<Route className="w-5 h-5" />}
+        title="APQP 여정"
+        sub="사전 제품 품질 계획 — 계획→설계→공정→검증→피드백 순서로 산출물을 채웁니다 · Core Tool은 배지 클릭으로 바로 작성"
+        actions={
+          <div className="text-right">
+            <div className="text-2xl font-bold tabular-nums">{board.overallPct}%</div>
+            <div className="text-[11px] text-muted-foreground">전체 진척률</div>
+          </div>
+        }
+      />
 
       {/* ── 순차 스테퍼 ── */}
       <div className="flex items-stretch gap-0 rounded-xl border border-border bg-card px-4 py-4 overflow-x-auto">

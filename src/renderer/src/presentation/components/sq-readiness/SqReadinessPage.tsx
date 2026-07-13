@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ShieldCheck, RefreshCw } from 'lucide-react'
 import type { SqReadinessDto, SqSignal } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
 import { SqItemDetail } from './SqItemDetail'
 
 const SIGNAL_BG: Record<SqSignal, string> = {
@@ -59,33 +60,30 @@ export function SqReadinessPage(): JSX.Element {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* 헤더 */}
-      <header className="flex items-center gap-3 mb-4 shrink-0">
-        <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-          <ShieldCheck className="w-5 h-5" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold tracking-tight">SQ 준비도</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            삼보모터스(HKMC) SQ 평가 Ver4 · {data?.categories.length ?? 0}대 · {summary.total}항목 ·{' '}
-            {data?.totalPoints ?? 0}점 — 양식 작성·표준화 현황 신호등
-          </p>
-        </div>
-        <div className="flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1.5"><Dot signal="green" className="w-2.5 h-2.5" /> {summary.green}</span>
-          <span className="flex items-center gap-1.5"><Dot signal="yellow" className="w-2.5 h-2.5" /> {summary.yellow}</span>
-          <span className="flex items-center gap-1.5"><Dot signal="red" className="w-2.5 h-2.5" /> {summary.red}</span>
-          <span className="flex items-center gap-1.5"><Dot signal="gray" className="w-2.5 h-2.5" /> {summary.gray}</span>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="ml-1 p-1.5 rounded-md hover:bg-muted text-muted-foreground"
-            title="새로고침"
-          >
-            <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
-          </button>
-        </div>
-      </header>
+      {/* 헤더 — 공통 규격(PageHeader) */}
+      <div className="shrink-0">
+        <PageHeader
+          icon={<ShieldCheck className="w-5 h-5" />}
+          title="SQ 준비도"
+          sub={`삼보모터스(HKMC) SQ 평가 Ver4 · ${data?.categories.length ?? 0}대 · ${summary.total}항목 · ${data?.totalPoints ?? 0}점 — 양식 작성·표준화 현황 신호등`}
+          actions={
+            <div className="flex items-center gap-3 text-xs">
+              <span className="flex items-center gap-1.5"><Dot signal="green" className="w-2.5 h-2.5" /> {summary.green}</span>
+              <span className="flex items-center gap-1.5"><Dot signal="yellow" className="w-2.5 h-2.5" /> {summary.yellow}</span>
+              <span className="flex items-center gap-1.5"><Dot signal="red" className="w-2.5 h-2.5" /> {summary.red}</span>
+              <span className="flex items-center gap-1.5"><Dot signal="gray" className="w-2.5 h-2.5" /> {summary.gray}</span>
+              <button
+                type="button"
+                onClick={() => void load()}
+                className="ml-1 p-1.5 rounded-md hover:bg-muted text-muted-foreground"
+                title="새로고침"
+              >
+                <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+              </button>
+            </div>
+          }
+        />
+      </div>
 
       {/* 본문: 좌(목록) / 우(상세) */}
       <div className="flex gap-4 flex-1 min-h-0">

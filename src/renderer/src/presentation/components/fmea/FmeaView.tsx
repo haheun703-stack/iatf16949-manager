@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { GitBranch, Loader2, Plus, Trash2, FileSpreadsheet } from 'lucide-react'
 import { type FmeaRowDto, type FmeaActionPriority } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { PageHeader } from '../shared/PageHeader'
 import { useFmeaStore } from '../../stores/fmeaStore'
 
 const AP_COLOR: Record<FmeaActionPriority, string> = {
@@ -41,31 +42,34 @@ export function FmeaView(): JSX.Element {
   return (
     <div className="-m-6 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
       <header className="px-6 pt-5 pb-4 border-b border-border bg-card shrink-0">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <GitBranch className="w-6 h-6 text-primary" />
-              공정 FMEA <span className="text-sm font-semibold text-primary">신판 (AIAG-VDA)</span>
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1">
+        <PageHeader
+          icon={<GitBranch className="w-5 h-5" />}
+          title="공정 FMEA"
+          sub={
+            <>
+              <span className="font-semibold text-primary">신판 (AIAG-VDA)</span> ·
               구조→기능→고장→리스크(S·O·D·AP)→최적화 7-step · 고객 제출용 공정 FMEA
-            </p>
-          </div>
-          {docs.length > 0 && (
-            <select
-              value={selectedId ?? ''}
-              onChange={(e) => void select(Number(e.target.value))}
-              className="input-field max-w-xs text-sm"
-            >
-              {docs.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.fmeaNo} · {d.partName ?? ''} {d.partNo ? `(${d.partNo})` : ''}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+            </>
+          }
+          actions={
+            <>
+              {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              {docs.length > 0 && (
+                <select
+                  value={selectedId ?? ''}
+                  onChange={(e) => void select(Number(e.target.value))}
+                  className="input-field max-w-xs text-sm"
+                >
+                  {docs.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.fmeaNo} · {d.partName ?? ''} {d.partNo ? `(${d.partNo})` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
+          }
+        />
 
         {board && (
           <div className="mt-3 flex items-center gap-4 flex-wrap text-xs">
