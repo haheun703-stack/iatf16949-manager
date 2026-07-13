@@ -268,7 +268,7 @@ export function UnmetHeatmap({
       <div className="flex-1 min-h-0 overflow-x-auto">
         <table className="w-full h-full table-fixed border-collapse tabular-nums">
           <colgroup>
-            <col style={{ width: 104 }} />
+            <col style={{ width: 92 }} />
             {catNames.map((n) => (
               <col key={n} />
             ))}
@@ -288,7 +288,7 @@ export function UnmetHeatmap({
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <th className="text-right text-[12px] font-bold text-muted-foreground pr-2 truncate">
+                <th className="text-left text-[12px] font-bold text-muted-foreground pr-2 truncate">
                   {r.label.replace('경영·보증', '')}
                 </th>
                 {r.cells.map((v, ci) => {
@@ -326,7 +326,7 @@ export function UnmetHeatmap({
           </tbody>
           <tfoot>
             <tr style={{ height: 32 }}>
-              <th className="text-right text-[12.5px] font-bold text-muted-foreground pr-2">계</th>
+              <th className="text-left text-[12.5px] font-bold text-muted-foreground pr-2">계</th>
               {colTotals.map((v, ci) => (
                 <td key={ci} className="text-center text-[12.5px] font-extrabold">
                   {v}
