@@ -1,14 +1,19 @@
-# TODO — 이어서 작업 (갱신: 2026-07-13 마감)
+# TODO — 이어서 작업 (갱신: 2026-07-14 오전)
 
-## 📌 내일(7/14) 할 일 — 사장님 지정 순서
+## 📌 다음(7/14 오후, 사무실) — 백로그에서 택
 
-1. **UI P3**: 글자 크기 배율 옵션(사이드바 설정) + 제품 정보 화면(버전·제조사) + 포커스/대비 점검 — 심사장 시연 대비.
-2. **히트맵 핫스팟 → 모의심사 직접 연결**: 현재는 AI 접이식 열기까지 — 클릭한 셀(팀×카테고리)의 항목으로 예상질문 바로 생성(MockAuditCard에 initialItemKey prop). 작은 작업.
-3. **죽은코드 정리**: domain/ 11파일 + register.ts v4 19채널 540줄(삭제안전 검증됨) — 클린채널 공사와 묶어도 됨.
-4. (백로그) 부실 셀맵 5건 보강 · TPC 하드코딩 잔여(팩 분리와 함께) · 궤적 '현 페이스' 정직화(준비도 일일 이력 저장) · 팀원 피드백→Phase 3 판단.
-5. (사업, 코딩 아님) TPC와 IP 서면 정리 착수 · 10월 PSST 사업계획서 준비 · 공고 모니터링 루틴은 "걸어줘" 대기.
+1. **설치판 재빌드**(심사장 시연용): 오늘 3커밋 반영 — UI P3·히트맵→모의심사·죽은코드정리. `build:win`+사일런트 설치. ⚠️재빌드 전 dev·electron 종료(`taskkill //F //IM electron.exe`). ⚠️NSIS /S=PowerShell Start-Process -Wait.
+2. **부실 셀맵 5건 보강** · **TPC 하드코딩 잔여**(팩 분리와 함께) · **궤적 '현 페이스' 정직화**(준비도 일일 이력 저장) · 팀원 피드백→Phase 3 판단.
+3. **클린채널 공사 착수**(TPC팩 분리, 2~3주) → 10월 PSST 준비. (사업) TPC와 IP 서면 정리 · 공고 모니터링 루틴 "걸어줘" 대기.
+4. (P3 대비점검 잔여) 사이드바 메뉴 *설명* 텍스트 `text-foreground/55`(11px)=~3.2:1 AA미달 — 원하면 `/70`으로 개선(장식성이라 보류).
 
-**7/13 마감 상태**: HEAD e8b8431(origin 동기화·워킹트리 클린), 설치본=7/13 14:07판. **오늘 손댄 화면 11개 전수 실화면 검증 — 문제 0건**(홈·대시보드·MSA·정기의무·APQP·조항커버리지·문서BOM·FMEA·PPAP·일정표·품번ISIR).
+**7/14 오전 마감 상태**: HEAD **db3b1da**(origin 동기화·워킹트리 클린). ⚠️설치본은 아직 7/13 14:07판 — 오늘 3커밋 미반영, 심사장 시연 전 재빌드 필요. ⚠️화면캡처=카카오톡·사진뷰어 겹치면 PrintWindow(scratchpad shotpw.ps1)로.
+
+## 🟢 7/14 오전 — 사장님 지정 3개 완료 (전부 커밋·푸시·실화면 검증)
+
+1. **★UI P3**(e262a68, 심사장 시연 대비): ①글자배율=사이드바 스테퍼(90~140%, `webFrame.setZoomFactor` 전체UI 비례확대)+localStorage 영속→부팅 자동적용(App useEffect). ②제품정보 화면(AboutView)=앱버전(APP_INFO IPC=`app.getVersion`)·제조사(`company_profile` DB=하드코딩아님·고객마다 자기정보)·런타임(Electron/Chromium/Node/V8), 사이드바 ⓘ진입, PageHeader. ③포커스=전역 `:focus-visible` 링(Tab시만). 신규 preload `setZoomFactor` 노출.
+2. **★히트맵 핫스팟→모의심사 직접연결**(2288104): UnmetHeatmap 핫스팟 클릭→그 팀×카테고리 최고배점 미충족 항목코드를 `onHotspotClick(itemKey)`로. MockAuditCard `initialItemKey`+`runNonce`(매클릭 재실행)→자동선택+AI예상질문 자동생성, 결과도착시 카드 정밀스크롤. Dashboard `openMockAuditFor`. 검증: 품질팀×검사시험(8)→2_7(50점) 자동생성+착지 실화면.
+3. **★v4 죽은코드 완전정리**(db3b1da): `domain/` 11파일 삭제(참조0) · `register.ts` **727→189줄**(죽은핸들러 19개=CLAUSE/DOC/TASK/TEAM_LIST/DASHBOARD_STATS·FULL/DB_STATUS/REGULATION_LIST/BULK + 미사용 import) · `ipc-channels` 상수19 · `ipc-types` 타입맵19+자기참조 죽은타입12. 검증: 참조0 재확인·typecheck node+web·build 3타깃(main 254→237KB)·dev부팅 무에러·대시보드(DASHBOARD_V5)·홈 실렌더.
 
 ## 🟢 7/13 — 검수버그 3건+실명 5건 해소 + ★대시보드 v3 (콜드스타트 1순위)
 
