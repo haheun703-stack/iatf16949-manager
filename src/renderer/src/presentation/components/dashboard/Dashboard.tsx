@@ -35,6 +35,8 @@ export function Dashboard(): JSX.Element {
   const [aiOpen, setAiOpen] = useState(false)
   const [scoresOpen, setScoresOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
+  // 히트맵 핫스팟 → 모의심사 직접 연결: 클릭한 항목 코드 + nonce(매 클릭 재실행)
+  const [mockAudit, setMockAudit] = useState<{ key: string; nonce: number } | null>(null)
   const aiFoldRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -155,6 +157,20 @@ export function Dashboard(): JSX.Element {
     setTimeout(() => aiFoldRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
+  // 히트맵 핫스팟 클릭 → AI 접이식 열고 모의심사 카드로 스크롤 + 해당 항목 예상질문 자동 생성
+  const openMockAuditFor = (itemKey: string): void => {
+    setAiOpen(true)
+    setMockAudit((prev) => ({ key: itemKey, nonce: (prev?.nonce ?? 0) + 1 }))
+    // 접이식이 mount될 때까지 재시도 후 모의심사 카드에 정확히 착지(없으면 fold 상단 폴백)
+    const scrollToCard = (attempt = 0): void => {
+      const el = document.getElementById('mock-audit-card')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      else if (attempt < 10) setTimeout(() => scrollToCard(attempt + 1), 40)
+      else aiFoldRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    setTimeout(() => scrollToCard(), 40)
+  }
+
   const handleExport = async (): Promise<void> => {
     setExporting(true)
     try {
@@ -201,7 +217,7 @@ export function Dashboard(): JSX.Element {
             teams={teams}
             readiness={readiness}
             codeToCat={codeToCat}
-            onHotspotClick={openAiFold}
+            onHotspotClick={openMockAuditFor}
           />
           <TopUnmet readiness={readiness} selectedCat={selectedCat} />
           <TrajectoryChart
@@ -222,7 +238,13 @@ export function Dashboard(): JSX.Element {
 
       {board && <TodoStrip board={board} onOpenAiFold={openAiFold} />}
 
-      <AiInsightsFold ref={aiFoldRef} open={aiOpen} onToggle={() => setAiOpen(!aiOpen)} />
+      <AiInsightsFold
+        ref={aiFoldRef}
+        open={aiOpen}
+        onToggle={() => setAiOpen(!aiOpen)}
+        mockAuditKey={mockAudit?.key ?? null}
+        mockAuditNonce={mockAudit?.nonce ?? 0}
+      />
 
       {/* AI 채점 현황 — 접이식(양식 채점 파이프라인 리포트) */}
       <div className="bg-card border border-dashed border-border rounded-xl shadow-sm overflow-hidden">

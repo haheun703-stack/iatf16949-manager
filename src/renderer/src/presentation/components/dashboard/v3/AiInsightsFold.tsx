@@ -13,8 +13,14 @@ import { IsirCompletenessCard } from '../IsirCompletenessCard'
  */
 export const AiInsightsFold = forwardRef<
   HTMLDivElement,
-  { open: boolean; onToggle: () => void }
->(function AiInsightsFold({ open, onToggle }, ref): JSX.Element {
+  {
+    open: boolean
+    onToggle: () => void
+    /** 히트맵 핫스팟 → 모의심사 직접 연결: 지정 항목 코드 + 매 클릭 재실행 nonce */
+    mockAuditKey?: string | null
+    mockAuditNonce?: number
+  }
+>(function AiInsightsFold({ open, onToggle, mockAuditKey = null, mockAuditNonce = 0 }, ref): JSX.Element {
   return (
     <div ref={ref} className="bg-card border border-dashed border-border rounded-xl shadow-sm overflow-hidden">
       <button
@@ -42,7 +48,7 @@ export const AiInsightsFold = forwardRef<
             <ReadinessCard />
           </div>
           <AbsenceCard />
-          <MockAuditCard />
+          <MockAuditCard initialItemKey={mockAuditKey} runNonce={mockAuditNonce} />
           <FlywheelCard />
           <IsirCompletenessCard />
         </div>

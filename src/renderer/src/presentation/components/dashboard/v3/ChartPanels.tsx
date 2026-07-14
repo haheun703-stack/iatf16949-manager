@@ -233,20 +233,27 @@ export function UnmetHeatmap({
   teams: TeamSummaryDto[]
   readiness: SqReadinessDto
   codeToCat: Map<string, number>
-  onHotspotClick: () => void
+  /** 핫스팟 셀 클릭 → 그 셀의 대표 SQ 항목(최고 배점 미충족) 코드 전달 */
+  onHotspotClick: (itemKey: string) => void
 }): JSX.Element {
   const themeById = new Map<string, TeamTheme>(TEAMS.map((t) => [t.id, t]))
   const catNames = readiness.categories.map((c) => c.name)
 
   const rows = teams
     .map((t) => {
-      const cells = catNames.map((_, ci) =>
-        t.items.filter((i) => i.signal === 'red' && codeToCat.get(i.code) === ci).length
+      // 셀별 미충족(red) 항목 목록 → 개수(cells) + 대표 항목 코드(cellTop: 최고 배점)
+      const redByCat = catNames.map((_, ci) =>
+        t.items.filter((i) => i.signal === 'red' && codeToCat.get(i.code) === ci)
+      )
+      const cells = redByCat.map((arr) => arr.length)
+      const cellTop = redByCat.map((arr) =>
+        arr.length ? [...arr].sort((a, b) => b.points - a.points)[0].code : null
       )
       return {
         id: t.teamId,
         label: themeById.get(t.teamId)?.label ?? t.teamId,
         cells,
+        cellTop,
         total: cells.reduce((s, v) => s + v, 0)
       }
     })
@@ -293,15 +300,16 @@ export function UnmetHeatmap({
                 </th>
                 {r.cells.map((v, ci) => {
                   const { bg, ink } = heatColor(v, max)
-                  const hotspot = max > 0 && v === max
+                  const topCode = r.cellTop[ci]
+                  const hotspot = max > 0 && v === max && !!topCode
                   return (
                     <td key={ci} className="p-[3px] h-full">
                       <div
                         role={hotspot ? 'button' : undefined}
-                        onClick={hotspot ? onHotspotClick : undefined}
+                        onClick={hotspot && topCode ? () => onHotspotClick(topCode) : undefined}
                         title={
                           hotspot
-                            ? `✦ 최다 핫스팟 — ${r.label} × ${catNames[ci]} ${v}건 · 클릭 → 모의심사 예상질문`
+                            ? `✦ 최다 핫스팟 — ${r.label} × ${catNames[ci]} ${v}건 · 클릭 → ${topCode} 모의심사 예상질문`
                             : undefined
                         }
                         className={cn(
