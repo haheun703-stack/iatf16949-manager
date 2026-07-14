@@ -142,6 +142,24 @@ export interface CompanyProfile {
   auditDate: string
 }
 
+/** 제품(앱) 정보 — 제품 정보 화면(버전·제조사)용. main 에서 app.getVersion 등으로 수집. (UI P3) */
+export interface AppInfo {
+  /** 제품명 (electron-builder productName) */
+  productName: string
+  /** 앱 버전 (package.json version) */
+  version: string
+  /** 저작권 */
+  copyright: string
+  /** 런타임 버전 */
+  electron: string
+  chrome: string
+  node: string
+  v8: string
+  /** OS 플랫폼·아키텍처 */
+  platform: string
+  arch: string
+}
+
 export interface DocGenRequest {
   templateId: string
   profile: CompanyProfile
@@ -1719,6 +1737,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.DB_STATUS]: {
     request: void
     response: DbStatus
+  }
+  [IPC_CHANNELS.APP_INFO]: {
+    request: void
+    response: AppInfo
   }
   [IPC_CHANNELS.COMPANY_PROFILE_GET]: {
     request: void

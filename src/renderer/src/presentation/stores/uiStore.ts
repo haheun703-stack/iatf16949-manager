@@ -20,6 +20,7 @@ export type PageId =
   | 'form-chain'
   | 'clause-tree'
   | 'team'
+  | 'about'
 
 interface UIState {
   currentPage: PageId
@@ -27,6 +28,10 @@ interface UIState {
 
   sidebarCollapsed: boolean
   toggleSidebar: () => void
+
+  /** 글자 크기 배율(0.9~1.4). 전체 UI 확대. localStorage 영속. UI P3. */
+  fontScale: number
+  setFontScale: (scale: number) => void
 
   selectedFormCode: string | null
   setSelectedFormCode: (code: string | null) => void
@@ -46,12 +51,52 @@ interface UIState {
   setSelectedTeam: (id: TeamId | null) => void
 }
 
+// ── 글자 크기 배율 (UI P3) ────────────────────────────────────────
+export const FONT_SCALE_MIN = 0.9
+export const FONT_SCALE_MAX = 1.4
+export const FONT_SCALE_STEP = 0.1
+const FONT_SCALE_KEY = 'ui.fontScale'
+
+const clampScale = (n: number): number =>
+  Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, Math.round(n * 100) / 100))
+
+function readFontScale(): number {
+  try {
+    const raw = localStorage.getItem(FONT_SCALE_KEY)
+    const n = raw ? Number(raw) : NaN
+    return Number.isFinite(n) ? clampScale(n) : 1
+  } catch {
+    return 1
+  }
+}
+
+/** 배율을 실제 UI에 적용 + localStorage 저장. App 부팅 시·설정 변경 시 호출. */
+export function applyFontScale(scale: number): void {
+  try {
+    window.api.setZoomFactor(scale)
+  } catch {
+    /* preload 미노출 환경 무시 */
+  }
+  try {
+    localStorage.setItem(FONT_SCALE_KEY, String(scale))
+  } catch {
+    /* 저장 실패 무시 */
+  }
+}
+
 export const useUIStore = create<UIState>((set) => ({
   currentPage: 'home', // 팀별 허브가 첫 화면 (7/6 UI 재편)
   setPage: (page) => set({ currentPage: page }),
 
   sidebarCollapsed: false,
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+
+  fontScale: readFontScale(),
+  setFontScale: (scale) => {
+    const next = clampScale(scale)
+    applyFontScale(next)
+    set({ fontScale: next })
+  },
 
   selectedFormCode: null,
   setSelectedFormCode: (code) => set({ selectedFormCode: code }),

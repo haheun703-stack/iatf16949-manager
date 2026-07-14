@@ -59,6 +59,9 @@ export const IPC_CHANNELS = {
   // Database
   DB_STATUS: 'db:status',
 
+  // 제품(앱) 정보 — 버전·런타임 (UI P3 제품 정보 화면)
+  APP_INFO: 'app:info',
+
   // Form operations (v5)
   FORM_LIST: 'form:list',
   FORM_GET_DEFINITION: 'form:getDefinition',

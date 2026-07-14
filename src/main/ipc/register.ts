@@ -1,4 +1,4 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow, app } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { randomUUID } from 'crypto'
@@ -18,7 +18,8 @@ import type {
   RegulationItem,
   CompanyProfile,
   DocGenRequest,
-  DocGenResult
+  DocGenResult,
+  AppInfo
 } from '@shared/ipc-types'
 import { generateQualityManual } from '../docgen/quality-manual-generator'
 import { registerFormHandlers } from './form-handlers'
@@ -603,6 +604,22 @@ export function registerAllIpcHandlers(): void {
     'companyName', 'ceoName', 'address', 'phone', 'fax',
     'factoryName', 'revisionNumber', 'revisionDate', 'defaultAuthor', 'mastersDir', 'auditDate'
   ]
+
+  // ──── 제품(앱) 정보 — 버전·런타임 (UI P3 제품 정보 화면) ────
+  ipcMain.handle(IPC_CHANNELS.APP_INFO, (): AppInfo => {
+    return {
+      // electron-builder.yml 과 일치하는 제품 식별자(개인·TPC 브랜딩 아님, 안전)
+      productName: 'IATF16949 품질경영시스템',
+      version: app.getVersion(),
+      copyright: 'Copyright © 2026',
+      electron: process.versions.electron,
+      chrome: process.versions.chrome,
+      node: process.versions.node,
+      v8: process.versions.v8,
+      platform: process.platform,
+      arch: process.arch
+    }
+  })
 
   ipcMain.handle(IPC_CHANNELS.COMPANY_PROFILE_GET, () => {
     const rows = db.prepare('SELECT key, value FROM company_profile').all() as Array<{ key: string; value: string }>

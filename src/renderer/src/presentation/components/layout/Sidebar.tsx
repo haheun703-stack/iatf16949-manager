@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package, Folder, ListChecks, Route, Home } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, AlertTriangle, Factory, FileEdit, FolderTree, CalendarDays, CalendarClock, ClipboardCheck, GitBranch, Ruler, Pencil, Check, Package, Folder, ListChecks, Route, Home, Minus, Plus, Info } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
-import { useUIStore, type PageId } from '../../stores/uiStore'
+import { useUIStore, type PageId, FONT_SCALE_MIN, FONT_SCALE_MAX, FONT_SCALE_STEP } from '../../stores/uiStore'
 import { setAuditDateCache } from '../../hooks/useDday'
 
 interface MenuItem {
@@ -59,7 +59,7 @@ const MENU_GROUPS: MenuGroup[] = [
 ]
 
 export function Sidebar(): JSX.Element {
-  const { currentPage, setPage, sidebarCollapsed } = useUIStore()
+  const { currentPage, setPage, sidebarCollapsed, fontScale, setFontScale } = useUIStore()
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
   const [author, setAuthor] = useState('')
   const [editing, setEditing] = useState(false)
@@ -286,6 +286,60 @@ export function Sidebar(): JSX.Element {
               <Pencil className="w-3 h-3 ml-auto shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" />
             </button>
           ))}
+
+        {/* 글자 크기 배율 — 심사장 시연 접근성 (UI P3) */}
+        {!sidebarCollapsed && (
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground px-1.5 -mx-1.5">
+            <span className="shrink-0">글자 크기</span>
+            <div className="ml-auto flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => setFontScale(fontScale - FONT_SCALE_STEP)}
+                disabled={fontScale <= FONT_SCALE_MIN + 0.001}
+                title="글자 작게"
+                className="rounded p-0.5 hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontScale(1)}
+                title="기본 크기(100%)로 초기화"
+                className="min-w-[38px] text-center font-medium text-foreground tabular-nums rounded px-1 py-0.5 hover:bg-muted"
+              >
+                {Math.round(fontScale * 100)}%
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontScale(fontScale + FONT_SCALE_STEP)}
+                disabled={fontScale >= FONT_SCALE_MAX - 0.001}
+                title="글자 크게"
+                className="rounded p-0.5 hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 제품 정보(버전·제조사) — 심사장 시연 대비 (UI P3) */}
+        <button
+          type="button"
+          onClick={() => setPage('about')}
+          title="제품 정보 — 버전 · 제조사 · 시스템 정보"
+          className={cn(
+            'mt-2 flex items-center rounded text-[11px] transition-colors',
+            sidebarCollapsed
+              ? 'w-8 h-8 mx-auto justify-center'
+              : 'w-full gap-1.5 px-1.5 py-1 -mx-1.5 text-left',
+            currentPage === 'about'
+              ? 'bg-primary/10 text-primary font-medium'
+              : 'text-muted-foreground hover:bg-muted'
+          )}
+        >
+          <Info className="w-3.5 h-3.5 shrink-0 opacity-80" />
+          {!sidebarCollapsed && <span>제품 정보</span>}
+        </button>
       </div>
     </aside>
   )

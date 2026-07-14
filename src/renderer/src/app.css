@@ -77,6 +77,18 @@ body {
   background-clip: padding-box;
 }
 
+/* 키보드 포커스 가시성 — 접근성/심사장 시연 (UI P3).
+   마우스 클릭엔 안 뜨고 Tab 키 이동 시에만 표시(:focus-visible). */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* 자체 포커스 스타일(box-shadow 링)이 있는 입력칸은 이중 링 방지 */
+.input-field:focus-visible {
+  outline: none;
+}
+
 .input-field {
   width: 100%;
   padding: 0.5rem 0.7rem;

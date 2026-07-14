@@ -17,6 +17,7 @@ import { ClauseCoverageView } from '../clause/ClauseCoverageView'
 import { ApqpView } from '../apqp/ApqpView'
 import { TeamHubView } from '../home/TeamHubView'
 import { TeamDetailView } from '../home/TeamDetailView'
+import { AboutView } from '../about/AboutView'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -49,6 +50,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'msa' && <MsaView />}
             {currentPage === 'clause-tree' && <ClauseCoverageView />}
             {currentPage === 'apqp' && <ApqpView />}
+            {currentPage === 'about' && <AboutView />}
           </ErrorBoundary>
         </main>
       </div>
