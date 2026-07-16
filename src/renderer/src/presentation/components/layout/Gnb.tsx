@@ -131,7 +131,7 @@ export function Gnb(): JSX.Element {
   }
 
   return (
-    <header className="h-14 bg-card border-b border-border flex items-center px-5 shrink-0 gap-1">
+    <header className="h-16 bg-card border-b border-border flex items-center px-6 shrink-0 gap-2">
       {/* 로고 — 회사명은 company_profile(고객사마다 자기 회사) */}
       <button
         type="button"
@@ -149,7 +149,7 @@ export function Gnb(): JSX.Element {
       </button>
 
       {/* 카테고리 내비게이션 */}
-      <nav ref={navRef} className="flex items-stretch gap-1 h-full flex-1 min-w-0">
+      <nav ref={navRef} className="flex items-stretch gap-3 h-full flex-1 min-w-0">
         {DIRECT_ITEMS.map((item) => (
           <button
             key={item.id}
@@ -157,7 +157,7 @@ export function Gnb(): JSX.Element {
             onClick={() => go(item.id)}
             title={item.desc}
             className={cn(
-              'relative px-3.5 text-[13.5px] font-semibold transition-colors whitespace-nowrap',
+              'relative px-4 text-[14px] font-semibold transition-colors whitespace-nowrap',
               active === item.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -175,7 +175,7 @@ export function Gnb(): JSX.Element {
               onClick={() => setOpenGroup((k) => (k === group.key ? null : group.key))}
               aria-expanded={openGroup === group.key}
               className={cn(
-                'relative px-3.5 text-[13.5px] font-semibold transition-colors whitespace-nowrap inline-flex items-center gap-1',
+                'relative px-4 text-[14px] font-semibold transition-colors whitespace-nowrap inline-flex items-center gap-1',
                 active === group.key || openGroup === group.key
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'

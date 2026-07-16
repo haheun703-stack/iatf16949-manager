@@ -102,10 +102,10 @@ export function PortalHome(): JSX.Element {
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-5 break-keep">
-      {/* 회사 밴드 — 딥블루는 점(앵커)에 */}
-      <div className="rounded-2xl px-8 py-6 text-white flex items-center gap-6 flex-wrap bg-gradient-to-r from-[#1c4d80] to-[#2a78d6]">
+      {/* 회사 밴드 — 파스텔 면(7/16 사장님: 전체 파스텔 밝게). 딥블루는 활성 버튼 점에만 */}
+      <div className="rounded-2xl px-8 py-6 flex items-center gap-6 flex-wrap border border-border bg-gradient-to-r from-white via-[#eaf3fc] to-[#dcebfa]">
         <div className="min-w-0">
-          <div className="text-[13.5px] font-semibold opacity-80 truncate">
+          <div className="text-[13.5px] font-semibold text-muted-foreground truncate">
             {profile?.companyName || 'IATF 16949 품질경영시스템'} · {dateLabel}
           </div>
           {/* 톤 원칙(코워크 09 검토 반영): 하루가 끝나기 전 이행률은 경보가 아니라 진행 현황 — 위기어는 연체에만 */}
@@ -122,8 +122,8 @@ export function PortalHome(): JSX.Element {
           className={cn(
             'h-10 px-5 rounded-lg text-[13.5px] font-bold border transition-colors',
             onlyOpen
-              ? 'bg-white text-[#1c4d80] border-white'
-              : 'bg-white/15 border-white/40 hover:bg-white/25'
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-white border-border text-foreground hover:bg-muted'
           )}
           title="미이행(오늘 마감·연체) 업무만 표시"
         >
@@ -132,7 +132,7 @@ export function PortalHome(): JSX.Element {
         <button
           type="button"
           onClick={() => setPage('obligations')}
-          className="h-10 px-5 rounded-lg text-[13.5px] font-bold bg-white/15 border border-white/40 hover:bg-white/25 transition-colors"
+          className="h-10 px-5 rounded-lg text-[13.5px] font-bold bg-white border border-border text-foreground hover:bg-muted transition-colors"
           title="정기 의무 등록·수정 — 팀별 일상 업무를 여기서 등록"
         >
           정기 의무 관리 ›
@@ -278,8 +278,7 @@ export function PortalHome(): JSX.Element {
             return (
               <div
                 key={team.teamId}
-                className="bg-card rounded-xl overflow-hidden flex flex-col"
-                style={{ border: `1px solid ${theme.border}` }}
+                className="bg-card rounded-xl overflow-hidden flex flex-col border border-border"
               >
                 <div
                   className="px-5 py-3 text-[14px] font-bold flex items-center"
@@ -473,7 +472,7 @@ function TaskRow({
             type="button"
             onClick={onComplete}
             disabled={completing}
-            className="h-8 px-3 rounded-md text-[12px] font-bold bg-primary text-primary-foreground hover:brightness-95 disabled:opacity-50 inline-flex items-center gap-1"
+            className="h-8 px-3 rounded-md text-[12px] font-bold bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 inline-flex items-center gap-1"
             title="이행 완료 처리 — 다음 도래일 자동 전진 + 이력 기록"
           >
             {completing ? <Loader2 className="w-3 h-3 animate-spin" /> : '완료'}
