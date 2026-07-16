@@ -17,6 +17,7 @@ function rowToObligation(r: Record<string, unknown>): ObligationDto {
     category: (r.category as ObligationCategory) ?? '기타',
     clauseRef: (r.clause_ref as string) || null,
     owner: (r.owner as string) || null,
+    assignee: (r.assignee as string) || null,
     leadDays: (r.lead_days as number) ?? 7,
     anchorDate: (r.anchor_date as string) || null,
     lastDoneDate: (r.last_done_date as string) || null,
@@ -90,8 +91,8 @@ export function registerObligationHandlers(): void {
       const res = db
         .prepare(
           `INSERT INTO recurring_obligations
-             (title, cadence, category, clause_ref, owner, lead_days, next_due_date, form_code, active, note, sort_order)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             (title, cadence, category, clause_ref, owner, assignee, lead_days, next_due_date, form_code, active, note, sort_order)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           input.title?.trim() || '제목 없음',
@@ -99,6 +100,7 @@ export function registerObligationHandlers(): void {
           input.category ?? '기타',
           input.clauseRef ?? null,
           input.owner ?? null,
+          input.assignee ?? null,
           input.leadDays ?? 7,
           input.nextDueDate ?? null,
           input.formCode ?? null,
@@ -120,6 +122,7 @@ export function registerObligationHandlers(): void {
         category: 'category',
         clauseRef: 'clause_ref',
         owner: 'owner',
+        assignee: 'assignee',
         leadDays: 'lead_days',
         nextDueDate: 'next_due_date',
         formCode: 'form_code',

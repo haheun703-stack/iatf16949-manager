@@ -298,7 +298,7 @@ export function registerTeamHandlers(): void {
 
       const obs = db
         .prepare(
-          `SELECT id, title, cadence, owner, lead_days, last_done_date, next_due_date, form_code
+          `SELECT id, title, cadence, owner, assignee, lead_days, last_done_date, next_due_date, form_code
            FROM recurring_obligations WHERE active = 1
            ORDER BY next_due_date ASC, sort_order ASC`
         )
@@ -405,6 +405,7 @@ export function registerTeamHandlers(): void {
         id: o.id as number,
         title: o.title as string,
         cadence: (o.cadence as string) || '월',
+        assignee: (o.assignee as string) || null,
         status,
         dueDate,
         daysLeft: status === 'done' ? null : daysLeft,

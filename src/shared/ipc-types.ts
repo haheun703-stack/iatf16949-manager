@@ -686,6 +686,8 @@ export interface TodayTaskDto {
   id: number
   title: string
   cadence: string
+  /** 담당자 개인(0066, 자유 텍스트) — 개인별 보드 그룹핑용 */
+  assignee: string | null
   status: TodayTaskStatus
   /** 다음 도래일(YYYY-MM-DD). */
   dueDate: string | null
@@ -720,6 +722,36 @@ export interface TeamTodayBoardDto {
   teams: TeamTodayDto[]
   /** 팀 매핑 실패 의무(정직 노출 — owner 표기 정비 대상) */
   unassigned: TodayTaskDto[]
+}
+
+// ===== 관제탑 홈 KPI 지수 (0066) =====
+
+export interface KpiMeasurementDto {
+  period: string // 'YYYY-MM'
+  value: number
+}
+
+export interface KpiIndicatorDto {
+  id: number
+  name: string
+  unit: string
+  /** null = 목표 미설정 */
+  target: number | null
+  /** higher=높을수록 좋음 / lower=낮을수록 좋음 */
+  direction: 'higher' | 'lower'
+  ownerTeam: string | null
+  note: string | null
+  /** 최신 측정값(없으면 null → '미입력' 표시) */
+  latest: KpiMeasurementDto | null
+  /** 직전 측정값(추세 표시용) */
+  prev: KpiMeasurementDto | null
+}
+
+export interface KpiSaveInput {
+  indicatorId: number
+  period: string // 'YYYY-MM'
+  value: number
+  enteredBy?: string
 }
 
 // ===== 오늘 할 일 (매일 관리 보드) =====
@@ -1199,6 +1231,8 @@ export interface ObligationDto {
   category: ObligationCategory
   clauseRef: string | null
   owner: string | null
+  /** 담당자 개인(0066) — 홈 보드 개인별 그룹핑 */
+  assignee: string | null
   leadDays: number
   anchorDate: string | null
   lastDoneDate: string | null
@@ -1217,6 +1251,7 @@ export interface ObligationCreateInput {
   category?: ObligationCategory
   clauseRef?: string | null
   owner?: string | null
+  assignee?: string | null
   leadDays?: number
   nextDueDate?: string | null
   formCode?: string | null
@@ -1231,6 +1266,7 @@ export interface ObligationUpdateInput {
   category?: ObligationCategory
   clauseRef?: string | null
   owner?: string | null
+  assignee?: string | null
   leadDays?: number
   nextDueDate?: string | null
   formCode?: string | null
@@ -1617,6 +1653,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.TEAM_TODAY_BOARD]: {
     request: void
     response: TeamTodayBoardDto
+  }
+  [IPC_CHANNELS.KPI_HOME]: {
+    request: void
+    response: KpiIndicatorDto[]
+  }
+  [IPC_CHANNELS.KPI_SAVE]: {
+    request: KpiSaveInput
+    response: { success: boolean }
   }
   [IPC_CHANNELS.TEAM_REGS]: {
     request: { teamId: string }

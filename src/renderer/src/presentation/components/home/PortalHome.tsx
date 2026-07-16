@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Check, X, AlertCircle, Clock, Loader2, ShieldCheck, ChevronRight, FileEdit
+  Check, X, AlertCircle, Clock, Loader2, ShieldCheck, ChevronRight, FileEdit, Users, User
 } from 'lucide-react'
-import { teamTheme } from '@shared/team-theme'
-import type { CompanyProfile, TeamTodayBoardDto, TodayTaskDto } from '@shared/ipc-types'
+import { teamTheme, type TeamId } from '@shared/team-theme'
+import type {
+  CompanyProfile,
+  TeamTodayBoardDto,
+  TeamTodayDto,
+  TodayTaskDto,
+  KpiIndicatorDto
+} from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore } from '../../stores/uiStore'
 import { useDday } from '../../hooks/useDday'
@@ -18,7 +24,9 @@ import { useDday } from '../../hooks/useDday'
 export function PortalHome(): JSX.Element {
   const [board, setBoard] = useState<TeamTodayBoardDto | null>(null)
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
+  const [kpis, setKpis] = useState<KpiIndicatorDto[]>([])
   const [onlyOpen, setOnlyOpen] = useState(false)
+  const [boardView, setBoardView] = useState<'team' | 'person'>('team')
   const [completing, setCompleting] = useState<number | null>(null)
   const setPage = useUIStore((s) => s.setPage)
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
@@ -33,8 +41,18 @@ export function PortalHome(): JSX.Element {
     }
   }, [])
 
+  const loadKpis = useCallback(async (): Promise<void> => {
+    try {
+      const res = (await window.api.invoke(window.api.channels.KPI_HOME)) as KpiIndicatorDto[]
+      setKpis(res)
+    } catch {
+      setKpis([])
+    }
+  }, [])
+
   useEffect(() => {
     void load()
+    void loadKpis()
     void (async () => {
       try {
         const p = (await window.api.invoke(window.api.channels.COMPANY_PROFILE_GET)) as CompanyProfile
@@ -43,7 +61,7 @@ export function PortalHome(): JSX.Element {
         /* 프로필 미구성 */
       }
     })()
-  }, [load])
+  }, [load, loadKpis])
 
   const complete = async (task: TodayTaskDto): Promise<void> => {
     setCompleting(task.id)
@@ -189,16 +207,66 @@ export function PortalHome(): JSX.Element {
         </div>
       </div>
 
-      {/* 메인: 팀별 오늘 할 일 보드 */}
+      {/* KPI 지수 스트립 (0066) — 목표 대비 실적, 미입력=정직 회색 */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="mb-3.5 flex items-baseline flex-wrap gap-2">
+          <span className="flex-1 text-[12.5px] font-bold text-muted-foreground">KPI 지수 — 목표 대비 월 실적</span>
+          <span className="text-[11px] text-muted-foreground">값은 월별 [입력]으로 기록 · 품질실적 월보 연동 예정</span>
+        </div>
+        {kpis.length === 0 ? (
+          <div className="text-[12px] text-muted-foreground">지표 없음</div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            {kpis.map((k) => (
+              <KpiTile key={k.id} kpi={k} enteredBy={profile?.defaultAuthor || undefined} onSaved={loadKpis} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 메인: 오늘 할 일 보드 — 팀별 ⇄ 개인별 */}
       <div>
         <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
           <span className="text-[14.5px] font-extrabold tracking-[-0.01em]">
-            팀별 오늘 할 일 — 했는지 · 안 했는지
+            오늘 할 일 — 했는지 · 안 했는지
           </span>
           <span className="text-[12px] font-medium text-muted-foreground">
             ✓ = 완료 처리 또는 연결 양식의 오늘 작성 기록 · 심사(SQ) 연계는 배지로만
           </span>
+          <span className="flex-1" />
+          <span className="inline-flex rounded-lg border border-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setBoardView('team')}
+              className={cn(
+                'h-8 px-3.5 text-[12px] font-bold inline-flex items-center gap-1.5 transition-colors',
+                boardView === 'team' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-muted'
+              )}
+            >
+              <Users className="w-3.5 h-3.5" /> 팀별
+            </button>
+            <button
+              type="button"
+              onClick={() => setBoardView('person')}
+              className={cn(
+                'h-8 px-3.5 text-[12px] font-bold inline-flex items-center gap-1.5 transition-colors',
+                boardView === 'person' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-muted'
+              )}
+            >
+              <User className="w-3.5 h-3.5" /> 개인별
+            </button>
+          </span>
         </div>
+        {boardView === 'person' ? (
+          <PersonBoard
+            teams={board.teams}
+            onlyOpen={onlyOpen}
+            completing={completing}
+            onComplete={(t) => void complete(t)}
+            onOpenForm={openForm}
+            onGoObligations={() => setPage('obligations')}
+          />
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
           {board.teams.map((team) => {
             const theme = teamTheme(team.teamId)
@@ -260,6 +328,7 @@ export function PortalHome(): JSX.Element {
             )
           })}
         </div>
+        )}
       </div>
 
       {/* 팀 미배정 의무 — 정직 노출 */}
@@ -337,12 +406,15 @@ function TaskRow({
   task,
   completing,
   onComplete,
-  onOpenForm
+  onOpenForm,
+  teamDot
 }: {
   task: TodayTaskDto
   completing: boolean
   onComplete: () => void
   onOpenForm: (formCode: string) => void
+  /** 개인별 보드에서 소속 팀 표시(팀 고유색 점) */
+  teamDot?: { color: string; label: string }
 }): JSX.Element {
   const st = STATUS_STYLE[task.status]
   const Icon = st.icon
@@ -356,6 +428,13 @@ function TaskRow({
       >
         <Icon className="w-3 h-3" />
       </span>
+      {teamDot && (
+        <span
+          className="w-2.5 h-2.5 rounded-full shrink-0"
+          style={{ backgroundColor: teamDot.color }}
+          title={teamDot.label}
+        />
+      )}
       <span className="flex-1 min-w-0 truncate" title={`${task.title} · ${task.cadence} 주기`}>
         {task.title}
         {task.status === 'overdue' && task.daysLeft != null && (
@@ -401,6 +480,226 @@ function TaskRow({
           </button>
         </span>
       ) : null}
+    </div>
+  )
+}
+
+/** 개인별 보드 — 담당자(0066)가 지정된 업무를 사람 단위로 재그룹. 미지정은 카드 대신 안내. */
+function PersonBoard({
+  teams,
+  onlyOpen,
+  completing,
+  onComplete,
+  onOpenForm,
+  onGoObligations
+}: {
+  teams: TeamTodayDto[]
+  onlyOpen: boolean
+  completing: number | null
+  onComplete: (task: TodayTaskDto) => void
+  onOpenForm: (formCode: string) => void
+  onGoObligations: () => void
+}): JSX.Element {
+  type Entry = { task: TodayTaskDto; teamId: TeamId }
+  const persons = new Map<string, Entry[]>()
+  let unassigned = 0
+  for (const team of teams) {
+    for (const task of team.tasks) {
+      if (onlyOpen && task.status !== 'due' && task.status !== 'overdue') continue
+      if (!task.assignee) {
+        unassigned++
+        continue
+      }
+      if (!persons.has(task.assignee)) persons.set(task.assignee, [])
+      persons.get(task.assignee)!.push({ task, teamId: team.teamId })
+    }
+  }
+  const names = [...persons.keys()].sort((a, b) => a.localeCompare(b, 'ko'))
+
+  if (names.length === 0) {
+    return (
+      <button
+        type="button"
+        onClick={onGoObligations}
+        className="w-full text-left bg-card border border-border rounded-xl px-5 py-6 text-[12.5px] leading-relaxed text-muted-foreground hover:bg-muted/50 transition-colors"
+      >
+        담당자가 지정된 업무가 아직 없습니다 — <b className="text-foreground">정기 의무 관리</b>에서 각 업무에
+        담당자(개인)를 지정하면 여기에 사람별 보드가 나타납니다 ›
+        {unassigned > 0 && <span className="block mt-1 text-[11.5px]">오늘 업무 중 담당자 미지정 {unassigned}건</span>}
+      </button>
+    )
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
+        {names.map((name) => {
+          const entries = persons.get(name)!
+          const done = entries.filter((e) => e.task.status === 'done').length
+          const open = entries.filter((e) => e.task.status === 'due' || e.task.status === 'overdue').length
+          const denom = done + open
+          const pct = denom > 0 ? Math.round((done / denom) * 100) : null
+          return (
+            <div key={name} className="bg-card border border-border rounded-xl overflow-hidden flex flex-col">
+              <div className="px-4 py-2.5 text-[13px] font-bold flex items-center bg-secondary text-secondary-foreground">
+                <span className="flex-1 truncate">{name}</span>
+                <span className="text-[11.5px] font-semibold tabular-nums opacity-85 shrink-0">
+                  {denom === 0 ? `예정 ${entries.length}` : `${done}/${denom}건`}
+                </span>
+              </div>
+              <div className="flex-1">
+                {entries.map(({ task, teamId }) => {
+                  const theme = teamTheme(teamId)
+                  return (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      completing={completing === task.id}
+                      onComplete={() => onComplete(task)}
+                      onOpenForm={onOpenForm}
+                      teamDot={{ color: theme.border, label: theme.label }}
+                    />
+                  )
+                })}
+              </div>
+              <div className="mt-auto px-4 py-2.5 border-t border-border flex items-center gap-2.5 text-[11.5px] text-muted-foreground">
+                <span className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  {pct != null && <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />}
+                </span>
+                <span className="tabular-nums">{pct == null ? '—' : `${pct}%`}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      {unassigned > 0 && (
+        <button
+          type="button"
+          onClick={onGoObligations}
+          className="mt-3 w-full text-left bg-muted/60 border border-border rounded-xl px-4 py-2.5 text-[12px] text-muted-foreground hover:bg-muted transition-colors"
+        >
+          담당자 미지정 업무 {unassigned}건 — 정기 의무에서 담당자(개인)를 지정하면 개인별 보드에 나타납니다 ›
+        </button>
+      )}
+    </>
+  )
+}
+
+/** KPI 타일 — 목표 대비 최신 실적, 미입력=회색, [입력]=월별 값 기록(같은 달 재입력 시 정정) */
+function KpiTile({
+  kpi,
+  enteredBy,
+  onSaved
+}: {
+  kpi: KpiIndicatorDto
+  enteredBy?: string
+  onSaved: () => void
+}): JSX.Element {
+  const nowPeriod = (() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })()
+  const [editing, setEditing] = useState(false)
+  const [period, setPeriod] = useState(nowPeriod)
+  const [val, setVal] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const fmt = (n: number): string => n.toLocaleString()
+  const ok =
+    kpi.latest && kpi.target != null
+      ? kpi.direction === 'lower'
+        ? kpi.latest.value <= kpi.target
+        : kpi.latest.value >= kpi.target
+      : null
+  const diff = kpi.latest && kpi.prev ? kpi.latest.value - kpi.prev.value : null
+  const improved = diff != null && diff !== 0 ? (kpi.direction === 'lower' ? diff < 0 : diff > 0) : null
+
+  const save = async (): Promise<void> => {
+    const v = Number(val)
+    if (!Number.isFinite(v) || !period) return
+    setSaving(true)
+    try {
+      await window.api.invoke(window.api.channels.KPI_SAVE, {
+        indicatorId: kpi.id,
+        period,
+        value: v,
+        enteredBy
+      })
+      setEditing(false)
+      setVal('')
+      onSaved()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="border border-border rounded-lg px-3.5 py-3 min-w-0">
+      <div className="flex items-center gap-1.5">
+        <span className="flex-1 text-[11.5px] font-semibold text-muted-foreground truncate" title={`${kpi.name}${kpi.ownerTeam ? ` · ${kpi.ownerTeam}` : ''}${kpi.note ? ` — ${kpi.note}` : ''}`}>
+          {kpi.name}
+        </span>
+        <button
+          type="button"
+          onClick={() => setEditing((v) => !v)}
+          className="text-[10.5px] font-bold text-primary hover:bg-primary/10 rounded px-1.5 py-0.5 shrink-0"
+        >
+          {editing ? '닫기' : '입력'}
+        </button>
+      </div>
+
+      {editing ? (
+        <div className="mt-2 space-y-1.5">
+          <input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} className="input-field !text-[11.5px] !py-1 !px-1.5" />
+          <div className="flex gap-1.5">
+            <input
+              type="number"
+              value={val}
+              onChange={(e) => setVal(e.target.value)}
+              placeholder={`값 (${kpi.unit})`}
+              className="input-field !text-[11.5px] !py-1 !px-1.5 min-w-0"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void save()
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={saving || val === ''}
+              className="h-[26px] px-2 rounded-md text-[10.5px] font-bold bg-primary text-primary-foreground disabled:opacity-50 shrink-0"
+            >
+              {saving ? '…' : '저장'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div
+            className={cn(
+              'text-[19px] font-extrabold tabular-nums tracking-[-0.01em] mt-1 leading-tight',
+              !kpi.latest && 'text-muted-foreground/60 font-bold text-[15px]',
+              ok === false && 'text-destructive'
+            )}
+          >
+            {kpi.latest ? (
+              <>
+                {fmt(kpi.latest.value)} <small className="text-[11px] font-semibold text-muted-foreground">{kpi.unit}</small>
+              </>
+            ) : (
+              '미입력'
+            )}
+          </div>
+          <div className="text-[10.5px] text-muted-foreground mt-1 tabular-nums flex items-center gap-1.5 flex-wrap">
+            <span>{kpi.target != null ? `목표 ${fmt(kpi.target)}` : '목표 미설정'}</span>
+            {diff != null && diff !== 0 && (
+              <span className={cn('font-bold', improved ? 'text-[#0a7a0a]' : 'text-destructive')}>
+                {diff > 0 ? '▲' : '▼'} {fmt(Math.abs(diff))}
+              </span>
+            )}
+            {kpi.latest && <span className="opacity-70">{kpi.latest.period.slice(5)}월</span>}
+          </div>
+        </>
+      )}
     </div>
   )
 }

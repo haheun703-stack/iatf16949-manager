@@ -17,6 +17,9 @@ export const IPC_CHANNELS = {
   TEAM_REGS: 'team:regs',
   // 관제탑 홈 (포털 1단계) — 팀별 오늘 할 일·이행률
   TEAM_TODAY_BOARD: 'team:todayBoard',
+  // 관제탑 홈 KPI 지수 (0066) — 지표+최근 측정값 / 월별 실적 입력
+  KPI_HOME: 'kpi:home',
+  KPI_SAVE: 'kpi:save',
 
   // 양식 캔버스 (엑셀형 작성 화면)
   FORM_RENDER_MODEL: 'form:renderModel',

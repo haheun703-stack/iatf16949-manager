@@ -16,6 +16,7 @@ export function ObligationModal(): JSX.Element | null {
   const [category, setCategory] = useState<ObligationCategory>('기타')
   const [clauseRef, setClauseRef] = useState('')
   const [owner, setOwner] = useState('')
+  const [assignee, setAssignee] = useState('')
   const [leadDays, setLeadDays] = useState('7')
   const [nextDueDate, setNextDueDate] = useState('')
   const [active, setActive] = useState(true)
@@ -30,6 +31,7 @@ export function ObligationModal(): JSX.Element | null {
       setCategory(editing.category)
       setClauseRef(editing.clauseRef ?? '')
       setOwner(editing.owner ?? '')
+      setAssignee(editing.assignee ?? '')
       setLeadDays(String(editing.leadDays ?? 7))
       setNextDueDate(editing.nextDueDate ?? '')
       setActive(editing.active)
@@ -40,6 +42,7 @@ export function ObligationModal(): JSX.Element | null {
       setCategory('기타')
       setClauseRef('')
       setOwner('')
+      setAssignee('')
       setLeadDays('7')
       setNextDueDate('')
       setActive(true)
@@ -59,6 +62,7 @@ export function ObligationModal(): JSX.Element | null {
         category,
         clauseRef: clauseRef.trim() || null,
         owner: owner.trim() || null,
+        assignee: assignee.trim() || null,
         leadDays: Number(leadDays) || 0,
         nextDueDate: nextDueDate || null,
         active,
@@ -134,10 +138,14 @@ export function ObligationModal(): JSX.Element | null {
             <Field label="IATF/SQ 조항">
               <input type="text" value={clauseRef} onChange={(e) => setClauseRef(e.target.value)} placeholder="예: 9.3" className="input-field" />
             </Field>
-            <Field label="담당">
-              <input type="text" value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="담당자/팀" className="input-field" />
+            <Field label="담당 팀">
+              <input type="text" value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="예: 품질팀" className="input-field" />
             </Field>
           </div>
+
+          <Field label="담당자 (개인) — 홈 개인별 보드에 표시">
+            <input type="text" value={assignee} onChange={(e) => setAssignee(e.target.value)} placeholder="예: 홍길동" className="input-field" />
+          </Field>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="다음 도래일">
