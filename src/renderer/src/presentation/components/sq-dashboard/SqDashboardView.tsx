@@ -66,8 +66,11 @@ export function SqDashboardView(): JSX.Element {
 
   const cpActive = data.checkpoint.met + data.checkpoint.partial + data.checkpoint.missing
   const readyPct = cpActive > 0 ? Math.round((data.checkpoint.met / cpActive) * 100) : 0
-  const toS = Math.max(0, data.gradeRule.S - data.totalConverted)
-  const toG = Math.max(0, data.gradeRule.G - data.totalConverted)
+  // 정본 = 확정 자체평가(있으면), 없으면 제안치
+  const mainScore = data.confirmed ? data.confirmed.totalScore : data.totalConverted
+  const mainGrade = data.confirmed ? data.confirmed.grade : data.grade
+  const toS = Math.max(0, data.gradeRule.S - mainScore)
+  const toG = Math.max(0, data.gradeRule.G - mainScore)
 
   return (
     <div className="space-y-5 break-keep">
@@ -84,27 +87,41 @@ export function SqDashboardView(): JSX.Element {
       {/* ── 1행: 히어로 점수 + 준비도 + 남은 거리 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-2 bg-card border border-border rounded-xl px-6 py-5">
-          <div className="text-[13px] font-semibold text-muted-foreground">SQ 환산 점수 (제안 기준)</div>
+          <div className="text-[13px] font-semibold text-muted-foreground">
+            {data.confirmed
+              ? `SQ 확정 점수 — 자체평가 ${data.confirmed.id} (${data.confirmed.assessedAt})`
+              : 'SQ 환산 점수 (제안 기준)'}
+          </div>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-[40px] font-extrabold tabular-nums tracking-[-0.02em] leading-none">
-              {data.totalConverted}
+              {data.confirmed ? data.confirmed.totalScore : data.totalConverted}
             </span>
             <span className="text-[15px] font-semibold text-muted-foreground">/1000</span>
-            <span
-              className={cn(
-                'text-[13px] font-bold px-2.5 py-0.5 rounded-md ml-1',
-                data.grade === 'S' && 'bg-emerald-100 text-emerald-800',
-                data.grade === 'G' && 'bg-secondary text-secondary-foreground',
-                data.grade === '불합격' && 'bg-[#fcebeb] text-[#a32d2d]'
-              )}
-            >
-              {data.grade === '불합격' ? '불합격권' : `${data.grade} 등급`}
-            </span>
+            {(() => {
+              const g = data.confirmed ? data.confirmed.grade : data.grade
+              return (
+                <span
+                  className={cn(
+                    'text-[13px] font-bold px-2.5 py-0.5 rounded-md ml-1',
+                    g === 'S' && 'bg-emerald-100 text-emerald-800',
+                    g === 'G' && 'bg-secondary text-secondary-foreground',
+                    g === '불합격' && 'bg-[#fcebeb] text-[#a32d2d]'
+                  )}
+                >
+                  {g === '불합격' ? '불합격권' : `${g} 등급`}
+                </span>
+              )
+            })()}
+            {data.confirmed && (
+              <span className="text-[12px] text-muted-foreground ml-2">
+                제안치(체크리스트) {data.totalConverted}점
+              </span>
+            )}
           </div>
           {/* 등급컷 불릿 바 */}
           <svg viewBox="0 0 340 46" width="100%" height="46" className="mt-2" aria-label={`점수 위치 — G ${data.gradeRule.G}, S ${data.gradeRule.S}`}>
             <rect x="10" y="18" width="320" height="10" rx="5" fill="#edf3fa" />
-            <rect x="10" y="18" width={Math.min(320, (data.totalConverted / 1000) * 320)} height="10" rx="5" fill="#2a78d6" />
+            <rect x="10" y="18" width={Math.min(320, (mainScore / 1000) * 320)} height="10" rx="5" fill="#2a78d6" />
             {[
               { v: data.gradeRule.G, label: `G ${data.gradeRule.G}` },
               { v: data.gradeRule.S, label: `S ${data.gradeRule.S}` }
@@ -116,14 +133,14 @@ export function SqDashboardView(): JSX.Element {
                 </text>
               </g>
             ))}
-            <text x={Math.min(320, Math.max(20, 10 + (data.totalConverted / 1000) * 320))} y="43" textAnchor="middle" fontSize="11" fontWeight="700" fill="#1f3348">
-              {data.totalConverted}
+            <text x={Math.min(320, Math.max(20, 10 + (mainScore / 1000) * 320))} y="43" textAnchor="middle" fontSize="11" fontWeight="700" fill="#1f3348">
+              {mainScore}
             </text>
           </svg>
           <div className="text-[12px] text-muted-foreground mt-1">
-            {data.grade === 'S'
+            {mainGrade === 'S'
               ? 'S 등급권 — 유지가 과제입니다'
-              : toS > 0 && data.grade === 'G'
+              : toS > 0 && mainGrade === 'G'
                 ? `S등급까지 ${toS}점 — 아래 '남은 점수 Top 5'가 그 후보입니다`
                 : `G등급(합격)까지 ${toG}점 — 아래 Top 5부터 해소하세요`}
             {data.naScore > 0 && ` · 미해당 ${data.naScore}점 제외 환산(모드①, 원본 확정 전)`}

@@ -884,6 +884,8 @@ export interface SqDashboardDto {
   teams: Array<{ teamId: TeamId; loss: number; items: SqDashboardItemDto[] }>
   /** 팀 미배정 항목(정직 노출) */
   unassigned: SqDashboardItemDto[]
+  /** 최근 확정 자체평가(있으면 이것이 정본 — 제안치는 참고로 강등) */
+  confirmed: { id: string; assessedAt: string; totalScore: number; grade: string } | null
 }
 
 // ===== 오늘 할 일 (매일 관리 보드) =====

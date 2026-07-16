@@ -215,6 +215,27 @@ export function registerSqGuideHandlers(): void {
         .filter((t) => t.items.length > 0)
         .sort((a, b) => b.loss - a.loss)
 
+      // 최근 확정 자체평가 — 있으면 대시보드 정본(제안치는 참고 강등)
+      let confirmed: SqDashboardDto['confirmed'] = null
+      try {
+        const c = db
+          .prepare(
+            `SELECT id, assessed_at, total_score, grade FROM sq_assessments
+             WHERE total_score IS NOT NULL ORDER BY created_at DESC LIMIT 1`
+          )
+          .get() as Record<string, unknown> | undefined
+        if (c) {
+          confirmed = {
+            id: c.id as string,
+            assessedAt: c.assessed_at as string,
+            totalScore: c.total_score as number,
+            grade: c.grade as string
+          }
+        }
+      } catch {
+        /* 0064 미구성 */
+      }
+
       return {
         basis: 'suggested',
         guideVersion,
@@ -227,7 +248,8 @@ export function registerSqGuideHandlers(): void {
         areas,
         topLosses,
         teams,
-        unassigned: unassigned.sort((a, b) => b.loss - a.loss)
+        unassigned: unassigned.sort((a, b) => b.loss - a.loss),
+        confirmed
       }
     } catch (err) {
       console.error('[sq:dashboard] failed:', (err as Error).message)
