@@ -20,6 +20,11 @@ export const IPC_CHANNELS = {
   // 관제탑 홈 KPI 지수 (0066) — 지표+최근 측정값 / 월별 실적 입력
   KPI_HOME: 'kpi:home',
   KPI_SAVE: 'kpi:save',
+  // IATF 대시보드 — 인증 심사 준비 한 장 (조항·핵심 의무·문서화)
+  IATF_DASHBOARD: 'iatf:dashboard',
+  // 규정·양식 찾아보기 (포털 2단계) — 규정 카드 그리드 + 상세(하위 양식)
+  REG_BROWSE: 'reg:browse',
+  REG_FORMS: 'reg:forms',
 
   // 양식 캔버스 (엑셀형 작성 화면)
   FORM_RENDER_MODEL: 'form:renderModel',

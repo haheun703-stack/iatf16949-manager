@@ -1,0 +1,232 @@
+import { useEffect, useState } from 'react'
+import { Loader2, ShieldCheck, ChevronRight, BookOpen, CircleCheck, CircleAlert, Clock } from 'lucide-react'
+import type { IatfDashboardDto, IatfDutyDto } from '@shared/ipc-types'
+import { cn } from '../../../lib/utils'
+import { useUIStore } from '../../stores/uiStore'
+import { useDday } from '../../hooks/useDday'
+import { PageHeader } from '../shared/PageHeader'
+
+/**
+ * IATF 대시보드 — 인증기관 심사 관점 한 장 (SQ 대시보드와 이원화, 7/16 사장님 확정).
+ * ①조항 커버리지(4~10장 규정 매핑) ②심사 핵심 정기 의무(내부심사·경영검토·교정·교육 —
+ * 이행 기록 기준, 정직) ③문서화 준비도(규정 본문·작성 가능 양식·작성 실적).
+ */
+
+const DUTY_CATS = ['내부심사', '경영검토', '교정/MSA', '교육/인식', '문서관리', '안전/비상']
+
+const STATUS_PILL: Record<IatfDutyDto['status'], { label: string; cls: string }> = {
+  ok: { label: '정상', cls: 'bg-emerald-100 text-emerald-800' },
+  due: { label: '임박', cls: 'bg-amber-100 text-amber-800' },
+  overdue: { label: '연체', cls: 'bg-[#fcebeb] text-[#a32d2d]' }
+}
+
+export function IatfDashboardView(): JSX.Element {
+  const [data, setData] = useState<IatfDashboardDto | null>(null)
+  const setPage = useUIStore((s) => s.setPage)
+  const { dday } = useDday()
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const res = (await window.api.invoke(window.api.channels.IATF_DASHBOARD)) as IatfDashboardDto
+        if (alive) setData(res)
+      } catch {
+        if (alive) setData(null)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-sm text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin" /> IATF 준비 현황 집계 중...
+      </div>
+    )
+  }
+
+  const overdue = data.duties.filter((d) => d.status === 'overdue')
+  const due = data.duties.filter((d) => d.status === 'due')
+  const emptyClauses = data.clauses.filter((c) => c.regCount === 0)
+  const maxReg = Math.max(1, ...data.clauses.map((c) => c.regCount))
+
+  return (
+    <div className="space-y-5 break-keep">
+      <PageHeader
+        title="IATF 대시보드 — 인증 심사 준비 한 장"
+        sub="조항 커버리지 · 내부심사/경영검토 등 핵심 의무 이행 · 문서화 — SQ(고객사 평가)와 별개의 인증기관 심사 관점"
+        actions={
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-bold bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full">
+            <ShieldCheck className="w-4 h-4" /> 정기심사 D-{Math.abs(dday)}
+          </span>
+        }
+      />
+
+      {/* ── 1행: 핵심 지표 ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-card border border-border rounded-xl px-6 py-5">
+          <div className="text-[13px] font-semibold text-muted-foreground">심사까지</div>
+          <div className="text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1">
+            D-{Math.abs(dday)}
+          </div>
+          <div className="text-[12px] text-muted-foreground mt-1.5">3차 정기심사 · 설정에서 변경</div>
+        </div>
+        <div className="bg-card border border-border rounded-xl px-6 py-5">
+          <div className="text-[13px] font-semibold text-muted-foreground">핵심 의무 연체</div>
+          <div className={cn('text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1', overdue.length > 0 && 'text-destructive')}>
+            {overdue.length}
+          </div>
+          <div className="text-[12px] text-muted-foreground mt-1.5">내부심사·경영검토·교정·교육 기준</div>
+        </div>
+        <div className="bg-card border border-border rounded-xl px-6 py-5">
+          <div className="text-[13px] font-semibold text-muted-foreground">빈 조항 (규정 미매핑)</div>
+          <div className={cn('text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1', emptyClauses.length > 0 && 'text-destructive')}>
+            {emptyClauses.length}
+          </div>
+          <div className="text-[12px] text-muted-foreground mt-1.5">
+            {emptyClauses.length > 0 ? `${emptyClauses.map((c) => c.clause).join('·')}장 보강 필요` : '4~10장 전부 매핑됨'}
+          </div>
+        </div>
+        <div className="bg-card border border-border rounded-xl px-6 py-5">
+          <div className="text-[13px] font-semibold text-muted-foreground">문서화 (작성 가능 양식)</div>
+          <div className="text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1">
+            {data.docs.formsFillable}
+            <small className="text-[14px] font-semibold text-muted-foreground"> /{data.docs.formsTotal}</small>
+          </div>
+          <div className="text-[12px] text-muted-foreground mt-1.5">규정 본문 {data.docs.regBodies}/{data.docs.regsTotal}종 열람 가능</div>
+        </div>
+      </div>
+
+      {/* ── 2행: 조항 커버리지 + 문서화 ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-card border border-border rounded-xl p-6">
+          <div className="mb-4 flex items-baseline">
+            <span className="flex-1 text-[13.5px] font-bold text-muted-foreground">조항 커버리지 — IATF 4~10장</span>
+            <button type="button" onClick={() => setPage('clause-tree')} className="text-[12px] font-bold text-primary">
+              상세 보기 ›
+            </button>
+          </div>
+          <div className="space-y-3">
+            {data.clauses.map((c) => (
+              <div key={c.clause} className="flex items-center gap-3">
+                <span className="w-[120px] text-[13px] font-semibold truncate">
+                  {c.clause}장 <span className="text-muted-foreground font-medium">{c.title}</span>
+                </span>
+                <span className="flex-1 h-3 rounded-full bg-[#e7f1fc] overflow-hidden">
+                  <span
+                    className={cn('block h-full rounded-full', c.regCount === 0 ? 'bg-[#d03b3b]' : 'bg-primary')}
+                    style={{ width: `${Math.max(4, (c.regCount / maxReg) * 100)}%` }}
+                  />
+                </span>
+                <span className={cn('w-16 text-right text-[12.5px] tabular-nums', c.regCount === 0 ? 'text-destructive font-bold' : 'text-muted-foreground')}>
+                  {c.regCount === 0 ? '없음' : `규정 ${c.regCount}`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6">
+          <div className="mb-4 flex items-baseline">
+            <span className="flex-1 text-[13.5px] font-bold text-muted-foreground">문서화 준비도</span>
+            <button type="button" onClick={() => setPage('document-bom')} className="text-[12px] font-bold text-primary">
+              문서 BOM ›
+            </button>
+          </div>
+          <div className="space-y-3">
+            <DocBar label="규정 본문 열람" value={data.docs.regBodies} total={data.docs.regsTotal} />
+            <DocBar label="작성 가능 양식" value={data.docs.formsFillable} total={data.docs.formsTotal} />
+            <DocBar label="작성 실적 있는 양식" value={data.docs.formsWithSubmission} total={data.docs.formsTotal} />
+          </div>
+          <div className="text-[11.5px] text-muted-foreground mt-4">
+            작성 가능 = 셀맵(필드 정의) 보유 · 나머지는 문서 등록만 — 셀맵 보강으로 확대
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3행: 심사 핵심 정기 의무 ── */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <div className="mb-4 flex items-baseline flex-wrap gap-2">
+          <span className="flex-1 text-[13.5px] font-bold text-muted-foreground">
+            심사 핵심 의무 — 내부심사 · 경영검토 · 교정 · 교육 (이행 기록 기준)
+          </span>
+          <button type="button" onClick={() => setPage('obligations')} className="text-[12px] font-bold text-primary">
+            정기 의무 관리 ›
+          </button>
+        </div>
+        {DUTY_CATS.map((cat) => {
+          const rows = data.duties.filter((d) => d.category === cat)
+          if (rows.length === 0) return null
+          return (
+            <div key={cat} className="mb-3 last:mb-0">
+              <div className="text-[12px] font-bold text-secondary-foreground bg-secondary inline-block rounded px-2 py-0.5 mb-1.5">
+                {cat}
+              </div>
+              {rows.map((d) => {
+                const pill = STATUS_PILL[d.status]
+                return (
+                  <div key={d.id} className="flex items-center gap-2.5 py-[7px] border-t border-border text-[13px]">
+                    {d.status === 'ok' ? (
+                      <CircleCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : d.status === 'due' ? (
+                      <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                    ) : (
+                      <CircleAlert className="w-4 h-4 text-[#c03636] shrink-0" />
+                    )}
+                    <span className="flex-1 min-w-0 truncate">{d.title}</span>
+                    {d.clauseRef && (
+                      <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+                        {d.clauseRef}
+                      </span>
+                    )}
+                    <span className="text-[11.5px] text-muted-foreground tabular-nums shrink-0 hidden md:inline">
+                      {d.lastDoneDate ? `최근 ${d.lastDoneDate}` : '이행 기록 없음'}
+                    </span>
+                    <span className="text-[11.5px] text-muted-foreground tabular-nums shrink-0">
+                      {d.nextDueDate ? `도래 ${d.nextDueDate}` : '—'}
+                    </span>
+                    <span className={cn('text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0', pill.cls)}>
+                      {pill.label}
+                      {d.status === 'overdue' && d.daysLeft != null && ` ${Math.abs(d.daysLeft)}일`}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+        {due.length + overdue.length > 0 && (
+          <div className="text-[12px] text-muted-foreground mt-3">
+            연체 {overdue.length} · 임박 {due.length} — 홈 관제탑과 팀별 허브에서 [완료] 처리하면 즉시 반영됩니다.
+          </div>
+        )}
+      </div>
+
+      <p className="text-[12px] text-muted-foreground text-center inline-flex items-center gap-1.5 w-full justify-center">
+        <BookOpen className="w-3.5 h-3.5" />
+        내부심사·경영검토의 "했다"는 정기 의무 이행 기록이 근거 — 소급 표시 없음(정직).
+        <button type="button" onClick={() => setPage('sq-dashboard')} className="text-primary font-bold inline-flex items-center">
+          SQ(고객사 평가) 대시보드는 따로 <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </p>
+    </div>
+  )
+}
+
+function DocBar({ label, value, total }: { label: string; value: number; total: number }): JSX.Element {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-[140px] text-[13px] font-semibold truncate">{label}</span>
+      <span className="flex-1 h-3 rounded-full bg-[#e7f1fc] overflow-hidden">
+        <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+      </span>
+      <span className="w-[110px] text-right text-[12.5px] tabular-nums text-muted-foreground">
+        <b className="text-foreground">{value}</b> / {total} · {pct}%
+      </span>
+    </div>
+  )
+}

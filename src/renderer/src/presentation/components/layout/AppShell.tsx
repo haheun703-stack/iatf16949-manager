@@ -4,6 +4,8 @@ import { Dashboard } from '../dashboard/Dashboard'
 import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
 import { SqDashboardView } from '../sq-dashboard/SqDashboardView'
 import { SelfAssessmentPage } from '../sq-assessment/SelfAssessmentPage'
+import { IatfDashboardView } from '../iatf-dashboard/IatfDashboardView'
+import { DocBrowseView } from '../doc-browse/DocBrowseView'
 import { PartsView } from '../parts/PartsView'
 import { CaseWorkPage } from '../case-work/CaseWorkPage'
 import { ProcessWorkbenchPage } from '../process-workbench/ProcessWorkbenchPage'
@@ -49,6 +51,8 @@ export function AppShell(): JSX.Element {
             {currentPage === 'dashboard' && <Dashboard />}
             {currentPage === 'sq-dashboard' && <SqDashboardView />}
             {currentPage === 'sq-assessment' && <SelfAssessmentPage />}
+            {currentPage === 'iatf-dashboard' && <IatfDashboardView />}
+            {currentPage === 'doc-browse' && <DocBrowseView />}
             {currentPage === 'sq-readiness' && <SqReadinessPage />}
             {currentPage === 'parts' && <PartsView />}
             {currentPage === 'case-work' && <CaseWorkPage />}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   LayoutDashboard, AlertTriangle, CalendarDays, CalendarClock, Route, Package, ClipboardCheck,
   GitBranch, Ruler, ShieldCheck, ListChecks, FolderTree, FileEdit, Factory, Home, Users,
-  ChevronDown, Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck
+  ChevronDown, Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -63,13 +63,15 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'sq-dashboard', label: 'SQ 대시보드', icon: Gauge, desc: '점수·등급·남은 점수 — 한 장 요약' },
       { id: 'sq-assessment', label: 'SQ 자체평가', icon: BadgeCheck, desc: '42항목 확정 → 점수 → 리포트 (6_4 증빙)' },
       { id: 'sq-readiness', label: 'SQ 준비도 (42항목)', icon: ShieldCheck, desc: '항목별 신호등 상세' },
-      { id: 'clause-tree', label: '조항 커버리지 (IATF)', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑' }
+      { id: 'iatf-dashboard', label: 'IATF 대시보드', icon: Gauge, desc: '조항·핵심 의무·문서화 — 인증 심사 한 장' },
+      { id: 'clause-tree', label: '조항 커버리지 (IATF)', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑 상세' }
     ]
   },
   {
     key: 'docs',
     label: '문서 · 양식',
     items: [
+      { id: 'doc-browse', label: '규정·양식 찾아보기', icon: BookOpen, desc: '카드 → 규정 본문 → 양식 작성 (포털)' },
       { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '프로세스·규정·양식 원장' },
       { id: 'form-builder', label: '양식 단독 작성', icon: FileEdit, desc: '양식만 빠르게 작성' },
       { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '흐름도 등록 · AI 추출' }

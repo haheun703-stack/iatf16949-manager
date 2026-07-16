@@ -809,6 +809,47 @@ export interface SqDashboardItemDto {
   teams: TeamId[]
 }
 
+// ===== IATF 대시보드 (인증 심사 준비 한 장) =====
+
+export interface IatfDutyDto {
+  id: number
+  title: string
+  category: string
+  clauseRef: string | null
+  cadence: string
+  lastDoneDate: string | null
+  nextDueDate: string | null
+  /** 음수 = 연체 */
+  daysLeft: number | null
+  status: 'ok' | 'due' | 'overdue'
+}
+
+export interface IatfDashboardDto {
+  clauses: Array<{ clause: string; title: string; regCount: number }>
+  /** 심사 핵심 카테고리(내부심사·경영검토·교정/MSA·교육/인식·문서관리·안전/비상) 의무 */
+  duties: IatfDutyDto[]
+  docs: {
+    regsTotal: number
+    regBodies: number
+    formsTotal: number
+    formsFillable: number
+    formsWithSubmission: number
+  }
+}
+
+// ===== 규정·양식 찾아보기 (포털 2단계) =====
+
+export interface RegBrowseDto {
+  regCode: string
+  regName: string
+  respDepts: string[]
+  iatfClause: string | null
+  hasBody: boolean
+  formsTotal: number
+  formsFillable: number
+  draftCount: number
+}
+
 // ===== SQ 자체평가 (코워크 07 Phase B) =====
 
 export interface SqAssessmentLineDto {
@@ -1795,6 +1836,18 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.KPI_SAVE]: {
     request: KpiSaveInput
     response: { success: boolean }
+  }
+  [IPC_CHANNELS.IATF_DASHBOARD]: {
+    request: void
+    response: IatfDashboardDto
+  }
+  [IPC_CHANNELS.REG_BROWSE]: {
+    request: void
+    response: RegBrowseDto[]
+  }
+  [IPC_CHANNELS.REG_FORMS]: {
+    request: { regCode: string }
+    response: TeamRegFormDto[]
   }
   [IPC_CHANNELS.SQ_GUIDE_GET]: {
     request: { itemCode: string }

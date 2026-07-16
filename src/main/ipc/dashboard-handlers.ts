@@ -9,7 +9,10 @@ import type {
   DailyBoardDto,
   DailyObligationDto,
   DailySqRedDto,
-  DailyDraftDto
+  DailyDraftDto,
+  IatfDashboardDto,
+  IatfDutyDto,
+  RegBrowseDto
 } from '@shared/ipc-types'
 import { computeSqReadiness } from './sq-handlers'
 
@@ -290,6 +293,162 @@ export function registerDashboardHandlers(): void {
     } catch (err) {
       console.error('[dashboard:dailyBoard] failed:', (err as Error).message)
       return empty
+    }
+  })
+
+  // ──── IATF 대시보드 — 인증 심사 준비 한 장 (SQ 와 별개: 인증기관 심사 관점) ────
+  ipcMain.handle(IPC_CHANNELS.IATF_DASHBOARD, (): IatfDashboardDto => {
+    const empty: IatfDashboardDto = {
+      clauses: [],
+      duties: [],
+      docs: { regsTotal: 0, regBodies: 0, formsTotal: 0, formsFillable: 0, formsWithSubmission: 0 }
+    }
+    try {
+      // ① 조항 커버리지 요약 (CLAUSE_COVERAGE 와 동일 원천, 장별 규정 수만)
+      const TITLES: Record<string, string> = {
+        '4': '조직 상황', '5': '리더십', '6': '기획', '7': '지원',
+        '8': '운용', '9': '성과평가', '10': '개선'
+      }
+      const clauseRegs = new Map<string, Set<string>>()
+      const rows = db
+        .prepare(
+          `SELECT reg_code, iatf_clause FROM forms
+           WHERE iatf_clause IS NOT NULL AND iatf_clause <> ''`
+        )
+        .all() as Array<{ reg_code: string; iatf_clause: string }>
+      for (const r of rows) {
+        for (const cl of String(r.iatf_clause).split(',').map((s) => s.trim()).filter(Boolean)) {
+          if (!clauseRegs.has(cl)) clauseRegs.set(cl, new Set())
+          clauseRegs.get(cl)!.add(r.reg_code)
+        }
+      }
+      const clauses = ['4', '5', '6', '7', '8', '9', '10'].map((cl) => ({
+        clause: cl,
+        title: TITLES[cl],
+        regCount: clauseRegs.get(cl)?.size ?? 0
+      }))
+
+      // ② 심사 핵심 정기 의무 — 내부심사·경영검토·교정·교육·문서·비상 (이행 기록 기준, 정직)
+      const CORE = ['내부심사', '경영검토', '교정/MSA', '교육/인식', '문서관리', '안전/비상']
+      const today = new Date()
+      const t0 = new Date(
+        `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T00:00:00`
+      )
+      const dutyRows = db
+        .prepare(
+          `SELECT id, title, category, clause_ref, cadence, last_done_date, next_due_date, lead_days
+           FROM recurring_obligations
+           WHERE active = 1 AND category IN (${CORE.map(() => '?').join(',')})
+           ORDER BY next_due_date ASC`
+        )
+        .all(...CORE) as Array<Record<string, unknown>>
+      const duties: IatfDutyDto[] = dutyRows.map((r) => {
+        const due = (r.next_due_date as string) || null
+        const daysLeft = due ? Math.round((new Date(`${due}T00:00:00`).getTime() - t0.getTime()) / 86400000) : null
+        const lead = (r.lead_days as number) ?? 7
+        const status: IatfDutyDto['status'] =
+          daysLeft != null && daysLeft < 0 ? 'overdue' : daysLeft != null && daysLeft <= lead ? 'due' : 'ok'
+        return {
+          id: r.id as number,
+          title: r.title as string,
+          category: r.category as string,
+          clauseRef: (r.clause_ref as string) || null,
+          cadence: (r.cadence as string) || '월',
+          lastDoneDate: (r.last_done_date as string) || null,
+          nextDueDate: due,
+          daysLeft,
+          status
+        }
+      })
+
+      // ③ 문서화 준비도
+      const docs = {
+        regsTotal: countOf(db, 'SELECT COUNT(DISTINCT reg_code) AS c FROM forms'),
+        regBodies: countOf(db, 'SELECT COUNT(DISTINCT reg_code) AS c FROM regulation_sections'),
+        formsTotal: countOf(db, 'SELECT COUNT(*) AS c FROM forms WHERE code <> reg_code'),
+        formsFillable: countOf(
+          db,
+          'SELECT COUNT(*) AS c FROM forms f WHERE EXISTS (SELECT 1 FROM form_fields ff WHERE ff.form_code = f.code)'
+        ),
+        formsWithSubmission: countOf(db, 'SELECT COUNT(DISTINCT form_code) AS c FROM form_submissions')
+      }
+
+      return { clauses, duties, docs }
+    } catch (err) {
+      console.error('[iatf:dashboard] failed:', (err as Error).message)
+      return empty
+    }
+  })
+
+  // ──── 규정·양식 찾아보기 (포털 2단계) — 규정 카드 그리드 원천 ────
+  ipcMain.handle(IPC_CHANNELS.REG_BROWSE, (): RegBrowseDto[] => {
+    try {
+      const rows = db
+        .prepare(
+          `SELECT f.code, f.name, f.reg_code, f.resp_dept, f.iatf_clause,
+                  (SELECT COUNT(*) FROM form_fields ff WHERE ff.form_code = f.code) AS fields_count,
+                  (SELECT COUNT(*) FROM form_submissions s WHERE s.form_code = f.code) AS draft_count
+           FROM forms f ORDER BY f.reg_code, f.code`
+        )
+        .all() as Array<Record<string, unknown>>
+      const bodyRegs = new Set(
+        (db.prepare('SELECT DISTINCT reg_code FROM regulation_sections').all() as Array<{ reg_code: string }>).map(
+          (r) => r.reg_code
+        )
+      )
+      const regs = new Map<string, RegBrowseDto>()
+      for (const r of rows) {
+        const reg = r.reg_code as string
+        if (!regs.has(reg)) {
+          regs.set(reg, {
+            regCode: reg,
+            regName: reg,
+            respDepts: [],
+            iatfClause: null,
+            hasBody: bodyRegs.has(reg),
+            formsTotal: 0,
+            formsFillable: 0,
+            draftCount: 0
+          })
+        }
+        const dto = regs.get(reg)!
+        const dept = (r.resp_dept as string) || null
+        if (dept && !dto.respDepts.includes(dept)) dto.respDepts.push(dept)
+        if (!dto.iatfClause && r.iatf_clause) dto.iatfClause = r.iatf_clause as string
+        if ((r.code as string) === reg) {
+          dto.regName = (r.name as string) || reg // 규정 문서 자체 행
+        } else {
+          dto.formsTotal += 1
+          if (((r.fields_count as number) ?? 0) > 0) dto.formsFillable += 1
+          dto.draftCount += (r.draft_count as number) ?? 0
+        }
+      }
+      return [...regs.values()].sort((a, b) => a.regCode.localeCompare(b.regCode))
+    } catch (err) {
+      console.error('[reg:browse] failed:', (err as Error).message)
+      return []
+    }
+  })
+
+  // 규정 상세 — 하위 양식 목록 (작성가능/작성본 수)
+  ipcMain.handle(IPC_CHANNELS.REG_FORMS, (_e, { regCode }: { regCode: string }) => {
+    try {
+      const rows = db
+        .prepare(
+          `SELECT f.code, f.name,
+                  (SELECT COUNT(*) FROM form_fields ff WHERE ff.form_code = f.code) AS fields_count,
+                  (SELECT COUNT(*) FROM form_submissions s WHERE s.form_code = f.code) AS draft_count
+           FROM forms f WHERE f.reg_code = ? AND f.code <> f.reg_code ORDER BY f.code`
+        )
+        .all(regCode) as Array<Record<string, unknown>>
+      return rows.map((r) => ({
+        code: r.code as string,
+        name: r.name as string,
+        fieldsCount: (r.fields_count as number) ?? 0,
+        draftCount: (r.draft_count as number) ?? 0
+      }))
+    } catch {
+      return []
     }
   })
 }
