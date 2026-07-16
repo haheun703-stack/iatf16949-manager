@@ -148,14 +148,19 @@ export function registerObligationHandlers(): void {
     IPC_CHANNELS.OBLIGATION_DELETE,
     (_event, { id }: { id: number }): { success: boolean } => {
       db.prepare('DELETE FROM recurring_obligations WHERE id = ?').run(id)
+      try {
+        db.prepare('DELETE FROM obligation_completions WHERE obligation_id = ?').run(id)
+      } catch {
+        /* 0063 미적용 구버전 */
+      }
       return { success: true }
     }
   )
 
-  // ──── 이행 완료 → 최근이행일 기록 + 다음 도래일 자동 전진 ────
+  // ──── 이행 완료 → 최근이행일 기록 + 다음 도래일 자동 전진 + 이력 적재(0063) ────
   ipcMain.handle(
     IPC_CHANNELS.OBLIGATION_COMPLETE,
-    (_event, { id, doneDate }: { id: number; doneDate?: string }): {
+    (_event, { id, doneDate, doneBy }: { id: number; doneDate?: string; doneBy?: string }): {
       success: boolean
       nextDueDate: string | null
     } => {
@@ -171,6 +176,18 @@ export function registerObligationHandlers(): void {
          SET last_done_date = ?, next_due_date = ?, updated_at = datetime('now')
          WHERE id = ?`
       ).run(done, next, id)
+      try {
+        // 관제탑 홈 주간 추이의 원천 — 같은 날 중복 완료는 1건만 유지
+        db.prepare(
+          `INSERT INTO obligation_completions (obligation_id, done_date, done_by, source)
+           SELECT ?, ?, ?, 'manual'
+           WHERE NOT EXISTS (
+             SELECT 1 FROM obligation_completions WHERE obligation_id = ? AND done_date = ?
+           )`
+        ).run(id, done, doneBy ?? null, id, done)
+      } catch {
+        /* 0063 미적용 구버전 — 이력 없이 동작 */
+      }
       return { success: true, nextDueDate: next }
     }
   )

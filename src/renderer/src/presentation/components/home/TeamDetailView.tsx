@@ -49,8 +49,8 @@ export function TeamDetailView(): JSX.Element {
     return (
       <div className="text-center py-20 text-sm text-muted-foreground">
         팀이 선택되지 않았습니다 —{' '}
-        <button type="button" className="text-primary font-semibold" onClick={() => setPage('home')}>
-          홈으로
+        <button type="button" className="text-primary font-semibold" onClick={() => setPage('team-hub')}>
+          팀별 허브로
         </button>
       </div>
     )
@@ -62,10 +62,10 @@ export function TeamDetailView(): JSX.Element {
     <div className="max-w-3xl mx-auto space-y-4">
       <button
         type="button"
-        onClick={() => setPage('home')}
+        onClick={() => setPage('team-hub')}
         className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="w-3.5 h-3.5" /> 홈
+        <ArrowLeft className="w-3.5 h-3.5" /> 팀별 허브
         <ChevronRight className="w-3 h-3" />
         <span style={{ color: theme.darkText }} className="font-semibold">
           {theme.label}

@@ -15,6 +15,8 @@ export const IPC_CHANNELS = {
   // 팀별 허브 (홈)
   TEAM_SUMMARY: 'team:summary',
   TEAM_REGS: 'team:regs',
+  // 관제탑 홈 (포털 1단계) — 팀별 오늘 할 일·이행률
+  TEAM_TODAY_BOARD: 'team:todayBoard',
 
   // 양식 캔버스 (엑셀형 작성 화면)
   FORM_RENDER_MODEL: 'form:renderModel',

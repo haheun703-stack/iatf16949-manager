@@ -1,6 +1,5 @@
 import { useUIStore } from '../../stores/uiStore'
-import { TopBar } from './TopBar'
-import { Sidebar } from './Sidebar'
+import { Gnb } from './Gnb'
 import { Dashboard } from '../dashboard/Dashboard'
 import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
 import { PartsView } from '../parts/PartsView'
@@ -15,6 +14,7 @@ import { FmeaView } from '../fmea/FmeaView'
 import { MsaView } from '../msa/MsaView'
 import { ClauseCoverageView } from '../clause/ClauseCoverageView'
 import { ApqpView } from '../apqp/ApqpView'
+import { PortalHome } from '../home/PortalHome'
 import { TeamHubView } from '../home/TeamHubView'
 import { TeamDetailView } from '../home/TeamDetailView'
 import { AboutView } from '../about/AboutView'
@@ -28,13 +28,14 @@ export function AppShell(): JSX.Element {
 
   return (
     <div className="h-screen flex flex-col">
-      <TopBar />
+      {/* 포털 1단계(7/16): 사이드바 제거 → 상단 GNB 통일. 홈 = 관제탑(팀별 오늘 할 일). */}
+      <Gnb />
       <div className="flex flex-1 min-h-0">
-        <Sidebar />
         <main className="flex-1 min-w-0 overflow-y-auto p-6">
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}
           <ErrorBoundary key={currentPage}>
-            {currentPage === 'home' && <TeamHubView />}
+            {currentPage === 'home' && <PortalHome />}
+            {currentPage === 'team-hub' && <TeamHubView />}
             {currentPage === 'team-detail' && <TeamDetailView />}
             {currentPage === 'dashboard' && <Dashboard />}
             {currentPage === 'sq-readiness' && <SqReadinessPage />}

@@ -39,7 +39,7 @@ export function TeamRail(): JSX.Element {
       <div className="text-[12px] font-extrabold text-muted-foreground px-1 mb-0.5">팀</div>
       <button
         type="button"
-        onClick={() => setPage('home')}
+        onClick={() => setPage('team-hub')}
         className="flex-1 min-h-[40px] text-[13.5px] font-bold text-white rounded-lg px-1.5 hover:opacity-90 transition-opacity"
         style={{ backgroundColor: '#2a78d6' }}
       >

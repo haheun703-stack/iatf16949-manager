@@ -86,6 +86,29 @@ export function normalizeTeam(respDept: string | null | undefined): TeamId | nul
   return DEPT_LUT.get(norm(respDept)) ?? null
 }
 
+// ── 정기 의무 owner(자유 텍스트) → 팀 (관제탑 홈, 포털 1단계) ──
+// owner 는 '품질팀' 외에 '영업/품질'·'경영지원'·'경영진'·'품질개발' 같은
+// 자유 표기가 섞여 있어 deptKeys 직매칭이 실패함. 토큰 분해 후
+// ①deptKeys 직매칭 ②'팀' 접미사 보정 ③힌트 순으로 첫 매칭 팀 1개를 배정.
+const OWNER_HINTS: Record<string, TeamId> = {
+  경영지원: 'chongmu', // 총무팀 관할(경영기획)
+  경영진: 'chongmu',
+  경영자: 'chongmu',
+  자재: 'gumae' // 자재 입출고 = 구매팀 관할(수입"검사"는 품질 — forms.resp_dept 가 우선)
+}
+
+/** 정기 의무 owner → TeamId. 복수 표기('영업/품질')는 첫 매칭 팀. 미매핑은 null(정직 노출). */
+export function normalizeOwnerTeam(owner: string | null | undefined): TeamId | null {
+  if (!owner) return null
+  for (const token of owner.split(/[/,·+&]/)) {
+    const t = norm(token)
+    if (!t) continue
+    const team = DEPT_LUT.get(t) ?? DEPT_LUT.get(`${t}팀`) ?? OWNER_HINTS[t]
+    if (team) return team
+  }
+  return null
+}
+
 export function teamTheme(id: TeamId): TeamTheme {
   return TEAMS.find((t) => t.id === id)!
 }

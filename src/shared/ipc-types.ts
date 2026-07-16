@@ -677,6 +677,51 @@ export interface TeamRegDto {
   forms: TeamRegFormDto[]
 }
 
+// ===== 관제탑 홈: 팀별 오늘 할 일 보드 (포털 1단계) =====
+
+/** done=이행됨 / due=오늘 마감 미이행 / overdue=기한 경과 / upcoming=lead 창 내 예정 */
+export type TodayTaskStatus = 'done' | 'due' | 'overdue' | 'upcoming'
+
+export interface TodayTaskDto {
+  id: number
+  title: string
+  cadence: string
+  status: TodayTaskStatus
+  /** 다음 도래일(YYYY-MM-DD). */
+  dueDate: string | null
+  /** 오늘 기준 남은 일수(음수=연체). done 이면 null. */
+  daysLeft: number | null
+  /** 오늘 이행된 경우 이행일. */
+  doneAt: string | null
+  /** manual=완료 버튼 / form=연결 양식의 오늘 작성 기록 감지(자동 판정) */
+  doneSource: 'manual' | 'form' | null
+  formCode: string | null
+  /** 연계 SQ 항목 코드(예: '2_7') — 심사는 항목 각주로만. */
+  sqBadges: string[]
+}
+
+export interface TeamTodayDto {
+  teamId: TeamId
+  /** 오늘 이행 완료 수 */
+  done: number
+  /** 오늘 해야 하는데 미이행(due+overdue) */
+  open: number
+  overdue: number
+  upcoming: number
+  tasks: TodayTaskDto[]
+}
+
+export interface TeamTodayBoardDto {
+  /** 기준일(로컬 YYYY-MM-DD) */
+  date: string
+  totals: { done: number; open: number; overdue: number }
+  /** 최근 7일 완료 건수(0063 이력 기반 — 오늘부터 쌓임) */
+  trend: Array<{ date: string; done: number }>
+  teams: TeamTodayDto[]
+  /** 팀 매핑 실패 의무(정직 노출 — owner 표기 정비 대상) */
+  unassigned: TodayTaskDto[]
+}
+
 // ===== 오늘 할 일 (매일 관리 보드) =====
 
 export interface DailyObligationDto {
@@ -1569,6 +1614,10 @@ export interface IpcChannelMap {
     request: void
     response: TeamSummaryDto[]
   }
+  [IPC_CHANNELS.TEAM_TODAY_BOARD]: {
+    request: void
+    response: TeamTodayBoardDto
+  }
   [IPC_CHANNELS.TEAM_REGS]: {
     request: { teamId: string }
     response: TeamRegDto[]
@@ -1818,7 +1867,7 @@ export interface IpcChannelMap {
     response: { success: boolean }
   }
   [IPC_CHANNELS.OBLIGATION_COMPLETE]: {
-    request: { id: number; doneDate?: string }
+    request: { id: number; doneDate?: string; doneBy?: string }
     response: { success: boolean; nextDueDate: string | null }
   }
   [IPC_CHANNELS.PPAP_SUBMISSION_LIST]: {

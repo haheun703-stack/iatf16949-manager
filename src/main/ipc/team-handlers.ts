@@ -2,8 +2,16 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { computeSqReadiness } from './sq-handlers'
-import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
-import type { TeamSummaryDto, TeamSqItemDto, TeamRegDto, SqSignal } from '@shared/ipc-types'
+import { TEAMS, normalizeTeam, normalizeOwnerTeam, teamTheme, type TeamId } from '@shared/team-theme'
+import type {
+  TeamSummaryDto,
+  TeamSqItemDto,
+  TeamRegDto,
+  SqSignal,
+  TeamTodayBoardDto,
+  TeamTodayDto,
+  TodayTaskDto
+} from '@shared/ipc-types'
 
 const SIGNAL_SCORE: Record<SqSignal, number> = { green: 1, yellow: 0.5, red: 0, gray: 0 }
 
@@ -230,6 +238,181 @@ export function registerTeamHandlers(): void {
     } catch (err) {
       console.error('[team:regs] failed:', (err as Error).message)
       return []
+    }
+  })
+
+  // ──── 관제탑 홈: 팀별 오늘 할 일 보드 (포털 1단계) ────
+  // "했는지·안 했는지"의 원천 = recurring_obligations(도래) + 완료 이력(0063)
+  // + 연결 양식의 오늘 작성 기록(form_submissions, 자동 판정 표시).
+  // 팀 배정 = 연결 양식 resp_dept(BOM 정본) 우선 → owner 텍스트 정규화 폴백.
+  ipcMain.handle(IPC_CHANNELS.TEAM_TODAY_BOARD, (): TeamTodayBoardDto => {
+    const ymd = (d: Date): string =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const today = ymd(new Date())
+    const t0 = new Date(`${today}T00:00:00`)
+    const empty: TeamTodayBoardDto = {
+      date: today,
+      totals: { done: 0, open: 0, overdue: 0 },
+      trend: [],
+      teams: TEAMS.map((t) => ({ teamId: t.id, done: 0, open: 0, overdue: 0, upcoming: 0, tasks: [] })),
+      unassigned: []
+    }
+    try {
+      // 양식 → 책임팀 / 규정 (SQ 배지용)
+      const formMeta = new Map<string, { team: TeamId | null; regCode: string | null }>()
+      try {
+        const rows = db
+          .prepare('SELECT code, resp_dept, reg_code FROM forms')
+          .all() as Array<{ code: string; resp_dept: string | null; reg_code: string | null }>
+        for (const r of rows) formMeta.set(r.code, { team: normalizeTeam(r.resp_dept), regCode: r.reg_code })
+      } catch {
+        /* forms 미구성 */
+      }
+      // 규정 → SQ 항목 배지
+      const regSq = new Map<string, string[]>()
+      try {
+        const rows = db.prepare('SELECT reg_code, item_code FROM sq_reg_map').all() as Array<{
+          reg_code: string
+          item_code: string
+        }>
+        for (const r of rows) {
+          if (!regSq.has(r.reg_code)) regSq.set(r.reg_code, [])
+          regSq.get(r.reg_code)!.push(r.item_code)
+        }
+      } catch {
+        /* SQ 백본 미구성 */
+      }
+      // 연결 양식의 오늘 작성 기록 (자동 판정 표시 — 확정은 완료 버튼)
+      const formDoneToday = new Set<string>()
+      try {
+        const rows = db
+          .prepare(
+            `SELECT DISTINCT form_code FROM form_submissions
+             WHERE date(COALESCE(updated_at, created_at)) = date('now', 'localtime')`
+          )
+          .all() as Array<{ form_code: string }>
+        for (const r of rows) formDoneToday.add(r.form_code)
+      } catch {
+        /* noop */
+      }
+
+      const obs = db
+        .prepare(
+          `SELECT id, title, cadence, owner, lead_days, last_done_date, next_due_date, form_code
+           FROM recurring_obligations WHERE active = 1
+           ORDER BY next_due_date ASC, sort_order ASC`
+        )
+        .all() as Array<Record<string, unknown>>
+
+      const byTeam = new Map<TeamId, TeamTodayDto>()
+      for (const t of TEAMS) byTeam.set(t.id, { teamId: t.id, done: 0, open: 0, overdue: 0, upcoming: 0, tasks: [] })
+      const unassigned: TodayTaskDto[] = []
+      const totals = { done: 0, open: 0, overdue: 0 }
+
+      for (const o of obs) {
+        const formCode = (o.form_code as string) || null
+        const meta = formCode ? formMeta.get(formCode) : undefined
+        const team = meta?.team ?? normalizeOwnerTeam(o.owner as string)
+        const sqBadges = meta?.regCode ? (regSq.get(meta.regCode) ?? []) : []
+
+        const lastDone = (o.last_done_date as string) || null
+        const dueDate = (o.next_due_date as string) || null
+        const daysLeft = dueDate
+          ? Math.round((new Date(`${dueDate}T00:00:00`).getTime() - t0.getTime()) / 86400000)
+          : null
+        const lead = (o.lead_days as number) ?? 7
+
+        let task: TodayTaskDto | null = null
+        if (lastDone === today) {
+          task = mk(o, 'done', dueDate, null, today, 'manual', formCode, sqBadges)
+        } else if (daysLeft != null && daysLeft <= 0 && formCode && formDoneToday.has(formCode)) {
+          // 오늘 마감인데 완료 버튼은 안 눌렀지만 연결 양식이 오늘 작성됨 → 자동 판정 표시
+          task = mk(o, 'done', dueDate, daysLeft, today, 'form', formCode, sqBadges)
+        } else if (daysLeft != null && daysLeft < 0) {
+          task = mk(o, 'overdue', dueDate, daysLeft, null, null, formCode, sqBadges)
+        } else if (daysLeft != null && daysLeft === 0) {
+          task = mk(o, 'due', dueDate, daysLeft, null, null, formCode, sqBadges)
+        } else if (daysLeft != null && daysLeft <= lead) {
+          task = mk(o, 'upcoming', dueDate, daysLeft, null, null, formCode, sqBadges)
+        }
+        if (!task) continue // 도래 창 밖 — 오늘의 일 아님
+
+        const bucket = team ? byTeam.get(team)! : null
+        if (task.status === 'done') {
+          totals.done++
+          if (bucket) bucket.done++
+        } else if (task.status === 'overdue') {
+          totals.overdue++
+          totals.open++
+          if (bucket) {
+            bucket.overdue++
+            bucket.open++
+          }
+        } else if (task.status === 'due') {
+          totals.open++
+          if (bucket) bucket.open++
+        } else if (bucket) {
+          bucket.upcoming++
+        }
+        if (bucket) bucket.tasks.push(task)
+        else unassigned.push(task)
+      }
+
+      // 팀 내 정렬: 연체 → 오늘 마감 → 완료 → 예정
+      const rank: Record<string, number> = { overdue: 0, due: 1, done: 2, upcoming: 3 }
+      for (const b of byTeam.values())
+        b.tasks.sort((a, z) => rank[a.status] - rank[z.status] || (a.daysLeft ?? 0) - (z.daysLeft ?? 0))
+
+      // 최근 7일 완료 추이 (0063 — 데이터는 오늘부터 쌓임)
+      const trend: Array<{ date: string; done: number }> = []
+      try {
+        const from = new Date(t0)
+        from.setDate(from.getDate() - 6)
+        const rows = db
+          .prepare(
+            `SELECT done_date, COUNT(*) AS c FROM obligation_completions
+             WHERE done_date >= ? GROUP BY done_date`
+          )
+          .all(ymd(from)) as Array<{ done_date: string; c: number }>
+        const byDate = new Map(rows.map((r) => [r.done_date, r.c]))
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(t0)
+          d.setDate(d.getDate() - i)
+          const key = ymd(d)
+          trend.push({ date: key, done: byDate.get(key) ?? 0 })
+        }
+      } catch {
+        /* 0063 미적용 — 추이 없이 동작 */
+      }
+
+      return { date: today, totals, trend, teams: [...byTeam.values()], unassigned }
+    } catch (err) {
+      console.error('[team:todayBoard] failed:', (err as Error).message)
+      return empty
+    }
+
+    function mk(
+      o: Record<string, unknown>,
+      status: TodayTaskDto['status'],
+      dueDate: string | null,
+      daysLeft: number | null,
+      doneAt: string | null,
+      doneSource: TodayTaskDto['doneSource'],
+      formCode: string | null,
+      sqBadges: string[]
+    ): TodayTaskDto {
+      return {
+        id: o.id as number,
+        title: o.title as string,
+        cadence: (o.cadence as string) || '월',
+        status,
+        dueDate,
+        daysLeft: status === 'done' ? null : daysLeft,
+        doneAt,
+        doneSource,
+        formCode,
+        sqBadges
+      }
     }
   })
 }

@@ -3,6 +3,7 @@ import type { TeamId } from '@shared/team-theme'
 
 export type PageId =
   | 'home'
+  | 'team-hub'
   | 'team-detail'
   | 'dashboard'
   | 'sq-readiness'
@@ -25,9 +26,6 @@ export type PageId =
 interface UIState {
   currentPage: PageId
   setPage: (page: PageId) => void
-
-  sidebarCollapsed: boolean
-  toggleSidebar: () => void
 
   /** 글자 크기 배율(0.9~1.4). 전체 UI 확대. localStorage 영속. UI P3. */
   fontScale: number
@@ -85,11 +83,8 @@ export function applyFontScale(scale: number): void {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  currentPage: 'home', // 팀별 허브가 첫 화면 (7/6 UI 재편)
+  currentPage: 'home', // 관제탑(팀별 오늘 할 일)이 첫 화면 (포털 1단계, 7/16)
   setPage: (page) => set({ currentPage: page }),
-
-  sidebarCollapsed: false,
-  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 
   fontScale: readFontScale(),
   setFontScale: (scale) => {
