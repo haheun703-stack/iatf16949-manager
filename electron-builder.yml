@@ -24,6 +24,11 @@ extraResources:
     to: forms
     filter:
       - "**/*.xlsx"
+  # SQ 갭양식 13종 + 자체평가 리포트 템플릿 (코워크 08번, forms.template_path 가 참조)
+  - from: resources/templates
+    to: templates
+    filter:
+      - "**/*.xlsx"
 
 win:
   icon: build/icon.ico
