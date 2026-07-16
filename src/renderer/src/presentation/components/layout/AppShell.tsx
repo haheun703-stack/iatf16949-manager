@@ -33,7 +33,9 @@ export function AppShell(): JSX.Element {
       {/* 포털 1단계(7/16): 사이드바 제거 → 상단 GNB 통일. 홈 = 관제탑(팀별 오늘 할 일). */}
       <Gnb />
       <div className="flex flex-1 min-h-0">
-        <main className="flex-1 min-w-0 overflow-y-auto p-7">
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          {/* 전 화면 공통 중앙 칼럼(1400px) — GNB 와 같은 축, 좌우 여백 균등 (7/16 사장님: "전체적인" 가운데 정렬) */}
+          <div className="max-w-[1400px] mx-auto w-full p-7">
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}
           <ErrorBoundary key={currentPage}>
             {currentPage === 'home' && <PortalHome />}
@@ -57,6 +59,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'apqp' && <ApqpView />}
             {currentPage === 'about' && <AboutView />}
           </ErrorBoundary>
+          </div>
         </main>
       </div>
       <GlobalCopilot />
