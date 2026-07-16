@@ -7,6 +7,7 @@ export type PageId =
   | 'team-detail'
   | 'dashboard'
   | 'sq-dashboard'
+  | 'sq-assessment'
   | 'sq-readiness'
   | 'parts'
   | 'case-work'

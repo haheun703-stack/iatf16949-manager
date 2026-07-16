@@ -150,6 +150,14 @@ export const IPC_CHANNELS = {
   SQ_CHECKPOINT_UPDATE: 'sq:checkpointUpdate',
   // SQ 대시보드 (09 목업 실구현) — 제안 기준 환산점수·등급·팀별 손실
   SQ_DASHBOARD: 'sq:dashboard',
+  // SQ 자체평가 (코워크 07 Phase B) — 실행→확정→점수·등급→리포트 출력
+  SQ_ASSESS_RUN: 'sq:assessRun',
+  SQ_ASSESS_LIST: 'sq:assessList',
+  SQ_ASSESS_GET: 'sq:assessGet',
+  SQ_ASSESS_CONFIRM: 'sq:assessConfirm',
+  SQ_ASSESS_META: 'sq:assessMeta',
+  SQ_ASSESS_FINALIZE: 'sq:assessFinalize',
+  SQ_ASSESS_EXPORT: 'sq:assessExport',
 
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',

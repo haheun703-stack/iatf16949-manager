@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   LayoutDashboard, AlertTriangle, CalendarDays, CalendarClock, Route, Package, ClipboardCheck,
   GitBranch, Ruler, ShieldCheck, ListChecks, FolderTree, FileEdit, Factory, Home, Users,
-  ChevronDown, Sparkles, Wand2, Search, Building2, Gauge
+  ChevronDown, Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -61,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       // SQ = 고객사(HKMC) 평가 / IATF = 인증 심사 — 대시보드 이원화 (7/16 사장님 확정)
       { id: 'sq-dashboard', label: 'SQ 대시보드', icon: Gauge, desc: '점수·등급·남은 점수 — 한 장 요약' },
+      { id: 'sq-assessment', label: 'SQ 자체평가', icon: BadgeCheck, desc: '42항목 확정 → 점수 → 리포트 (6_4 증빙)' },
       { id: 'sq-readiness', label: 'SQ 준비도 (42항목)', icon: ShieldCheck, desc: '항목별 신호등 상세' },
       { id: 'clause-tree', label: '조항 커버리지 (IATF)', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑' }
     ]

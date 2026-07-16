@@ -809,6 +809,62 @@ export interface SqDashboardItemDto {
   teams: TeamId[]
 }
 
+// ===== SQ 자체평가 (코워크 07 Phase B) =====
+
+export interface SqAssessmentLineDto {
+  itemCode: string
+  title: string
+  area: string
+  score: number
+  suggestedState: SqSuggestedState | null
+  finalState: SqSuggestedState | null
+  observation: string | null
+  extraFinding: string | null
+}
+
+export interface SqAssessmentDto {
+  id: string
+  assessedAt: string
+  assessor: string | null
+  witness: string | null
+  summaryOpinion: string | null
+  nextDue: string | null
+  totalScore: number | null
+  grade: string | null
+  reportPath: string | null
+  approvedBy: string | null
+  approvedAt: string | null
+  confirmedCount: number
+  lines: SqAssessmentLineDto[]
+}
+
+export interface SqAssessmentSummaryDto {
+  id: string
+  assessedAt: string
+  totalScore: number | null
+  grade: string | null
+  reportPath: string | null
+  confirmedCount: number
+}
+
+export interface SqAssessConfirmInput {
+  assessmentId: string
+  itemCode: string
+  finalState?: SqSuggestedState | null
+  observation?: string | null
+  extraFinding?: string | null
+}
+
+export interface SqAssessMetaInput {
+  assessmentId: string
+  assessedAt?: string
+  assessor?: string | null
+  witness?: string | null
+  summaryOpinion?: string | null
+  nextDue?: string | null
+  approvedBy?: string | null
+}
+
 export interface SqDashboardDto {
   /** 'suggested' = 체크리스트 기반 자동 제안치 (자체평가 확정 전) */
   basis: 'suggested'
@@ -1749,6 +1805,34 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.SQ_DASHBOARD]: {
     request: void
     response: SqDashboardDto | null
+  }
+  [IPC_CHANNELS.SQ_ASSESS_RUN]: {
+    request: void
+    response: { success: boolean; id?: string; error?: string }
+  }
+  [IPC_CHANNELS.SQ_ASSESS_LIST]: {
+    request: void
+    response: SqAssessmentSummaryDto[]
+  }
+  [IPC_CHANNELS.SQ_ASSESS_GET]: {
+    request: { id?: string }
+    response: SqAssessmentDto | null
+  }
+  [IPC_CHANNELS.SQ_ASSESS_CONFIRM]: {
+    request: SqAssessConfirmInput
+    response: { success: boolean; confirmedCount: number }
+  }
+  [IPC_CHANNELS.SQ_ASSESS_META]: {
+    request: SqAssessMetaInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.SQ_ASSESS_FINALIZE]: {
+    request: { assessmentId: string }
+    response: { success: boolean; totalScore?: number; grade?: string; remaining?: number }
+  }
+  [IPC_CHANNELS.SQ_ASSESS_EXPORT]: {
+    request: { assessmentId: string }
+    response: { success: boolean; filePath?: string; canceled?: boolean; validationsPreserved?: boolean; error?: string }
   }
   [IPC_CHANNELS.TEAM_REGS]: {
     request: { teamId: string }
