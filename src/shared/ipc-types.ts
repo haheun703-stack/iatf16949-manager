@@ -794,6 +794,42 @@ export interface SqCheckpointUpdateInput {
   updatedBy?: string
 }
 
+// ===== SQ 대시보드 (09 목업 실구현 — 제안 기준) =====
+
+export interface SqDashboardItemDto {
+  code: string
+  title: string
+  area: string
+  score: number
+  suggestedState: SqSuggestedState
+  /** 제안 상태 × 계수로 환산한 취득점수(미해당은 0이지만 분모 제외) */
+  earned: number
+  /** 손실 = 배점 - 취득 (미해당은 0) */
+  loss: number
+  teams: TeamId[]
+}
+
+export interface SqDashboardDto {
+  /** 'suggested' = 체크리스트 기반 자동 제안치 (자체평가 확정 전) */
+  basis: 'suggested'
+  guideVersion: string
+  /** 미해당 제외 원점수 합 */
+  totalRaw: number
+  /** 미해당 배점 합 */
+  naScore: number
+  /** 모드① 환산: 원점수 ÷ (1000-미해당배점) × 1000, 반올림 */
+  totalConverted: number
+  grade: 'S' | 'G' | '불합격'
+  gradeRule: { S: number; G: number }
+  checkpoint: { met: number; partial: number; missing: number; na: number }
+  areas: Array<{ area: string; score: number; earned: number; naAll: boolean }>
+  topLosses: SqDashboardItemDto[]
+  /** 손실 큰 순 팀 목록 — 팀별로 해야 할 항목들 */
+  teams: Array<{ teamId: TeamId; loss: number; items: SqDashboardItemDto[] }>
+  /** 팀 미배정 항목(정직 노출) */
+  unassigned: SqDashboardItemDto[]
+}
+
 // ===== 오늘 할 일 (매일 관리 보드) =====
 
 export interface DailyObligationDto {
@@ -1709,6 +1745,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.SQ_CHECKPOINT_UPDATE]: {
     request: SqCheckpointUpdateInput
     response: { success: boolean; suggestedState: SqSuggestedState }
+  }
+  [IPC_CHANNELS.SQ_DASHBOARD]: {
+    request: void
+    response: SqDashboardDto | null
   }
   [IPC_CHANNELS.TEAM_REGS]: {
     request: { teamId: string }

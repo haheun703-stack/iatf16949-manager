@@ -2,6 +2,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { Gnb } from './Gnb'
 import { Dashboard } from '../dashboard/Dashboard'
 import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
+import { SqDashboardView } from '../sq-dashboard/SqDashboardView'
 import { PartsView } from '../parts/PartsView'
 import { CaseWorkPage } from '../case-work/CaseWorkPage'
 import { ProcessWorkbenchPage } from '../process-workbench/ProcessWorkbenchPage'
@@ -38,6 +39,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'team-hub' && <TeamHubView />}
             {currentPage === 'team-detail' && <TeamDetailView />}
             {currentPage === 'dashboard' && <Dashboard />}
+            {currentPage === 'sq-dashboard' && <SqDashboardView />}
             {currentPage === 'sq-readiness' && <SqReadinessPage />}
             {currentPage === 'parts' && <PartsView />}
             {currentPage === 'case-work' && <CaseWorkPage />}

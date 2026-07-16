@@ -1,12 +1,15 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
+import { TEAMS, normalizeTeam, type TeamId } from '@shared/team-theme'
 import type {
   SqGuideDto,
   SqGuideCheckpointDto,
   SqCheckpointStatus,
   SqCheckpointUpdateInput,
-  SqSuggestedState
+  SqSuggestedState,
+  SqDashboardDto,
+  SqDashboardItemDto
 } from '@shared/ipc-types'
 
 /**
@@ -87,6 +90,147 @@ export function registerSqGuideHandlers(): void {
       }
     } catch (err) {
       console.error('[sq:guideGet] failed:', (err as Error).message)
+      return null
+    }
+  })
+
+  // ──── SQ 대시보드 (09 목업 실구현) — 제안 기준 환산점수·등급·영역·Top손실·팀별 ────
+  // basis='suggested': 체크리스트 상태 → 계수 환산의 자동 제안치. 확정 점수는 자체평가(Phase B)가 만든다.
+  ipcMain.handle(IPC_CHANNELS.SQ_DASHBOARD, (): SqDashboardDto | null => {
+    try {
+      const coeff = JSON.parse(
+        (db.prepare("SELECT value FROM app_config WHERE key='sq.state_coefficients'").get() as { value: string })
+          .value
+      ) as Record<string, number>
+      const gradeRule = JSON.parse(
+        (db.prepare("SELECT value FROM app_config WHERE key='sq.grade_rule'").get() as { value: string }).value
+      ) as { S: number; G: number }
+      const guideVersion =
+        (db.prepare("SELECT value FROM app_config WHERE key='sq.guide_version'").get() as { value: string } | undefined)
+          ?.value ?? 'Ver4'
+
+      // 항목 마스터 + 가이드 영역
+      const items = db
+        .prepare(
+          `SELECT si.code, si.title, si.points, si.fallback_dept, gi.area
+           FROM sq_items si JOIN sq_guide_items gi ON gi.item_code = si.code
+           ORDER BY si.code`
+        )
+        .all() as Array<{ code: string; title: string; points: number; fallback_dept: string | null; area: string }>
+
+      // 체크포인트 상태(항목별)
+      const cpRows = db
+        .prepare('SELECT item_code, status FROM sq_checkpoints')
+        .all() as Array<{ item_code: string; status: SqCheckpointStatus }>
+      const cpsByItem = new Map<string, Array<{ status: SqCheckpointStatus }>>()
+      const cpTotal = { met: 0, partial: 0, missing: 0, na: 0 }
+      for (const r of cpRows) {
+        if (!cpsByItem.has(r.item_code)) cpsByItem.set(r.item_code, [])
+        cpsByItem.get(r.item_code)!.push({ status: r.status })
+        cpTotal[r.status]++
+      }
+
+      // 항목 → 팀 (TEAM_SUMMARY 와 동일 원칙: 규정 역산 우선 → fallback_dept)
+      const regTeams = new Map<string, Set<TeamId>>()
+      for (const r of db
+        .prepare('SELECT DISTINCT reg_code, resp_dept FROM forms WHERE resp_dept IS NOT NULL')
+        .all() as Array<{ reg_code: string; resp_dept: string }>) {
+        const t = normalizeTeam(r.resp_dept)
+        if (!t) continue
+        if (!regTeams.has(r.reg_code)) regTeams.set(r.reg_code, new Set())
+        regTeams.get(r.reg_code)!.add(t)
+      }
+      const itemRegs = new Map<string, string[]>()
+      for (const m of db.prepare('SELECT item_code, reg_code FROM sq_reg_map').all() as Array<{
+        item_code: string
+        reg_code: string
+      }>) {
+        if (!itemRegs.has(m.item_code)) itemRegs.set(m.item_code, [])
+        itemRegs.get(m.item_code)!.push(m.reg_code)
+      }
+
+      const dtoItems: SqDashboardItemDto[] = items.map((it) => {
+        const state = suggestState(cpsByItem.get(it.code) ?? [])
+        const isNa = state === '미해당'
+        const earned = isNa ? 0 : Math.round(it.points * (coeff[state] ?? 0))
+        const teams = new Set<TeamId>()
+        for (const reg of itemRegs.get(it.code) ?? []) for (const t of regTeams.get(reg) ?? []) teams.add(t)
+        if (teams.size === 0 && it.fallback_dept) {
+          const fb = normalizeTeam(it.fallback_dept)
+          if (fb) teams.add(fb)
+        }
+        return {
+          code: it.code,
+          title: it.title,
+          area: it.area,
+          score: it.points,
+          suggestedState: state,
+          earned,
+          loss: isNa ? 0 : it.points - earned,
+          teams: [...teams]
+        }
+      })
+
+      const naScore = dtoItems.filter((i) => i.suggestedState === '미해당').reduce((s, i) => s + i.score, 0)
+      const totalRaw = dtoItems.reduce((s, i) => s + i.earned, 0)
+      // 미해당 환산 모드①(분모 제외 비례) — xlsm 확정 전 기본값 (07번 5절)
+      const denom = 1000 - naScore
+      const totalConverted = denom > 0 ? Math.round((totalRaw / denom) * 1000) : 0
+      const grade: SqDashboardDto['grade'] =
+        totalConverted >= gradeRule.S ? 'S' : totalConverted >= gradeRule.G ? 'G' : '불합격'
+
+      const AREA_ORDER = ['생산조건관리', '검사시험', '설비관리', '금형관리', '자재관리', '품질경영체제']
+      const areas = AREA_ORDER.map((area) => {
+        const list = dtoItems.filter((i) => i.area === area)
+        return {
+          area,
+          score: list.reduce((s, i) => s + i.score, 0),
+          earned: list.reduce((s, i) => s + i.earned, 0),
+          naAll: list.length > 0 && list.every((i) => i.suggestedState === '미해당')
+        }
+      })
+
+      const topLosses = [...dtoItems].sort((a, b) => b.loss - a.loss).slice(0, 5)
+
+      const byTeam = new Map<TeamId, { loss: number; items: SqDashboardItemDto[] }>()
+      for (const t of TEAMS) byTeam.set(t.id, { loss: 0, items: [] })
+      const unassigned: SqDashboardItemDto[] = []
+      for (const it of dtoItems) {
+        if (it.teams.length === 0) {
+          if (it.loss > 0) unassigned.push(it)
+          continue
+        }
+        for (const t of it.teams) {
+          const b = byTeam.get(t)!
+          b.items.push(it)
+          b.loss += it.loss
+        }
+      }
+      const teams = [...byTeam.entries()]
+        .map(([teamId, v]) => ({
+          teamId,
+          loss: v.loss,
+          items: v.items.filter((i) => i.loss > 0).sort((a, b) => b.loss - a.loss)
+        }))
+        .filter((t) => t.items.length > 0)
+        .sort((a, b) => b.loss - a.loss)
+
+      return {
+        basis: 'suggested',
+        guideVersion,
+        totalRaw,
+        naScore,
+        totalConverted,
+        grade,
+        gradeRule,
+        checkpoint: cpTotal,
+        areas,
+        topLosses,
+        teams,
+        unassigned: unassigned.sort((a, b) => b.loss - a.loss)
+      }
+    } catch (err) {
+      console.error('[sq:dashboard] failed:', (err as Error).message)
       return null
     }
   })

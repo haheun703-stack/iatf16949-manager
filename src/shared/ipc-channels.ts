@@ -148,6 +148,8 @@ export const IPC_CHANNELS = {
   // SQ 작성 가이드층 (0064, 코워크 07/08) — 가이드 열람 + 체크포인트 이행상태
   SQ_GUIDE_GET: 'sq:guideGet',
   SQ_CHECKPOINT_UPDATE: 'sq:checkpointUpdate',
+  // SQ 대시보드 (09 목업 실구현) — 제안 기준 환산점수·등급·팀별 손실
+  SQ_DASHBOARD: 'sq:dashboard',
 
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',
