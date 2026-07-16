@@ -34,8 +34,13 @@ export function AppShell(): JSX.Element {
       <Gnb />
       <div className="flex flex-1 min-h-0">
         <main className="flex-1 min-w-0 overflow-y-auto">
-          {/* 전 화면 공통 중앙 칼럼(1400px) — GNB 와 같은 축, 좌우 여백 균등 (7/16 사장님: "전체적인" 가운데 정렬) */}
-          <div className="max-w-[1400px] mx-auto w-full p-7">
+          {/* 전 화면 공통 중앙 칼럼 — 화면의 94%·최대 1400px: 어떤 창 크기/글자 배율에서도
+              좌우 여백이 반드시 생긴다 (7/16 사장님: "전체적인" 가운데 정렬·좌우 비율).
+              인라인 스타일 고정 — 유틸리티 클래스 미생성/충돌에도 영향받지 않는 정본. */}
+          <div
+            className="min-w-0 w-full px-2 py-7"
+            style={{ maxWidth: 'min(1400px, 94vw)', marginLeft: 'auto', marginRight: 'auto' }}
+          >
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}
           <ErrorBoundary key={currentPage}>
             {currentPage === 'home' && <PortalHome />}

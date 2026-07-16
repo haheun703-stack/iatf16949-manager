@@ -70,7 +70,7 @@ export function SqDashboardView(): JSX.Element {
   const toG = Math.max(0, data.gradeRule.G - data.totalConverted)
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-5 break-keep">
+    <div className="space-y-5 break-keep">
       <PageHeader
         title="SQ 대시보드 — 이번 심사, 붙습니까?"
         sub={`한 장 요약 · 가이드 ${data.guideVersion} · 제안 기준(증빙 체크리스트 자동 산출) — 확정 점수는 자체평가에서`}

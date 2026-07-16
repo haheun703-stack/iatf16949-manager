@@ -172,7 +172,7 @@ export function SelfAssessmentPage(): JSX.Element {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-4 break-keep">
+    <div className="space-y-4 break-keep">
       <PageHeader
         title="SQ 자체평가"
         sub="42항목 확정 → 점수·등급 → 내부 리포트 출력 — 이 기록이 SQ 6_4(자체 내부심사) 증빙이 됩니다"

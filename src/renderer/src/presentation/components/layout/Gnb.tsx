@@ -135,8 +135,11 @@ export function Gnb(): JSX.Element {
 
   return (
     <header className="h-16 bg-card border-b border-border shrink-0">
-      {/* FLOWX식 중앙 칼럼 — 본문(PortalHome max-w)과 같은 폭으로 정렬 (7/16) */}
-      <div className="max-w-[1400px] mx-auto w-full h-full flex items-center px-6 gap-2">
+      {/* FLOWX식 중앙 칼럼 — 본문(AppShell 래퍼)과 같은 폭 규칙 (7/16, 인라인 고정) */}
+      <div
+        className="w-full h-full flex items-center px-2 gap-2"
+        style={{ maxWidth: 'min(1400px, 94vw)', marginLeft: 'auto', marginRight: 'auto' }}
+      >
       {/* 로고 — 회사명은 company_profile(고객사마다 자기 회사) */}
       <button
         type="button"

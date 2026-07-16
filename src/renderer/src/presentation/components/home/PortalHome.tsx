@@ -101,7 +101,7 @@ export function PortalHome(): JSX.Element {
   })()
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-5 break-keep">
+    <div className="space-y-5 break-keep">
       {/* 회사 밴드 — 파스텔 면(7/16 사장님: 전체 파스텔 밝게). 딥블루는 활성 버튼 점에만 */}
       <div className="rounded-2xl px-8 py-6 flex items-center gap-6 flex-wrap border border-border bg-gradient-to-r from-white via-[#eaf3fc] to-[#dcebfa]">
         <div className="min-w-0">
