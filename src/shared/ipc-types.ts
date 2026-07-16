@@ -754,6 +754,46 @@ export interface KpiSaveInput {
   enteredBy?: string
 }
 
+// ===== SQ 작성 가이드층 (0064, 코워크 07/08 지시서) =====
+
+export type SqCheckpointStatus = 'met' | 'partial' | 'missing' | 'na'
+/** 이행상태 제안값 — 자체평가 확정값과 동일 어휘(채점 계수는 app_config) */
+export type SqSuggestedState = '우수' | '양호' | '보완' | '일부미흡' | '다수미흡' | '미관리' | '미해당'
+
+export interface SqGuideCheckpointDto {
+  id: number
+  guideId: number
+  content: string
+  status: SqCheckpointStatus
+  evidenceNote: string | null
+}
+
+export interface SqGuideDto {
+  itemCode: string
+  title: string
+  area: string
+  score: number
+  highValue: boolean
+  regulationsText: string | null
+  formsText: string | null
+  cycleRetention: string | null
+  guideVersion: string
+  /** 증빙 체크리스트(evidence 불릿, 체크 상태 연동) */
+  checkpoints: SqGuideCheckpointDto[]
+  howToWrite: string[]
+  examples: string[]
+  penaltyPatterns: string[]
+  /** 체크 상태에서 결정론 산출한 제안 이행상태 — 확정은 자체평가(사람) */
+  suggestedState: SqSuggestedState
+}
+
+export interface SqCheckpointUpdateInput {
+  checkpointId: number
+  status: SqCheckpointStatus
+  evidenceNote?: string | null
+  updatedBy?: string
+}
+
 // ===== 오늘 할 일 (매일 관리 보드) =====
 
 export interface DailyObligationDto {
@@ -1661,6 +1701,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.KPI_SAVE]: {
     request: KpiSaveInput
     response: { success: boolean }
+  }
+  [IPC_CHANNELS.SQ_GUIDE_GET]: {
+    request: { itemCode: string }
+    response: SqGuideDto | null
+  }
+  [IPC_CHANNELS.SQ_CHECKPOINT_UPDATE]: {
+    request: SqCheckpointUpdateInput
+    response: { success: boolean; suggestedState: SqSuggestedState }
   }
   [IPC_CHANNELS.TEAM_REGS]: {
     request: { teamId: string }

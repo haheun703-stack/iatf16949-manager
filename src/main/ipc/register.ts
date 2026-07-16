@@ -21,6 +21,7 @@ import { registerFmeaHandlers } from './fmea-handlers'
 import { registerApqpHandlers } from './apqp-handlers'
 import { registerTeamHandlers } from './team-handlers'
 import { registerKpiHandlers } from './kpi-handlers'
+import { registerSqGuideHandlers } from './sq-guide-handlers'
 import { registerMsaHandlers } from './msa-handlers'
 import { registerReportHandlers } from './report-handlers'
 import { registerSqHandlers } from './sq-handlers'
@@ -43,6 +44,7 @@ export function registerAllIpcHandlers(): void {
   registerApqpHandlers()
   registerTeamHandlers()
   registerKpiHandlers()
+  registerSqGuideHandlers()
   registerMsaHandlers()
   registerReportHandlers()
   registerSqHandlers()

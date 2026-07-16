@@ -145,6 +145,9 @@ export const IPC_CHANNELS = {
   // SQ 준비도 (SQ 평가 백본: 6대·42항목 신호등)
   SQ_READINESS: 'sq:readiness',
   SQ_ITEM_DETAIL: 'sq:itemDetail',
+  // SQ 작성 가이드층 (0064, 코워크 07/08) — 가이드 열람 + 체크포인트 이행상태
+  SQ_GUIDE_GET: 'sq:guideGet',
+  SQ_CHECKPOINT_UPDATE: 'sq:checkpointUpdate',
 
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',

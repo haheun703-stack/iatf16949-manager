@@ -11,6 +11,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { useAiAuthorStore } from '../../stores/aiAuthorStore'
 import { useDday } from '../../hooks/useDday'
 import { cn } from '../../../lib/utils'
+import { WriteGuidePanel } from '../guide/WriteGuidePanel'
 
 const SIGNAL_BADGE: Record<string, { label: string; cls: string }> = {
   red: { label: '미충족', cls: '' },
@@ -447,6 +448,14 @@ function StepCard({
                   필요 양식 ({detail.forms.length})
                 </div>
                 <FormList forms={detail.forms} teamRegs={item.regs} />
+              </section>
+
+              {/* ④ 작성 가이드 (코워크 07번 Phase A) — 체크 → 이행상태 제안 */}
+              <section>
+                <div className="text-[11px] font-bold text-muted-foreground mb-1.5">
+                  작성 가이드 — 이렇게 작성하세요
+                </div>
+                <WriteGuidePanel itemCode={item.code} />
               </section>
             </>
           )}
