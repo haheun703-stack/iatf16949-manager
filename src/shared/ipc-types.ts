@@ -1435,7 +1435,7 @@ export interface ScheduleUpdateInput {
 
 // ===== 정기 의무 캘린더 (반복 의무: 일/주/월/분기/년) =====
 
-export type ObligationCadence = '일' | '주' | '월' | '분기' | '년'
+export type ObligationCadence = '일' | '주' | '월' | '분기' | '반기' | '년'
 export type ObligationCategory =
   | '내부심사'
   | '경영검토'
@@ -1448,7 +1448,7 @@ export type ObligationCategory =
   | '문서관리'
   | '기타'
 
-export const OBLIGATION_CADENCES: ObligationCadence[] = ['일', '주', '월', '분기', '년']
+export const OBLIGATION_CADENCES: ObligationCadence[] = ['일', '주', '월', '분기', '반기', '년']
 export const OBLIGATION_CATEGORIES: ObligationCategory[] = [
   '내부심사',
   '경영검토',

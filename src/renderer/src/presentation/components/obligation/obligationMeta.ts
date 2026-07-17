@@ -9,6 +9,7 @@ export const CADENCE_META: Record<
   주: { label: '주간', bar: 'bg-orange-500', chip: 'bg-orange-100 text-orange-700', desc: '매주 반복' },
   월: { label: '월간', bar: 'bg-amber-500', chip: 'bg-amber-100 text-amber-700', desc: '매월 반복' },
   분기: { label: '분기', bar: 'bg-teal-500', chip: 'bg-teal-100 text-teal-700', desc: '분기 반복' },
+  반기: { label: '반기', bar: 'bg-sky-500', chip: 'bg-sky-100 text-sky-700', desc: '6개월 반복' },
   년: { label: '연간', bar: 'bg-blue-500', chip: 'bg-blue-100 text-blue-700', desc: '매년 반복' }
 }
 

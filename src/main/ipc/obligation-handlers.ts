@@ -48,6 +48,9 @@ function advanceDate(baseYmd: string, cadence: ObligationCadence): string {
     case '분기':
       d.setMonth(d.getMonth() + 3)
       break
+    case '반기':
+      d.setMonth(d.getMonth() + 6)
+      break
     case '년':
       d.setMonth(d.getMonth() + 12)
       break
