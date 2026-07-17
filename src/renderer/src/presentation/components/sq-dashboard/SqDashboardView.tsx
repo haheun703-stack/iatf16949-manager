@@ -73,36 +73,36 @@ export function SqDashboardView(): JSX.Element {
   const toG = Math.max(0, data.gradeRule.G - mainScore)
 
   return (
-    <div className="space-y-5 break-keep">
+    <div className="space-y-6 break-keep">
       <PageHeader
         title="SQ 대시보드 — 이번 심사, 붙습니까?"
         sub={`한 장 요약 · 가이드 ${data.guideVersion} · 제안 기준(증빙 체크리스트 자동 산출) — 확정 점수는 자체평가에서`}
         actions={
-          <span className="inline-flex items-center gap-1.5 text-[12px] font-bold bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full">
+          <span className="inline-flex items-center gap-1.5 text-[13px] font-bold bg-secondary text-secondary-foreground px-3.5 py-2 rounded-full">
             <ShieldCheck className="w-4 h-4" /> 심사 D-{Math.abs(dday)}
           </span>
         }
       />
 
       {/* ── 1행: 히어로 점수 + 준비도 + 남은 거리 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl px-6 py-5">
-          <div className="text-[13px] font-semibold text-muted-foreground">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+        <div className="lg:col-span-2 bg-card border border-border rounded-xl px-7 py-6">
+          <div className="text-[14.5px] font-semibold text-muted-foreground">
             {data.confirmed
               ? `SQ 확정 점수 — 자체평가 ${data.confirmed.id} (${data.confirmed.assessedAt})`
               : 'SQ 환산 점수 (제안 기준)'}
           </div>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-[40px] font-extrabold tabular-nums tracking-[-0.02em] leading-none">
+          <div className="flex items-baseline gap-2.5 mt-1.5">
+            <span className="text-[54px] font-extrabold tabular-nums tracking-[-0.02em] leading-none">
               {data.confirmed ? data.confirmed.totalScore : data.totalConverted}
             </span>
-            <span className="text-[15px] font-semibold text-muted-foreground">/1000</span>
+            <span className="text-[18px] font-semibold text-muted-foreground">/1000</span>
             {(() => {
               const g = data.confirmed ? data.confirmed.grade : data.grade
               return (
                 <span
                   className={cn(
-                    'text-[13px] font-bold px-2.5 py-0.5 rounded-md ml-1',
+                    'text-[15px] font-bold px-3 py-1 rounded-md ml-1',
                     g === 'S' && 'bg-emerald-100 text-emerald-800',
                     g === 'G' && 'bg-secondary text-secondary-foreground',
                     g === '불합격' && 'bg-[#fcebeb] text-[#a32d2d]'
@@ -113,31 +113,31 @@ export function SqDashboardView(): JSX.Element {
               )
             })()}
             {data.confirmed && (
-              <span className="text-[12px] text-muted-foreground ml-2">
+              <span className="text-[13px] text-muted-foreground ml-2">
                 제안치(체크리스트) {data.totalConverted}점
               </span>
             )}
           </div>
           {/* 등급컷 불릿 바 */}
-          <svg viewBox="0 0 340 46" width="100%" height="46" className="mt-2" aria-label={`점수 위치 — G ${data.gradeRule.G}, S ${data.gradeRule.S}`}>
-            <rect x="10" y="18" width="320" height="10" rx="5" fill="#edf3fa" />
-            <rect x="10" y="18" width={Math.min(320, (mainScore / 1000) * 320)} height="10" rx="5" fill="#2a78d6" />
+          <svg viewBox="0 0 340 52" width="100%" height="58" className="mt-3" aria-label={`점수 위치 — G ${data.gradeRule.G}, S ${data.gradeRule.S}`}>
+            <rect x="10" y="20" width="320" height="13" rx="6.5" fill="#edf3fa" />
+            <rect x="10" y="20" width={Math.min(320, (mainScore / 1000) * 320)} height="13" rx="6.5" fill="#2a78d6" />
             {[
               { v: data.gradeRule.G, label: `G ${data.gradeRule.G}` },
               { v: data.gradeRule.S, label: `S ${data.gradeRule.S}` }
             ].map((m) => (
               <g key={m.v}>
-                <line x1={10 + (m.v / 1000) * 320} y1="12" x2={10 + (m.v / 1000) * 320} y2="34" stroke="#98a8b8" strokeWidth="1.5" />
-                <text x={10 + (m.v / 1000) * 320} y="9" textAnchor="middle" fontSize="10" fill="#5c7288">
+                <line x1={10 + (m.v / 1000) * 320} y1="13" x2={10 + (m.v / 1000) * 320} y2="39" stroke="#98a8b8" strokeWidth="1.5" />
+                <text x={10 + (m.v / 1000) * 320} y="10" textAnchor="middle" fontSize="11.5" fill="#5c7288">
                   {m.label}
                 </text>
               </g>
             ))}
-            <text x={Math.min(320, Math.max(20, 10 + (mainScore / 1000) * 320))} y="43" textAnchor="middle" fontSize="11" fontWeight="700" fill="#1f3348">
+            <text x={Math.min(320, Math.max(20, 10 + (mainScore / 1000) * 320))} y="50" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="#1f3348">
               {mainScore}
             </text>
           </svg>
-          <div className="text-[12px] text-muted-foreground mt-1">
+          <div className="text-[13.5px] text-muted-foreground mt-1.5">
             {mainGrade === 'S'
               ? 'S 등급권 — 유지가 과제입니다'
               : toS > 0 && mainGrade === 'G'
@@ -147,32 +147,32 @@ export function SqDashboardView(): JSX.Element {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl px-6 py-5">
-          <div className="text-[13px] font-semibold text-muted-foreground">증빙 준비도 (체크포인트)</div>
-          <div className="text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1">
+        <div className="bg-card border border-border rounded-xl px-7 py-6">
+          <div className="text-[14.5px] font-semibold text-muted-foreground">증빙 준비도 (체크포인트)</div>
+          <div className="text-[40px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1.5">
             {readyPct}%
           </div>
-          <div className="text-[12px] text-muted-foreground mt-1.5 leading-relaxed">
+          <div className="text-[13.5px] text-muted-foreground mt-2 leading-relaxed">
             {cpActive}개 중 충족 {data.checkpoint.met} · 부분 {data.checkpoint.partial}
             <br />
             미비 {data.checkpoint.missing}개 → 팀 상세에서 체크하며 해소
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl px-6 py-5">
-          <div className="text-[13px] font-semibold text-muted-foreground">남은 점수 (전체 손실)</div>
-          <div className="text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1 text-[#a32d2d]">
+        <div className="bg-card border border-border rounded-xl px-7 py-6">
+          <div className="text-[14.5px] font-semibold text-muted-foreground">남은 점수 (전체 손실)</div>
+          <div className="text-[40px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1.5 text-[#a32d2d]">
             −{1000 - data.naScore - data.totalRaw}
           </div>
-          <div className="text-[12px] text-muted-foreground mt-1.5">전부 '양호' 이상이 되면 0 — 팀별 목록에서 회수</div>
+          <div className="text-[13.5px] text-muted-foreground mt-2">전부 '양호' 이상이 되면 0 — 팀별 목록에서 회수</div>
         </div>
       </div>
 
       {/* ── 2행: 남은 점수 Top5 + 영역별 미터 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="text-[13.5px] font-bold text-muted-foreground mb-1">남은 점수 Top 5 — 등급으로 가는 최단 경로</div>
-          <div className="text-[11.5px] text-muted-foreground mb-3">행을 누르면 담당 팀 상세로 이동합니다</div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="bg-card border border-border rounded-xl p-7">
+          <div className="text-[15.5px] font-bold text-muted-foreground mb-1">남은 점수 Top 5 — 등급으로 가는 최단 경로</div>
+          <div className="text-[12.5px] text-muted-foreground mb-3">행을 누르면 담당 팀 상세로 이동합니다</div>
           <div>
             {data.topLosses.map((it) => (
               <ItemRow key={it.code} item={it} onOpenTeam={openTeam} />
@@ -180,18 +180,18 @@ export function SqDashboardView(): JSX.Element {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="text-[13.5px] font-bold text-muted-foreground mb-4">영역별 취득 현황</div>
-          <div className="space-y-3">
+        <div className="bg-card border border-border rounded-xl p-7">
+          <div className="text-[15.5px] font-bold text-muted-foreground mb-5">영역별 취득 현황</div>
+          <div className="space-y-4">
             {data.areas.map((a) => {
               const pct = a.naAll ? 0 : a.score > 0 ? Math.round((a.earned / a.score) * 100) : 0
               return (
                 <div key={a.area} className={cn('flex items-center gap-3', a.naAll && 'opacity-50')}>
-                  <span className="w-[104px] text-[13px] font-semibold truncate">{a.area}</span>
-                  <span className="flex-1 h-3 rounded-full bg-[#e7f1fc] overflow-hidden">
+                  <span className="w-[124px] text-[14.5px] font-semibold truncate">{a.area}</span>
+                  <span className="flex-1 h-3.5 rounded-full bg-[#e7f1fc] overflow-hidden">
                     {!a.naAll && <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />}
                   </span>
-                  <span className="w-[110px] text-right text-[12.5px] tabular-nums text-muted-foreground">
+                  <span className="w-[128px] text-right text-[14px] tabular-nums text-muted-foreground">
                     {a.naAll ? '미해당' : (
                       <>
                         <b className="text-foreground">{a.earned}</b> / {a.score} · {pct}%
@@ -202,7 +202,7 @@ export function SqDashboardView(): JSX.Element {
               )
             })}
           </div>
-          <div className="text-[11.5px] text-muted-foreground mt-4">
+          <div className="text-[12.5px] text-muted-foreground mt-5">
             막대 = 제안 기준 취득점수 / 트랙 = 배점
           </div>
         </div>
@@ -210,13 +210,13 @@ export function SqDashboardView(): JSX.Element {
 
       {/* ── 3행: 팀별로 해야 할 것 (드릴다운) ── */}
       <div>
-        <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
-          <span className="text-[16px] font-extrabold tracking-[-0.01em]">팀별로 해야 할 것 — 손실 큰 순</span>
-          <span className="text-[13px] font-medium text-muted-foreground">
+        <div className="flex items-baseline gap-2.5 mb-3.5 flex-wrap">
+          <span className="text-[19px] font-extrabold tracking-[-0.01em]">팀별로 해야 할 것 — 손실 큰 순</span>
+          <span className="text-[14px] font-medium text-muted-foreground">
             팀 카드를 누르면 팀 상세(항목 펼침 → 증빙 체크 → 작성)로 갑니다
           </span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {data.teams.map((t) => {
             const theme = teamTheme(t.teamId)
             return (
@@ -227,33 +227,33 @@ export function SqDashboardView(): JSX.Element {
                 className="text-left bg-card border border-border rounded-xl overflow-hidden flex flex-col hover:shadow-md transition-shadow"
               >
                 <div
-                  className="px-5 py-3 text-[14px] font-bold flex items-center"
+                  className="px-5 py-3.5 text-[16px] font-bold flex items-center"
                   style={{ backgroundColor: theme.tintBg, color: theme.darkText }}
                 >
                   <span className="flex-1 truncate">{theme.label}</span>
-                  <span className="text-[12.5px] font-bold tabular-nums" style={{ color: '#a32d2d' }}>
+                  <span className="text-[14px] font-bold tabular-nums" style={{ color: '#a32d2d' }}>
                     −{t.loss}점
                   </span>
                 </div>
                 <div className="flex-1">
                   {t.items.slice(0, 4).map((it) => (
-                    <div key={it.code} className="px-5 py-[9px] border-t border-border flex items-center gap-2 text-[13px]">
-                      <span className="font-mono text-[11.5px] text-muted-foreground shrink-0">{it.code}</span>
+                    <div key={it.code} className="px-5 py-[11px] border-t border-border flex items-center gap-2 text-[14.5px]">
+                      <span className="font-mono text-[12.5px] text-muted-foreground shrink-0">{it.code}</span>
                       <span className="flex-1 min-w-0 truncate" title={it.title}>
                         {it.title}
                       </span>
                       <StatePill state={it.suggestedState} />
-                      <span className="text-[12px] font-bold tabular-nums text-[#a32d2d] shrink-0">−{it.loss}</span>
+                      <span className="text-[13.5px] font-bold tabular-nums text-[#a32d2d] shrink-0">−{it.loss}</span>
                     </div>
                   ))}
                   {t.items.length > 4 && (
-                    <div className="px-5 py-2 border-t border-border text-[11.5px] text-muted-foreground">
+                    <div className="px-5 py-2.5 border-t border-border text-[12.5px] text-muted-foreground">
                       외 {t.items.length - 4}개 항목…
                     </div>
                   )}
                 </div>
-                <div className="mt-auto px-5 py-2.5 border-t border-border text-[12.5px] font-bold text-primary inline-flex items-center gap-1">
-                  팀 상세에서 해소하기 <ChevronRight className="w-3.5 h-3.5" />
+                <div className="mt-auto px-5 py-3 border-t border-border text-[13.5px] font-bold text-primary inline-flex items-center gap-1">
+                  팀 상세에서 해소하기 <ChevronRight className="w-4 h-4" />
                 </div>
               </button>
             )
@@ -262,14 +262,14 @@ export function SqDashboardView(): JSX.Element {
       </div>
 
       {data.unassigned.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 text-[13px] text-amber-800">
-          <AlertCircle className="w-3.5 h-3.5 inline -mt-0.5 mr-1.5" />
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 text-[14px] text-amber-800">
+          <AlertCircle className="w-4 h-4 inline -mt-0.5 mr-1.5" />
           팀 미배정 손실 항목 {data.unassigned.length}건 ({data.unassigned.map((i) => i.code).join(', ')}) — 규정 매핑
           보강 대상
         </div>
       )}
 
-      <p className="text-[12px] text-muted-foreground text-center">
+      <p className="text-[13px] text-muted-foreground text-center">
         이 화면의 점수는 증빙 체크리스트에서 자동 산출한 <b>제안치</b>입니다 — 공식 점수·등급은 자체평가(예정)에서
         사람이 확정하고, 확정본이 이 화면의 정본이 됩니다.
       </p>
@@ -280,7 +280,7 @@ export function SqDashboardView(): JSX.Element {
 function StatePill({ state }: { state: SqSuggestedState }): JSX.Element {
   const s = STATE_PILL[state]
   return (
-    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{ backgroundColor: s.bg, color: s.fg }}>
+    <span className="text-[12px] font-bold px-2.5 py-[3px] rounded-full shrink-0" style={{ backgroundColor: s.bg, color: s.fg }}>
       {state}
     </span>
   )
@@ -299,25 +299,25 @@ function ItemRow({
       type="button"
       onClick={() => first && onOpenTeam(first)}
       disabled={!first}
-      className="w-full flex items-center gap-2.5 py-2.5 border-t border-border first:border-t-0 text-left hover:bg-muted/40 rounded-md px-1.5 disabled:cursor-default"
+      className="w-full flex items-center gap-2.5 py-3 border-t border-border first:border-t-0 text-left hover:bg-muted/40 rounded-md px-1.5 disabled:cursor-default"
     >
-      <span className="font-mono text-[12px] font-bold text-muted-foreground shrink-0">{item.code}</span>
-      <span className="flex-1 min-w-0 truncate text-[13.5px]" title={item.title}>
+      <span className="font-mono text-[13px] font-bold text-muted-foreground shrink-0">{item.code}</span>
+      <span className="flex-1 min-w-0 truncate text-[15px]" title={item.title}>
         {item.title}
       </span>
       <StatePill state={item.suggestedState} />
       {first && (
         <span
-          className="text-[11px] font-bold px-1.5 py-0.5 rounded shrink-0"
+          className="text-[12px] font-bold px-2 py-0.5 rounded shrink-0"
           style={{ backgroundColor: teamTheme(first).tintBg, color: teamTheme(first).darkText }}
         >
           {teamTheme(first).label.slice(0, 2)}
           {item.teams.length > 1 && ` +${item.teams.length - 1}`}
         </span>
       )}
-      <span className="text-[14px] font-extrabold tabular-nums text-[#a32d2d] shrink-0 w-14 text-right">
+      <span className="text-[16px] font-extrabold tabular-nums text-[#a32d2d] shrink-0 w-16 text-right">
         −{item.loss}
-        <small className="text-[11px] font-semibold text-muted-foreground">/{item.score}</small>
+        <small className="text-[12px] font-semibold text-muted-foreground">/{item.score}</small>
       </span>
     </button>
   )
