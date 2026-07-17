@@ -4,6 +4,7 @@ import { Dashboard } from '../dashboard/Dashboard'
 import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
 import { SqDashboardView } from '../sq-dashboard/SqDashboardView'
 import { SelfAssessmentPage } from '../sq-assessment/SelfAssessmentPage'
+import { SqTrackPage } from '../sq-track/SqTrackPage'
 import { IatfDashboardView } from '../iatf-dashboard/IatfDashboardView'
 import { DocBrowseView } from '../doc-browse/DocBrowseView'
 import { PartsView } from '../parts/PartsView'
@@ -54,6 +55,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'iatf-dashboard' && <IatfDashboardView />}
             {currentPage === 'doc-browse' && <DocBrowseView />}
             {currentPage === 'sq-readiness' && <SqReadinessPage />}
+            {currentPage === 'sq-track' && <SqTrackPage />}
             {currentPage === 'parts' && <PartsView />}
             {currentPage === 'case-work' && <CaseWorkPage />}
             {currentPage === 'document-bom' && <DocumentBomPage />}

@@ -929,6 +929,69 @@ export interface SqDashboardDto {
   confirmed: { id: string; assessedAt: string; totalScore: number; grade: string } | null
 }
 
+// ===== SQ 심사 아이템 트랙 (0068/0069 — 품번 4종 × 4단계 체크리스트) =====
+
+export type SqTrackStatus = 'open' | 'in_progress' | 'done' | 'na'
+export type SqTrackSeverity = 'red' | 'orange' | 'yellow'
+
+export interface SqTrackPartCardDto {
+  partNo: string
+  partName: string | null
+  customer: string | null
+  model: string | null
+  binderInfo: string | null
+  scanRef: string | null
+  total: number
+  done: number
+  na: number
+  /** open + in_progress 를 심각도별 집계 */
+  openBySeverity: { red: number; orange: number; yellow: number }
+}
+
+export interface SqTrackOverviewDto {
+  auditDate: string | null
+  title: string
+  goal: string | null
+  parts: SqTrackPartCardDto[]
+  totals: { total: number; open: number; done: number }
+}
+
+export interface SqTrackItemDto {
+  code: string
+  phase: number
+  seq: number
+  title: string
+  detail: string | null
+  evidencePages: string | null
+  severity: SqTrackSeverity
+  team: TeamId | null
+  formCode: string | null
+  formName: string | null
+  sqItemCode: string | null
+  tag: string | null
+  status: SqTrackStatus
+  note: string | null
+  updatedBy: string | null
+  updatedAt: string | null
+}
+
+export interface SqTrackPartDetailDto {
+  partNo: string
+  partName: string | null
+  customer: string | null
+  model: string | null
+  binderInfo: string | null
+  scanRef: string | null
+  phases: Array<{ phase: number; label: string; items: SqTrackItemDto[] }>
+}
+
+export interface SqTrackItemUpdateInput {
+  itemCode: string
+  status?: SqTrackStatus
+  note?: string | null
+  updatedBy?: string
+}
+
 // ===== 오늘 할 일 (매일 관리 보드) =====
 
 export interface DailyObligationDto {
@@ -1888,6 +1951,22 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.SQ_ASSESS_EXPORT]: {
     request: { assessmentId: string }
     response: { success: boolean; filePath?: string; canceled?: boolean; validationsPreserved?: boolean; error?: string }
+  }
+  [IPC_CHANNELS.SQTRACK_OVERVIEW]: {
+    request: void
+    response: SqTrackOverviewDto | null
+  }
+  [IPC_CHANNELS.SQTRACK_PART_DETAIL]: {
+    request: { partNo: string }
+    response: SqTrackPartDetailDto | null
+  }
+  [IPC_CHANNELS.SQTRACK_ITEM_UPDATE]: {
+    request: SqTrackItemUpdateInput
+    response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.SQTRACK_SET_AUDIT_DATE]: {
+    request: { date: string }
+    response: { success: boolean }
   }
   [IPC_CHANNELS.TEAM_REGS]: {
     request: { teamId: string }

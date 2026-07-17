@@ -163,6 +163,11 @@ export const IPC_CHANNELS = {
   SQ_ASSESS_META: 'sq:assessMeta',
   SQ_ASSESS_FINALIZE: 'sq:assessFinalize',
   SQ_ASSESS_EXPORT: 'sq:assessExport',
+  // SQ 심사 아이템 트랙 (0068/0069, 10월 LEVEL-UP — 품번 4종 × 4단계 체크리스트)
+  SQTRACK_OVERVIEW: 'sqtrack:overview',
+  SQTRACK_PART_DETAIL: 'sqtrack:partDetail',
+  SQTRACK_ITEM_UPDATE: 'sqtrack:itemUpdate',
+  SQTRACK_SET_AUDIT_DATE: 'sqtrack:setAuditDate',
 
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',

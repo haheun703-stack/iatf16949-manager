@@ -23,6 +23,7 @@ import { registerTeamHandlers } from './team-handlers'
 import { registerKpiHandlers } from './kpi-handlers'
 import { registerSqGuideHandlers } from './sq-guide-handlers'
 import { registerSqAssessHandlers } from './sq-assess-handlers'
+import { registerSqTrackHandlers } from './sqtrack-handlers'
 import { registerMsaHandlers } from './msa-handlers'
 import { registerReportHandlers } from './report-handlers'
 import { registerSqHandlers } from './sq-handlers'
@@ -47,6 +48,7 @@ export function registerAllIpcHandlers(): void {
   registerKpiHandlers()
   registerSqGuideHandlers()
   registerSqAssessHandlers()
+  registerSqTrackHandlers()
   registerMsaHandlers()
   registerReportHandlers()
   registerSqHandlers()

@@ -9,6 +9,7 @@ export type PageId =
   | 'sq-dashboard'
   | 'sq-assessment'
   | 'sq-readiness'
+  | 'sq-track'
   | 'iatf-dashboard'
   | 'doc-browse'
   | 'parts'
