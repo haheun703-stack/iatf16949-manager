@@ -929,6 +929,25 @@ export interface SqDashboardDto {
   confirmed: { id: string; assessedAt: string; totalScore: number; grade: string } | null
 }
 
+// ===== 정합성 점검 (7/19 검수 체계 1층 — 팀 체인 결정론 검사) =====
+
+export interface IntegrityCheckRow {
+  key: string
+  name: string
+  status: 'ok' | 'warn' | 'fail'
+  count: number
+  /** 문제 상세(최대 20건 표시) */
+  details: string[]
+  /** 검사 설명(판정 기준) */
+  note: string
+}
+
+export interface IntegrityReportDto {
+  ranAt: string
+  totals: { ok: number; warn: number; fail: number }
+  rows: IntegrityCheckRow[]
+}
+
 // ===== SQ 심사 아이템 트랙 (0068/0069 — 품번 4종 × 4단계 체크리스트) =====
 
 export type SqTrackStatus = 'open' | 'in_progress' | 'done' | 'na'
@@ -1923,6 +1942,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.SQ_DASHBOARD]: {
     request: void
     response: SqDashboardDto | null
+  }
+  [IPC_CHANNELS.INTEGRITY_CHECK]: {
+    request: void
+    response: IntegrityReportDto
   }
   [IPC_CHANNELS.SQ_ASSESS_RUN]: {
     request: void

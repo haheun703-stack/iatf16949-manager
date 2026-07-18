@@ -27,6 +27,7 @@ export type PageId =
   | 'clause-tree'
   | 'team'
   | 'about'
+  | 'integrity'
 
 interface UIState {
   currentPage: PageId

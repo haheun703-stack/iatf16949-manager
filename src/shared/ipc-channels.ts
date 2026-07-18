@@ -169,6 +169,9 @@ export const IPC_CHANNELS = {
   SQTRACK_ITEM_UPDATE: 'sqtrack:itemUpdate',
   SQTRACK_SET_AUDIT_DATE: 'sqtrack:setAuditDate',
 
+  // 정합성 점검 (팀 체인 결정론 검사 — 7/19 검수 체계 1층)
+  INTEGRITY_CHECK: 'integrity:check',
+
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',
   PART_DETAIL: 'parts:detail',

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Settings, Check, Pencil, Folder, CalendarClock, Minus, Plus, Info } from 'lucide-react'
+import { Settings, Check, Pencil, Folder, CalendarClock, Minus, Plus, Info, ShieldCheck } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, FONT_SCALE_MIN, FONT_SCALE_MAX, FONT_SCALE_STEP } from '../../stores/uiStore'
@@ -236,6 +236,20 @@ export function SettingsMenu(): JSX.Element {
               </button>
             </div>
           </div>
+
+          {/* 정합성 점검 (7/19 검수 체계 1층) */}
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false)
+              setPage('integrity')
+            }}
+            title="정합성 점검 — 팀·규정·양식·의무 체인 결정론 검사"
+            className="mt-1 w-full flex items-center gap-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted rounded px-1 py-1"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 shrink-0 opacity-80" />
+            <span>정합성 점검</span>
+          </button>
 
           {/* 제품 정보 (UI P3) */}
           <button

@@ -23,6 +23,7 @@ import { PortalHome } from '../home/PortalHome'
 import { TeamHubView } from '../home/TeamHubView'
 import { TeamDetailView } from '../home/TeamDetailView'
 import { AboutView } from '../about/AboutView'
+import { IntegrityView } from '../integrity/IntegrityView'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -69,6 +70,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'clause-tree' && <ClauseCoverageView />}
             {currentPage === 'apqp' && <ApqpView />}
             {currentPage === 'about' && <AboutView />}
+            {currentPage === 'integrity' && <IntegrityView />}
           </ErrorBoundary>
           </div>
         </main>

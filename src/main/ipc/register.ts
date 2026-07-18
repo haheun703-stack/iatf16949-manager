@@ -30,6 +30,7 @@ import { registerSqHandlers } from './sq-handlers'
 import { registerCaseHandlers } from './case-handlers'
 import { registerAiHandlers } from './ai-handlers'
 import { registerIsirHandlers } from './isir-handlers'
+import { registerIntegrityHandlers } from './integrity-handlers'
 
 export function registerAllIpcHandlers(): void {
   registerAiHandlers()
@@ -53,6 +54,7 @@ export function registerAllIpcHandlers(): void {
   registerReportHandlers()
   registerSqHandlers()
   registerCaseHandlers()
+  registerIntegrityHandlers()
   const db = getSqlite()
 
   // ──── Company Profile Handlers ────
