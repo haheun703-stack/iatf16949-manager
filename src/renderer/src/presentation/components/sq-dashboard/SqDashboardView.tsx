@@ -4,7 +4,7 @@ import { teamTheme, type TeamId } from '@shared/team-theme'
 import type { SqDashboardDto, SqDashboardItemDto, SqSuggestedState } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore } from '../../stores/uiStore'
-import { useDday } from '../../hooks/useDday'
+import { useSqTrackStore } from '../../stores/sqTrackStore'
 import { PageHeader } from '../shared/PageHeader'
 
 /**
@@ -13,6 +13,17 @@ import { PageHeader } from '../shared/PageHeader'
  * 숫자는 basis='suggested' — 체크리스트에서 자동 산출한 "제안" 점수(정직 라벨).
  * 자체평가(Phase B) 확정 후에는 확정 점수가 이 화면의 정본이 된다.
  */
+
+/** SQ 심사일(sqtrack.audit_date) 기준 D-n — useDday는 IATF(company_profile) 심사일 전용. */
+function calcSqDday(dateStr: string | null): string | null {
+  if (!dateStr) return null
+  const target = new Date(`${dateStr}T00:00:00`)
+  if (Number.isNaN(target.getTime())) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const diff = Math.round((target.getTime() - today.getTime()) / 86400000)
+  return diff >= 0 ? `D-${diff}` : `D+${-diff}`
+}
 
 const STATE_PILL: Record<SqSuggestedState, { bg: string; fg: string }> = {
   우수: { bg: '#dcf5dc', fg: '#0a5c0a' },
@@ -29,7 +40,13 @@ export function SqDashboardView(): JSX.Element {
   const [failed, setFailed] = useState(false)
   const setPage = useUIStore((s) => s.setPage)
   const setSelectedTeam = useUIStore((s) => s.setSelectedTeam)
-  const { dday } = useDday()
+  const sqOverview = useSqTrackStore((s) => s.overview)
+  const loadSqOverview = useSqTrackStore((s) => s.loadOverview)
+  const sqDday = calcSqDday(sqOverview?.auditDate ?? null)
+
+  useEffect(() => {
+    if (!sqOverview) void loadSqOverview()
+  }, [sqOverview, loadSqOverview])
 
   useEffect(() => {
     let alive = true
@@ -78,9 +95,14 @@ export function SqDashboardView(): JSX.Element {
         title="SQ 대시보드 — 이번 심사, 붙습니까?"
         sub={`한 장 요약 · 가이드 ${data.guideVersion} · 제안 기준(증빙 체크리스트 자동 산출) — 확정 점수는 자체평가에서`}
         actions={
-          <span className="inline-flex items-center gap-1.5 text-[13px] font-bold bg-secondary text-secondary-foreground px-3.5 py-2 rounded-full">
-            <ShieldCheck className="w-4 h-4" /> 심사 D-{Math.abs(dday)}
-          </span>
+          sqDday && (
+            <span className="inline-flex items-center gap-1.5 text-[13px] font-bold bg-secondary text-secondary-foreground px-3.5 py-2 rounded-full">
+              <ShieldCheck className="w-4 h-4" /> 심사 {sqDday}
+              {sqOverview?.auditDate && (
+                <span className="font-medium text-muted-foreground">({sqOverview.auditDate})</span>
+              )}
+            </span>
+          )
         }
       />
 
