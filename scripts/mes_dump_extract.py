@@ -96,7 +96,8 @@ class Reader:
         return struct.unpack("<H", self.read(2))[0]
 
 
-def extract(dmp_path, insert_offset, columns, out_path=None, limit=None):
+def iter_rows(dmp_path, insert_offset):
+    """테이블의 행을 리스트(컬럼 순)로 하나씩 yield 하는 제네레이터."""
     f = open(dmp_path, "rb")
     f.seek(insert_offset)
     head = f.read(65536)
@@ -125,15 +126,6 @@ def extract(dmp_path, insert_offset, columns, out_path=None, limit=None):
     if sent != 0:
         raise ValueError(f"디스크립터 종결 0 아님: {sent}")
 
-    writer = None
-    outf = None
-    if out_path:
-        outf = io.open(out_path, "w", encoding="utf-8-sig", newline="")
-        writer = csv.writer(outf)
-        writer.writerow(columns)
-
-    rows = 0
-    sample = []
     while True:
         try:
             marker = r.u16()
@@ -160,6 +152,21 @@ def extract(dmp_path, insert_offset, columns, out_path=None, limit=None):
                 rec.append(decode_str(raw))
         if ended:
             break
+        yield rec
+    f.close()
+
+
+def extract(dmp_path, insert_offset, columns, out_path=None, limit=None):
+    writer = None
+    outf = None
+    if out_path:
+        outf = io.open(out_path, "w", encoding="utf-8-sig", newline="")
+        writer = csv.writer(outf)
+        writer.writerow(columns)
+
+    rows = 0
+    sample = []
+    for rec in iter_rows(dmp_path, insert_offset):
         rows += 1
         if writer:
             writer.writerow(["" if v is None else v for v in rec])
