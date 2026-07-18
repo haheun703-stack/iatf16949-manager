@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   Check, X, AlertCircle, Clock, Loader2, ShieldCheck, ChevronRight, FileEdit, Users, User
 } from 'lucide-react'
-import { teamTheme, type TeamId } from '@shared/team-theme'
+import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import type {
   CompanyProfile,
   TeamTodayBoardDto,
@@ -25,6 +25,8 @@ export function PortalHome(): JSX.Element {
   const [board, setBoard] = useState<TeamTodayBoardDto | null>(null)
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
   const [kpis, setKpis] = useState<KpiIndicatorDto[]>([])
+  // KPI 필터: 'rep'=대표 6종(0066) / TeamId=팀별(0082 v4 §04) — 35종 평면 나열 방지
+  const [kpiFilter, setKpiFilter] = useState<'rep' | TeamId>('rep')
   const [onlyOpen, setOnlyOpen] = useState(false)
   const [boardView, setBoardView] = useState<'team' | 'person'>('team')
   const [completing, setCompleting] = useState<number | null>(null)
@@ -207,21 +209,58 @@ export function PortalHome(): JSX.Element {
         </div>
       </div>
 
-      {/* KPI 지수 스트립 (0066) — 목표 대비 실적, 미입력=정직 회색 */}
+      {/* KPI 지수 스트립 (0066 대표 + 0082 v4 §04 팀별) — 목표 대비 실적, 미입력=정직 회색 */}
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="mb-3.5 flex items-baseline flex-wrap gap-2">
           <span className="flex-1 text-[16.5px] font-bold text-foreground">KPI 지수 — 목표 대비 월 실적</span>
           <span className="text-[13px] text-muted-foreground">값은 월별 [입력]으로 기록 · 품질실적 월보 연동 예정</span>
         </div>
-        {kpis.length === 0 ? (
-          <div className="text-[13px] text-muted-foreground">지표 없음</div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-            {kpis.map((k) => (
-              <KpiTile key={k.id} kpi={k} enteredBy={profile?.defaultAuthor || undefined} onSaved={loadKpis} />
-            ))}
-          </div>
-        )}
+        <div className="mb-3.5 flex items-center flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setKpiFilter('rep')}
+            className={cn(
+              'text-[12.5px] font-bold px-3 py-1.5 rounded-full border transition-colors',
+              kpiFilter === 'rep'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+            )}
+          >
+            대표 지표
+          </button>
+          {TEAMS.map((t) => {
+            const active = kpiFilter === t.id
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setKpiFilter(t.id)}
+                className={cn(
+                  'text-[12.5px] font-bold px-3 py-1.5 rounded-full border transition-colors',
+                  !active && 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                )}
+                style={active ? { backgroundColor: t.tintBg, borderColor: t.border, color: t.darkText } : undefined}
+              >
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+        {(() => {
+          const shown =
+            kpiFilter === 'rep'
+              ? kpis.filter((k) => k.sortOrder < 100)
+              : kpis.filter((k) => normalizeTeam(k.ownerTeam) === kpiFilter)
+          return shown.length === 0 ? (
+            <div className="text-[13px] text-muted-foreground">지표 없음</div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+              {shown.map((k) => (
+                <KpiTile key={k.id} kpi={k} enteredBy={profile?.defaultAuthor || undefined} onSaved={loadKpis} />
+              ))}
+            </div>
+          )
+        })()}
       </div>
 
       {/* 메인: 오늘 할 일 보드 — 팀별 ⇄ 개인별 */}

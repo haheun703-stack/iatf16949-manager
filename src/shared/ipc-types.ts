@@ -740,6 +740,8 @@ export interface KpiIndicatorDto {
   /** higher=높을수록 좋음 / lower=낮을수록 좋음 */
   direction: 'higher' | 'lower'
   ownerTeam: string | null
+  /** 0066 대표 6종 < 100 ≤ v4 §04 팀별 지표(0082) — 홈 '대표 지표' 필터 기준 */
+  sortOrder: number
   note: string | null
   /** 최신 측정값(없으면 null → '미입력' 표시) */
   latest: KpiMeasurementDto | null
