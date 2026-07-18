@@ -42,7 +42,7 @@ export function AbsenceCard(): JSX.Element {
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold flex items-center gap-1.5">
+        <h2 className="text-[16.5px] font-bold flex items-center gap-1.5">
           <ScanSearch className="w-4 h-4 text-primary" />
           변경점 영향 점검 <span className="text-[12.5px] font-normal text-muted-foreground">있어야 할 양식인데 없는 것 감지</span>
         </h2>
@@ -83,13 +83,13 @@ export function AbsenceCard(): JSX.Element {
       )}
 
       {!loading && !check && (
-        <p className="text-[13.5px] text-muted-foreground py-2">상황을 선택하면 IATF/SQ 논리상 <b>있어야 할 양식</b>과 <b>누락·미작성</b>을 점검합니다.</p>
+        <p className="text-[14.5px] text-muted-foreground py-2">상황을 선택하면 IATF/SQ 논리상 <b>있어야 할 양식</b>과 <b>누락·미작성</b>을 점검합니다.</p>
       )}
 
       {check && (
         <>
           {/* 요약 */}
-          <div className="flex gap-4 text-[13.5px] mb-2">
+          <div className="flex gap-4 text-[14.5px] mb-2">
             <span className="text-emerald-600 font-semibold">작성됨 {check.summary.ok}</span>
             <span className="text-amber-600 font-semibold">미작성 {check.summary.unwritten}</span>
             <span className="text-red-600 font-semibold">누락 {check.summary.missing}</span>
@@ -97,7 +97,7 @@ export function AbsenceCard(): JSX.Element {
           </div>
 
           {diag && (
-            <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[13px] whitespace-pre-wrap leading-relaxed">
+            <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[14.5px] whitespace-pre-wrap leading-relaxed">
               {diag}
             </div>
           )}
@@ -108,11 +108,11 @@ export function AbsenceCard(): JSX.Element {
               const s = STATUS[it.status]
               const Icon = s.icon
               return (
-                <div key={it.regCode} className="flex items-center gap-2.5 px-3 py-2 text-[13.5px]">
+                <div key={it.regCode} className="flex items-center gap-2.5 px-3 py-2.5 text-[14.5px]">
                   <Icon className={`w-4 h-4 shrink-0 ${s.cls}`} />
                   <span className="font-mono text-[12px] text-muted-foreground w-12 shrink-0">{it.regCode}</span>
                   <span className="flex-1 min-w-0">
-                    <span className="truncate">{it.expected}</span>
+                    <span className="break-keep leading-snug">{it.expected}</span>
                     {it.sampleForm && <span className="text-muted-foreground"> · {it.sampleForm}</span>}
                   </span>
                   <span className={`text-[12.5px] font-semibold shrink-0 ${s.cls}`}>{s.ko}</span>

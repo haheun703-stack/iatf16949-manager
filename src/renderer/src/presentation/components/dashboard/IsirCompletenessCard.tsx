@@ -68,7 +68,7 @@ export function IsirCompletenessCard(): JSX.Element | null {
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold flex items-center gap-1.5">
+        <h2 className="text-[16.5px] font-bold flex items-center gap-1.5">
           <ShieldAlert className="w-4 h-4 text-primary" />
           ISIR 완비도
           <span className="text-[12.5px] font-normal text-muted-foreground">고객 협의 통제 패키지의 제출 현황</span>
@@ -103,11 +103,11 @@ export function IsirCompletenessCard(): JSX.Element | null {
             <span className="text-[12.5px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
               {comp.pkg.submitTypeLabel}
             </span>
-            <span className="text-[13.5px] text-muted-foreground truncate flex-1">{comp.partName}</span>
+            <span className="text-[14.5px] text-muted-foreground break-keep leading-snug flex-1">{comp.partName}</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
           </button>
 
-          <div className="flex gap-4 text-[13.5px] mb-2">
+          <div className="flex gap-4 text-[14.5px] mb-2">
             <span className="font-semibold">필수 {comp.summary.totalRequired}종</span>
             <span className="text-emerald-600 font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />제출 {comp.summary.present}
@@ -119,13 +119,13 @@ export function IsirCompletenessCard(): JSX.Element | null {
           </div>
 
           {diag && (
-            <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[13px] whitespace-pre-wrap leading-relaxed">
+            <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[14.5px] whitespace-pre-wrap leading-relaxed">
               {diag}
             </div>
           )}
 
           {missing.length > 0 ? (
-            <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-[13.5px] text-red-700">
+            <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-[14.5px] text-red-700">
               <b>미제출:</b> {missing.map((d) => `${d.docNo}.${d.docName}`).join(', ')}
             </div>
           ) : (

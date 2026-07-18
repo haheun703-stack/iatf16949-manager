@@ -45,7 +45,7 @@ export function ReadinessCard(): JSX.Element | null {
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold flex items-center gap-1.5">
+        <h2 className="text-[16.5px] font-bold flex items-center gap-1.5">
           <Gauge className="w-4 h-4 text-primary" />
           AI 심사 예측 <span className="text-[12.5px] font-normal text-muted-foreground">지금 SQ 심사 시 추정</span>
         </h2>
@@ -83,7 +83,7 @@ export function ReadinessCard(): JSX.Element | null {
 
       {/* AI 진단 */}
       {diag && (
-        <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[13px] whitespace-pre-wrap leading-relaxed">
+        <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[14.5px] whitespace-pre-wrap leading-relaxed">
           {diag}
         </div>
       )}
@@ -94,9 +94,9 @@ export function ReadinessCard(): JSX.Element | null {
           <div className="text-[12.5px] font-semibold text-muted-foreground mb-1">점수 손실 큰 항목</div>
           <div className="divide-y divide-border/50">
             {p.reds.slice(0, 5).map((r) => (
-              <div key={r.code} className="flex items-center gap-2 py-1 text-[13.5px]">
+              <div key={r.code} className="flex items-center gap-2 py-2.5 text-[14.5px]">
                 <span className="font-mono text-[12px] text-muted-foreground w-10 shrink-0">{r.code}</span>
-                <span className="truncate flex-1">{r.title}</span>
+                <span className="break-keep leading-snug flex-1">{r.title}</span>
                 <span className={`text-[12px] shrink-0 ${r.signal === 'gray' ? 'text-slate-400' : 'text-red-600'}`}>{r.reason}</span>
                 <span className="font-bold tabular-nums w-10 text-right shrink-0">-{r.points}</span>
               </div>

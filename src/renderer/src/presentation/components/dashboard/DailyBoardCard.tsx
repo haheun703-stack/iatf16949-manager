@@ -43,7 +43,7 @@ export function DailyBoardCard(): JSX.Element | null {
     <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
       <div className="px-5 py-3 border-b border-border flex items-center gap-2">
         <CalendarClock className="w-4 h-4 text-primary" />
-        <h2 className="text-sm font-bold">오늘 할 일</h2>
+        <h2 className="text-[16.5px] font-bold">오늘 할 일</h2>
         <span className="text-[12.5px] text-muted-foreground">매일 작성·관리 항목</span>
         {totalCount === 0 && (
           <span className="ml-auto inline-flex items-center gap-1 text-[13.5px] font-semibold text-emerald-600">
@@ -149,7 +149,7 @@ function Column({
 }): JSX.Element {
   return (
     <div className="px-4 py-3">
-      <div className="flex items-center gap-1.5 text-[12.5px] font-bold text-muted-foreground uppercase tracking-wide mb-2">
+      <div className="flex items-center gap-1.5 text-[13.5px] font-bold text-foreground uppercase tracking-wide mb-2">
         {icon}
         {title}
         <span
@@ -186,12 +186,12 @@ function Item({
       <button
         type="button"
         onClick={onClick}
-        className="group w-full text-left flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted transition-colors"
+        className="group w-full text-left flex items-center gap-2 rounded-md px-2 py-2.5 hover:bg-muted transition-colors"
       >
         {left}
         <span className="min-w-0 flex-1">
-          <span className="block text-[13.5px] font-medium truncate">{main}</span>
-          <span className="block text-[12px] text-muted-foreground truncate">{sub}</span>
+          <span className="block text-[14.5px] font-medium break-keep leading-snug">{main}</span>
+          <span className="block text-[12.5px] text-muted-foreground break-keep leading-snug">{sub}</span>
         </span>
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-primary shrink-0" />
       </button>

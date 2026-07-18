@@ -85,7 +85,7 @@ export function MockAuditCard({
 
   return (
     <div ref={rootRef} id="mock-audit-card" className="bg-card border border-border rounded-xl shadow-sm p-5 scroll-mt-4">
-      <h2 className="text-sm font-bold flex items-center gap-1.5 mb-3">
+      <h2 className="text-[16.5px] font-bold flex items-center gap-1.5 mb-3">
         <GraduationCap className="w-4 h-4 text-primary" />
         AI 모의 심사 <span className="text-[12.5px] font-normal text-muted-foreground">AI 심사원의 예상질문 + 증빙 갭</span>
       </h2>
@@ -110,7 +110,7 @@ export function MockAuditCard({
           type="button"
           onClick={() => void run()}
           disabled={loading || !sel}
-          className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+          className="text-[14px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50 flex items-center gap-1.5 shrink-0"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GraduationCap className="w-4 h-4" />}
           모의심사
@@ -124,18 +124,18 @@ export function MockAuditCard({
       )}
 
       {!result && !loading && !err && (
-        <p className="text-[13.5px] text-muted-foreground">항목을 고르고 <b>모의심사</b>를 누르면, AI 심사원이 던질 예상 질문과 우리 증빙의 충분/부족을 짚어줍니다.</p>
+        <p className="text-[14.5px] text-muted-foreground">항목을 고르고 <b>모의심사</b>를 누르면, AI 심사원이 던질 예상 질문과 우리 증빙의 충분/부족을 짚어줍니다.</p>
       )}
 
       {result && (
         <div>
           <div className="flex items-center gap-2 text-[13.5px] text-muted-foreground mb-2">
             <span className="font-mono font-semibold text-foreground">{result.itemCode}</span>
-            <span className="font-semibold text-foreground truncate">{result.itemTitle}</span>
+            <span className="font-semibold text-foreground break-keep leading-snug">{result.itemTitle}</span>
             <span className="shrink-0">· {result.points}점</span>
             <span className="shrink-0">· 증빙 양식 {result.formCount}(작성 {result.submittedCount})</span>
           </div>
-          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-[13px] whitespace-pre-wrap leading-relaxed">
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-[14.5px] whitespace-pre-wrap leading-relaxed">
             {result.text}
           </div>
         </div>

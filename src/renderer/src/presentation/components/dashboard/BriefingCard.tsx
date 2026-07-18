@@ -27,13 +27,13 @@ function Stat({
 function ItemRow({ it }: { it: BriefingItem }): JSX.Element {
   const dd = it.daysLeft < 0 ? `D+${-it.daysLeft}` : it.daysLeft === 0 ? 'D-DAY' : `D-${it.daysLeft}`
   return (
-    <div className="flex items-center gap-2 text-[13.5px] py-1 border-b border-border/50 last:border-0">
+    <div className="flex items-center gap-2 text-[14.5px] py-2.5 border-b border-border/50 last:border-0">
       <span
         className={`font-mono font-bold w-12 shrink-0 ${it.daysLeft < 0 ? 'text-red-600' : it.daysLeft <= 3 ? 'text-amber-600' : 'text-muted-foreground'}`}
       >
         {dd}
       </span>
-      <span className="truncate flex-1">{it.title}</span>
+      <span className="break-keep leading-snug flex-1">{it.title}</span>
       {it.owner && <span className="text-[12px] text-muted-foreground shrink-0">{it.owner}</span>}
       <span className="text-[12px] px-1 rounded bg-muted text-muted-foreground shrink-0">
         {it.kind === 'case' ? '케이스' : '일정'}
@@ -79,7 +79,7 @@ export function BriefingCard(): JSX.Element | null {
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold flex items-center gap-1.5">
+        <h2 className="text-[16.5px] font-bold flex items-center gap-1.5">
           <Sparkles className="w-4 h-4 text-primary" />
           오늘의 브리핑
           <span className="text-[12.5px] font-normal text-muted-foreground">{facts.today}</span>
@@ -111,7 +111,7 @@ export function BriefingCard(): JSX.Element | null {
 
       {/* AI 요약 */}
       {summary && (
-        <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[13px] whitespace-pre-wrap leading-relaxed">
+        <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[14.5px] whitespace-pre-wrap leading-relaxed">
           {summary}
         </div>
       )}
@@ -119,7 +119,7 @@ export function BriefingCard(): JSX.Element | null {
       {/* 임박/초과 항목 */}
       {top.length > 0 ? (
         <div className="mt-3">
-          <div className="text-[12.5px] font-semibold text-muted-foreground mb-1">처리 필요 항목</div>
+          <div className="text-[13px] font-semibold text-muted-foreground mb-1">처리 필요 항목</div>
           {top.map((it, i) => (
             <ItemRow key={i} it={it} />
           ))}

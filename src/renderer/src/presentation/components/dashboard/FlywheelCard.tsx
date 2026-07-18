@@ -22,7 +22,7 @@ export function FlywheelCard(): JSX.Element | null {
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-5">
-      <h2 className="text-sm font-bold flex items-center gap-1.5 mb-3">
+      <h2 className="text-[16.5px] font-bold flex items-center gap-1.5 mb-3">
         <TrendingUp className="w-4 h-4 text-primary" />
         AI 수용률 · 비용 <span className="text-[12.5px] font-normal text-muted-foreground">쓸수록 정확해지는 지표</span>
       </h2>

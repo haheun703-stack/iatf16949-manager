@@ -39,7 +39,7 @@ export function NeedsAttentionList(): JSX.Element {
       {items.length === 0 ? (
         <div className="text-center py-8">
           <CheckCircle2 className="w-9 h-9 mx-auto mb-2 text-success opacity-70" />
-          <p className="text-sm font-semibold">보완이 필요한 양식이 없습니다</p>
+          <p className="text-[15px] font-semibold">보완이 필요한 양식이 없습니다</p>
           <p className="text-[13.5px] text-muted-foreground mt-0.5">
             양식을 작성·채점하면 80점 미만·미채점 항목이 여기에 모입니다.
           </p>
@@ -56,11 +56,11 @@ export function NeedsAttentionList(): JSX.Element {
               <span className="inline-flex items-center justify-center min-w-[72px] px-2 py-0.5 rounded text-[12.5px] font-mono font-semibold bg-muted">
                 {it.formCode}
               </span>
-              <span className="flex-1 text-sm truncate">{it.formName || it.formCode}</span>
+              <span className="flex-1 text-[14.5px] break-keep leading-snug">{it.formName || it.formCode}</span>
               <span className={cn('text-[12.5px] font-semibold px-2 py-0.5 rounded', REASON_STYLE[it.reason] ?? 'bg-muted text-muted-foreground')}>
                 {it.reason}
               </span>
-              <span className="text-xs font-bold tabular-nums w-10 text-right">
+              <span className="text-[13.5px] font-bold tabular-nums w-10 text-right">
                 {it.score != null ? `${it.score}점` : '–'}
               </span>
               <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground" />

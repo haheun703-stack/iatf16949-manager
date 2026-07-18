@@ -46,7 +46,7 @@ export function RecentScoresPanel(): JSX.Element {
               className="w-full text-left p-2.5 rounded-md hover:bg-muted/50 transition-colors flex items-center gap-2"
             >
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium truncate">{r.formName || r.formCode}</div>
+                <div className="text-[14.5px] font-medium break-keep leading-snug">{r.formName || r.formCode}</div>
                 <div className="text-[12.5px] text-muted-foreground font-mono">{r.formCode}</div>
               </div>
               <span className={cn('text-lg font-black tabular-nums', scoreTone(r.score))}>

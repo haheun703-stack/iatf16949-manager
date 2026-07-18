@@ -40,7 +40,7 @@ export function ScoreDistributionPanel(): JSX.Element {
       {scored === 0 ? (
         <div className="text-center py-10">
           <Gauge className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-30" />
-          <p className="text-sm font-semibold mb-1">아직 채점된 양식이 없습니다</p>
+          <p className="text-[15px] font-semibold mb-1">아직 채점된 양식이 없습니다</p>
           <p className="text-[13.5px] text-muted-foreground leading-relaxed">
             양식을 작성한 뒤 <span className="text-primary font-semibold">AI 채점</span>을 실행하면<br />
             여기에 실제 준비도가 집계됩니다.
@@ -70,7 +70,7 @@ export function ScoreDistributionPanel(): JSX.Element {
                       style={{ width: `${(d.count / maxCount) * 100}%` }}
                     />
                   </div>
-                  <span className="text-xs font-semibold tabular-nums w-6 text-right">{d.count}</span>
+                  <span className="text-[13.5px] font-semibold tabular-nums w-6 text-right">{d.count}</span>
                 </div>
               )
             })}
