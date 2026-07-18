@@ -948,6 +948,56 @@ export interface IntegrityReportDto {
   rows: IntegrityCheckRow[]
 }
 
+// ===== LOT 계보 조회 (7/19 Scan-to-Trace — MES POP_TRACE 사이드카) =====
+
+export interface MesTraceStatusDto {
+  available: boolean
+  path: string
+  builtAt: string | null
+  sourceDmp: string | null
+  lotCount: number
+  edgeCount: number
+  /** 계보 링크 연도 범위 (예: '2021~2026') */
+  yearRange: string | null
+}
+
+export interface MesTraceLotDto {
+  id: number
+  barcode: string
+  lotseq: number
+  /** 품번 (POP_LOT_INFO.PNO — 원장 밖 LOT 은 null) */
+  pno: string | null
+  addymd: string | null
+  gbn: string | null
+  qty: number | null
+}
+
+export interface MesTraceLevelDto {
+  /** 1 = 직계 (부모/자식), 2 = 그 다음 단계 ... */
+  depth: number
+  /** 해당 단계 실제 건수 (lots 는 표시 상한으로 잘릴 수 있음) */
+  count: number
+  lots: MesTraceLotDto[]
+}
+
+export interface MesTraceDirectionDto {
+  levels: MesTraceLevelDto[]
+  /** 전개된 LOT 총수 (start 제외) */
+  total: number
+  /** 그래프 전개 소요(ms) — 심사 시연 수치 */
+  ms: number
+  /** 상한 도달로 잘렸는지 */
+  truncated: boolean
+}
+
+export interface MesTraceExpandDto {
+  start: MesTraceLotDto
+  /** 역추적 — 이 LOT 에 들어온 것(자재 방향) */
+  up: MesTraceDirectionDto
+  /** 정추적 — 이 LOT 이 들어간 곳(완제품 방향) */
+  down: MesTraceDirectionDto
+}
+
 // ===== SQ 심사 아이템 트랙 (0068/0069 — 품번 4종 × 4단계 체크리스트) =====
 
 export type SqTrackStatus = 'open' | 'in_progress' | 'done' | 'na'
@@ -1946,6 +1996,18 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.INTEGRITY_CHECK]: {
     request: void
     response: IntegrityReportDto
+  }
+  [IPC_CHANNELS.MES_TRACE_STATUS]: {
+    request: void
+    response: MesTraceStatusDto
+  }
+  [IPC_CHANNELS.MES_TRACE_SEARCH]: {
+    request: { query: string }
+    response: MesTraceLotDto[]
+  }
+  [IPC_CHANNELS.MES_TRACE_EXPAND]: {
+    request: { lotId: number }
+    response: MesTraceExpandDto | null
   }
   [IPC_CHANNELS.SQ_ASSESS_RUN]: {
     request: void

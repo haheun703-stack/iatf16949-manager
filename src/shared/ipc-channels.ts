@@ -172,6 +172,11 @@ export const IPC_CHANNELS = {
   // 정합성 점검 (팀 체인 결정론 검사 — 7/19 검수 체계 1층)
   INTEGRITY_CHECK: 'integrity:check',
 
+  // LOT 계보 조회 (MES POP_TRACE 사이드카 mes_trace.db — 정·역추적, 7/19 Scan-to-Trace)
+  MES_TRACE_STATUS: 'mesTrace:status',
+  MES_TRACE_SEARCH: 'mesTrace:search',
+  MES_TRACE_EXPAND: 'mesTrace:expand',
+
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',
   PART_DETAIL: 'parts:detail',

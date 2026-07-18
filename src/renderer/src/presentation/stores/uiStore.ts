@@ -28,6 +28,7 @@ export type PageId =
   | 'team'
   | 'about'
   | 'integrity'
+  | 'mes-trace'
 
 interface UIState {
   currentPage: PageId
