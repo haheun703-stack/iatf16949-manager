@@ -1,4 +1,28 @@
-# TODO — 이어서 작업 (갱신: 2026-07-17 밤)
+# TODO — 이어서 작업 (갱신: 2026-07-18)
+
+## 🟢 7/18 — MES DB 덤프 통째 입수 → 판독 성공 + 하위코드 앱 적재 (0076)
+
+**대사건**: 회사 서버에서 받은 `tspmes_2026-07-17.zip`(3.4GB)의 정체 = **MES(TSPMES) Oracle 11gR2
+전체 DB 야간백업**(6.2GB dmp, 테이블 135개). 일일 엑셀 드롭을 기다릴 필요가 없어짐 — 수년치가 통째로 있음.
+
+1. **덤프 판독기 자작**(Oracle 설치 없이): `scripts/mes_dump_scan.py`(전 테이블 DDL/오프셋 목록)
+   + `scripts/mes_dump_extract.py`(exp 바이너리 행 포맷 역공학 — 디스크립터/NULL=FEFF/종료=FFFF/
+   Oracle NUMBER·DATE 디코딩/UTF-8·CP949 혼재 자동판별). 한계: LONG/LOB 테이블(POP_ITEM 도면)은 미지원.
+2. **하위코드 전량 적재**(0076_mes_codes_seed): POP_CODE 2,906행·128그룹 → 앱 `mes_codes` 테이블.
+   핵심 그룹: **QC_GBN**(W자주/I수입/P패트롤/O출하) · SPC_INSP(자주검사 항목 105) · MAC_CLGBN(설비
+   보전항목 119) · ROUTEBAD(공정별 불량 251) · WRKCTR(설비 182) · CON_SCOPE(브레이징 조건범위+PLC주소)
+   · DEPT(부서) · SPC_CNT(검사차수/시각). 스모크=멱등 2회 적용 OK.
+3. **4종 기록 ↔ MES 테이블 매핑 확정**: 자주/수입/패트롤 = QMS_SQC(QCGBN 구분)+QMS_SQCDESC(측정값,
+   ~840MB 최대 테이블) · 설비일상점검 = MAC_DESC · 검사규격 = **QMS_SPEC(SU/SL/NOMINAL → CP/CPK 원천!)**
+   · POP_SQC/POP_QC_DATA 등 POP_* 검사계열은 빈 테이블(QMS_*가 실사용). 샘플 CSV+README =
+   `8. 자주검사...\TPC AM사업부 하위코드들 모음_260718\추출결과\`.
+
+**▶ 다음**:
+1. **QMS_SQC/SQCDESC/QMS_SPEC/MAC_DESC 전량 추출**(각 최근 N개월) → mes_records 적재 파이프라인
+   (0072 스키마와 정합) — "CP 기준은 있는데 기록이 없다" 갭을 덤프 데이터로 즉시 매꿀 수 있는지 판단.
+2. QMS_SPEC(규격)+QMS_SQCDESC(실측) 조합으로 **CP/CPK 계산 스파이크** — [[plan_cpk_recording]] 대기 해제 후보.
+3. MES 다운로드 의무 재정의 검토: 일일 엑셀 드롭 대신 **주기적 dmp 반입**이 현실적일 수 있음(사장님 논의).
+4. POP_ITEM(BLOB) 추출기 확장(백로그) · 관제탑 MES 의무 담당자 지정(7/20 도래분).
 
 ## 🟢 7/17 — SQ 레벨업(10월, 600→700+) 심사 대비 하루 완결 (커밋 8건, HEAD 5156126, 전부 푸시)
 
