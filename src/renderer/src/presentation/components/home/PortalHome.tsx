@@ -105,7 +105,7 @@ export function PortalHome(): JSX.Element {
       {/* 회사 밴드 — 파스텔 면(7/16 사장님: 전체 파스텔 밝게). 딥블루는 활성 버튼 점에만 */}
       <div className="rounded-2xl px-8 py-6 flex items-center gap-6 flex-wrap border border-border bg-gradient-to-r from-white via-[#eaf3fc] to-[#dcebfa]">
         <div className="min-w-0">
-          <div className="text-[13.5px] font-semibold text-muted-foreground truncate">
+          <div className="text-[14px] font-semibold text-muted-foreground break-keep leading-snug">
             {profile?.companyName || 'IATF 16949 품질경영시스템'} · {dateLabel}
           </div>
           {/* 톤 원칙(코워크 09 검토 반영): 하루가 끝나기 전 이행률은 경보가 아니라 진행 현황 — 위기어는 연체에만 */}
@@ -150,13 +150,13 @@ export function PortalHome(): JSX.Element {
           className="text-left bg-card border border-border rounded-xl px-6 py-5 hover:shadow-md transition-shadow"
           title="심사 준비는 '심사 대응' 탭에서 — SQ 42항목"
         >
-          <div className="text-[13px] font-semibold text-muted-foreground inline-flex items-center gap-1">
+          <div className="text-[16.5px] font-bold text-foreground inline-flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5" /> 심사 대비 <span className="opacity-70">(항목)</span>
           </div>
           <div className="text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1">
             D-{Math.abs(dday)}
           </div>
-          <div className="text-[12px] font-semibold text-primary mt-1.5 inline-flex items-center">
+          <div className="text-[13px] font-semibold text-primary mt-1.5 inline-flex items-center">
             SQ 준비도 보기 <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </button>
@@ -165,28 +165,28 @@ export function PortalHome(): JSX.Element {
       {/* 위젯: 주간 완료 추이 + 팀별 오늘 이행률 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-card border border-border rounded-xl p-6">
-          <div className="text-[13.5px] font-bold text-muted-foreground mb-3.5">주간 완료 추이 (전사)</div>
+          <div className="text-[16.5px] font-bold text-foreground mb-3.5">주간 완료 추이 (전사)</div>
           <TrendBars trend={board.trend} />
         </div>
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="mb-3.5 flex items-baseline">
-            <span className="flex-1 text-[13.5px] font-bold text-muted-foreground">팀별 오늘 이행률</span>
+            <span className="flex-1 text-[16.5px] font-bold text-foreground">팀별 오늘 이행률</span>
             <button
               type="button"
               onClick={() => setPage('team-hub')}
-              className="text-[12px] font-bold text-primary"
+              className="text-[13px] font-bold text-primary"
             >
               팀별 허브 ›
             </button>
           </div>
-          <div className="grid gap-2">
+          <div className="grid gap-3">
             {board.teams.map((t) => {
               const theme = teamTheme(t.teamId)
               const d = t.done + t.open
               const pct = d > 0 ? Math.round((t.done / d) * 100) : null
               return (
-                <div key={t.teamId} className="flex items-center gap-3 text-[13.5px]">
-                  <span className="w-[118px] font-semibold truncate" style={{ color: theme.darkText }}>
+                <div key={t.teamId} className="flex items-center gap-3 text-[14.5px]">
+                  <span className="w-[118px] font-semibold break-keep leading-snug" style={{ color: theme.darkText }}>
                     {theme.label}
                   </span>
                   <span className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
@@ -197,7 +197,7 @@ export function PortalHome(): JSX.Element {
                       />
                     )}
                   </span>
-                  <span className="w-16 text-right tabular-nums text-[13px] text-muted-foreground">
+                  <span className="w-16 text-right tabular-nums text-[14px] text-muted-foreground">
                     {d === 0 ? '없음' : `${t.done}/${d}건`}
                   </span>
                 </div>
@@ -210,11 +210,11 @@ export function PortalHome(): JSX.Element {
       {/* KPI 지수 스트립 (0066) — 목표 대비 실적, 미입력=정직 회색 */}
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="mb-3.5 flex items-baseline flex-wrap gap-2">
-          <span className="flex-1 text-[13.5px] font-bold text-muted-foreground">KPI 지수 — 목표 대비 월 실적</span>
-          <span className="text-[12px] text-muted-foreground">값은 월별 [입력]으로 기록 · 품질실적 월보 연동 예정</span>
+          <span className="flex-1 text-[16.5px] font-bold text-foreground">KPI 지수 — 목표 대비 월 실적</span>
+          <span className="text-[13px] text-muted-foreground">값은 월별 [입력]으로 기록 · 품질실적 월보 연동 예정</span>
         </div>
         {kpis.length === 0 ? (
-          <div className="text-[12px] text-muted-foreground">지표 없음</div>
+          <div className="text-[13px] text-muted-foreground">지표 없음</div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
             {kpis.map((k) => (
@@ -227,10 +227,10 @@ export function PortalHome(): JSX.Element {
       {/* 메인: 오늘 할 일 보드 — 팀별 ⇄ 개인별 */}
       <div>
         <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
-          <span className="text-[16px] font-extrabold tracking-[-0.01em]">
+          <span className="text-[19px] font-extrabold tracking-[-0.01em]">
             오늘 할 일 — 했는지 · 안 했는지
           </span>
-          <span className="text-[13px] font-medium text-muted-foreground">
+          <span className="text-[14px] font-medium text-muted-foreground">
             ✓ = 완료 처리 또는 연결 양식의 오늘 작성 기록 · 심사(SQ) 연계는 배지로만
           </span>
           <span className="flex-1" />
@@ -281,17 +281,17 @@ export function PortalHome(): JSX.Element {
                 className="bg-card rounded-xl overflow-hidden flex flex-col border border-border"
               >
                 <div
-                  className="px-5 py-3 text-[14px] font-bold flex items-center"
+                  className="px-5 py-3 text-[16.5px] font-bold flex items-center"
                   style={{ backgroundColor: theme.tintBg, color: theme.darkText }}
                 >
-                  <span className="flex-1 truncate">{theme.label}</span>
-                  <span className="text-[12.5px] font-semibold tabular-nums opacity-85 shrink-0">
+                  <span className="flex-1 break-keep leading-snug">{theme.label}</span>
+                  <span className="text-[13.5px] font-semibold tabular-nums opacity-85 shrink-0">
                     {denomT === 0 ? `예정 ${team.upcoming}` : `${team.done}/${denomT}건`}
                   </span>
                 </div>
 
                 {tasks.length === 0 ? (
-                  <div className="px-5 py-4 text-[13px] leading-relaxed text-muted-foreground">
+                  <div className="px-5 py-4 text-[14.5px] leading-relaxed text-muted-foreground">
                     {onlyOpen
                       ? '미이행 없음 👍'
                       : denomT === 0 && team.upcoming === 0
@@ -312,7 +312,7 @@ export function PortalHome(): JSX.Element {
                   </div>
                 )}
 
-                <div className="mt-auto px-5 py-3 border-t border-border flex items-center gap-2.5 text-[12.5px] text-muted-foreground">
+                <div className="mt-auto px-5 py-3 border-t border-border flex items-center gap-2.5 text-[13.5px] text-muted-foreground">
                   <span className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                     {pct != null && (
                       <span
@@ -335,7 +335,7 @@ export function PortalHome(): JSX.Element {
         <button
           type="button"
           onClick={() => setPage('obligations')}
-          className="w-full text-left bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 text-[13px] text-amber-800 hover:bg-amber-100 transition-colors"
+          className="w-full text-left bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 text-[14.5px] text-amber-800 hover:bg-amber-100 transition-colors"
         >
           <AlertCircle className="w-3.5 h-3.5 inline -mt-0.5 mr-1.5" />
           담당 팀이 지정되지 않은 오늘 업무 <b>{board.unassigned.length}건</b> — 정기 의무에서 담당을
@@ -349,7 +349,7 @@ export function PortalHome(): JSX.Element {
 function Kpi({ label, value, sub, bad }: { label: string; value: string; sub: string; bad?: boolean }): JSX.Element {
   return (
     <div className="bg-card border border-border rounded-xl px-6 py-5">
-      <div className="text-[13px] font-semibold text-muted-foreground">{label}</div>
+      <div className="text-[16.5px] font-bold text-foreground">{label}</div>
       <div
         className={cn(
           'text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1',
@@ -358,7 +358,7 @@ function Kpi({ label, value, sub, bad }: { label: string; value: string; sub: st
       >
         {value}
       </div>
-      <div className="text-[12px] text-muted-foreground mt-1.5">{sub}</div>
+      <div className="text-[13px] text-muted-foreground mt-1.5">{sub}</div>
     </div>
   )
 }
@@ -374,18 +374,18 @@ function TrendBars({ trend }: { trend: TeamTodayBoardDto['trend'] }): JSX.Elemen
           const d = new Date(`${t.date}T00:00:00`)
           return (
             <div key={t.date} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-              <span className="text-[11px] tabular-nums text-muted-foreground">{t.done > 0 ? t.done : ''}</span>
+              <span className="text-[12px] tabular-nums text-muted-foreground">{t.done > 0 ? t.done : ''}</span>
               <div
                 className="w-full max-w-[42px] rounded-t bg-primary/80"
                 style={{ height: `${Math.max(t.done > 0 ? 10 : 2, (t.done / max) * 58)}px` }}
               />
-              <span className="text-[11px] text-muted-foreground">{`${d.getMonth() + 1}/${d.getDate()}`}</span>
+              <span className="text-[12px] text-muted-foreground">{`${d.getMonth() + 1}/${d.getDate()}`}</span>
             </div>
           )
         })}
       </div>
       {allZero && (
-        <div className="text-[12px] text-muted-foreground mt-2">
+        <div className="text-[13px] text-muted-foreground mt-2">
           이행 이력은 오늘부터 쌓입니다 — [완료] 처리가 기록되면 추이가 채워집니다.
         </div>
       )}
@@ -419,7 +419,7 @@ function TaskRow({
   const Icon = st.icon
   const isOpen = task.status === 'due' || task.status === 'overdue'
   return (
-    <div className="px-5 py-[11px] border-t border-border first:border-t-0 flex items-center gap-2.5 text-[13.5px]">
+    <div className="px-5 py-3 border-t border-border first:border-t-0 flex items-center gap-2.5 text-[14.5px]">
       <span
         className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white"
         style={{ backgroundColor: st.bg }}
@@ -434,13 +434,13 @@ function TaskRow({
           title={teamDot.label}
         />
       )}
-      <span className="flex-1 min-w-0 truncate" title={`${task.title} · ${task.cadence} 주기`}>
+      <span className="flex-1 min-w-0 break-keep leading-snug" title={`${task.title} · ${task.cadence} 주기`}>
         {task.title}
         {task.status === 'overdue' && task.daysLeft != null && (
-          <em className="not-italic text-destructive font-bold text-[12.5px]"> 연체 {Math.abs(task.daysLeft)}일</em>
+          <em className="not-italic text-destructive font-bold text-[13.5px]"> 연체 {Math.abs(task.daysLeft)}일</em>
         )}
         {task.status === 'upcoming' && task.daysLeft != null && (
-          <span className="text-muted-foreground text-[12.5px] tabular-nums"> D-{task.daysLeft}</span>
+          <span className="text-muted-foreground text-[13.5px] tabular-nums"> D-{task.daysLeft}</span>
         )}
       </span>
       {task.sqBadges.length > 0 && (
@@ -453,7 +453,7 @@ function TaskRow({
         </span>
       )}
       {task.status === 'done' ? (
-        <span className="text-[12px] text-muted-foreground shrink-0" title={task.doneSource === 'form' ? '연결 양식의 오늘 작성 기록 감지' : '완료 처리됨'}>
+        <span className="text-[13px] text-muted-foreground shrink-0" title={task.doneSource === 'form' ? '연결 양식의 오늘 작성 기록 감지' : '완료 처리됨'}>
           {task.doneSource === 'form' ? '작성기록' : '완료'}
         </span>
       ) : isOpen ? (
@@ -520,11 +520,11 @@ function PersonBoard({
       <button
         type="button"
         onClick={onGoObligations}
-        className="w-full text-left bg-card border border-border rounded-xl px-6 py-7 text-[13.5px] leading-relaxed text-muted-foreground hover:bg-muted/50 transition-colors"
+        className="w-full text-left bg-card border border-border rounded-xl px-6 py-7 text-[14.5px] leading-relaxed text-muted-foreground hover:bg-muted/50 transition-colors"
       >
         담당자가 지정된 업무가 아직 없습니다 — <b className="text-foreground">정기 의무 관리</b>에서 각 업무에
         담당자(개인)를 지정하면 여기에 사람별 보드가 나타납니다 ›
-        {unassigned > 0 && <span className="block mt-1 text-[11.5px]">오늘 업무 중 담당자 미지정 {unassigned}건</span>}
+        {unassigned > 0 && <span className="block mt-1 text-[13px]">오늘 업무 중 담당자 미지정 {unassigned}건</span>}
       </button>
     )
   }
@@ -540,9 +540,9 @@ function PersonBoard({
           const pct = denom > 0 ? Math.round((done / denom) * 100) : null
           return (
             <div key={name} className="bg-card border border-border rounded-xl overflow-hidden flex flex-col">
-              <div className="px-5 py-3 text-[14px] font-bold flex items-center bg-secondary text-secondary-foreground">
-                <span className="flex-1 truncate">{name}</span>
-                <span className="text-[12.5px] font-semibold tabular-nums opacity-85 shrink-0">
+              <div className="px-5 py-3 text-[16.5px] font-bold flex items-center bg-secondary text-secondary-foreground">
+                <span className="flex-1 break-keep leading-snug">{name}</span>
+                <span className="text-[13.5px] font-semibold tabular-nums opacity-85 shrink-0">
                   {denom === 0 ? `예정 ${entries.length}` : `${done}/${denom}건`}
                 </span>
               </div>
@@ -561,7 +561,7 @@ function PersonBoard({
                   )
                 })}
               </div>
-              <div className="mt-auto px-5 py-3 border-t border-border flex items-center gap-2.5 text-[12.5px] text-muted-foreground">
+              <div className="mt-auto px-5 py-3 border-t border-border flex items-center gap-2.5 text-[13.5px] text-muted-foreground">
                 <span className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                   {pct != null && <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />}
                 </span>
@@ -575,7 +575,7 @@ function PersonBoard({
         <button
           type="button"
           onClick={onGoObligations}
-          className="mt-4 w-full text-left bg-muted/60 border border-border rounded-xl px-5 py-3 text-[13px] text-muted-foreground hover:bg-muted transition-colors"
+          className="mt-4 w-full text-left bg-muted/60 border border-border rounded-xl px-5 py-3 text-[14.5px] text-muted-foreground hover:bg-muted transition-colors"
         >
           담당자 미지정 업무 {unassigned}건 — 정기 의무에서 담당자(개인)를 지정하면 개인별 보드에 나타납니다 ›
         </button>
@@ -633,9 +633,9 @@ function KpiTile({
   }
 
   return (
-    <div className="border border-border rounded-lg px-4 py-3.5 min-w-0">
+    <div className="border border-border rounded-lg px-4 py-4 min-w-0">
       <div className="flex items-center gap-1.5">
-        <span className="flex-1 text-[12.5px] font-semibold text-muted-foreground truncate" title={`${kpi.name}${kpi.ownerTeam ? ` · ${kpi.ownerTeam}` : ''}${kpi.note ? ` — ${kpi.note}` : ''}`}>
+        <span className="flex-1 text-[14.5px] font-bold text-foreground break-keep leading-snug" title={`${kpi.name}${kpi.ownerTeam ? ` · ${kpi.ownerTeam}` : ''}${kpi.note ? ` — ${kpi.note}` : ''}`}>
           {kpi.name}
         </span>
         <button
@@ -688,7 +688,7 @@ function KpiTile({
               '미입력'
             )}
           </div>
-          <div className="text-[11.5px] text-muted-foreground mt-1.5 tabular-nums flex items-center gap-1.5 flex-wrap">
+          <div className="text-[12.5px] text-muted-foreground mt-1.5 tabular-nums flex items-center gap-1.5 flex-wrap">
             <span>{kpi.target != null ? `목표 ${fmt(kpi.target)}` : '목표 미설정'}</span>
             {diff != null && diff !== 0 && (
               <span className={cn('font-bold', improved ? 'text-[#0a7a0a]' : 'text-destructive')}>

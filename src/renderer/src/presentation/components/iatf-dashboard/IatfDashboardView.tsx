@@ -68,35 +68,35 @@ export function IatfDashboardView(): JSX.Element {
       {/* ── 1행: 핵심 지표 ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card border border-border rounded-xl px-6 py-5">
-          <div className="text-[13px] font-semibold text-muted-foreground">심사까지</div>
+          <div className="text-[16.5px] font-bold text-foreground">심사까지</div>
           <div className="text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1">
             D-{Math.abs(dday)}
           </div>
-          <div className="text-[12px] text-muted-foreground mt-1.5">3차 정기심사 · 설정에서 변경</div>
+          <div className="text-[13px] text-muted-foreground mt-1.5">3차 정기심사 · 설정에서 변경</div>
         </div>
         <div className="bg-card border border-border rounded-xl px-6 py-5">
-          <div className="text-[13px] font-semibold text-muted-foreground">핵심 의무 연체</div>
+          <div className="text-[16.5px] font-bold text-foreground">핵심 의무 연체</div>
           <div className={cn('text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1', overdue.length > 0 && 'text-destructive')}>
             {overdue.length}
           </div>
-          <div className="text-[12px] text-muted-foreground mt-1.5">내부심사·경영검토·교정·교육 기준</div>
+          <div className="text-[13px] text-muted-foreground mt-1.5">내부심사·경영검토·교정·교육 기준</div>
         </div>
         <div className="bg-card border border-border rounded-xl px-6 py-5">
-          <div className="text-[13px] font-semibold text-muted-foreground">빈 조항 (규정 미매핑)</div>
+          <div className="text-[16.5px] font-bold text-foreground">빈 조항 (규정 미매핑)</div>
           <div className={cn('text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1', emptyClauses.length > 0 && 'text-destructive')}>
             {emptyClauses.length}
           </div>
-          <div className="text-[12px] text-muted-foreground mt-1.5">
+          <div className="text-[13px] text-muted-foreground mt-1.5">
             {emptyClauses.length > 0 ? `${emptyClauses.map((c) => c.clause).join('·')}장 보강 필요` : '4~10장 전부 매핑됨'}
           </div>
         </div>
         <div className="bg-card border border-border rounded-xl px-6 py-5">
-          <div className="text-[13px] font-semibold text-muted-foreground">문서화 (작성 가능 양식)</div>
+          <div className="text-[16.5px] font-bold text-foreground">문서화 (작성 가능 양식)</div>
           <div className="text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1">
             {data.docs.formsFillable}
             <small className="text-[14px] font-semibold text-muted-foreground"> /{data.docs.formsTotal}</small>
           </div>
-          <div className="text-[12px] text-muted-foreground mt-1.5">규정 본문 {data.docs.regBodies}/{data.docs.regsTotal}종 열람 가능</div>
+          <div className="text-[13px] text-muted-foreground mt-1.5">규정 본문 {data.docs.regBodies}/{data.docs.regsTotal}종 열람 가능</div>
         </div>
       </div>
 
@@ -104,15 +104,15 @@ export function IatfDashboardView(): JSX.Element {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="mb-4 flex items-baseline">
-            <span className="flex-1 text-[13.5px] font-bold text-muted-foreground">조항 커버리지 — IATF 4~10장</span>
-            <button type="button" onClick={() => setPage('clause-tree')} className="text-[12px] font-bold text-primary">
+            <span className="flex-1 text-[16.5px] font-bold text-foreground">조항 커버리지 — IATF 4~10장</span>
+            <button type="button" onClick={() => setPage('clause-tree')} className="text-[13px] font-bold text-primary">
               상세 보기 ›
             </button>
           </div>
           <div className="space-y-3">
             {data.clauses.map((c) => (
               <div key={c.clause} className="flex items-center gap-3">
-                <span className="w-[120px] text-[13px] font-semibold truncate">
+                <span className="w-[120px] text-[14.5px] font-semibold break-keep leading-snug">
                   {c.clause}장 <span className="text-muted-foreground font-medium">{c.title}</span>
                 </span>
                 <span className="flex-1 h-3 rounded-full bg-[#e7f1fc] overflow-hidden">
@@ -121,7 +121,7 @@ export function IatfDashboardView(): JSX.Element {
                     style={{ width: `${Math.max(4, (c.regCount / maxReg) * 100)}%` }}
                   />
                 </span>
-                <span className={cn('w-16 text-right text-[12.5px] tabular-nums', c.regCount === 0 ? 'text-destructive font-bold' : 'text-muted-foreground')}>
+                <span className={cn('w-16 text-right text-[13.5px] tabular-nums', c.regCount === 0 ? 'text-destructive font-bold' : 'text-muted-foreground')}>
                   {c.regCount === 0 ? '없음' : `규정 ${c.regCount}`}
                 </span>
               </div>
@@ -131,8 +131,8 @@ export function IatfDashboardView(): JSX.Element {
 
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="mb-4 flex items-baseline">
-            <span className="flex-1 text-[13.5px] font-bold text-muted-foreground">문서화 준비도</span>
-            <button type="button" onClick={() => setPage('document-bom')} className="text-[12px] font-bold text-primary">
+            <span className="flex-1 text-[16.5px] font-bold text-foreground">문서화 준비도</span>
+            <button type="button" onClick={() => setPage('document-bom')} className="text-[13px] font-bold text-primary">
               문서 BOM ›
             </button>
           </div>
@@ -141,7 +141,7 @@ export function IatfDashboardView(): JSX.Element {
             <DocBar label="작성 가능 양식" value={data.docs.formsFillable} total={data.docs.formsTotal} />
             <DocBar label="작성 실적 있는 양식" value={data.docs.formsWithSubmission} total={data.docs.formsTotal} />
           </div>
-          <div className="text-[11.5px] text-muted-foreground mt-4">
+          <div className="text-[13px] text-muted-foreground mt-4">
             작성 가능 = 셀맵(필드 정의) 보유 · 나머지는 문서 등록만 — 셀맵 보강으로 확대
           </div>
         </div>
@@ -150,10 +150,10 @@ export function IatfDashboardView(): JSX.Element {
       {/* ── 3행: 심사 핵심 정기 의무 ── */}
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="mb-4 flex items-baseline flex-wrap gap-2">
-          <span className="flex-1 text-[13.5px] font-bold text-muted-foreground">
+          <span className="flex-1 text-[16.5px] font-bold text-foreground">
             심사 핵심 의무 — 내부심사 · 경영검토 · 교정 · 교육 (이행 기록 기준)
           </span>
-          <button type="button" onClick={() => setPage('obligations')} className="text-[12px] font-bold text-primary">
+          <button type="button" onClick={() => setPage('obligations')} className="text-[13px] font-bold text-primary">
             정기 의무 관리 ›
           </button>
         </div>
@@ -168,7 +168,7 @@ export function IatfDashboardView(): JSX.Element {
               {rows.map((d) => {
                 const pill = STATUS_PILL[d.status]
                 return (
-                  <div key={d.id} className="flex items-center gap-2.5 py-[7px] border-t border-border text-[13px]">
+                  <div key={d.id} className="flex items-center gap-2.5 py-2.5 border-t border-border text-[14.5px]">
                     {d.status === 'ok' ? (
                       <CircleCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                     ) : d.status === 'due' ? (
@@ -176,16 +176,16 @@ export function IatfDashboardView(): JSX.Element {
                     ) : (
                       <CircleAlert className="w-4 h-4 text-[#c03636] shrink-0" />
                     )}
-                    <span className="flex-1 min-w-0 truncate">{d.title}</span>
+                    <span className="flex-1 min-w-0 break-keep leading-snug">{d.title}</span>
                     {d.clauseRef && (
                       <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
                         {d.clauseRef}
                       </span>
                     )}
-                    <span className="text-[11.5px] text-muted-foreground tabular-nums shrink-0 hidden md:inline">
+                    <span className="text-[13px] text-muted-foreground tabular-nums shrink-0 hidden md:inline">
                       {d.lastDoneDate ? `최근 ${d.lastDoneDate}` : '이행 기록 없음'}
                     </span>
-                    <span className="text-[11.5px] text-muted-foreground tabular-nums shrink-0">
+                    <span className="text-[13px] text-muted-foreground tabular-nums shrink-0">
                       {d.nextDueDate ? `도래 ${d.nextDueDate}` : '—'}
                     </span>
                     <span className={cn('text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0', pill.cls)}>
@@ -199,13 +199,13 @@ export function IatfDashboardView(): JSX.Element {
           )
         })}
         {due.length + overdue.length > 0 && (
-          <div className="text-[12px] text-muted-foreground mt-3">
+          <div className="text-[13px] text-muted-foreground mt-3">
             연체 {overdue.length} · 임박 {due.length} — 홈 관제탑과 팀별 허브에서 [완료] 처리하면 즉시 반영됩니다.
           </div>
         )}
       </div>
 
-      <p className="text-[12px] text-muted-foreground text-center inline-flex items-center gap-1.5 w-full justify-center">
+      <p className="text-[13px] text-muted-foreground text-center inline-flex items-center gap-1.5 w-full justify-center">
         <BookOpen className="w-3.5 h-3.5" />
         내부심사·경영검토의 "했다"는 정기 의무 이행 기록이 근거 — 소급 표시 없음(정직).
         <button type="button" onClick={() => setPage('sq-dashboard')} className="text-primary font-bold inline-flex items-center">
@@ -220,11 +220,11 @@ function DocBar({ label, value, total }: { label: string; value: number; total: 
   const pct = total > 0 ? Math.round((value / total) * 100) : 0
   return (
     <div className="flex items-center gap-3">
-      <span className="w-[140px] text-[13px] font-semibold truncate">{label}</span>
+      <span className="w-[140px] text-[14.5px] font-semibold break-keep leading-snug">{label}</span>
       <span className="flex-1 h-3 rounded-full bg-[#e7f1fc] overflow-hidden">
         <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
       </span>
-      <span className="w-[110px] text-right text-[12.5px] tabular-nums text-muted-foreground">
+      <span className="w-[110px] text-right text-[13.5px] tabular-nums text-muted-foreground">
         <b className="text-foreground">{value}</b> / {total} · {pct}%
       </span>
     </div>

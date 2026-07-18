@@ -61,8 +61,8 @@ export function TimelineView(): JSX.Element {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <CalendarRange className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-          <p className="text-sm font-semibold mb-1">날짜가 지정된 일정이 없습니다</p>
-          <p className="text-[12px] text-muted-foreground">일정에 시작일/마감일을 넣으면 타임라인에 표시됩니다.</p>
+          <p className="text-[15px] font-semibold mb-1">날짜가 지정된 일정이 없습니다</p>
+          <p className="text-[13px] text-muted-foreground">일정에 시작일/마감일을 넣으면 타임라인에 표시됩니다.</p>
         </div>
       </div>
     )
@@ -75,14 +75,14 @@ export function TimelineView(): JSX.Element {
       <div className="min-w-[760px]">
         {/* Month header */}
         <div className="flex sticky top-0 z-10 bg-muted/40 border-b border-border">
-          <div className="w-[260px] shrink-0 px-3 py-2 text-[11px] font-semibold text-muted-foreground border-r border-border">
+          <div className="w-[260px] shrink-0 px-3 py-2 text-[13px] font-semibold text-muted-foreground border-r border-border">
             일정 ({dated.length})
           </div>
           <div className="relative flex-1 h-8">
             {months.map((m) => (
               <div
                 key={m.label}
-                className="absolute top-0 h-full flex items-center px-1.5 text-[10px] text-muted-foreground border-l border-border/60"
+                className="absolute top-0 h-full flex items-center px-1.5 text-[11px] text-muted-foreground border-l border-border/60"
                 style={{ left: `${m.leftPct}%` }}
               >
                 {m.label}
@@ -119,9 +119,9 @@ export function TimelineView(): JSX.Element {
                     </span>
                     <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', STATUS_META[it.status].dot)} />
                   </div>
-                  <div className="text-[13px] font-medium truncate">{it.title}</div>
+                  <div className="text-[14.5px] font-semibold break-keep leading-snug">{it.title}</div>
                   {it.owner && (
-                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <div className="text-[12px] text-muted-foreground flex items-center gap-1 mt-0.5">
                       <User className="w-2.5 h-2.5" />
                       {it.owner}
                     </div>
@@ -136,7 +136,7 @@ export function TimelineView(): JSX.Element {
                     )}
                     style={{ left: `${Math.max(0, leftPct)}%`, width: `${widthPct}%` }}
                   >
-                    {dd && <span className="text-[9px] text-white/90 font-semibold whitespace-nowrap">{dd.text}</span>}
+                    {dd && <span className="text-[10px] text-white/90 font-semibold whitespace-nowrap">{dd.text}</span>}
                   </div>
                   {todayPct >= 0 && todayPct <= 100 && (
                     <div className="absolute top-0 h-full w-px bg-primary/40" style={{ left: `${todayPct}%` }} />

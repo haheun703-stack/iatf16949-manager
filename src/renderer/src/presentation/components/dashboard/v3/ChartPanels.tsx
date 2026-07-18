@@ -21,8 +21,8 @@ function Panel({
 }): JSX.Element {
   return (
     <div className={cn('bg-card border border-border rounded-xl shadow-sm p-5 flex flex-col', className)}>
-      <h2 className="text-[15px] font-extrabold">{title}</h2>
-      {sub && <div className="text-[11px] text-muted-foreground mb-3">{sub}</div>}
+      <h2 className="text-[16.5px] font-extrabold">{title}</h2>
+      {sub && <div className="text-[13px] text-muted-foreground mb-3">{sub}</div>}
       {children}
     </div>
   )
@@ -36,11 +36,11 @@ export function TeamRail(): JSX.Element {
   const setSelectedTeam = useUIStore((s) => s.setSelectedTeam)
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-3 flex flex-col gap-2 lg:row-span-2">
-      <div className="text-[12px] font-extrabold text-muted-foreground px-1 mb-0.5">팀</div>
+      <div className="text-[16.5px] font-extrabold text-foreground px-1 mb-0.5">팀</div>
       <button
         type="button"
         onClick={() => setPage('team-hub')}
-        className="flex-1 min-h-[40px] text-[13.5px] font-bold text-white rounded-lg px-1.5 hover:opacity-90 transition-opacity"
+        className="flex-1 min-h-[40px] text-[14.5px] font-bold text-white rounded-lg px-1.5 hover:opacity-90 transition-opacity"
         style={{ backgroundColor: '#2a78d6' }}
       >
         전체
@@ -53,7 +53,7 @@ export function TeamRail(): JSX.Element {
             setSelectedTeam(t.id)
             setPage('team-detail')
           }}
-          className="flex-1 min-h-[40px] text-[13.5px] font-bold rounded-lg px-1.5 hover:opacity-80 transition-opacity"
+          className="flex-1 min-h-[40px] text-[14.5px] font-bold rounded-lg px-1.5 hover:opacity-80 transition-opacity"
           style={{ backgroundColor: t.tintBg, color: t.darkText }}
         >
           {t.label.replace('팀', '').replace('경영·보증', '')}
@@ -112,10 +112,10 @@ export function DonutUnmet({
             <b className="text-[32px] font-extrabold" style={{ color: STATUS.critical }}>
               {total}
             </b>
-            <span className="text-[11px] text-muted-foreground">미충족</span>
+            <span className="text-[14px] text-muted-foreground">미충족</span>
           </div>
         </div>
-        <div className="flex flex-col gap-2 text-[12.5px] min-w-0 flex-1">
+        <div className="flex flex-col gap-2 text-[14.5px] min-w-0 flex-1">
           {slices.map((s, idx) => (
             <div
               key={s.name}
@@ -125,7 +125,7 @@ export function DonutUnmet({
               )}
             >
               <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: s.color }} />
-              <span className="truncate">{s.name}</span>
+              <span className="break-keep leading-snug">{s.name}</span>
               <b className="ml-auto pl-2 text-foreground tabular-nums">{s.count}</b>
             </div>
           ))}
@@ -166,7 +166,7 @@ export function TeamSignalColumns({
   const seg = (n: number, color: string, ink = '#fff'): JSX.Element | null =>
     n > 0 ? (
       <div
-        className="rounded-[3px] flex items-center justify-center text-[11.5px] font-extrabold"
+        className="rounded-[3px] flex items-center justify-center text-[13px] font-extrabold"
         style={{ height: `${(n / max) * 100}%`, minHeight: 10, backgroundColor: color, color: ink }}
       >
         {n}
@@ -198,12 +198,12 @@ export function TeamSignalColumns({
       </div>
       <div className="flex gap-3 px-1 pt-2">
         {cols.map((c) => (
-          <span key={c.id} className="flex-1 text-center text-[11.5px] font-bold text-muted-foreground truncate">
+          <span key={c.id} className="flex-1 text-center text-[14px] font-bold text-muted-foreground break-keep leading-snug">
             {c.label}
           </span>
         ))}
       </div>
-      <div className="flex gap-3.5 flex-wrap text-[11px] text-muted-foreground pt-2.5">
+      <div className="flex gap-3.5 flex-wrap text-[14px] text-muted-foreground pt-2.5">
         {(
           [
             ['충족', STATUS.good],
@@ -285,17 +285,17 @@ export function UnmetHeatmap({
             <tr style={{ height: 30 }}>
               <th />
               {catNames.map((n) => (
-                <th key={n} className="text-[11.5px] font-extrabold text-muted-foreground px-1 text-center">
+                <th key={n} className="text-[14px] font-extrabold text-muted-foreground px-1 text-center">
                   {n.replace('관리', '').replace('체제', '')}
                 </th>
               ))}
-              <th className="text-[11.5px] font-extrabold text-muted-foreground px-1">계</th>
+              <th className="text-[14px] font-extrabold text-muted-foreground px-1">계</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <th className="text-left text-[12px] font-bold text-muted-foreground pr-2 truncate">
+                <th className="text-left text-[13.5px] font-bold text-muted-foreground pr-2 break-keep leading-snug">
                   {r.label.replace('경영·보증', '')}
                 </th>
                 {r.cells.map((v, ci) => {
@@ -313,7 +313,7 @@ export function UnmetHeatmap({
                             : undefined
                         }
                         className={cn(
-                          'rounded-[5px] text-[12.5px] font-bold h-full min-h-[30px] flex items-center justify-center',
+                          'rounded-[5px] text-[14px] font-bold h-full min-h-[30px] flex items-center justify-center',
                           hotspot && 'cursor-pointer'
                         )}
                         style={{
@@ -328,19 +328,19 @@ export function UnmetHeatmap({
                     </td>
                   )
                 })}
-                <td className="text-center text-[12.5px] font-extrabold">{r.total}</td>
+                <td className="text-center text-[14px] font-extrabold">{r.total}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr style={{ height: 32 }}>
-              <th className="text-left text-[12.5px] font-bold text-muted-foreground pr-2">계</th>
+              <th className="text-left text-[14px] font-bold text-muted-foreground pr-2">계</th>
               {colTotals.map((v, ci) => (
-                <td key={ci} className="text-center text-[12.5px] font-extrabold">
+                <td key={ci} className="text-center text-[14px] font-extrabold">
                   {v}
                 </td>
               ))}
-              <td className="text-center text-[12.5px] font-extrabold">
+              <td className="text-center text-[14px] font-extrabold">
                 {colTotals.reduce((s, v) => s + v, 0)}
               </td>
             </tr>
@@ -376,14 +376,14 @@ export function TopUnmet({
     <Panel title="미충족 TOP — 배점순" sub="여기부터 잡으면 점수가 가장 빨리 오릅니다">
       <div className="flex flex-col gap-3.5 flex-1 justify-center">
         {top.length === 0 && (
-          <div className="text-[12px] text-muted-foreground text-center py-4">미충족 항목 없음 🎉</div>
+          <div className="text-[13.5px] text-muted-foreground text-center py-4">미충족 항목 없음 🎉</div>
         )}
         {top.map((i) => (
           <div key={i.code} className="grid grid-cols-[40px_1fr_48px_72px] gap-2.5 items-center">
             <button
               type="button"
               onClick={() => setPage('sq-readiness')}
-              className="text-[12px] font-extrabold text-left hover:underline"
+              className="text-[13.5px] font-extrabold text-left hover:underline"
               style={{ color: STATUS.critical }}
             >
               {i.code}
@@ -394,15 +394,15 @@ export function TopUnmet({
                 style={{ width: `${(i.points / max) * 100}%`, backgroundColor: STATUS.critical }}
               />
             </div>
-            <div className="text-[12.5px] font-extrabold text-right tabular-nums">{i.points}점</div>
+            <div className="text-[14px] font-extrabold text-right tabular-nums">{i.points}점</div>
             <button
               type="button"
               onClick={() => openAuthor(true)}
-              className="text-[10.5px] font-extrabold px-2.5 py-1 rounded-full bg-sky-100 text-sky-700 border border-transparent hover:border-sky-500 whitespace-nowrap"
+              className="text-[12px] font-extrabold px-2.5 py-1 rounded-full bg-sky-100 text-sky-700 border border-transparent hover:border-sky-500 whitespace-nowrap"
             >
               AI 초안 ›
             </button>
-            <div className="col-span-4 -mt-1.5 text-[11.5px] text-muted-foreground truncate">{i.title}</div>
+            <div className="col-span-4 -mt-1.5 text-[13px] text-muted-foreground break-keep leading-snug">{i.title}</div>
           </div>
         ))}
       </div>
@@ -445,8 +445,8 @@ export function TrajectoryChart({
           <line x1="0" y1="105" x2="300" y2="105" stroke="#d3e1ef" strokeWidth="1" />
           <line x1="0" y1={y(50)} x2="300" y2={y(50)} stroke="#d3e1ef" strokeWidth="0.6" strokeDasharray="3 3" />
           <line x1="0" y1={y(90)} x2="300" y2={y(90)} stroke="#d3e1ef" strokeWidth="0.6" strokeDasharray="3 3" />
-          <text x="4" y={y(50) - 3} fontSize="9" fill="#7e93a8">50%</text>
-          <text x="4" y={y(90) - 3} fontSize="9" fill="#7e93a8">90%</text>
+          <text x="4" y={y(50) - 3} fontSize="11" fill="#7e93a8">50%</text>
+          <text x="4" y={y(90) - 3} fontSize="11" fill="#7e93a8">90%</text>
           <polygon
             points={`${x0},${y(currentPct)} ${x1},${y(90)} ${x1},105 ${x0},105`}
             fill="#2a78d6"
@@ -466,23 +466,23 @@ export function TrajectoryChart({
             strokeWidth="2.5"
           />
           <circle cx={x0} cy={y(currentPct)} r="4" fill="#142438" />
-          <text x={x0 + 8} y={y(currentPct) - 4} fontSize="9" fontWeight="800" fill="#142438">
+          <text x={x0 + 8} y={y(currentPct) - 4} fontSize="11" fontWeight="800" fill="#142438">
             현재 {currentPct}%
           </text>
           <circle cx={x1} cy={y(90)} r="3.5" fill="#fff" stroke="#2a78d6" strokeWidth="2" />
           <circle cx={x1} cy={y(projectedPct)} r="3.5" fill={STATUS.critical} />
-          <text x={x1 - 66} y={Math.min(y(projectedPct) + 14, 100)} fontSize="9" fontWeight="800" fill={STATUS.critical}>
+          <text x={x1 - 82} y={Math.min(y(projectedPct) + 14, 100)} fontSize="11" fontWeight="800" fill={STATUS.critical}>
             현 페이스 ~{projectedPct}%
           </text>
         </svg>
         <div className="flex px-2 pt-1.5">
           {monthLabels.map((m) => (
-            <span key={m} className="flex-1 text-center text-[11.5px] font-semibold text-muted-foreground">
+            <span key={m} className="flex-1 text-center text-[13px] font-semibold text-muted-foreground">
               {m}
             </span>
           ))}
         </div>
-        <div className="flex gap-3.5 flex-wrap text-[11px] text-muted-foreground pt-2">
+        <div className="flex gap-3.5 flex-wrap text-[12.5px] text-muted-foreground pt-2">
           <span>
             <span className="inline-block w-4 border-t-[2.5px] border-dashed mr-1 align-[3px]" style={{ borderColor: '#2a78d6' }} />
             필요 페이스 (90% 도달)
@@ -513,7 +513,7 @@ export function TeamFormsFunnel({ teams }: { teams: TeamSummaryDto[] }): JSX.Ele
           const thin = r.formsTotal > 0 && fillPct < 10
           return (
             <div key={r.teamId} className="grid grid-cols-[104px_1fr_104px] gap-2.5 items-center">
-              <div className="text-[12.5px] font-bold text-muted-foreground text-right truncate">{label}</div>
+              <div className="text-[14px] font-bold text-muted-foreground text-right break-keep leading-snug">{label}</div>
               <div className="flex justify-center">
                 <div
                   className="h-[22px] rounded relative overflow-hidden"
@@ -523,12 +523,12 @@ export function TeamFormsFunnel({ teams }: { teams: TeamSummaryDto[] }): JSX.Ele
                     className="absolute left-0 top-0 bottom-0 rounded-l"
                     style={{ width: `${fillPct}%`, backgroundColor: '#2a78d6' }}
                   />
-                  <span className="absolute inset-0 flex items-center justify-center text-[11.5px] font-extrabold text-white">
+                  <span className="absolute inset-0 flex items-center justify-center text-[13px] font-extrabold text-white">
                     {r.formsTotal}
                   </span>
                 </div>
               </div>
-              <div className="text-[11.5px] text-muted-foreground tabular-nums">
+              <div className="text-[13px] text-muted-foreground tabular-nums">
                 <b className="text-foreground">{r.formsFillable}</b> {thin ? '⚠ 셀맵 미적재' : '작성가능'}
               </div>
             </div>

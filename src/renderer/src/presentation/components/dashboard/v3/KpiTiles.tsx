@@ -59,7 +59,7 @@ export function KpiTiles({ tiles }: { tiles: KpiTileSpec[] }): JSX.Element {
               <Icon className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <div className="text-[12px] font-bold text-muted-foreground tracking-wide">
+              <div className="text-[16.5px] font-bold text-foreground tracking-wide">
                 {t.label}
               </div>
               <div
@@ -75,9 +75,9 @@ export function KpiTiles({ tiles }: { tiles: KpiTileSpec[] }): JSX.Element {
                 {t.value}
                 {t.unit && <span className="text-[15px] font-bold text-muted-foreground ml-0.5">{t.unit}</span>}
               </div>
-              <div className="text-[11.5px] text-muted-foreground truncate">{t.sub}</div>
+              <div className="text-[13px] text-muted-foreground break-keep leading-snug">{t.sub}</div>
               {t.aiNote && (
-                <div className="text-[11px] font-bold text-sky-600 mt-0.5 truncate" title={`✦ ${t.aiNote}`}>
+                <div className="text-[14px] font-bold text-sky-600 mt-0.5 break-keep leading-snug" title={`✦ ${t.aiNote}`}>
                   ✦ {t.aiNote}
                 </div>
               )}

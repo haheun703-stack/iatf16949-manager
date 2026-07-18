@@ -64,7 +64,7 @@ export function TeamDetailView(): JSX.Element {
       <button
         type="button"
         onClick={() => setPage('team-hub')}
-        className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> 팀별 허브
         <ChevronRight className="w-3 h-3" />
@@ -81,8 +81,8 @@ export function TeamDetailView(): JSX.Element {
           {theme.label.slice(0, 1)}
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight">{theme.label}</h1>
-          <p className="text-[12px] text-muted-foreground">
+          <h1 className="text-xl font-extrabold tracking-tight">{theme.label}</h1>
+          <p className="text-[13.5px] text-muted-foreground">
             {theme.desc} · SQ {summary?.itemCount ?? 0}항목 · 양식 {summary?.formsTotal ?? 0}종
           </p>
         </div>
@@ -99,15 +99,15 @@ export function TeamDetailView(): JSX.Element {
       </div>
 
       {/* ── ① 심사 단계 (SQ 렌즈) ── */}
-      <div className="text-[12px] font-bold text-muted-foreground pt-1">
-        심사 단계 <span className="font-normal">— SQ 점검항목, 배점 큰 순</span>
+      <div className="text-[16.5px] font-bold text-foreground pt-1">
+        심사 단계 <span className="font-normal text-[13px] text-muted-foreground">— SQ 점검항목, 배점 큰 순</span>
       </div>
       {!data ? (
         <div className="flex items-center justify-center gap-2 py-14 text-sm text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin" /> 불러오는 중...
         </div>
       ) : !summary || summary.items.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card px-4 py-6 text-center text-[13px] text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-4 py-6 text-center text-[14.5px] text-muted-foreground">
           이 팀에 배정된 SQ 항목이 없습니다 — 아래 책임 규정·양식으로 관리합니다.
         </div>
       ) : (
@@ -128,7 +128,7 @@ export function TeamDetailView(): JSX.Element {
       {/* ── ② 책임 규정·양식 (문서 BOM 의 팀 렌즈) ── */}
       <TeamRegSection teamId={selectedTeam} theme={theme} />
 
-      <p className="text-[11px] text-muted-foreground text-center pt-1">
+      <p className="text-[13px] text-muted-foreground text-center pt-1">
         번호 = 처리 순서(배점 큰 순) · 빨강 = 미충족 · 지침 펼침 → 본문 → 하위 양식 → 작성
       </p>
     </div>
@@ -165,18 +165,18 @@ function TeamRegSection({
 
   return (
     <div>
-      <div className="text-[12px] font-bold text-muted-foreground mb-2">
+      <div className="text-[16.5px] font-bold text-foreground mb-2">
         책임 규정·양식{' '}
-        <span className="font-normal">
+        <span className="font-normal text-[13px] text-muted-foreground">
           — 이 팀이 관리하는 지침과 하위 양식 {regs ? `(규정 ${regs.length}종)` : ''}
         </span>
       </div>
       {!regs ? (
-        <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-6 justify-center">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground py-6 justify-center">
           <Loader2 className="w-3.5 h-3.5 animate-spin" /> 규정 트리 불러오는 중...
         </div>
       ) : regs.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card px-4 py-6 text-center text-[13px] text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-4 py-6 text-center text-[14.5px] text-muted-foreground">
           책임 규정이 없습니다.
         </div>
       ) : (
@@ -224,19 +224,19 @@ function RegGroup({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-muted/30"
+        className="w-full flex items-center gap-2.5 px-3.5 py-3 text-left hover:bg-muted/30"
       >
         <BookOpen className="w-4 h-4 shrink-0" style={{ color: theme.darkText }} />
-        <span className="text-[12px] font-mono font-bold shrink-0" style={{ color: theme.darkText }}>
+        <span className="text-[13px] font-mono font-bold shrink-0" style={{ color: theme.darkText }}>
           {reg.regCode}
         </span>
-        <span className="text-[13px] font-semibold flex-1 min-w-0 truncate">{reg.regName}</span>
+        <span className="text-[14.5px] font-semibold flex-1 min-w-0 break-keep leading-snug">{reg.regName}</span>
         {reg.iatfClause && (
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+          <span className="text-[11.5px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
             {reg.iatfClause}장
           </span>
         )}
-        <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">양식 {reg.forms.length}</span>
+        <span className="text-[13px] text-muted-foreground shrink-0 tabular-nums">양식 {reg.forms.length}</span>
         {open ? (
           <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
         ) : (
@@ -249,7 +249,7 @@ function RegGroup({
           {reg.hasBody ? (
             <RegRow regCode={reg.regCode} theme={theme} />
           ) : (
-            <div className="text-[11.5px] text-muted-foreground">등록된 규정 본문이 없습니다.</div>
+            <div className="text-[13px] text-muted-foreground">등록된 규정 본문이 없습니다.</div>
           )}
           {reg.forms.length > 0 && (
             <div className="space-y-1.5">
@@ -258,7 +258,7 @@ function RegGroup({
                 return (
                   <div
                     key={f.code}
-                    className="flex items-center gap-2.5 bg-card border rounded-lg px-3 py-2"
+                    className="flex items-center gap-2.5 bg-card border rounded-lg px-3 py-2.5"
                     style={{ borderColor: fillable ? 'var(--border, #e5e7eb)' : ALERT_RED.border + '66' }}
                   >
                     {fillable ? (
@@ -267,11 +267,11 @@ function RegGroup({
                       <CircleAlert className="w-4 h-4 shrink-0" style={{ color: ALERT_RED.border }} />
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-[12px] font-semibold truncate">
-                        <span className="font-mono text-[11px] text-muted-foreground mr-1.5">{f.code}</span>
+                      <div className="text-[14.5px] font-semibold break-keep leading-snug">
+                        <span className="font-mono text-[12.5px] text-muted-foreground mr-1.5">{f.code}</span>
                         {f.name}
                       </div>
-                      <div className="text-[10.5px] text-muted-foreground">
+                      <div className="text-[13px] text-muted-foreground">
                         {fillable ? `작성 가능 · 작성본 ${f.draftCount}건` : '문서 등록만 — 작성 양식 준비 전'}
                       </div>
                     </div>
@@ -280,14 +280,14 @@ function RegGroup({
                         <button
                           type="button"
                           onClick={() => write(f.code)}
-                          className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md border border-border hover:bg-muted"
+                          className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-2 py-1 rounded-md border border-border hover:bg-muted"
                         >
                           <PencilLine className="w-3 h-3" /> 작성
                         </button>
                         <button
                           type="button"
                           onClick={() => openAuthor(true)}
-                          className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20"
+                          className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20"
                         >
                           <Sparkles className="w-3 h-3" /> AI 초안
                         </button>
@@ -306,8 +306,8 @@ function RegGroup({
 
 function Stat({ label, value, color }: { label: string; value: string; color?: string }): JSX.Element {
   return (
-    <div className="bg-muted/50 rounded-lg px-3 py-2">
-      <div className="text-[10.5px] text-muted-foreground">{label}</div>
+    <div className="bg-muted/50 rounded-lg px-3 py-2.5">
+      <div className="text-[13px] text-muted-foreground">{label}</div>
       <div className="text-[19px] font-bold tabular-nums" style={color ? { color } : undefined}>
         {value}
       </div>
@@ -367,9 +367,9 @@ function StepCard({
       className="bg-card rounded-xl overflow-hidden transition-colors"
       style={{ border: open ? `1px solid ${theme.border}` : '1px solid var(--border, #e5e7eb)' }}
     >
-      <button type="button" onClick={onToggle} className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-muted/30">
+      <button type="button" onClick={onToggle} className="w-full flex items-center gap-3 px-3.5 py-3 text-left hover:bg-muted/30">
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-[12.5px] font-bold shrink-0 tabular-nums"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px] font-bold shrink-0 tabular-nums"
           style={
             open
               ? { backgroundColor: theme.border, color: '#fff' }
@@ -379,15 +379,15 @@ function StepCard({
           {String(idx).padStart(2, '0')}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold truncate">
+          <div className="text-[14.5px] font-semibold break-keep leading-snug">
             {item.title} <span className="text-muted-foreground font-normal">{item.points}점</span>
           </div>
-          <div className="text-[11px] text-muted-foreground truncate">
+          <div className="text-[13px] text-muted-foreground break-keep leading-snug">
             지침 {item.regs.join(' · ') || '—'}
           </div>
         </div>
         <span
-          className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0', badge.cls)}
+          className={cn('text-[12px] font-semibold px-2 py-0.5 rounded-full shrink-0', badge.cls)}
           style={
             item.signal === 'red'
               ? { backgroundColor: ALERT_RED.tintBg, color: ALERT_RED.darkText }
@@ -406,7 +406,7 @@ function StepCard({
       {open && (
         <div className="border-t border-border bg-muted/20 px-4 py-3.5 space-y-4">
           {failed ? (
-            <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-3">
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground py-3">
               항목 상세를 불러오지 못했습니다.
               <button
                 type="button"
@@ -417,7 +417,7 @@ function StepCard({
               </button>
             </div>
           ) : loading || !detail ? (
-            <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-3">
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground py-3">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> 항목 상세 불러오는 중...
             </div>
           ) : (
@@ -425,8 +425,8 @@ function StepCard({
               {/* ① 요구사항 */}
               {detail.requirement && (
                 <section>
-                  <div className="text-[11px] font-bold text-muted-foreground mb-1.5">이 항목이 요구하는 것</div>
-                  <div className="text-[12px] leading-relaxed whitespace-pre-wrap bg-card border border-border/60 rounded-lg px-3 py-2.5 max-h-44 overflow-y-auto">
+                  <div className="text-[16.5px] font-bold text-foreground mb-1.5">이 항목이 요구하는 것</div>
+                  <div className="text-[14.5px] leading-relaxed whitespace-pre-wrap bg-card border border-border/60 rounded-lg px-3 py-2.5 max-h-44 overflow-y-auto">
                     {detail.requirement}
                   </div>
                 </section>
@@ -434,7 +434,7 @@ function StepCard({
 
               {/* ② 지침(지배 규정) — 본문 열람 */}
               <section>
-                <div className="text-[11px] font-bold text-muted-foreground mb-1.5">지침 (지배 규정)</div>
+                <div className="text-[16.5px] font-bold text-foreground mb-1.5">지침 (지배 규정)</div>
                 <div className="space-y-1.5">
                   {item.regs.map((reg) => (
                     <RegRow key={reg} regCode={reg} theme={theme} />
@@ -444,7 +444,7 @@ function StepCard({
 
               {/* ③ 필요 양식 */}
               <section>
-                <div className="text-[11px] font-bold text-muted-foreground mb-1.5">
+                <div className="text-[16.5px] font-bold text-foreground mb-1.5">
                   필요 양식 ({detail.forms.length})
                 </div>
                 <FormList forms={detail.forms} teamRegs={item.regs} />
@@ -452,7 +452,7 @@ function StepCard({
 
               {/* ④ 작성 가이드 (코워크 07번 Phase A) — 체크 → 이행상태 제안 */}
               <section>
-                <div className="text-[11px] font-bold text-muted-foreground mb-1.5">
+                <div className="text-[16.5px] font-bold text-foreground mb-1.5">
                   작성 가이드 — 이렇게 작성하세요
                 </div>
                 <WriteGuidePanel itemCode={item.code} />
@@ -494,28 +494,28 @@ function RegRow({ regCode, theme }: { regCode: string; theme: ReturnType<typeof 
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/40"
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/40"
       >
         <BookOpen className="w-3.5 h-3.5 shrink-0" style={{ color: theme.darkText }} />
-        <span className="text-[12px] font-mono font-bold" style={{ color: theme.darkText }}>
+        <span className="text-[13.5px] font-mono font-bold" style={{ color: theme.darkText }}>
           {regCode}
         </span>
-        <span className="ml-auto text-[11px] text-muted-foreground">{open ? '본문 닫기' : '본문 보기'}</span>
+        <span className="ml-auto text-[13px] text-muted-foreground">{open ? '본문 닫기' : '본문 보기'}</span>
         {open ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />}
       </button>
       {open && (
         <div className="border-t border-border/60 px-3 py-2.5 max-h-72 overflow-y-auto space-y-2.5">
           {!secs ? (
-            <div className="text-[11.5px] text-muted-foreground flex items-center gap-1.5 py-1">
+            <div className="text-[13px] text-muted-foreground flex items-center gap-1.5 py-1">
               <Loader2 className="w-3 h-3 animate-spin" /> 규정 본문 불러오는 중...
             </div>
           ) : secs.length === 0 ? (
-            <div className="text-[11.5px] text-muted-foreground py-1">등록된 본문이 없습니다.</div>
+            <div className="text-[13px] text-muted-foreground py-1">등록된 본문이 없습니다.</div>
           ) : (
             secs.map((s) => (
               <div key={s.id}>
-                <div className="text-[11px] font-bold mb-0.5">{s.sectionTitle}</div>
-                <div className="text-[11.5px] leading-relaxed whitespace-pre-wrap text-foreground/80">
+                <div className="text-[15px] font-bold mb-0.5">{s.sectionTitle}</div>
+                <div className="text-[14px] leading-relaxed whitespace-pre-wrap text-foreground/80">
                   {s.sectionBody.length > 900 ? s.sectionBody.slice(0, 900) + ' …' : s.sectionBody}
                 </div>
               </div>
@@ -555,7 +555,7 @@ function FormList({
   if (sorted.length === 0) {
     return (
       <div
-        className="flex items-center gap-2 text-[12px] rounded-lg px-3 py-2.5"
+        className="flex items-center gap-2 text-[14px] rounded-lg px-3 py-2.5"
         style={{ backgroundColor: ALERT_RED.tintBg, color: ALERT_RED.darkText }}
       >
         <CircleAlert className="w-4 h-4 shrink-0" />
@@ -571,7 +571,7 @@ function FormList({
         return (
           <div
             key={f.formCode}
-            className="flex items-center gap-2.5 bg-card border rounded-lg px-3 py-2"
+            className="flex items-center gap-2.5 bg-card border rounded-lg px-3 py-2.5"
             style={{ borderColor: fillable ? 'var(--border, #e5e7eb)' : ALERT_RED.border + '66' }}
           >
             {fillable ? (
@@ -580,11 +580,11 @@ function FormList({
               <CircleAlert className="w-4 h-4 shrink-0" style={{ color: ALERT_RED.border }} />
             )}
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold truncate">
-                <span className="font-mono text-[11px] text-muted-foreground mr-1.5">{f.formCode}</span>
+              <div className="text-[14.5px] font-semibold break-keep leading-snug">
+                <span className="font-mono text-[12.5px] text-muted-foreground mr-1.5">{f.formCode}</span>
                 {f.formName}
               </div>
-              <div className="text-[10.5px] text-muted-foreground">
+              <div className="text-[13px] text-muted-foreground">
                 {fillable
                   ? `작성 가능 · 작성본 ${f.draftCount}건`
                   : '문서 등록만 — 작성 양식 준비 전'}
@@ -595,7 +595,7 @@ function FormList({
                 <button
                   type="button"
                   onClick={() => write(f.formCode)}
-                  className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md border border-border hover:bg-muted"
+                  className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-2 py-1 rounded-md border border-border hover:bg-muted"
                   title="양식 작성 화면으로 (입력/엑셀 뷰)"
                 >
                   <PencilLine className="w-3 h-3" /> 작성
@@ -603,7 +603,7 @@ function FormList({
                 <button
                   type="button"
                   onClick={() => openAuthor(true)}
-                  className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20"
+                  className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20"
                   title="메모를 던지면 AI가 초안을 만듭니다 (승인 후 반영)"
                 >
                   <Sparkles className="w-3 h-3" /> AI 초안
@@ -614,7 +614,7 @@ function FormList({
         )
       })}
       {sorted.length > 12 && (
-        <div className="text-[11px] text-muted-foreground text-center">외 {sorted.length - 12}종…</div>
+        <div className="text-[13px] text-muted-foreground text-center">외 {sorted.length - 12}종…</div>
       )}
     </div>
   )

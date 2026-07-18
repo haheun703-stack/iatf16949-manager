@@ -71,14 +71,14 @@ export function IsirCompletenessCard(): JSX.Element | null {
         <h2 className="text-sm font-bold flex items-center gap-1.5">
           <ShieldAlert className="w-4 h-4 text-primary" />
           ISIR 완비도
-          <span className="text-[11px] font-normal text-muted-foreground">고객 협의 통제 패키지의 제출 현황</span>
+          <span className="text-[12.5px] font-normal text-muted-foreground">고객 협의 통제 패키지의 제출 현황</span>
         </h2>
         {comp?.pkg && (
           <button
             type="button"
             onClick={() => void askAi()}
             disabled={loadingAi}
-            className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/5 disabled:opacity-50 flex items-center gap-1.5"
+            className="text-[13.5px] font-semibold px-2.5 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/5 disabled:opacity-50 flex items-center gap-1.5"
           >
             {loadingAi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
             AI 진단
@@ -87,7 +87,7 @@ export function IsirCompletenessCard(): JSX.Element | null {
       </div>
 
       {loading && (
-        <div className="py-6 flex items-center justify-center text-muted-foreground text-[12px] gap-2">
+        <div className="py-6 flex items-center justify-center text-muted-foreground text-[13.5px] gap-2">
           <Loader2 className="w-4 h-4 animate-spin" /> 불러오는 중…
         </div>
       )}
@@ -100,14 +100,14 @@ export function IsirCompletenessCard(): JSX.Element | null {
             className="group w-full flex items-center gap-2 mb-3 text-left"
           >
             <span className="font-mono text-[14px] font-bold">{comp.partNo}</span>
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+            <span className="text-[12.5px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
               {comp.pkg.submitTypeLabel}
             </span>
-            <span className="text-[12px] text-muted-foreground truncate flex-1">{comp.partName}</span>
+            <span className="text-[13.5px] text-muted-foreground truncate flex-1">{comp.partName}</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
           </button>
 
-          <div className="flex gap-4 text-[12px] mb-2">
+          <div className="flex gap-4 text-[13.5px] mb-2">
             <span className="font-semibold">필수 {comp.summary.totalRequired}종</span>
             <span className="text-emerald-600 font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />제출 {comp.summary.present}
@@ -125,11 +125,11 @@ export function IsirCompletenessCard(): JSX.Element | null {
           )}
 
           {missing.length > 0 ? (
-            <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-[12px] text-red-700">
+            <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-[13.5px] text-red-700">
               <b>미제출:</b> {missing.map((d) => `${d.docNo}.${d.docName}`).join(', ')}
             </div>
           ) : (
-            <p className="text-[12px] text-emerald-600 font-medium">필수 문서 전부 제출됨 ✓</p>
+            <p className="text-[13.5px] text-emerald-600 font-medium">필수 문서 전부 제출됨 ✓</p>
           )}
         </>
       )}

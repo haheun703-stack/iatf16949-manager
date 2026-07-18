@@ -56,7 +56,7 @@ export function TeamHubView(): JSX.Element {
         title="무엇부터 볼까요?"
         sub="팀마다 고유 색 · 카드를 누르면 그 팀의 심사 단계 → 지침 → 양식 순으로 열립니다"
         actions={
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+          <div className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold bg-primary/10 text-primary px-2.5 py-1 rounded-full">
             <ShieldCheck className="w-3.5 h-3.5" />
             심사 D-{Math.abs(dday)}
           </div>
@@ -80,7 +80,7 @@ export function TeamHubView(): JSX.Element {
         </div>
       )}
 
-      <p className="text-[11px] text-muted-foreground text-center pt-2">
+      <p className="text-[13px] text-muted-foreground text-center pt-2">
         색 = 팀 고유 식별 · 빨강은 부적합/미작성 경고에만 사용 · 준비도 = SQ 신호등 가중점수
       </p>
     </div>
@@ -104,7 +104,7 @@ function TeamCard({
     <button
       type="button"
       onClick={onClick}
-      className="group text-left bg-card rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
+      className="group text-left bg-card rounded-xl p-5 shadow-sm hover:shadow-md transition-all"
       style={{ border: `1px solid ${theme.border}` }}
     >
       <div className="flex items-center gap-2.5 mb-2.5">
@@ -114,10 +114,10 @@ function TeamCard({
         >
           <Icon className="w-5 h-5" />
         </div>
-        <div className="text-[14.5px] font-bold flex-1 min-w-0 truncate">{theme.label}</div>
+        <div className="text-[17px] font-extrabold flex-1 min-w-0 break-keep leading-snug">{theme.label}</div>
         <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
       </div>
-      <div className="text-[12px] text-muted-foreground mb-3 truncate">{theme.desc}</div>
+      <div className="text-[13.5px] text-muted-foreground mb-3 break-keep leading-snug">{theme.desc}</div>
 
       {/* 준비도 바 (팀색) */}
       <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-2.5">
@@ -128,12 +128,12 @@ function TeamCard({
       </div>
       <div className="flex items-center justify-between">
         <span
-          className="text-[11.5px] font-semibold px-2 py-0.5 rounded-full"
+          className="text-[12.5px] font-semibold px-2 py-0.5 rounded-full"
           style={{ backgroundColor: theme.tintBg, color: theme.darkText }}
         >
           {pct == null ? '측정 전' : `준비도 ${pct}%`}
         </span>
-        <span className="text-[11.5px] text-muted-foreground inline-flex items-center gap-1">
+        <span className="text-[13px] text-muted-foreground inline-flex items-center gap-1">
           {summary?.urgent && <Clock className="w-3.5 h-3.5 text-amber-600" />}
           {summary?.urgent ? `급함 · ${todo}` : `할 일 ${todo}`}
         </span>

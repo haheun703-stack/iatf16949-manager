@@ -31,7 +31,7 @@ export function NeedsAttentionList(): JSX.Element {
           <AlertTriangle className="w-4 h-4 text-warning" />
           <h2 className="text-lg font-bold tracking-tight">보완 필요 양식</h2>
         </div>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-[12.5px] text-muted-foreground">
           {totalCount > 0 ? `점수 낮은 순 · 총 ${totalCount}건` : ''}
         </span>
       </header>
@@ -40,7 +40,7 @@ export function NeedsAttentionList(): JSX.Element {
         <div className="text-center py-8">
           <CheckCircle2 className="w-9 h-9 mx-auto mb-2 text-success opacity-70" />
           <p className="text-sm font-semibold">보완이 필요한 양식이 없습니다</p>
-          <p className="text-[12px] text-muted-foreground mt-0.5">
+          <p className="text-[13.5px] text-muted-foreground mt-0.5">
             양식을 작성·채점하면 80점 미만·미채점 항목이 여기에 모입니다.
           </p>
         </div>
@@ -53,11 +53,11 @@ export function NeedsAttentionList(): JSX.Element {
               onClick={() => openForm(it.formCode)}
               className="w-full text-left px-2 py-2.5 flex items-center gap-3 hover:bg-muted/50"
             >
-              <span className="inline-flex items-center justify-center min-w-[72px] px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-muted">
+              <span className="inline-flex items-center justify-center min-w-[72px] px-2 py-0.5 rounded text-[12.5px] font-mono font-semibold bg-muted">
                 {it.formCode}
               </span>
               <span className="flex-1 text-sm truncate">{it.formName || it.formCode}</span>
-              <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded', REASON_STYLE[it.reason] ?? 'bg-muted text-muted-foreground')}>
+              <span className={cn('text-[12.5px] font-semibold px-2 py-0.5 rounded', REASON_STYLE[it.reason] ?? 'bg-muted text-muted-foreground')}>
                 {it.reason}
               </span>
               <span className="text-xs font-bold tabular-nums w-10 text-right">

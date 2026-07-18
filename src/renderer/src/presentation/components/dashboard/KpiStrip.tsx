@@ -69,9 +69,9 @@ export function KpiStrip(): JSX.Element {
               <Icon className="w-5 h-5" />
             </div>
             <div className="leading-tight min-w-0">
-              <div className="text-[11px] text-muted-foreground font-medium">{k.label}</div>
+              <div className="text-[16.5px] text-foreground font-bold">{k.label}</div>
               <div className="text-[26px] font-bold mt-0.5 tabular-nums">{k.value}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{k.sub}</div>
+              <div className="text-[12.5px] text-muted-foreground mt-0.5 break-keep leading-snug">{k.sub}</div>
             </div>
           </div>
         )

@@ -42,8 +42,8 @@ export function BoardView(): JSX.Element {
               <div className="px-3 py-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={cn('w-2 h-2 rounded-full', meta.dot)} />
-                  <span className={cn('text-sm font-bold', meta.head)}>{status}</span>
-                  <span className="text-[11px] text-muted-foreground tabular-nums">{colItems.length}</span>
+                  <span className={cn('text-[16.5px] font-bold', meta.head)}>{status}</span>
+                  <span className="text-[13px] text-muted-foreground tabular-nums">{colItems.length}</span>
                 </div>
                 <button
                   type="button"
@@ -67,7 +67,7 @@ export function BoardView(): JSX.Element {
                   />
                 ))}
                 {colItems.length === 0 && (
-                  <div className="text-[11px] text-muted-foreground text-center py-6 border border-dashed border-border rounded-md">
+                  <div className="text-[12.5px] text-muted-foreground text-center py-6 border border-dashed border-border rounded-md">
                     여기로 카드를 드래그
                   </div>
                 )}
@@ -101,7 +101,7 @@ function Card({
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={cn(
-        'bg-card border border-border rounded-md p-2.5 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all',
+        'bg-card border border-border rounded-md p-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all',
         dragging && 'opacity-40'
       )}
     >
@@ -111,13 +111,13 @@ function Card({
         </span>
         <span className={cn('w-2 h-2 rounded-full', PRIORITY_DOT[item.priority])} title={`우선순위 ${item.priority}`} />
       </div>
-      <div className="text-sm font-medium leading-snug mb-2">{item.title}</div>
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1 truncate">
+      <div className="text-[15px] font-semibold leading-snug break-keep mb-2">{item.title}</div>
+      <div className="flex items-center justify-between text-[12.5px] text-muted-foreground">
+        <span className="flex items-center gap-1 min-w-0">
           {item.owner && (
             <>
               <User className="w-3 h-3 shrink-0" />
-              <span className="truncate">{item.owner}</span>
+              <span className="break-keep leading-snug">{item.owner}</span>
             </>
           )}
         </span>

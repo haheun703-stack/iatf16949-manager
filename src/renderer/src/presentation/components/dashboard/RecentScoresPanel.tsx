@@ -33,7 +33,7 @@ export function RecentScoresPanel(): JSX.Element {
       </header>
 
       {recent.length === 0 ? (
-        <div className="text-center py-10 text-[12px] text-muted-foreground leading-relaxed">
+        <div className="text-center py-10 text-[13.5px] text-muted-foreground leading-relaxed">
           최근 채점 이력이 없습니다.<br />양식에서 AI 채점을 실행해 보세요.
         </div>
       ) : (
@@ -47,7 +47,7 @@ export function RecentScoresPanel(): JSX.Element {
             >
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium truncate">{r.formName || r.formCode}</div>
-                <div className="text-[11px] text-muted-foreground font-mono">{r.formCode}</div>
+                <div className="text-[12.5px] text-muted-foreground font-mono">{r.formCode}</div>
               </div>
               <span className={cn('text-lg font-black tabular-nums', scoreTone(r.score))}>
                 {r.score}

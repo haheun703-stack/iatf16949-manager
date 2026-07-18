@@ -87,14 +87,14 @@ export function MockAuditCard({
     <div ref={rootRef} id="mock-audit-card" className="bg-card border border-border rounded-xl shadow-sm p-5 scroll-mt-4">
       <h2 className="text-sm font-bold flex items-center gap-1.5 mb-3">
         <GraduationCap className="w-4 h-4 text-primary" />
-        AI 모의 심사 <span className="text-[11px] font-normal text-muted-foreground">AI 심사원의 예상질문 + 증빙 갭</span>
+        AI 모의 심사 <span className="text-[12.5px] font-normal text-muted-foreground">AI 심사원의 예상질문 + 증빙 갭</span>
       </h2>
 
       <div className="flex items-center gap-2 mb-3">
         <select
           value={sel}
           onChange={(e) => setSel(e.target.value)}
-          className="flex-1 text-[12px] px-3 py-2 rounded-lg border border-border bg-background"
+          className="flex-1 text-[13.5px] px-3 py-2 rounded-lg border border-border bg-background"
         >
           {Object.entries(byCat).map(([cat, its]) => (
             <optgroup key={cat} label={cat}>
@@ -118,18 +118,18 @@ export function MockAuditCard({
       </div>
 
       {err && (
-        <div className="flex items-start gap-2 p-2.5 bg-destructive/10 border border-destructive/30 rounded-md text-[12px] text-destructive">
+        <div className="flex items-start gap-2 p-2.5 bg-destructive/10 border border-destructive/30 rounded-md text-[13.5px] text-destructive">
           <FileWarning className="w-4 h-4 shrink-0 mt-0.5" /><span>{err}</span>
         </div>
       )}
 
       {!result && !loading && !err && (
-        <p className="text-[12px] text-muted-foreground">항목을 고르고 <b>모의심사</b>를 누르면, AI 심사원이 던질 예상 질문과 우리 증빙의 충분/부족을 짚어줍니다.</p>
+        <p className="text-[13.5px] text-muted-foreground">항목을 고르고 <b>모의심사</b>를 누르면, AI 심사원이 던질 예상 질문과 우리 증빙의 충분/부족을 짚어줍니다.</p>
       )}
 
       {result && (
         <div>
-          <div className="flex items-center gap-2 text-[12px] text-muted-foreground mb-2">
+          <div className="flex items-center gap-2 text-[13.5px] text-muted-foreground mb-2">
             <span className="font-mono font-semibold text-foreground">{result.itemCode}</span>
             <span className="font-semibold text-foreground truncate">{result.itemTitle}</span>
             <span className="shrink-0">· {result.points}점</span>

@@ -18,7 +18,7 @@ function Stat({
       <Icon className="w-4 h-4 shrink-0" />
       <div className="leading-tight">
         <div className="text-[15px] font-bold tabular-nums">{value}</div>
-        <div className="text-[10px] opacity-80">{label}</div>
+        <div className="text-[12px] opacity-80">{label}</div>
       </div>
     </div>
   )
@@ -27,15 +27,15 @@ function Stat({
 function ItemRow({ it }: { it: BriefingItem }): JSX.Element {
   const dd = it.daysLeft < 0 ? `D+${-it.daysLeft}` : it.daysLeft === 0 ? 'D-DAY' : `D-${it.daysLeft}`
   return (
-    <div className="flex items-center gap-2 text-[12px] py-1 border-b border-border/50 last:border-0">
+    <div className="flex items-center gap-2 text-[13.5px] py-1 border-b border-border/50 last:border-0">
       <span
         className={`font-mono font-bold w-12 shrink-0 ${it.daysLeft < 0 ? 'text-red-600' : it.daysLeft <= 3 ? 'text-amber-600' : 'text-muted-foreground'}`}
       >
         {dd}
       </span>
       <span className="truncate flex-1">{it.title}</span>
-      {it.owner && <span className="text-[10px] text-muted-foreground shrink-0">{it.owner}</span>}
-      <span className="text-[10px] px-1 rounded bg-muted text-muted-foreground shrink-0">
+      {it.owner && <span className="text-[12px] text-muted-foreground shrink-0">{it.owner}</span>}
+      <span className="text-[12px] px-1 rounded bg-muted text-muted-foreground shrink-0">
         {it.kind === 'case' ? '케이스' : '일정'}
       </span>
     </div>
@@ -82,14 +82,14 @@ export function BriefingCard(): JSX.Element | null {
         <h2 className="text-sm font-bold flex items-center gap-1.5">
           <Sparkles className="w-4 h-4 text-primary" />
           오늘의 브리핑
-          <span className="text-[11px] font-normal text-muted-foreground">{facts.today}</span>
+          <span className="text-[12.5px] font-normal text-muted-foreground">{facts.today}</span>
         </h2>
         <button
           type="button"
           onClick={() => void askAi()}
           disabled={loadingAi}
           title="현재 현황을 AI가 자연어로 요약합니다"
-          className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/5 disabled:opacity-50 flex items-center gap-1.5"
+          className="text-[13.5px] font-semibold px-2.5 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/5 disabled:opacity-50 flex items-center gap-1.5"
         >
           {loadingAi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
           AI 요약
@@ -119,13 +119,13 @@ export function BriefingCard(): JSX.Element | null {
       {/* 임박/초과 항목 */}
       {top.length > 0 ? (
         <div className="mt-3">
-          <div className="text-[11px] font-semibold text-muted-foreground mb-1">처리 필요 항목</div>
+          <div className="text-[12.5px] font-semibold text-muted-foreground mb-1">처리 필요 항목</div>
           {top.map((it, i) => (
             <ItemRow key={i} it={it} />
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-[12px] text-muted-foreground">기한 초과·임박 항목이 없습니다. 👍</p>
+        <p className="mt-3 text-[13.5px] text-muted-foreground">기한 초과·임박 항목이 없습니다. 👍</p>
       )}
     </div>
   )

@@ -29,10 +29,10 @@ export const AiInsightsFold = forwardRef<
         className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
       >
         <Sparkles className="w-4 h-4 text-sky-600 shrink-0" />
-        <span className="text-[11px] font-extrabold px-2.5 py-[3px] rounded-full bg-sky-100 text-sky-700">
+        <span className="text-[12.5px] font-extrabold px-2.5 py-[3px] rounded-full bg-sky-100 text-sky-700">
           AI 인사이트 6
         </span>
-        <span className="text-[13px] font-bold text-muted-foreground">
+        <span className="text-[16.5px] font-bold text-foreground">
           브리핑 · 심사예측 · 부재감지 · 모의심사 · 수용률 · ISIR — 펼쳐서 보기
         </span>
         {open ? (

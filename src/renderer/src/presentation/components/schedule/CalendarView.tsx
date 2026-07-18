@@ -65,7 +65,7 @@ export function CalendarView(): JSX.Element {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-3 mb-3 shrink-0">
-        <h2 className="text-xl font-bold tabular-nums tracking-tight">
+        <h2 className="text-xl font-extrabold tabular-nums tracking-tight">
           {year}년 {month + 1}월
         </h2>
         <div className="flex items-center gap-1">
@@ -79,7 +79,7 @@ export function CalendarView(): JSX.Element {
         <button
           type="button"
           onClick={goToday}
-          className="text-xs font-semibold px-2.5 py-1 rounded-md border border-border hover:bg-muted"
+          className="text-[13px] font-semibold px-2.5 py-1 rounded-md border border-border hover:bg-muted"
         >
           오늘
         </button>
@@ -90,7 +90,7 @@ export function CalendarView(): JSX.Element {
           <div
             key={w}
             className={cn(
-              'bg-card py-2 text-center text-[11px] font-semibold',
+              'bg-card py-2 text-center text-[12.5px] font-semibold',
               i === 0 ? 'text-rose-500' : i === 6 ? 'text-blue-500' : 'text-muted-foreground'
             )}
           >
@@ -122,7 +122,7 @@ export function CalendarView(): JSX.Element {
             >
               <span
                 className={cn(
-                  'text-[11px] font-semibold tabular-nums w-5 h-5 flex items-center justify-center rounded-full',
+                  'text-[12.5px] font-semibold tabular-nums w-5 h-5 flex items-center justify-center rounded-full',
                   isToday
                     ? 'bg-primary text-primary-foreground'
                     : weekday === 0
@@ -144,7 +144,7 @@ export function CalendarView(): JSX.Element {
                       openEdit(it)
                     }}
                     className={cn(
-                      'w-full text-left text-[10px] font-medium text-white px-1.5 py-1 rounded-md truncate',
+                      'w-full text-left text-[11px] font-medium text-white px-1.5 py-1 rounded-md truncate',
                       CATEGORY_BAR[it.category],
                       it.status === '완료' && 'opacity-50 line-through'
                     )}
@@ -154,7 +154,7 @@ export function CalendarView(): JSX.Element {
                   </button>
                 ))}
                 {dayItems.length > 3 && (
-                  <div className="text-[10px] text-muted-foreground pl-1">+{dayItems.length - 3}건</div>
+                  <div className="text-[11px] text-muted-foreground pl-1">+{dayItems.length - 3}건</div>
                 )}
               </div>
             </div>

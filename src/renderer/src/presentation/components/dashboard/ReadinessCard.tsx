@@ -47,13 +47,13 @@ export function ReadinessCard(): JSX.Element | null {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold flex items-center gap-1.5">
           <Gauge className="w-4 h-4 text-primary" />
-          AI 심사 예측 <span className="text-[11px] font-normal text-muted-foreground">지금 SQ 심사 시 추정</span>
+          AI 심사 예측 <span className="text-[12.5px] font-normal text-muted-foreground">지금 SQ 심사 시 추정</span>
         </h2>
         <button
           type="button"
           onClick={() => void askAi()}
           disabled={loadingAi}
-          className="text-[12px] font-semibold px-2.5 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/5 disabled:opacity-50 flex items-center gap-1.5"
+          className="text-[13.5px] font-semibold px-2.5 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/5 disabled:opacity-50 flex items-center gap-1.5"
         >
           {loadingAi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
           AI 진단
@@ -66,14 +66,14 @@ export function ReadinessCard(): JSX.Element | null {
           {p.score}
           <span className="text-base font-bold text-muted-foreground"> / {p.totalPoints}</span>
         </div>
-        <div className="text-[12px] text-muted-foreground mb-1">추정 {pct}% · 회색(측정불가)은 0점 처리</div>
+        <div className="text-[13.5px] text-muted-foreground mb-1">추정 {pct}% · 회색(측정불가)은 0점 처리</div>
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden mb-3">
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
       </div>
 
       {/* 신호등 카운트 */}
-      <div className="flex gap-4 text-[12px] mb-3">
+      <div className="flex gap-4 text-[13.5px] mb-3">
         {(['green', 'yellow', 'red', 'gray'] as const).map((s) => (
           <span key={s} className={`font-semibold ${SIG[s].cls}`}>
             {SIG[s].ko} {p.counts[s]}
@@ -91,13 +91,13 @@ export function ReadinessCard(): JSX.Element | null {
       {/* 점수 손실 큰 항목 */}
       {p.reds.length > 0 && (
         <div>
-          <div className="text-[11px] font-semibold text-muted-foreground mb-1">점수 손실 큰 항목</div>
+          <div className="text-[12.5px] font-semibold text-muted-foreground mb-1">점수 손실 큰 항목</div>
           <div className="divide-y divide-border/50">
             {p.reds.slice(0, 5).map((r) => (
-              <div key={r.code} className="flex items-center gap-2 py-1 text-[12px]">
-                <span className="font-mono text-[10px] text-muted-foreground w-10 shrink-0">{r.code}</span>
+              <div key={r.code} className="flex items-center gap-2 py-1 text-[13.5px]">
+                <span className="font-mono text-[12px] text-muted-foreground w-10 shrink-0">{r.code}</span>
                 <span className="truncate flex-1">{r.title}</span>
-                <span className={`text-[10px] shrink-0 ${r.signal === 'gray' ? 'text-slate-400' : 'text-red-600'}`}>{r.reason}</span>
+                <span className={`text-[12px] shrink-0 ${r.signal === 'gray' ? 'text-slate-400' : 'text-red-600'}`}>{r.reason}</span>
                 <span className="font-bold tabular-nums w-10 text-right shrink-0">-{r.points}</span>
               </div>
             ))}

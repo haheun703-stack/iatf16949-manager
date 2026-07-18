@@ -53,7 +53,7 @@ export function SchedulePage(): JSX.Element {
                 type="button"
                 onClick={() => setView(v.id)}
                 className={cn(
-                  'text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors',
+                  'text-[13px] font-semibold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors',
                   active ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 )}
               >

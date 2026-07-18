@@ -32,19 +32,19 @@ export function HeaderBand({
         <h1 className="text-[24px] font-extrabold tracking-tight leading-tight">
           IATF 16949 심사 준비 대시보드
         </h1>
-        <div className="text-[11px] text-white/70 mt-0.5">
+        <div className="text-[13px] text-white/70 mt-0.5">
           AM사업부 · 기준일 {todayStr} · 정기 인증심사 {auditDateStr} ({dday >= 0 ? 'D-' : 'D+'}
           {Math.abs(dday)})
         </div>
       </div>
       <div className="ml-auto">
-        <div className="text-[10px] font-bold tracking-widest text-white/75 mb-1.5">SQ 카테고리</div>
+        <div className="text-[14px] font-bold tracking-widest text-white/75 mb-1.5">SQ 카테고리</div>
         <div className="flex gap-1.5 flex-wrap">
           <button
             type="button"
             onClick={() => onSelectCat(null)}
             className={cn(
-              'text-[11.5px] font-bold px-3 py-1.5 rounded-lg border transition-colors',
+              'text-[13px] font-bold px-3 py-1.5 rounded-lg border transition-colors',
               selectedCat === null
                 ? 'bg-white border-white'
                 : 'border-white/35 text-white hover:bg-white/10'
@@ -59,7 +59,7 @@ export function HeaderBand({
               type="button"
               onClick={() => onSelectCat(selectedCat === idx ? null : idx)}
               className={cn(
-                'text-[11.5px] font-bold px-3 py-1.5 rounded-lg border transition-colors',
+                'text-[13px] font-bold px-3 py-1.5 rounded-lg border transition-colors',
                 selectedCat === idx
                   ? 'bg-white border-white'
                   : 'border-white/35 text-white hover:bg-white/10'

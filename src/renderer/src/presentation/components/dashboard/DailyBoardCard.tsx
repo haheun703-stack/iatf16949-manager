@@ -44,9 +44,9 @@ export function DailyBoardCard(): JSX.Element | null {
       <div className="px-5 py-3 border-b border-border flex items-center gap-2">
         <CalendarClock className="w-4 h-4 text-primary" />
         <h2 className="text-sm font-bold">오늘 할 일</h2>
-        <span className="text-[11px] text-muted-foreground">매일 작성·관리 항목</span>
+        <span className="text-[12.5px] text-muted-foreground">매일 작성·관리 항목</span>
         {totalCount === 0 && (
-          <span className="ml-auto inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-600">
+          <span className="ml-auto inline-flex items-center gap-1 text-[13.5px] font-semibold text-emerald-600">
             <CheckCircle2 className="w-4 h-4" /> 오늘 도래 항목 없음
           </span>
         )}
@@ -68,7 +68,7 @@ export function DailyBoardCard(): JSX.Element | null {
                 left={
                   <span
                     className={cn(
-                      'text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 tabular-nums',
+                      'text-[12px] font-bold px-1.5 py-0.5 rounded shrink-0 tabular-nums',
                       o.daysLeft < 0
                         ? 'bg-rose-100 text-rose-700'
                         : o.daysLeft === 0
@@ -97,7 +97,7 @@ export function DailyBoardCard(): JSX.Element | null {
                 key={s.code}
                 onClick={() => setPage('sq-readiness')}
                 left={
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 shrink-0 tabular-nums">
+                  <span className="text-[12px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 shrink-0 tabular-nums">
                     {s.points}점
                   </span>
                 }
@@ -119,7 +119,7 @@ export function DailyBoardCard(): JSX.Element | null {
                 key={d.submissionId}
                 onClick={() => openDraft(d.submissionId, d.formCode)}
                 left={
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0">
+                  <span className="text-[12px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0">
                     {d.formCode}
                   </span>
                 }
@@ -149,12 +149,12 @@ function Column({
 }): JSX.Element {
   return (
     <div className="px-4 py-3">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-2">
+      <div className="flex items-center gap-1.5 text-[12.5px] font-bold text-muted-foreground uppercase tracking-wide mb-2">
         {icon}
         {title}
         <span
           className={cn(
-            'ml-auto tabular-nums font-bold px-1.5 py-0.5 rounded-full text-[10px]',
+            'ml-auto tabular-nums font-bold px-1.5 py-0.5 rounded-full text-[12px]',
             count > 0 ? 'bg-rose-100 text-rose-700' : 'bg-muted text-muted-foreground'
           )}
         >
@@ -162,7 +162,7 @@ function Column({
         </span>
       </div>
       {count === 0 ? (
-        <p className="text-[11.5px] text-muted-foreground/60 py-2">{emptyText}</p>
+        <p className="text-[13px] text-muted-foreground/60 py-2">{emptyText}</p>
       ) : (
         <ul className="space-y-1">{children}</ul>
       )}
@@ -190,8 +190,8 @@ function Item({
       >
         {left}
         <span className="min-w-0 flex-1">
-          <span className="block text-[12px] font-medium truncate">{main}</span>
-          <span className="block text-[10.5px] text-muted-foreground truncate">{sub}</span>
+          <span className="block text-[13.5px] font-medium truncate">{main}</span>
+          <span className="block text-[12px] text-muted-foreground truncate">{sub}</span>
         </span>
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-primary shrink-0" />
       </button>

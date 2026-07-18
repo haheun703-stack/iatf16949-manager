@@ -200,7 +200,7 @@ export function Dashboard(): JSX.Element {
       />
 
       {error && (
-        <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-[12px] text-destructive">
+        <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-[14.5px] text-destructive">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>대시보드 집계 실패: {error}</span>
         </div>
@@ -231,7 +231,7 @@ export function Dashboard(): JSX.Element {
         </div>
       )}
       {!readiness && (
-        <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-6 justify-center">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground py-6 justify-center">
           <Loader2 className="w-4 h-4 animate-spin" /> 집계 불러오는 중...
         </div>
       )}
@@ -254,7 +254,7 @@ export function Dashboard(): JSX.Element {
           className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
         >
           <Gauge className="w-4 h-4 text-primary shrink-0" />
-          <span className="text-[12px] font-bold text-muted-foreground">
+          <span className="text-[16.5px] font-bold text-foreground">
             AI 채점 현황 — 평균점수 · 등급분포 · 최근채점 · 보완필요{loading && ' (집계 중...)'}
           </span>
           {scoresOpen ? (
@@ -275,7 +275,7 @@ export function Dashboard(): JSX.Element {
                     ? '채점된 양식이 있어야 내보낼 수 있습니다'
                     : 'AI 채점 결과를 Excel로 내보냅니다'
                 }
-                className="text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border hover:bg-muted disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+                className="text-[13.5px] font-semibold px-3 py-1.5 rounded-lg border border-border hover:bg-muted disabled:opacity-50 flex items-center gap-1.5 transition-colors"
               >
                 {exporting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -299,7 +299,7 @@ export function Dashboard(): JSX.Element {
         )}
       </div>
 
-      <p className="text-[10.5px] text-muted-foreground text-center pt-1 pb-2">
+      <p className="text-[14px] text-muted-foreground text-center pt-1 pb-2">
         {data && (
           <>
             문서 BOM {data.bomTotalDocs}건 · 관련양식 {data.bomTotalForms}건 · 작성 초안{' '}
