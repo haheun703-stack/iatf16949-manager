@@ -1,27 +1,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 팀 테마 — 7팀 고유 색 토큰 + respDept 정규화 (팀별 허브 재편 7/6)
+// 팀 테마 — 5팀 고유 색 토큰 + respDept 정규화
 //
-//  팀 = forms.resp_dept 실값과 1:1 (정본 0.7 매트릭스 책임부서).
+//  ★5팀 재편(2026-07-19 사장님 확정, v4 통합뼈대): 실제 조직 = 개발·자재/출하·
+//  생산·품질·관리 5팀. 레거시 7팀 표기(총무·영업·구매·생산기술·품질경영보증)는
+//  deptKeys 로 흡수 — DB의 기존 resp_dept/owner 텍스트는 무수정 호환.
+//  분해 규칙: 영업팀 → 자재/출하팀(납입지시·출하 축. 수주·견적은 개발팀 소관이나
+//  레거시 '영업팀' 문자열은 자재/출하로 일괄 배정 — 신규 시드부터 정팀 기입).
+//  총무팀 → 관리팀 · 구매팀 → 자재/출하팀 · 생산기술팀 → 생산팀(설비·금형).
+//
 //  원칙: 색 = 팀 고유 식별자. 빨강(#E24B4A)은 부적합/미작성/경고 전용으로 예약.
 //  shared 에 둔 이유: 메인(TEAM_SUMMARY 집계)과 렌더러(카드/배지) 공용.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type TeamId =
-  | 'chongmu'    // 총무팀
-  | 'yeongup'    // 영업팀
-  | 'gumae'      // 구매팀
-  | 'saengsan'   // 생산팀
-  | 'saengki'    // 생산기술팀
-  | 'pumjil'     // 품질경영·보증팀
-  | 'gaebal'     // 개발팀
+  | 'gaebal'     // 개발팀 (수주·견적·원가 + APQP·ECN·양산이관)
+  | 'jajae'      // 자재/출하팀 (납입지시·조달·출하 — 구 구매팀+영업팀)
+  | 'saengsan'   // 생산팀 (공정 + 설비·금형 — 구 생산기술팀 흡수)
+  | 'pumjil'     // 품질팀
+  | 'gwanli'     // 관리팀 (구 총무팀)
 
 export interface TeamTheme {
   id: TeamId
   /** 화면 표시명 */
   label: string
-  /** DB forms.resp_dept 매칭값(정규화 후) */
+  /** DB forms.resp_dept 매칭값(정규화 후) — 레거시 팀명 포함 */
   deptKeys: string[]
-  /** 팀 설명(허브 카드 부제) */
+  /** 팀 설명(허브 카드 부제) — v4 뼈대 미션 요약 */
   desc: string
   /** 팀 고유색 */
   border: string
@@ -29,43 +33,33 @@ export interface TeamTheme {
   darkText: string
 }
 
-/** 사장님 확정 순서(2026-07-06): 총무→영업→구매→생산→생산기술→품질→개발 */
+/** v4 뼈대 순서(2026-07-19): 개발→자재/출하→생산→품질→관리 */
 export const TEAMS: TeamTheme[] = [
   {
-    id: 'chongmu', label: '총무팀', deptKeys: ['총무팀', '관리팀'],
-    desc: '교육·인사, 안전보건환경, 경영기획',
-    border: '#7F77DD', tintBg: '#EEEDFE', darkText: '#3C3489'
+    id: 'gaebal', label: '개발팀', deptKeys: ['개발팀', '설계팀', '개발영업팀'],
+    desc: '수주·견적·원가, APQP·ISIR·PPAP, ECN·양산이관',
+    border: '#3F3D9E', tintBg: '#EAEAFA', darkText: '#26215C'
   },
   {
-    id: 'yeongup', label: '영업팀', deptKeys: ['영업팀'],
-    desc: '수주·계약, 고객만족, 완성품 출하',
-    border: '#D85A30', tintBg: '#FAECE7', darkText: '#712B13'
-  },
-  {
-    // 수입검사는 구매 아님 — L-2100 수입검사표준·기준서 책임부서=품질보증팀(BOM, 7/7 사장님 지적)
-    id: 'gumae', label: '구매팀', deptKeys: ['구매팀'],
-    desc: '발주·협력업체, 자재 입출고',
+    id: 'jajae', label: '자재/출하팀', deptKeys: ['자재/출하팀', '자재출하팀', '자재팀', '출하팀', '구매팀', '영업팀'],
+    desc: '납입지시·조달·출하, 식별·추적·FIFO, 외주관리',
     border: '#EF9F27', tintBg: '#FAEEDA', darkText: '#633806'
   },
   {
-    id: 'saengsan', label: '생산팀', deptKeys: ['생산팀'],
-    desc: '작업표준·공정관리, 식별·추적, 3정5S',
+    id: 'saengsan', label: '생산팀', deptKeys: ['생산팀', '생산기술팀'],
+    desc: '작업표준·공정관리, 설비·금형, 4M·초중종물',
     border: '#639922', tintBg: '#EAF3DE', darkText: '#27500A'
   },
   {
-    id: 'saengki', label: '생산기술팀', deptKeys: ['생산기술팀'],
-    desc: '설비·치공구 관리, 금형',
-    border: '#2A9D8F', tintBg: '#E3F2F0', darkText: '#0F4C46'
-  },
-  {
-    id: 'pumjil', label: '품질경영·보증팀', deptKeys: ['품질보증팀', '품질경영팀', '품질팀', '품질개발팀'],
-    desc: '검사·시험, 계측기, 부적합·개선, SQ',
+    // 수입검사는 구매 아님 — L-2100 수입검사표준·기준서 책임부서=품질보증팀(BOM, 7/7 사장님 지적)
+    id: 'pumjil', label: '품질팀', deptKeys: ['품질팀', '품질보증팀', '품질경영팀', '품질개발팀', '품질경영·보증팀'],
+    desc: '검사·시험, 계측기, 부적합·CAPA, SQ·추적성 검증',
     border: '#378ADD', tintBg: '#E6F1FB', darkText: '#0C447C'
   },
   {
-    id: 'gaebal', label: '개발팀', deptKeys: ['개발팀', '설계팀'],
-    desc: 'APQP·ISIR·PPAP, FMEA, 도면·4M',
-    border: '#3F3D9E', tintBg: '#EAEAFA', darkText: '#26215C'
+    id: 'gwanli', label: '관리팀', deptKeys: ['관리팀', '총무팀', '경영지원팀'],
+    desc: '자금·결산, 인사·교육·온보딩, 법정신고',
+    border: '#7F77DD', tintBg: '#EEEDFE', darkText: '#3C3489'
   }
 ]
 
@@ -91,10 +85,16 @@ export function normalizeTeam(respDept: string | null | undefined): TeamId | nul
 // 자유 표기가 섞여 있어 deptKeys 직매칭이 실패함. 토큰 분해 후
 // ①deptKeys 직매칭 ②'팀' 접미사 보정 ③힌트 순으로 첫 매칭 팀 1개를 배정.
 const OWNER_HINTS: Record<string, TeamId> = {
-  경영지원: 'chongmu', // 총무팀 관할(경영기획)
-  경영진: 'chongmu',
-  경영자: 'chongmu',
-  자재: 'gumae' // 자재 입출고 = 구매팀 관할(수입"검사"는 품질 — forms.resp_dept 가 우선)
+  경영지원: 'gwanli',
+  경영진: 'gwanli',
+  경영자: 'gwanli',
+  총무: 'gwanli',
+  자재: 'jajae',
+  출하: 'jajae',
+  구매: 'jajae',
+  영업: 'jajae', // 레거시 — 납입지시·출하 축(수주·견적 신규 시드는 개발팀으로 기입)
+  생산기술: 'saengsan',
+  생산관리: 'saengsan'
 }
 
 /** 정기 의무 owner → TeamId. 복수 표기('영업/품질')는 첫 매칭 팀. 미매핑은 null(정직 노출). */

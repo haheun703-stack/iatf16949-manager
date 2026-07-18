@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  Briefcase, Handshake, ShoppingCart, Factory, Wrench, BadgeCheck, DraftingCompass,
+  Briefcase, Truck, Factory, BadgeCheck, DraftingCompass,
   Clock, ChevronRight, ShieldCheck, Loader2
 } from 'lucide-react'
 import { TEAMS, type TeamId, type TeamTheme } from '@shared/team-theme'
@@ -10,13 +10,11 @@ import { useDday } from '../../hooks/useDday'
 import { PageHeader } from '../shared/PageHeader'
 
 const TEAM_ICON: Record<TeamId, typeof Briefcase> = {
-  chongmu: Briefcase,
-  yeongup: Handshake,
-  gumae: ShoppingCart,
+  gaebal: DraftingCompass,
+  jajae: Truck,
   saengsan: Factory,
-  saengki: Wrench,
   pumjil: BadgeCheck,
-  gaebal: DraftingCompass
+  gwanli: Briefcase
 }
 
 /**
