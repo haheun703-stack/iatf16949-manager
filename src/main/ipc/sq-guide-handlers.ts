@@ -200,11 +200,11 @@ export function registerSqGuideHandlers(): void {
           if (it.loss > 0) unassigned.push(it)
           continue
         }
-        for (const t of it.teams) {
-          const b = byTeam.get(t)!
-          b.items.push(it)
-          b.loss += it.loss
-        }
+        // 복수 책임팀 항목은 주담당(첫 팀)에만 배정 — 팀 카드 중복 표출·손실 이중계상 방지
+        // (7/19 사장님 지적: 자재/품질 공동 항목이 두 카드에 다 뜸). 부담당은 teams 배열로 유지(+N 배지).
+        const b = byTeam.get(it.teams[0])!
+        b.items.push(it)
+        b.loss += it.loss
       }
       const teams = [...byTeam.entries()]
         .map(([teamId, v]) => ({

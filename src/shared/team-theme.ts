@@ -41,7 +41,8 @@ export const TEAMS: TeamTheme[] = [
     border: '#3F3D9E', tintBg: '#EAEAFA', darkText: '#26215C'
   },
   {
-    id: 'jajae', label: '자재/출하팀', deptKeys: ['자재/출하팀', '자재출하팀', '자재팀', '출하팀', '구매팀', '영업팀'],
+    // 표시명 '영업/자재팀' = 7/19 사장님 확정(v4 문서의 '자재/출하'에서 현장 명칭으로 변경)
+    id: 'jajae', label: '영업/자재팀', deptKeys: ['영업/자재팀', '영업자재팀', '자재/출하팀', '자재출하팀', '자재팀', '출하팀', '구매팀', '영업팀'],
     desc: '납입지시·조달·출하, 식별·추적·FIFO, 외주관리',
     border: '#EF9F27', tintBg: '#FAEEDA', darkText: '#633806'
   },
