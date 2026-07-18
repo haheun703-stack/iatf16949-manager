@@ -149,6 +149,17 @@ export function registerSqGuideHandlers(): void {
         itemRegs.get(m.item_code)!.push(m.reg_code)
       }
 
+      // 주담당 규칙(7/19 사장님 지적 — "수입검사 기준 수립은 품질팀"): 복수 책임팀이면
+      // SQ 영역의 본질 담당 팀을 주담당(첫 번째)으로 — 심사 영역 구조 그대로라 설명 가능.
+      const AREA_PRIMARY: Record<string, TeamId> = {
+        생산조건관리: 'saengsan',
+        검사시험: 'pumjil',
+        설비관리: 'saengsan',
+        금형관리: 'saengsan',
+        자재관리: 'jajae',
+        품질경영체제: 'pumjil'
+      }
+
       const dtoItems: SqDashboardItemDto[] = items.map((it) => {
         const state = suggestState(cpsByItem.get(it.code) ?? [])
         const isNa = state === '미해당'
@@ -159,6 +170,12 @@ export function registerSqGuideHandlers(): void {
           const fb = normalizeTeam(it.fallback_dept)
           if (fb) teams.add(fb)
         }
+        const teamArr = [...teams]
+        const pref = AREA_PRIMARY[it.area]
+        if (pref && teamArr.includes(pref)) {
+          teamArr.splice(teamArr.indexOf(pref), 1)
+          teamArr.unshift(pref)
+        }
         return {
           code: it.code,
           title: it.title,
@@ -167,7 +184,7 @@ export function registerSqGuideHandlers(): void {
           suggestedState: state,
           earned,
           loss: isNa ? 0 : it.points - earned,
-          teams: [...teams]
+          teams: teamArr
         }
       })
 
