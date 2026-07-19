@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarClock, Plus, Loader2, Check, AlertTriangle } from 'lucide-react'
+import { CalendarClock, Plus, Loader2, Check, AlertTriangle, Network } from 'lucide-react'
 import { OBLIGATION_CADENCES, type ObligationCadence, type ObligationDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { traceDeepLink } from '../../../lib/deeplink'
+import { useUIStore } from '../../stores/uiStore'
 import { PageHeader } from '../shared/PageHeader'
 import { useObligationStore } from '../../stores/obligationStore'
 import { CADENCE_META, CATEGORY_CHIP, dueStatus } from './obligationMeta'
@@ -133,6 +135,8 @@ function ObligationRow({
   onComplete: () => void
 }): JSX.Element {
   const sig = dueStatus(item.nextDueDate, item.leadDays, item.active)
+  const setPage = useUIStore((s) => s.setPage)
+  const link = traceDeepLink(item.title)
   return (
     <div className={cn('flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors', !item.active && 'opacity-55')}>
       <span className={cn('w-2 h-2 rounded-full shrink-0', sig.dot)} title={sig.text} />
@@ -157,6 +161,18 @@ function ObligationRow({
       </button>
 
       <span className={cn('text-[13px] shrink-0 w-20 text-right', sig.textTone)}>{sig.text}</span>
+
+      {link && (
+        <button
+          type="button"
+          onClick={() => setPage(link.page)}
+          title={link.hint}
+          className="shrink-0 text-[12.5px] font-semibold px-2.5 py-1.5 rounded-md text-primary hover:bg-primary/10 flex items-center gap-1 transition-colors"
+        >
+          <Network className="w-3 h-3" />
+          {link.label}
+        </button>
+      )}
 
       <button
         type="button"

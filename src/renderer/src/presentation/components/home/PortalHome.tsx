@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Check, X, AlertCircle, Clock, Loader2, ShieldCheck, ChevronRight, FileEdit, Users, User
+  Check, X, AlertCircle, Clock, Loader2, ShieldCheck, ChevronRight, FileEdit, Users, User, Network
 } from 'lucide-react'
 import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import type {
@@ -11,7 +11,8 @@ import type {
   KpiIndicatorDto
 } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
-import { useUIStore } from '../../stores/uiStore'
+import { traceDeepLink } from '../../../lib/deeplink'
+import { useUIStore, type PageId } from '../../stores/uiStore'
 import { useDday } from '../../hooks/useDday'
 
 /**
@@ -256,7 +257,13 @@ export function PortalHome(): JSX.Element {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
               {shown.map((k) => (
-                <KpiTile key={k.id} kpi={k} enteredBy={profile?.defaultAuthor || undefined} onSaved={loadKpis} />
+                <KpiTile
+                  key={k.id}
+                  kpi={k}
+                  enteredBy={profile?.defaultAuthor || undefined}
+                  onSaved={loadKpis}
+                  onOpenPage={setPage}
+                />
               ))}
             </div>
           )
@@ -303,6 +310,7 @@ export function PortalHome(): JSX.Element {
             completing={completing}
             onComplete={(t) => void complete(t)}
             onOpenForm={openForm}
+            onOpenPage={setPage}
             onGoObligations={() => setPage('obligations')}
           />
         ) : (
@@ -346,6 +354,7 @@ export function PortalHome(): JSX.Element {
                         completing={completing === task.id}
                         onComplete={() => void complete(task)}
                         onOpenForm={openForm}
+                        onOpenPage={setPage}
                       />
                     ))}
                   </div>
@@ -445,18 +454,22 @@ function TaskRow({
   completing,
   onComplete,
   onOpenForm,
+  onOpenPage,
   teamDot
 }: {
   task: TodayTaskDto
   completing: boolean
   onComplete: () => void
   onOpenForm: (formCode: string) => void
+  /** 도구 딥링크(예: 모의 역추적 훈련 → LOT 계보 조회) */
+  onOpenPage: (page: PageId) => void
   /** 개인별 보드에서 소속 팀 표시(팀 고유색 점) */
   teamDot?: { color: string; label: string }
 }): JSX.Element {
   const st = STATUS_STYLE[task.status]
   const Icon = st.icon
   const isOpen = task.status === 'due' || task.status === 'overdue'
+  const link = traceDeepLink(task.title)
   return (
     <div className="px-5 py-3 border-t border-border first:border-t-0 flex items-center gap-2.5 text-[14.5px]">
       <span
@@ -490,6 +503,16 @@ function TaskRow({
           SQ {task.sqBadges[0]}
           {task.sqBadges.length > 1 && ` +${task.sqBadges.length - 1}`}
         </span>
+      )}
+      {link && task.status !== 'done' && (
+        <button
+          type="button"
+          onClick={() => onOpenPage(link.page)}
+          className="h-8 px-2.5 rounded-md text-[12px] font-bold text-primary hover:bg-primary/10 inline-flex items-center gap-1 shrink-0"
+          title={link.hint}
+        >
+          <Network className="w-3 h-3" /> {link.label}
+        </button>
       )}
       {task.status === 'done' ? (
         <span className="text-[13px] text-muted-foreground shrink-0" title={task.doneSource === 'form' ? '연결 양식의 오늘 작성 기록 감지' : '완료 처리됨'}>
@@ -529,6 +552,7 @@ function PersonBoard({
   completing,
   onComplete,
   onOpenForm,
+  onOpenPage,
   onGoObligations
 }: {
   teams: TeamTodayDto[]
@@ -536,6 +560,7 @@ function PersonBoard({
   completing: number | null
   onComplete: (task: TodayTaskDto) => void
   onOpenForm: (formCode: string) => void
+  onOpenPage: (page: PageId) => void
   onGoObligations: () => void
 }): JSX.Element {
   type Entry = { task: TodayTaskDto; teamId: TeamId }
@@ -595,6 +620,7 @@ function PersonBoard({
                       completing={completing === task.id}
                       onComplete={() => onComplete(task)}
                       onOpenForm={onOpenForm}
+                      onOpenPage={onOpenPage}
                       teamDot={{ color: theme.border, label: theme.label }}
                     />
                   )
@@ -627,12 +653,16 @@ function PersonBoard({
 function KpiTile({
   kpi,
   enteredBy,
-  onSaved
+  onSaved,
+  onOpenPage
 }: {
   kpi: KpiIndicatorDto
   enteredBy?: string
   onSaved: () => void
+  /** 실측 도구 딥링크(예: 역추적 소요시간 → LOT 계보 조회) */
+  onOpenPage?: (page: PageId) => void
 }): JSX.Element {
+  const link = traceDeepLink(kpi.name)
   const nowPeriod = (() => {
     const d = new Date()
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -735,6 +765,16 @@ function KpiTile({
               </span>
             )}
             {kpi.latest && <span className="opacity-70">{kpi.latest.period.slice(5)}월</span>}
+            {link && onOpenPage && (
+              <button
+                type="button"
+                onClick={() => onOpenPage(link.page)}
+                className="font-bold text-primary hover:bg-primary/10 rounded px-1.5 py-0.5 inline-flex items-center gap-1"
+                title={link.hint}
+              >
+                <Network className="w-3 h-3" /> {link.label}
+              </button>
+            )}
           </div>
         </>
       )}

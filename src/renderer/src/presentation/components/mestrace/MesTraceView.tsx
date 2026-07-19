@@ -326,7 +326,8 @@ export function MesTraceView(): JSX.Element {
           <p className="text-[13px] text-muted-foreground leading-relaxed">
             원천: MES(TSPMES) 계보 테이블 실측 — 검사·전개는 읽기전용입니다. 새 덤프 반입 시{' '}
             <b>scripts/mes_trace_build.py</b> 를 다시 실행하면 이 화면이 자동으로 새 데이터를 읽습니다(앱 재시작
-            불필요).
+            불필요). 월 1회 <b>모의 역추적 훈련</b>(정기 의무·품질팀)의 실측 도구입니다 — 훈련 후 소요시간을 홈
+            KPI <b>역추적 소요시간</b>(분)에 입력하고 의무를 완료 처리하세요.
           </p>
         </>
       )}
