@@ -177,6 +177,11 @@ export const IPC_CHANNELS = {
   MES_TRACE_SEARCH: 'mesTrace:search',
   MES_TRACE_EXPAND: 'mesTrace:expand',
 
+  // MES 기록 현황 (QMS_SQC+MAC_DESC 사이드카 mes_records.db — 커버리지 판정, 7/20)
+  MES_RECORDS_STATUS: 'mesRecords:status',
+  MES_RECORDS_COVERAGE: 'mesRecords:coverage',
+  MES_RECORDS_DETAIL: 'mesRecords:detail',
+
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',
   PART_DETAIL: 'parts:detail',

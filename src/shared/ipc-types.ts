@@ -1000,6 +1000,65 @@ export interface MesTraceExpandDto {
   down: MesTraceDirectionDto
 }
 
+// ===== MES 기록 현황 (7/20 — 기록이 들어왔는지/비었는지 커버리지 판정) =====
+
+export interface MesRecordsTypeStat {
+  /** 'W'자주 / 'I'수입 / 'P'패트롤 / 'O'출하 / 'MAC'설비 일상점검 */
+  key: string
+  label: string
+  totalItems: number
+  firstYmd: string | null
+  lastYmd: string | null
+}
+
+export interface MesRecordsStatusDto {
+  available: boolean
+  path: string
+  builtAt: string | null
+  sourceDmp: string | null
+  /** 덤프 데이터 마지막 일자 — 이후 날짜 공백은 '새 덤프 반입 필요'(결측 아님) */
+  dataEndYmd: string | null
+  /** 미래 일자로 잘못 입력된 MES 행 수(빌드에서 제외, 정직 표기) */
+  futureRows: number
+  types: MesRecordsTypeStat[]
+}
+
+export interface MesRecordsDayCell {
+  ymd: string
+  /** 0 = 기록 없음 */
+  items: number
+  /** 기록된 품번수(설비점검은 설비수) */
+  parts: number
+}
+
+export interface MesRecordsCoverageDto {
+  days: number
+  dataEndYmd: string | null
+  strips: Array<{ key: string; label: string; cells: MesRecordsDayCell[] }>
+}
+
+export interface MesRecordsPartRow {
+  /** 품번(설비점검은 설비코드) */
+  pno: string
+  /** 품명 / 설비명(mes_codes WRKCTR) */
+  name: string | null
+  firstYmd: string | null
+  lastYmd: string | null
+  totalItems: number
+  activeDays: number
+  /** 데이터 종료일 기준 미기록 경과일 — 큰 값 = 기록이 끊긴 품번/설비 */
+  staleDays: number
+}
+
+export interface MesRecordsDetailDto {
+  key: string
+  label: string
+  /** 미기록 경과일 큰 순 */
+  rows: MesRecordsPartRow[]
+  /** 데이터 종료일 기준 최근 30일 중 기록 있는 날 */
+  recent: Array<{ ymd: string; items: number; parts: number; inspectors: number; confirmedPct: number | null }>
+}
+
 // ===== SQ 심사 아이템 트랙 (0068/0069 — 품번 4종 × 4단계 체크리스트) =====
 
 export type SqTrackStatus = 'open' | 'in_progress' | 'done' | 'na'
@@ -2010,6 +2069,18 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.MES_TRACE_EXPAND]: {
     request: { lotId: number }
     response: MesTraceExpandDto | null
+  }
+  [IPC_CHANNELS.MES_RECORDS_STATUS]: {
+    request: void
+    response: MesRecordsStatusDto
+  }
+  [IPC_CHANNELS.MES_RECORDS_COVERAGE]: {
+    request: { days?: number }
+    response: MesRecordsCoverageDto
+  }
+  [IPC_CHANNELS.MES_RECORDS_DETAIL]: {
+    request: { key: string }
+    response: MesRecordsDetailDto | null
   }
   [IPC_CHANNELS.SQ_ASSESS_RUN]: {
     request: void

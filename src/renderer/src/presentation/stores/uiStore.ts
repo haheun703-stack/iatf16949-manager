@@ -29,6 +29,7 @@ export type PageId =
   | 'about'
   | 'integrity'
   | 'mes-trace'
+  | 'mes-records'
 
 interface UIState {
   currentPage: PageId

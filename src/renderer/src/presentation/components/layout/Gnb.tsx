@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   LayoutDashboard, AlertTriangle, CalendarDays, CalendarClock, Route, Package, ClipboardCheck,
   GitBranch, Ruler, ShieldCheck, ListChecks, FolderTree, FileEdit, Factory, Home, Users,
-  ChevronDown, Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList, Network
+  ChevronDown, Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList, Network, Activity
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -40,7 +40,9 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '심사 준비 현황 · 채점' },
       { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
       { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' },
-      { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '일·주·월·분기·년 반복' }
+      { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '일·주·월·분기·년 반복' },
+      // 사이드카 mes_records.db — 4종 기록이 들어왔는지/비었는지 커버리지 (7/20)
+      { id: 'mes-records', label: 'MES 기록 현황', icon: Activity, desc: '자주·수입·패트롤·설비점검 — 들어왔나/비었나' }
     ]
   },
   {

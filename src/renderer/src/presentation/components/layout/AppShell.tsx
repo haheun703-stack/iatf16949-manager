@@ -25,6 +25,7 @@ import { TeamDetailView } from '../home/TeamDetailView'
 import { AboutView } from '../about/AboutView'
 import { IntegrityView } from '../integrity/IntegrityView'
 import { MesTraceView } from '../mestrace/MesTraceView'
+import { MesRecordsView } from '../mesrecords/MesRecordsView'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -73,6 +74,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'about' && <AboutView />}
             {currentPage === 'integrity' && <IntegrityView />}
             {currentPage === 'mes-trace' && <MesTraceView />}
+            {currentPage === 'mes-records' && <MesRecordsView />}
           </ErrorBoundary>
           </div>
         </main>
