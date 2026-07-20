@@ -6,7 +6,7 @@ import type { IntegrityCheckRow, IntegrityReportDto } from '@shared/ipc-types'
 
 /**
  * 정합성 점검 (2026-07-19 사장님 발제 — "검증·검수를 체계로").
- * 팀→프로세스→규정→양식→의무→SQ 체인의 결정론 검사 10종.
+ * 팀→프로세스→규정→양식→의무→SQ 체인의 결정론 검사 11종.
  * 원칙: 결정론이 정본, AI 검수 에이전트(.claude/agents/integrity-auditor)는
  * 이 결과를 근거로만 판단한다. 검사 추가 시 이 파일 + 에이전트 정의 동기 갱신.
  */
@@ -175,6 +175,20 @@ export function registerIntegrityHandlers(): void {
           .all() as Array<{ reg_code: string }>
       ).map((r) => r.reg_code)
       rows.push(row('sqmap-ref', 'SQ↔규정 매핑 참조 무결성', bad, 'sq_reg_map 이 참조하는 규정이 양식 마스터에 실존해야 함', true))
+    }
+
+    // ⑪ sqtrack 팀 ID 유효성 — TeamId 리터럴 저장 테이블(0069)의 5팀 정합 (0083 실사례: 레거시 gumae/saengki 로 화면 크래시)
+    {
+      const validIds = new Set(['gaebal', 'jajae', 'saengsan', 'pumjil', 'gwanli'])
+      const bad: string[] = []
+      for (const r of db
+        .prepare(
+          `SELECT team, COUNT(*) n FROM sqtrack_items WHERE team IS NOT NULL GROUP BY team`
+        )
+        .all() as Array<{ team: string; n: number }>) {
+        if (!validIds.has(r.team)) bad.push(`${r.team} (${r.n}건)`)
+      }
+      rows.push(row('sqtrack-team', 'SQ 트랙 팀 ID 유효성', bad, 'sqtrack_items.team 은 5팀 TeamId 만 허용(레거시 잔존 시 화면 크래시, 0083 선례)'))
     }
 
     const totals = {

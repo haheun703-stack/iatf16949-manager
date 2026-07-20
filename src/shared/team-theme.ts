@@ -110,6 +110,27 @@ export function normalizeOwnerTeam(owner: string | null | undefined): TeamId | n
   return null
 }
 
+/** 레거시 TeamId(7팀 시절, DB 문자열 잔존 대비) → 5팀. sqtrack 0069 시드가 실사례(0083 교정). */
+const LEGACY_TEAM_IDS: Record<string, TeamId> = {
+  chongmu: 'gwanli',
+  yeongup: 'jajae',
+  gumae: 'jajae',
+  saengki: 'saengsan'
+}
+
 export function teamTheme(id: TeamId): TeamTheme {
-  return TEAMS.find((t) => t.id === id)!
+  const found =
+    TEAMS.find((t) => t.id === id) ??
+    TEAMS.find((t) => t.id === LEGACY_TEAM_IDS[id as unknown as string])
+  if (found) return found
+  // 미지 ID 는 크래시 대신 중립 배지(원문 라벨 정직 노출) — 화면 전체가 죽는 것 방지
+  return {
+    id,
+    label: String(id),
+    deptKeys: [],
+    desc: '',
+    border: '#9AA1AC',
+    tintBg: '#EEF0F3',
+    darkText: '#3F4650'
+  }
 }

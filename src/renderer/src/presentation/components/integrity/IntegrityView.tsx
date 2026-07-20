@@ -6,7 +6,7 @@ import { PageHeader } from '../shared/PageHeader'
 
 /**
  * 정합성 점검 (7/19 검수 체계 1층) — 팀→프로세스→규정→양식→의무→SQ 체인의
- * 결정론 검사 10종 결과. "문제 0건"이 정상 상태. 검사 정의는 main/integrity-handlers.
+ * 결정론 검사 11종 결과. "문제 0건"이 정상 상태. 검사 정의는 main/integrity-handlers.
  * AI 검수 에이전트(.claude/agents/integrity-auditor)는 이 결과를 근거로 판단(결정론 우선).
  */
 

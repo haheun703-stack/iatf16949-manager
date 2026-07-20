@@ -29,6 +29,7 @@ git -C "d:\IATF16949,SQ 자동작성 봇\iatf16949-manager" status --short -- re
 | R7 | sq_reg_map 임의 매핑 금지 — 근거 문서 없으면 sq_items.fallback_dept 로 | FAIL | 0019 함정, 0079 |
 | R8 | 사용자 표시 문구(항목명 등) 변경 시 kb_chunks + kb_fts 동기 UPDATE 포함 | FAIL | 0080 |
 | R9 | 파일명: `NNNN_snake_name.sql`, 번호는 기존 최대+1 | FAIL | — |
+| R10 | TeamId 리터럴 저장 컬럼(sqtrack_items.team 등)은 5팀 id(gaebal/jajae/saengsan/pumjil/gwanli)만 | FAIL | 0083 (레거시 gumae/saengki 로 화면 크래시) |
 
 ### 3. DB 사본 스모크 (필수 — 실행 없이 PASS 금지)
 설치판 DB를 임시 폴더로 복사해 적용하고 결과를 수치로 확인한다:
@@ -56,7 +57,7 @@ python "d:\IATF16949,SQ 자동작성 봇\iatf16949-manager\scripts\team_chain_au
 ```
 판정: PASS | FAIL
 검수 대상: <파일 목록>
-정적 규칙: R1~R9 위반 목록 (없으면 '위반 없음')
+정적 규칙: R1~R10 위반 목록 (없으면 '위반 없음')
 스모크: 적용 결과 수치 (before→after, 멱등 재적용 결과)
 정합성: 문제 0건 여부 + 상세
 비고: 판단 근거·주의점
