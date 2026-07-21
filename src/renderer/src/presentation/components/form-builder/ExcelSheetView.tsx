@@ -108,12 +108,16 @@ export function ExcelSheetView(): JSX.Element {
   }
 
   const totalW = model.colWidthsPx.reduce((a, b) => a + b, 0)
-  // 폭 맞춤 = 컨테이너에 딱 맞게 축소(1 이하로만 — 작은 시트는 100% 유지, 확대는 안 함).
+  // P8② 폭 맞춤 = 컨테이너 폭에 맞게 축소(≤100%). 단 가독성 하한 60% — 12개월 가로형처럼
+  //  극단적으로 넓은 시트는 더 줄이면 깨알이 되므로 60%에서 멈추고 가로 스크롤로 전환한다.
+  //  세로형(하한 위)=한눈에, 극단 가로형(하한 도달)=60%+첫열·머리행 고정 스크롤. 규칙 하나로 자동 분기.
+  const FLOOR = 0.6
   const fitScale = availW > 0 && totalW > 0 ? Math.min(1, availW / totalW) : 1
-  const scale = mode === 'fit' ? fitScale : 1
+  const floored = mode === 'fit' && fitScale < FLOOR // 가로형 자동 판정
+  const scale = mode === 'fit' ? Math.max(fitScale, FLOOR) : 1
   const scaledPct = Math.round(scale * 100)
-  // 100% 배율에서 실제로 옆으로 넘칠 때만 첫 열 고정을 켠다(폭 맞춤에선 스크롤이 없어 불필요).
-  const canScrollX = mode === 'full' && totalW > availW + 1
+  // 실제 렌더 폭이 컨테이너를 넘치면 스크롤/고정 활성(플로어 도달 가로형 또는 100% 모드)
+  const canScrollX = totalW * scale > availW + 1
 
   return (
     <div>
@@ -124,11 +128,17 @@ export function ExcelSheetView(): JSX.Element {
           입력 가능 셀 {model.editCells.length}개 — 클릭해서 작성
         </span>
         {canScrollX && (
-          <span className="inline-flex items-center gap-1 text-primary/70">← → 가로로 넘겨 보세요 (첫 열 고정)</span>
+          <span className="inline-flex items-center gap-1 text-primary/70">← → 가로로 넘겨 보세요 (첫 열·머리행 고정)</span>
         )}
         <div className="ml-auto flex items-center gap-2">
           {mode === 'fit' && scale < 1 && (
-            <span className="tabular-nums text-muted-foreground/70">폭 맞춤 {scaledPct}%</span>
+            <span
+              className={
+                'tabular-nums ' + (floored ? 'text-primary font-semibold' : 'text-muted-foreground/70')
+              }
+            >
+              {floored ? `가로형 · 배율 ${scaledPct}% (가로 스크롤)` : `폭 맞춤 ${scaledPct}%`}
+            </span>
           )}
           <div className="flex items-center rounded-md border border-border p-0.5 bg-muted/40">
             <button
@@ -196,6 +206,7 @@ export function ExcelSheetView(): JSX.Element {
                         cell={cell}
                         edit={edit}
                         frozen={c === 1 && canScrollX}
+                        frozenTop={r === 1 && canScrollX}
                         value={edit ? String(values[edit.fieldKey] ?? '') : undefined}
                         onChange={edit ? (v) => setValue(edit.fieldKey, v) : undefined}
                       />
@@ -215,12 +226,14 @@ function SheetCell({
   cell,
   edit,
   frozen,
+  frozenTop,
   value,
   onChange
 }: {
   cell?: RenderCellDto
   edit?: RenderEditCellDto
   frozen?: boolean
+  frozenTop?: boolean
   value?: string
   onChange?: (v: string) => void
 }): JSX.Element {
@@ -240,14 +253,19 @@ function SheetCell({
     padding: '1px 3px',
     lineHeight: 1.25
   }
-  // P8② 첫 열 고정 — 가로 스크롤 시 식별 열(NO 등)이 항상 보이게 sticky 처리.
-  //  투명 셀은 뒤가 비치지 않게 흰색으로 채우고, 우측에 얇은 구분선을 준다.
-  if (frozen) {
+  // P8② 첫 열/머리행 고정 — 가로형 스크롤 시 식별 열(첫 열)·제목행이 항상 보이게 sticky.
+  //  투명 셀은 뒤가 비치지 않게 흰색으로 채우고, 고정 경계에 얇은 구분선을 준다.
+  if (frozen || frozenTop) {
     style.position = 'sticky'
-    style.left = 0
-    style.zIndex = edit ? 3 : 2
+    if (frozen) style.left = 0
+    if (frozenTop) style.top = 0
+    // 좌상 코너(첫 열∩머리행)가 최상단, 그다음 머리행, 첫 열 순으로 겹침
+    style.zIndex = frozen && frozenTop ? 5 : frozenTop ? 4 : edit ? 3 : 2
     style.backgroundColor = cell?.bg ?? '#fff'
-    style.boxShadow = 'inset -1px 0 0 #d4d4d8, 2px 0 5px -3px rgba(0,0,0,0.18)'
+    const sh: string[] = []
+    if (frozen) sh.push('inset -1px 0 0 #d4d4d8', '2px 0 5px -3px rgba(0,0,0,0.18)')
+    if (frozenTop) sh.push('inset 0 -1px 0 #d4d4d8', '0 2px 5px -3px rgba(0,0,0,0.18)')
+    style.boxShadow = sh.join(', ')
   }
 
   if (edit && onChange) {
