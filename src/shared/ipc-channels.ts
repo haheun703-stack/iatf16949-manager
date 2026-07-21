@@ -20,6 +20,10 @@ export const IPC_CHANNELS = {
   // 관제탑 홈 KPI 지수 (0066) — 지표+최근 측정값 / 월별 실적 입력
   KPI_HOME: 'kpi:home',
   KPI_SAVE: 'kpi:save',
+  // P2 — 공용 PC 사용자 전환 (app_users 명단 CRUD, 0085). 활성 사용자는 로컬 상태(회사 DB 미혼입).
+  APP_USER_LIST: 'appUser:list',
+  APP_USER_UPSERT: 'appUser:upsert',
+  APP_USER_DELETE: 'appUser:delete',
   // IATF 대시보드 — 인증 심사 준비 한 장 (조항·핵심 의무·문서화)
   IATF_DASHBOARD: 'iatf:dashboard',
   // 규정·양식 찾아보기 (포털 2단계) — 규정 카드 그리드 + 상세(하위 양식)

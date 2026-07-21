@@ -12,6 +12,7 @@ import { useCopilotStore } from '../../stores/copilotStore'
 import { useAiAuthorStore } from '../../stores/aiAuthorStore'
 import { useSimilarStore } from '../../stores/similarStore'
 import { SettingsMenu } from './SettingsMenu'
+import { UserSwitcher } from './UserSwitcher'
 
 interface NavItem {
   id: PageId
@@ -274,6 +275,7 @@ export function Gnb(): JSX.Element {
           <Sparkles className="w-3.5 h-3.5" />
           코파일럿
         </button>
+        <UserSwitcher />
         <SettingsMenu />
       </div>
       </div>

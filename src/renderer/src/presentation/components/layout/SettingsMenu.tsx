@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Settings, Check, Pencil, Folder, CalendarClock, Minus, Plus, Info, ShieldCheck } from 'lucide-react'
+import { Settings, Check, Pencil, Folder, CalendarClock, Minus, Plus, Info, ShieldCheck, Users } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, FONT_SCALE_MIN, FONT_SCALE_MAX, FONT_SCALE_STEP } from '../../stores/uiStore'
 import { setAuditDateCache } from '../../hooks/useDday'
+import { UserManageModal } from './UserManageModal'
 
 /**
  * GNB 우측 설정 팝오버 — 사이드바 제거(포털 1단계)로 이동해 온 설정들:
@@ -17,6 +18,7 @@ export function SettingsMenu(): JSX.Element {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [editingDate, setEditingDate] = useState(false)
+  const [showUsers, setShowUsers] = useState(false) // P2 사용자 관리 모달
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -237,6 +239,20 @@ export function SettingsMenu(): JSX.Element {
             </div>
           </div>
 
+          {/* 사용자 관리 (P2) — 이름/부서/역할 CRUD. 퇴사=비활성 기본 */}
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false)
+              setShowUsers(true)
+            }}
+            title="사용자 관리 — 완료·작성 기록에 남는 이름(퇴사자는 비활성)"
+            className="mt-1 w-full flex items-center gap-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted rounded px-1 py-1"
+          >
+            <Users className="w-3.5 h-3.5 shrink-0 opacity-80" />
+            <span>사용자 관리</span>
+          </button>
+
           {/* 정합성 점검 (7/19 검수 체계 1층) */}
           <button
             type="button"
@@ -266,6 +282,8 @@ export function SettingsMenu(): JSX.Element {
           </button>
         </div>
       )}
+
+      {showUsers && <UserManageModal onClose={() => setShowUsers(false)} />}
     </div>
   )
 }

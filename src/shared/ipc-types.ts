@@ -756,6 +756,30 @@ export interface KpiSaveInput {
   enteredBy?: string
 }
 
+// ===== P2 앱 사용자(공용 PC 사람 전환) — app_users(0085) =====
+
+export type AppUserRole = 'member' | 'manager' | 'executive'
+
+export interface AppUserDto {
+  id: number
+  name: string
+  /** normalizeTeam 가능한 부서 문자열(team-theme deptKeys). null 가능 */
+  teamDept: string | null
+  role: AppUserRole
+  active: boolean
+  sortOrder: number
+}
+
+export interface AppUserUpsertInput {
+  /** 있으면 UPDATE, 없으면 INSERT(name UNIQUE 충돌 시 UPDATE) */
+  id?: number
+  name: string
+  teamDept?: string | null
+  role?: AppUserRole
+  active?: boolean
+  sortOrder?: number
+}
+
 // ===== SQ 작성 가이드층 (0064, 코워크 07/08 지시서) =====
 
 export type SqCheckpointStatus = 'met' | 'partial' | 'missing' | 'na'
@@ -2028,6 +2052,18 @@ export interface IpcChannelMap {
   }
   [IPC_CHANNELS.KPI_SAVE]: {
     request: KpiSaveInput
+    response: { success: boolean }
+  }
+  [IPC_CHANNELS.APP_USER_LIST]: {
+    request: void
+    response: AppUserDto[]
+  }
+  [IPC_CHANNELS.APP_USER_UPSERT]: {
+    request: AppUserUpsertInput
+    response: { success: boolean; id?: number }
+  }
+  [IPC_CHANNELS.APP_USER_DELETE]: {
+    request: { id: number }
     response: { success: boolean }
   }
   [IPC_CHANNELS.IATF_DASHBOARD]: {

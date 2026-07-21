@@ -33,6 +33,7 @@ import { registerIsirHandlers } from './isir-handlers'
 import { registerIntegrityHandlers } from './integrity-handlers'
 import { registerMesTraceHandlers } from './mes-trace-handlers'
 import { registerMesRecordsHandlers } from './mes-records-handlers'
+import { registerAppUsersHandlers } from './app-users-handlers'
 
 export function registerAllIpcHandlers(): void {
   registerAiHandlers()
@@ -59,6 +60,7 @@ export function registerAllIpcHandlers(): void {
   registerIntegrityHandlers()
   registerMesTraceHandlers()
   registerMesRecordsHandlers()
+  registerAppUsersHandlers()
   const db = getSqlite()
 
   // ──── Company Profile Handlers ────
