@@ -11,7 +11,8 @@ import type {
   AiScoreResponse,
   FormExportResult,
   FormRevisionListItemDto,
-  FormRevisionDto
+  FormRevisionDto,
+  FormExampleDto
 } from '@shared/ipc-types'
 
 export type CopilotTab = 'guide' | 'score'
@@ -52,6 +53,11 @@ interface FormState {
   mergeValues: (partial: Record<string, unknown>) => void
   resetValues: (initial?: Record<string, unknown>) => void
 
+  // P5 — 좌측 정답 패널: 모범 예시(form_examples). 양식 로드 시 함께 로드
+  examples: FormExampleDto[]
+  /** [틀 가져오기] — frame 필드만·빈 칸만 예시값 주입. fact 필드는 절대 건드리지 않음(원칙2) */
+  importFrame: () => number
+
   // 자동 메타주입(새 양식): 발행번호 미리보기(저장 시 serial_no로 확정)
   serialPreview: string | null
 
@@ -65,8 +71,8 @@ interface FormState {
   // 저장된 작성본을 양식에 불러와 이어쓰기
   loadSubmission: (id: number) => Promise<void>
 
-  // Save
-  saveDraft: () => Promise<number>
+  // Save. createdBy = 기록 주체(활성 사용자). [저장하고 완료] 경로에서 전달(§4)
+  saveDraft: (createdBy?: string) => Promise<number>
 
   // 공식 엑셀 출력(원본양식에 값 주입 → .xlsx, 선택 PDF). 출력 전 자동 저장.
   exportingXlsx: boolean
@@ -130,6 +136,7 @@ export const useFormStore = create<FormState>((set, get) => ({
       currentSubmissionId: null,
       aiError: null,
       revisions: [],
+      examples: [],
       // reset copilot context for the new form
       guide: null,
       guideError: null,
@@ -138,6 +145,13 @@ export const useFormStore = create<FormState>((set, get) => ({
     })
     if (res) {
       await get().loadRegulationSections(res.regCode)
+      // P5 — 좌측 정답 패널용 모범 예시 로드(폼이 바뀌었으면 무시)
+      try {
+        const ex = (await window.api.invoke(ch('FORM_EXAMPLES_GET'), { formCode: res.code })) as FormExampleDto[]
+        if (get().currentForm?.code === res.code) set({ examples: ex })
+      } catch {
+        /* 예시 없는 양식 */
+      }
       // 새 양식 메타 자동주입(발행번호/작성일자/작성자). 폼이 바뀌었으면 무시.
       try {
         const defaults = (await window.api.invoke(ch('FORM_DRAFT_DEFAULTS'), {
@@ -171,6 +185,24 @@ export const useFormStore = create<FormState>((set, get) => ({
   mergeValues: (partial) => set((s) => ({ values: { ...s.values, ...partial } })),
   resetValues: (initial = {}) => set({ values: initial }),
 
+  examples: [],
+  importFrame: () => {
+    const { examples, values } = get()
+    const patch: Record<string, unknown> = {}
+    let n = 0
+    for (const ex of examples) {
+      // frame(틀)만 · 빈 칸만. fact(오늘의 사실)는 절대 주입 안 함(원칙2)
+      if (ex.fieldClass !== 'frame') continue
+      const cur = values[ex.fieldKey]
+      if (cur == null || String(cur).trim() === '') {
+        patch[ex.fieldKey] = ex.exampleValue
+        n++
+      }
+    }
+    if (n > 0) set((s) => ({ values: { ...s.values, ...patch } }))
+    return n
+  },
+
   currentSubmissionId: null,
   setCurrentSubmissionId: (id) => set({ currentSubmissionId: id }),
 
@@ -200,7 +232,7 @@ export const useFormStore = create<FormState>((set, get) => ({
     void get().loadRevisions()
   },
 
-  saveDraft: async () => {
+  saveDraft: async (createdBy) => {
     const { currentForm, values, currentSubmissionId, serialPreview } = get()
     if (!currentForm) throw new Error('양식이 로드되지 않았습니다.')
 
@@ -216,7 +248,8 @@ export const useFormStore = create<FormState>((set, get) => ({
     const { id } = (await window.api.invoke(ch('FORM_SUBMISSION_CREATE'), {
       formCode: currentForm.code,
       values,
-      serialNo: serialPreview ?? undefined
+      serialNo: serialPreview ?? undefined,
+      createdBy: createdBy ?? undefined
     })) as { id: number }
     set({ currentSubmissionId: id })
     return id

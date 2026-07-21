@@ -77,6 +77,8 @@ export interface FormFieldDto {
   aiEnabled: boolean
   aiPromptHint: string | null
   sortOrder: number
+  /** 틀(frame)/사실(fact) 분류(0085) — fact 는 예시 자동주입 금지·저장 검증 대상(P5) */
+  fieldClass: 'frame' | 'fact'
   gridColumns?: GridColumnDto[] // type='grid' 일 때만
 }
 
@@ -759,6 +761,19 @@ export interface KpiSaveInput {
   period: string // 'YYYY-MM'
   value: number
   enteredBy?: string
+}
+
+// ===== P5 양식별 모범 예시(form_examples, 0085) — 좌측 정답 패널 =====
+
+export interface FormExampleDto {
+  fieldKey: string
+  label: string
+  exampleValue: string
+  whyNote: string | null
+  /** form_fields.field_class — frame=[틀 가져오기] 대상 / fact=자동주입 금지·저장검증 대상 */
+  fieldClass: 'frame' | 'fact'
+  /** form_fields.type — 'date' 는 예시값 완전일치 차단에서 제외(오탐 방지, 코워크 §0.7 ①) */
+  fieldType: string
 }
 
 // ===== P2 앱 사용자(공용 PC 사람 전환) — app_users(0085) =====
@@ -2198,6 +2213,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.REGULATION_GET_SECTIONS]: {
     request: { regCode: string }
     response: RegulationSectionDto[]
+  }
+  [IPC_CHANNELS.FORM_EXAMPLES_GET]: {
+    request: { formCode: string }
+    response: FormExampleDto[]
   }
   [IPC_CHANNELS.FORM_SUBMISSION_CREATE]: {
     request: { formCode: string; values: Record<string, unknown>; serialNo?: string; createdBy?: string }

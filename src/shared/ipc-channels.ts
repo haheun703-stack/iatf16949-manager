@@ -50,6 +50,8 @@ export const IPC_CHANNELS = {
   FORM_GET_DEFINITION: 'form:getDefinition',
   FORM_SET_SCOPE: 'form:setScope',
   REGULATION_GET_SECTIONS: 'regulation:getSections',
+  // 양식별 모범 예시(form_examples, 0085) — 좌측 정답 패널(P5)
+  FORM_EXAMPLES_GET: 'form:examplesGet',
   FORM_SUBMISSION_CREATE: 'form:submissionCreate',
   FORM_SUBMISSION_UPDATE: 'form:submissionUpdate',
   FORM_SUBMISSION_LIST: 'form:submissionList',

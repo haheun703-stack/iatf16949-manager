@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History, Table2 } from 'lucide-react'
+import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History, Table2, CheckCircle2, PanelLeftOpen, ShieldAlert } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
+import { useActiveUserStore } from '../../stores/activeUserStore'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 import { ApprovalBar } from './ApprovalBar'
 import { FormFieldInput } from './FormFieldInput'
@@ -15,11 +16,17 @@ import type { FormFieldDto } from '@shared/ipc-types'
 
 type ViewMode = 'input' | 'excel' | 'document'
 
-export function FormCanvas(): JSX.Element {
-  const { currentForm, currentFormLoading, saveDraft, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
+export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }): JSX.Element {
+  const { currentForm, currentFormLoading, saveDraft, values, examples, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const setPage = useUIStore((s) => s.setPage)
+  // 기록 주체 = 활성 사용자(§4). [저장하고 완료] 시 createdBy 로 전달
+  const currentName = useActiveUserStore((s) => {
+    const u = s.users.find((x) => x.id === s.activeUserId)
+    return u ? u.name : null
+  })
+  const [saveWarn, setSaveWarn] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [viewMode, setViewMode] = useState<ViewMode>('input')
   const [pdfBusy, setPdfBusy] = useState(false)
@@ -82,6 +89,46 @@ export function FormCanvas(): JSX.Element {
     return Array.from(map.entries())
   }, [currentForm])
 
+  // P5 저장 검증 — ①필수 fact 공란 ②text fact 예시값 완전일치(date 제외: 오늘 날짜 우연일치 오탐 방지, 코워크 ①)
+  const validateFactValues = (): string | null => {
+    if (!currentForm) return null
+    const facts = currentForm.fields.filter((f) => f.fieldClass === 'fact')
+    for (const f of facts) {
+      const v = values[f.fieldKey]
+      if (v == null || String(v).trim() === '') {
+        return `'${f.label}' 칸(오늘의 사실)이 비어 있습니다 — 실제 값을 입력하세요. (예시값 복사로는 통과되지 않습니다)`
+      }
+    }
+    for (const f of facts) {
+      if (f.type === 'date') continue
+      const ex = examples.find((e) => e.fieldKey === f.fieldKey)
+      if (ex && ex.exampleValue.trim() && String(values[f.fieldKey]).trim() === ex.exampleValue.trim()) {
+        return `'${f.label}' — 예시값을 그대로 저장할 수 없습니다. 본인이 확인한 실제 값을 입력하세요(기록 조작 방지).`
+      }
+    }
+    return null
+  }
+
+  // [저장하고 완료 처리 ✓] — 검증 통과 시 저장(createdBy=활성 사용자). 홈에서 작성기록으로 확정(§0.6 결정2)
+  const handleSaveAndComplete = async (): Promise<void> => {
+    const warn = validateFactValues()
+    if (warn) {
+      setSaveWarn(warn)
+      return
+    }
+    setSaveWarn(null)
+    setSaveStatus('saving')
+    try {
+      await saveDraft(currentName ?? undefined)
+      setSaveStatus('saved')
+      window.alert('작성기록을 저장했습니다.\n홈 "오늘 할 일"에서 [작성기록으로 확정]을 누르면 ✓ 처리됩니다.')
+      setTimeout(() => setSaveStatus('idle'), 2500)
+    } catch (err) {
+      console.error(err)
+      setSaveStatus('error')
+    }
+  }
+
   const handleSave = async (): Promise<void> => {
     setSaveStatus('saving')
     try {
@@ -137,6 +184,17 @@ export function FormCanvas(): JSX.Element {
             <span className="text-[11px] text-muted-foreground">규정 {currentForm.regCode}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {onUnfoldAnswer && (
+              <button
+                type="button"
+                onClick={onUnfoldAnswer}
+                title="왼쪽 정답 패널 펼치기"
+                className="text-[13px] font-semibold px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 flex items-center gap-1.5 transition-colors mr-1"
+              >
+                <PanelLeftOpen className="w-3.5 h-3.5" />
+                정답 보기
+              </button>
+            )}
             {/* 입력 / 문서 보기 토글 */}
             <div className="flex items-center rounded-lg border border-border p-0.5 bg-muted/40 mr-1">
               <button
@@ -290,6 +348,16 @@ export function FormCanvas(): JSX.Element {
               {saveStatus === 'error' && '저장 실패'}
               {saveStatus === 'idle' && '초안 저장'}
             </button>
+            <button
+              type="button"
+              onClick={() => void handleSaveAndComplete()}
+              disabled={saveStatus === 'saving'}
+              title="오늘의 사실 검증 후 저장 — 홈에서 작성기록으로 ✓ 확정"
+              className="text-[13px] font-bold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 transition-opacity"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              저장하고 완료 처리 ✓
+            </button>
           </div>
         </div>
         <h2 className="text-2xl font-bold tracking-tight">{currentForm.name}</h2>
@@ -338,6 +406,24 @@ export function FormCanvas(): JSX.Element {
       </div>
       ) : (
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-7">
+        {/* P5 저장 차단 경고(fact 공란·예시값 복제) */}
+        {saveWarn && (
+          <div className="flex items-start gap-2 rounded-lg border-2 border-destructive bg-destructive/10 px-4 py-3 text-[13px] text-destructive font-semibold">
+            <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <div className="font-bold mb-0.5">⛔ 저장할 수 없습니다</div>
+              <div className="font-medium leading-relaxed">{saveWarn}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSaveWarn(null)}
+              className="ml-auto text-[11px] font-bold px-2 py-1 rounded hover:bg-destructive/20 shrink-0"
+            >
+              닫기
+            </button>
+          </div>
+        )}
+
         {/* 결재란 */}
         <ApprovalBar approvals={currentForm.approvals} />
 

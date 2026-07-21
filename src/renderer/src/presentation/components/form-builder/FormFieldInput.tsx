@@ -1,4 +1,4 @@
-import { Sparkles, Loader2 } from 'lucide-react'
+import { Sparkles, Loader2, Lock } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { PhotoField } from './PhotoField'
@@ -27,12 +27,21 @@ export function FormFieldInput({ field }: Props): JSX.Element {
               자동
             </span>
           )}
+          {field.fieldClass === 'fact' && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold"
+              title="사람이 실측·기입하는 값 — 예시·[틀 가져오기]·AI로 채울 수 없습니다(기록 조작 방지)"
+            >
+              오늘의 사실
+            </span>
+          )}
           {field.unit && (
             <span className="text-[11px] text-muted-foreground font-normal">({field.unit})</span>
           )}
         </span>
 
-        {field.aiEnabled && (
+        {/* fact 필드는 AI 자동생성 금지(원칙2 — 사실은 사람만 채운다) */}
+        {field.aiEnabled && field.fieldClass !== 'fact' && (
           <button
             type="button"
             onClick={handleAI}
@@ -60,6 +69,11 @@ export function FormFieldInput({ field }: Props): JSX.Element {
       </label>
 
       {renderInput(field, value, setValue)}
+      {field.fieldClass === 'fact' && (
+        <p className="mt-1 text-[11px] text-amber-600/90 flex items-center gap-1">
+          <Lock className="w-3 h-3 shrink-0" /> 이 칸은 [틀 가져오기]·AI로 채워지지 않습니다 — 실측·실제 값만 저장됩니다
+        </p>
+      )}
     </div>
   )
 }

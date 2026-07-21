@@ -9,6 +9,7 @@ import { buildRenderModel } from '../docgen/render-model'
 import type {
   FormListItemDto,
   FormDefinitionDto,
+  FormExampleDto,
   FormFieldDto,
   FormFieldTypeDto,
   FormLayout,
@@ -55,7 +56,8 @@ function rowToField(row: Record<string, unknown>): FormFieldDto {
     unit: (row.unit as string) || null,
     aiEnabled: (row.ai_enabled as number) === 1,
     aiPromptHint: (row.ai_prompt_hint as string) || null,
-    sortOrder: (row.sort_order as number) ?? 0
+    sortOrder: (row.sort_order as number) ?? 0,
+    fieldClass: (row.field_class as string) === 'fact' ? 'fact' : 'frame'
   }
 }
 
@@ -142,6 +144,35 @@ export function registerFormHandlers(): void {
         deprecated: Number(form.deprecated) === 1,
         deprecatedNote: (form.deprecated_note as string) || null,
         replacementPage: (form.replacement_page as string) || null
+      }
+    }
+  )
+
+  // ──── 양식별 모범 예시(form_examples) — 좌측 정답 패널(P5) ────
+  ipcMain.handle(
+    IPC_CHANNELS.FORM_EXAMPLES_GET,
+    (_event, { formCode }: { formCode: string }): FormExampleDto[] => {
+      try {
+        const rows = db
+          .prepare(
+            `SELECT e.field_key, e.example_value, e.why_note, f.label, f.field_class, f.type
+             FROM form_examples e
+             LEFT JOIN form_fields f ON f.form_code = e.form_code AND f.field_key = e.field_key
+             WHERE e.form_code = ?
+             ORDER BY f.sort_order ASC`
+          )
+          .all(formCode) as Array<Record<string, unknown>>
+        return rows.map((r) => ({
+          fieldKey: r.field_key as string,
+          label: (r.label as string) || (r.field_key as string),
+          exampleValue: (r.example_value as string) ?? '',
+          whyNote: (r.why_note as string) || null,
+          fieldClass: (r.field_class as string) === 'fact' ? 'fact' : 'frame',
+          fieldType: (r.type as string) || 'text'
+        }))
+      } catch (err) {
+        console.error('[form:examplesGet] failed:', (err as Error).message)
+        return []
       }
     }
   )
