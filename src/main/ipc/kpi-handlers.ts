@@ -1,7 +1,13 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
-import type { KpiIndicatorDto, KpiMeasurementDto, KpiSaveInput } from '@shared/ipc-types'
+import type {
+  KpiIndicatorDto,
+  KpiMeasurementDto,
+  KpiSaveInput,
+  KpiMonthValueDto,
+  KpiBatchSaveInput
+} from '@shared/ipc-types'
 
 /**
  * 관제탑 홈 KPI 지수 (0066) — 지표 정의 + 월별 측정값.
@@ -62,4 +68,48 @@ export function registerKpiHandlers(): void {
       return { success: false }
     }
   })
+
+  // 특정 월의 지표별 실적값 — 일괄 입력 화면 프리필(기존 값 위에 정정)
+  ipcMain.handle(IPC_CHANNELS.KPI_MONTH, (_event, input: { period: string }): KpiMonthValueDto[] => {
+    try {
+      if (!/^\d{4}-\d{2}$/.test(input.period)) return []
+      return db
+        .prepare(`SELECT indicator_id AS indicatorId, value FROM kpi_measurements WHERE period = ?`)
+        .all(input.period) as KpiMonthValueDto[]
+    } catch (err) {
+      console.error('[kpi:month] failed:', (err as Error).message)
+      return []
+    }
+  })
+
+  // 월별 실적 일괄 저장 — 값이 채워진 지표만 upsert(빈칸=미입력 유지). 한 트랜잭션으로 원자화.
+  ipcMain.handle(
+    IPC_CHANNELS.KPI_SAVE_BATCH,
+    (_event, input: KpiBatchSaveInput): { success: boolean; saved: number } => {
+      try {
+        if (!/^\d{4}-\d{2}$/.test(input.period) || !Array.isArray(input.entries)) {
+          return { success: false, saved: 0 }
+        }
+        const stmt = db.prepare(
+          `INSERT INTO kpi_measurements (indicator_id, period, value, entered_by)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT(indicator_id, period) DO UPDATE SET value = excluded.value, entered_by = excluded.entered_by`
+        )
+        const apply = db.transaction((entries: KpiBatchSaveInput['entries']) => {
+          let n = 0
+          for (const e of entries) {
+            if (Number.isInteger(e.indicatorId) && Number.isFinite(e.value)) {
+              stmt.run(e.indicatorId, input.period, e.value, input.enteredBy ?? null)
+              n++
+            }
+          }
+          return n
+        })
+        return { success: true, saved: apply(input.entries) }
+      } catch (err) {
+        console.error('[kpi:save-batch] failed:', (err as Error).message)
+        return { success: false, saved: 0 }
+      }
+    }
+  )
 }

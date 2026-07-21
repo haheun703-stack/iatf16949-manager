@@ -763,6 +763,19 @@ export interface KpiSaveInput {
   enteredBy?: string
 }
 
+/** 특정 월의 지표별 실적값(일괄 입력 화면 프리필용) */
+export interface KpiMonthValueDto {
+  indicatorId: number
+  value: number
+}
+
+/** 월별 실적 일괄 저장 — 값이 채워진 지표만 upsert(빈칸=미입력 유지) */
+export interface KpiBatchSaveInput {
+  period: string // 'YYYY-MM'
+  entries: Array<{ indicatorId: number; value: number }>
+  enteredBy?: string
+}
+
 // ===== P5 양식별 모범 예시(form_examples, 0085) — 좌측 정답 패널 =====
 
 export interface FormExampleDto {
@@ -2073,6 +2086,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.KPI_SAVE]: {
     request: KpiSaveInput
     response: { success: boolean }
+  }
+  [IPC_CHANNELS.KPI_MONTH]: {
+    request: { period: string }
+    response: KpiMonthValueDto[]
+  }
+  [IPC_CHANNELS.KPI_SAVE_BATCH]: {
+    request: KpiBatchSaveInput
+    response: { success: boolean; saved: number }
   }
   [IPC_CHANNELS.APP_USER_LIST]: {
     request: void

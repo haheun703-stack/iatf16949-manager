@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   Check, X, AlertCircle, Clock, Loader2, ShieldCheck, ChevronRight, FileEdit, Users, User, Network,
-  Database, Download, UserCircle2, ChevronDown, Lock
+  Database, Download, UserCircle2, ChevronDown, Lock, ClipboardList
 } from 'lucide-react'
 import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import type {
@@ -18,6 +18,7 @@ import { traceDeepLink } from '../../../lib/deeplink'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 import { useDday } from '../../hooks/useDday'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { KpiBatchEntryModal } from './KpiBatchEntryModal'
 
 /** 'YYYY-MM-DD' 두 날짜 사이 일수(b-a). */
 function daysBetweenYmd(a: string, b: string): number {
@@ -49,6 +50,7 @@ export function PortalHome(): JSX.Element {
   const [completing, setCompleting] = useState<number | null>(null)
   const [mesStatus, setMesStatus] = useState<MesRecordsStatusDto | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
+  const [kpiBatchOpen, setKpiBatchOpen] = useState(false)
   const setPage = useUIStore((s) => s.setPage)
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const setSelectedTeam = useUIStore((s) => s.setSelectedTeam)
@@ -339,7 +341,15 @@ export function PortalHome(): JSX.Element {
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="mb-3.5 flex items-baseline flex-wrap gap-2">
           <span className="flex-1 text-[16.5px] font-bold text-foreground">KPI 지수 — 목표 대비 월 실적</span>
-          <span className="text-[13px] text-muted-foreground">값은 월별 [입력]으로 기록 · 품질실적 월보 연동 예정</span>
+          <span className="text-[13px] text-muted-foreground">빈칸=미입력 정직 표시 · 자동산출 불가분은 수기 집계</span>
+          <button
+            type="button"
+            onClick={() => setKpiBatchOpen(true)}
+            className="text-[12.5px] font-bold px-3 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/10 flex items-center gap-1.5 shrink-0"
+          >
+            <ClipboardList className="w-3.5 h-3.5" />
+            월별 실적 일괄 입력
+          </button>
         </div>
         <div className="mb-3.5 flex items-center flex-wrap gap-1.5">
           <button
@@ -394,6 +404,15 @@ export function PortalHome(): JSX.Element {
           )
         })()}
       </div>
+
+      {kpiBatchOpen && (
+        <KpiBatchEntryModal
+          indicators={kpis}
+          enteredBy={profile?.defaultAuthor || currentUser?.name || undefined}
+          onClose={() => setKpiBatchOpen(false)}
+          onSaved={loadKpis}
+        />
+      )}
         </div>
       </details>
 

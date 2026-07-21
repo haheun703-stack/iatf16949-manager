@@ -20,6 +20,8 @@ export const IPC_CHANNELS = {
   // 관제탑 홈 KPI 지수 (0066) — 지표+최근 측정값 / 월별 실적 입력
   KPI_HOME: 'kpi:home',
   KPI_SAVE: 'kpi:save',
+  KPI_MONTH: 'kpi:month',
+  KPI_SAVE_BATCH: 'kpi:save-batch',
   // P2 — 공용 PC 사용자 전환 (app_users 명단 CRUD, 0085). 활성 사용자는 로컬 상태(회사 DB 미혼입).
   APP_USER_LIST: 'appUser:list',
   APP_USER_UPSERT: 'appUser:upsert',
