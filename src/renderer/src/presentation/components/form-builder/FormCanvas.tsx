@@ -16,6 +16,13 @@ import type { FormFieldDto } from '@shared/ipc-types'
 
 type ViewMode = 'input' | 'excel' | 'document'
 
+// 판정류(저경우수 선택형) fact — 실제 판정이 예시와 같을 수 있어 완전일치 차단이 오탐(코워크 §0.7).
+// date 와 마찬가지로 완전일치 차단에서 제외(공란 검증만). 차단 대상 = 측정치·LOT·수량 같은 자유값 fact.
+const JUDGMENT_VALUES = new Set([
+  '합격', '불합격', '적합', '부적합', '양', '부', '양호', '불량', '정상', '이상',
+  'OK', 'NG', 'ok', 'ng', 'PASS', 'FAIL', 'pass', 'fail', 'Pass', 'Fail'
+])
+
 export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }): JSX.Element {
   const { currentForm, currentFormLoading, saveDraft, values, examples, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
     useFormStore()
@@ -100,9 +107,12 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
       }
     }
     for (const f of facts) {
-      if (f.type === 'date') continue
+      // 완전일치 차단 제외: date(오늘 우연일치) · select/radio(선택형) · 판정류 저경우수(코워크 §0.7)
+      if (f.type === 'date' || f.type === 'select' || f.type === 'radio') continue
       const ex = examples.find((e) => e.fieldKey === f.fieldKey)
-      if (ex && ex.exampleValue.trim() && String(values[f.fieldKey]).trim() === ex.exampleValue.trim()) {
+      if (!ex || !ex.exampleValue.trim()) continue
+      if (JUDGMENT_VALUES.has(ex.exampleValue.trim())) continue
+      if (String(values[f.fieldKey]).trim() === ex.exampleValue.trim()) {
         return `'${f.label}' — 예시값을 그대로 저장할 수 없습니다. 본인이 확인한 실제 값을 입력하세요(기록 조작 방지).`
       }
     }
