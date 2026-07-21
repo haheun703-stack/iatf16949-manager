@@ -166,7 +166,10 @@ export function registerObligationHandlers(): void {
   // ──── 이행 완료 → 최근이행일 기록 + 다음 도래일 자동 전진 + 이력 적재(0063) ────
   ipcMain.handle(
     IPC_CHANNELS.OBLIGATION_COMPLETE,
-    (_event, { id, doneDate, doneBy }: { id: number; doneDate?: string; doneBy?: string }): {
+    (
+      _event,
+      { id, doneDate, doneBy, source }: { id: number; doneDate?: string; doneBy?: string; source?: 'manual' | 'form' }
+    ): {
       success: boolean
       nextDueDate: string | null
     } => {
@@ -186,11 +189,11 @@ export function registerObligationHandlers(): void {
         // 관제탑 홈 주간 추이의 원천 — 같은 날 중복 완료는 1건만 유지
         db.prepare(
           `INSERT INTO obligation_completions (obligation_id, done_date, done_by, source)
-           SELECT ?, ?, ?, 'manual'
+           SELECT ?, ?, ?, ?
            WHERE NOT EXISTS (
              SELECT 1 FROM obligation_completions WHERE obligation_id = ? AND done_date = ?
            )`
-        ).run(id, done, doneBy ?? null, id, done)
+        ).run(id, done, doneBy ?? null, source === 'form' ? 'form' : 'manual', id, done)
       } catch {
         /* 0063 미적용 구버전 — 이력 없이 동작 */
       }

@@ -322,18 +322,18 @@ export function registerTeamHandlers(): void {
           : null
         const lead = (o.lead_days as number) ?? 7
 
+        const formRecordToday = !!(formCode && formDoneToday.has(formCode))
         let task: TodayTaskDto | null = null
         if (lastDone === today) {
-          task = mk(o, 'done', dueDate, null, today, 'manual', formCode, sqBadges)
-        } else if (daysLeft != null && daysLeft <= 0 && formCode && formDoneToday.has(formCode)) {
-          // 오늘 마감인데 완료 버튼은 안 눌렀지만 연결 양식이 오늘 작성됨 → 자동 판정 표시
-          task = mk(o, 'done', dueDate, daysLeft, today, 'form', formCode, sqBadges)
+          // 확정 완료(OBLIGATION_COMPLETE). 작성기록으로 확정한 것도 여기 — 프론트는 hasFormRecord 로 '작성기록' 표기
+          task = mk(o, 'done', dueDate, null, today, formRecordToday ? 'form' : 'manual', formCode, sqBadges, formRecordToday)
         } else if (daysLeft != null && daysLeft < 0) {
-          task = mk(o, 'overdue', dueDate, daysLeft, null, null, formCode, sqBadges)
+          // §0.6 결정2: 작성기록만 있고 미확정이면 done 아님 — overdue 유지 + hasFormRecord(홈에서 앰버 확정 유도)
+          task = mk(o, 'overdue', dueDate, daysLeft, null, null, formCode, sqBadges, formRecordToday)
         } else if (daysLeft != null && daysLeft === 0) {
-          task = mk(o, 'due', dueDate, daysLeft, null, null, formCode, sqBadges)
+          task = mk(o, 'due', dueDate, daysLeft, null, null, formCode, sqBadges, formRecordToday)
         } else if (daysLeft != null && daysLeft <= lead) {
-          task = mk(o, 'upcoming', dueDate, daysLeft, null, null, formCode, sqBadges)
+          task = mk(o, 'upcoming', dueDate, daysLeft, null, null, formCode, sqBadges, formRecordToday)
         }
         if (!task) continue // 도래 창 밖 — 오늘의 일 아님
 
@@ -399,7 +399,8 @@ export function registerTeamHandlers(): void {
       doneAt: string | null,
       doneSource: TodayTaskDto['doneSource'],
       formCode: string | null,
-      sqBadges: string[]
+      sqBadges: string[],
+      hasFormRecord: boolean
     ): TodayTaskDto {
       return {
         id: o.id as number,
@@ -412,6 +413,7 @@ export function registerTeamHandlers(): void {
         doneAt,
         doneSource,
         formCode,
+        hasFormRecord,
         sqBadges
       }
     }

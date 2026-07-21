@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   Check, X, AlertCircle, Clock, Loader2, ShieldCheck, ChevronRight, FileEdit, Users, User, Network,
-  Database, Download, UserCircle2, ChevronDown
+  Database, Download, UserCircle2, ChevronDown, Lock
 } from 'lucide-react'
 import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import type {
@@ -121,12 +121,15 @@ export function PortalHome(): JSX.Element {
     setShowPrompt(false)
   }
 
-  const complete = async (task: TodayTaskDto): Promise<void> => {
+  // source='form' = [작성기록으로 확정](§0.6 결정2) / 'manual' = 무연결 의무 수동 완료.
+  // 기록 주체 = 활성 사용자 우선, 없으면 defaultAuthor 폴백(§4).
+  const complete = async (task: TodayTaskDto, source: 'manual' | 'form' = 'manual'): Promise<void> => {
     setCompleting(task.id)
     try {
       await window.api.invoke(window.api.channels.OBLIGATION_COMPLETE, {
         id: task.id,
-        doneBy: profile?.defaultAuthor || undefined
+        doneBy: currentUser?.name || profile?.defaultAuthor || undefined,
+        source
       })
       await load()
     } catch {
@@ -185,10 +188,11 @@ export function PortalHome(): JSX.Element {
         teamLabel={myTeamId ? teamTheme(myTeamId).label : null}
         dateLabel={dateLabel}
         completing={completing}
-        onComplete={(t) => void complete(t)}
+        onComplete={(t, source) => void complete(t, source)}
         onOpenForm={openForm}
         onOpenPage={setPage}
         onSelectUser={() => setShowPrompt(true)}
+        currentName={currentUser?.name ?? null}
       />
 
       {/* 2. 타팀 스트립 — 5팀 한 줄(내 팀은 아웃라인) */}
@@ -419,10 +423,11 @@ export function PortalHome(): JSX.Element {
             teams={board.teams}
             onlyOpen={onlyOpen}
             completing={completing}
-            onComplete={(t) => void complete(t)}
+            onComplete={(t, source) => void complete(t, source)}
             onOpenForm={openForm}
             onOpenPage={setPage}
             onGoObligations={() => setPage('obligations')}
+            currentName={currentUser?.name ?? null}
           />
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
@@ -463,9 +468,10 @@ export function PortalHome(): JSX.Element {
                         key={task.id}
                         task={task}
                         completing={completing === task.id}
-                        onComplete={() => void complete(task)}
+                        onComplete={(source) => void complete(task, source)}
                         onOpenForm={openForm}
                         onOpenPage={setPage}
+                        currentName={currentUser?.name ?? null}
                       />
                     ))}
                   </div>
@@ -528,7 +534,8 @@ function Hero({
   onComplete,
   onOpenForm,
   onOpenPage,
-  onSelectUser
+  onSelectUser,
+  currentName
 }: {
   user: AppUserDto | null
   entries: Entry[]
@@ -536,10 +543,11 @@ function Hero({
   teamLabel: string | null
   dateLabel: string
   completing: number | null
-  onComplete: (t: TodayTaskDto) => void
+  onComplete: (t: TodayTaskDto, source: 'manual' | 'form') => void
   onOpenForm: (formCode: string) => void
   onOpenPage: (page: PageId) => void
   onSelectUser: () => void
+  currentName: string | null
 }): JSX.Element {
   if (!user) {
     return (
@@ -612,9 +620,10 @@ function Hero({
               key={task.id}
               task={task}
               completing={completing === task.id}
-              onComplete={() => onComplete(task)}
+              onComplete={(source) => onComplete(task, source)}
               onOpenForm={onOpenForm}
               onOpenPage={onOpenPage}
+              currentName={currentName}
             />
           ))}
         </div>
@@ -858,14 +867,18 @@ function TaskRow({
   onComplete,
   onOpenForm,
   onOpenPage,
+  currentName,
   teamDot
 }: {
   task: TodayTaskDto
   completing: boolean
-  onComplete: () => void
+  /** source='form'=작성기록으로 확정(§0.6 결정2) / 'manual'=무연결 의무 수동 완료 */
+  onComplete: (source: 'manual' | 'form') => void
   onOpenForm: (formCode: string) => void
   /** 도구 딥링크(예: 모의 역추적 훈련 → LOT 계보 조회) */
   onOpenPage: (page: PageId) => void
+  /** 무연결 의무 수동 완료 버튼의 기록 주체 표기(활성 사용자) */
+  currentName: string | null
   /** 개인별 보드에서 소속 팀 표시(팀 고유색 점) */
   teamDot?: { color: string; label: string }
 }): JSX.Element {
@@ -918,31 +931,60 @@ function TaskRow({
         </button>
       )}
       {task.status === 'done' ? (
-        <span className="text-[13px] text-muted-foreground shrink-0" title={task.doneSource === 'form' ? '연결 양식의 오늘 작성 기록 감지' : '완료 처리됨'}>
-          {task.doneSource === 'form' ? '작성기록' : '완료'}
+        <span
+          className="text-[13px] font-semibold shrink-0"
+          style={{ color: task.doneSource === 'form' ? '#4f9e3c' : undefined }}
+          title={task.doneSource === 'form' ? '연결 양식 작성기록으로 확정됨' : '완료 처리됨'}
+        >
+          {task.doneSource === 'form' ? '작성기록 ✓' : '완료 ✓'}
         </span>
       ) : isOpen ? (
-        <span className="flex items-center gap-1 shrink-0">
-          {task.formCode && (
-            <button
-              type="button"
-              onClick={() => onOpenForm(task.formCode!)}
-              className="h-8 px-2.5 rounded-md text-[12px] font-bold text-primary hover:bg-primary/10 inline-flex items-center gap-1"
-              title={`연결 양식(${task.formCode}) 바로 작성`}
-            >
-              <FileEdit className="w-3 h-3" /> 작성
-            </button>
-          )}
+        task.formCode ? (
+          task.hasFormRecord ? (
+            // 작성기록 있음 · 미확정 — 앰버 확정(§0.6 결정2: 표시만 done 금지, 확정=도래일 전진)
+            <span className="flex items-center gap-1.5 shrink-0">
+              <span className="hidden md:inline text-[11px] font-semibold text-amber-700">작성기록 있음</span>
+              <button
+                type="button"
+                onClick={() => onComplete('form')}
+                disabled={completing}
+                className="h-8 px-2.5 rounded-md text-[12px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50 inline-flex items-center gap-1"
+                title="오늘 연결 양식 작성기록이 있습니다 — 완료로 확정(다음 도래일 전진)"
+              >
+                {completing ? <Loader2 className="w-3 h-3 animate-spin" /> : '작성기록으로 확정'}
+              </button>
+            </span>
+          ) : (
+            // 연결 양식 · 작성기록 없음 — 수동 완료 없음(눈속임 차단), 정답 보고 작성만
+            <span className="flex items-center gap-1.5 shrink-0">
+              <span
+                className="hidden md:inline-flex items-center gap-0.5 text-[11px] font-semibold text-muted-foreground"
+                title="이 업무는 완료 버튼이 아니라 연결 양식 작성기록으로만 ✓ 됩니다(눈속임 차단)"
+              >
+                <Lock className="w-3 h-3" /> 작성기록으로만 ✓
+              </span>
+              <button
+                type="button"
+                onClick={() => onOpenForm(task.formCode!)}
+                className="h-8 px-2.5 rounded-md text-[12px] font-bold bg-primary/10 text-primary hover:bg-primary/20 inline-flex items-center gap-1"
+                title={`연결 양식(${task.formCode}) 정답 보고 작성`}
+              >
+                <FileEdit className="w-3 h-3" /> 정답 보고 작성
+              </button>
+            </span>
+          )
+        ) : (
+          // 무연결 의무 — 수동 완료(기록 주체 명시)
           <button
             type="button"
-            onClick={onComplete}
+            onClick={() => onComplete('manual')}
             disabled={completing}
-            className="h-8 px-3 rounded-md text-[12px] font-bold bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 inline-flex items-center gap-1"
+            className="h-8 px-3 rounded-md text-[12px] font-bold bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 inline-flex items-center gap-1 shrink-0"
             title="이행 완료 처리 — 다음 도래일 자동 전진 + 이력 기록"
           >
-            {completing ? <Loader2 className="w-3 h-3 animate-spin" /> : '완료'}
+            {completing ? <Loader2 className="w-3 h-3 animate-spin" /> : <>완료{currentName ? ` (기록: ${currentName})` : ''}</>}
           </button>
-        </span>
+        )
       ) : null}
     </div>
   )
@@ -956,15 +998,17 @@ function PersonBoard({
   onComplete,
   onOpenForm,
   onOpenPage,
-  onGoObligations
+  onGoObligations,
+  currentName
 }: {
   teams: TeamTodayDto[]
   onlyOpen: boolean
   completing: number | null
-  onComplete: (task: TodayTaskDto) => void
+  onComplete: (task: TodayTaskDto, source: 'manual' | 'form') => void
   onOpenForm: (formCode: string) => void
   onOpenPage: (page: PageId) => void
   onGoObligations: () => void
+  currentName: string | null
 }): JSX.Element {
   type Entry = { task: TodayTaskDto; teamId: TeamId }
   const persons = new Map<string, Entry[]>()
@@ -1021,9 +1065,10 @@ function PersonBoard({
                       key={task.id}
                       task={task}
                       completing={completing === task.id}
-                      onComplete={() => onComplete(task)}
+                      onComplete={(source) => onComplete(task, source)}
                       onOpenForm={onOpenForm}
                       onOpenPage={onOpenPage}
+                      currentName={currentName}
                       teamDot={{ color: theme.border, label: theme.label }}
                     />
                   )

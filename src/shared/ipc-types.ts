@@ -698,6 +698,11 @@ export interface TodayTaskDto {
   /** manual=완료 버튼 / form=연결 양식의 오늘 작성 기록 감지(자동 판정) */
   doneSource: 'manual' | 'form' | null
   formCode: string | null
+  /**
+   * 연결 양식이 오늘 작성됨(form_submissions). done 이 아니어도 true 가능 —
+   * §0.6 결정2: 작성기록만 있고 미확정이면 done 이 아니라 '작성기록 있음 — 완료 확정 필요'(앰버).
+   */
+  hasFormRecord: boolean
   /** 연계 SQ 항목 코드(예: '2_7') — 심사는 항목 각주로만. */
   sqBadges: string[]
 }
@@ -2411,7 +2416,7 @@ export interface IpcChannelMap {
     response: { success: boolean }
   }
   [IPC_CHANNELS.OBLIGATION_COMPLETE]: {
-    request: { id: number; doneDate?: string; doneBy?: string }
+    request: { id: number; doneDate?: string; doneBy?: string; source?: 'manual' | 'form' }
     response: { success: boolean; nextDueDate: string | null }
   }
   [IPC_CHANNELS.PPAP_SUBMISSION_LIST]: {
