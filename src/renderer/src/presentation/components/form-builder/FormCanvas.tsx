@@ -3,6 +3,7 @@ import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileD
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { isExampleCopyBlocked } from '@shared/form-validation'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 import { ApprovalBar } from './ApprovalBar'
 import { FormFieldInput } from './FormFieldInput'
@@ -15,13 +16,6 @@ import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
 
 type ViewMode = 'input' | 'excel' | 'document'
-
-// 판정류(저경우수 선택형) fact — 실제 판정이 예시와 같을 수 있어 완전일치 차단이 오탐(코워크 §0.7).
-// date 와 마찬가지로 완전일치 차단에서 제외(공란 검증만). 차단 대상 = 측정치·LOT·수량 같은 자유값 fact.
-const JUDGMENT_VALUES = new Set([
-  '합격', '불합격', '적합', '부적합', '양', '부', '양호', '불량', '정상', '이상',
-  'OK', 'NG', 'ok', 'ng', 'PASS', 'FAIL', 'pass', 'fail', 'Pass', 'Fail'
-])
 
 export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }): JSX.Element {
   const { currentForm, currentFormLoading, saveDraft, values, examples, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
@@ -99,7 +93,8 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
   // P5 저장 검증 — ①필수 fact 공란 ②text fact 예시값 완전일치(date 제외: 오늘 날짜 우연일치 오탐 방지, 코워크 ①)
   const validateFactValues = (): string | null => {
     if (!currentForm) return null
-    const facts = currentForm.fields.filter((f) => f.fieldClass === 'fact')
+    // auto 타입(작성자 등 시스템 자동채움)은 입력 불가라 fact 여도 검증 제외(M1 — 저장불가 폼 방지)
+    const facts = currentForm.fields.filter((f) => f.fieldClass === 'fact' && f.type !== 'auto')
     for (const f of facts) {
       const v = values[f.fieldKey]
       if (v == null || String(v).trim() === '') {
@@ -107,12 +102,8 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
       }
     }
     for (const f of facts) {
-      // 완전일치 차단 제외: date(오늘 우연일치) · select/radio(선택형) · 판정류 저경우수(코워크 §0.7)
-      if (f.type === 'date' || f.type === 'select' || f.type === 'radio') continue
       const ex = examples.find((e) => e.fieldKey === f.fieldKey)
-      if (!ex || !ex.exampleValue.trim()) continue
-      if (JUDGMENT_VALUES.has(ex.exampleValue.trim())) continue
-      if (String(values[f.fieldKey]).trim() === ex.exampleValue.trim()) {
+      if (ex && isExampleCopyBlocked('fact', f.type, ex.exampleValue, String(values[f.fieldKey] ?? ''))) {
         return `'${f.label}' — 예시값을 그대로 저장할 수 없습니다. 본인이 확인한 실제 값을 입력하세요(기록 조작 방지).`
       }
     }
@@ -135,6 +126,9 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
       setTimeout(() => setSaveStatus('idle'), 2500)
     } catch (err) {
       console.error(err)
+      // 데이터 계층(main) 조작 차단 메시지를 사용자에게 표시(H1)
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('예시값')) setSaveWarn(msg.slice(msg.indexOf('예시값')))
       setSaveStatus('error')
     }
   }
@@ -147,6 +141,9 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
       setTimeout(() => setSaveStatus('idle'), 2500)
     } catch (err) {
       console.error(err)
+      // [초안 저장]으로도 예시값 복제는 차단됨(H1 데이터 계층) — 사유 표시
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('예시값')) setSaveWarn(msg.slice(msg.indexOf('예시값')))
       setSaveStatus('error')
     }
   }

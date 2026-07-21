@@ -40,11 +40,12 @@ export function UserManageModal({ onClose }: { onClose: () => void }): JSX.Eleme
     setNewName('')
   }
 
-  const patch = (u: AppUserDto, fields: Partial<AppUserUpsertField>): void => {
-    void upsertUser({
+  const patch = (u: AppUserDto, fields: Partial<AppUserUpsertField>): Promise<boolean> => {
+    return upsertUser({
       id: u.id,
       name: fields.name ?? u.name,
-      teamDept: fields.teamDept ?? u.teamDept,
+      // 'teamDept' 키가 있으면 명시값(비우기=null 포함) 반영, 없으면 기존 유지(?? 는 null 을 삼킴)
+      teamDept: 'teamDept' in fields ? (fields.teamDept ?? null) : u.teamDept,
       role: fields.role ?? u.role,
       active: fields.active ?? u.active,
       sortOrder: u.sortOrder
@@ -147,7 +148,7 @@ function UserRow({
   onDelete
 }: {
   u: AppUserDto
-  onPatch: (u: AppUserDto, fields: Partial<AppUserUpsertField>) => void
+  onPatch: (u: AppUserDto, fields: Partial<AppUserUpsertField>) => Promise<boolean>
   onDelete: (id: number) => Promise<void>
 }): JSX.Element {
   const [name, setName] = useState(u.name)
@@ -166,8 +167,16 @@ function UserRow({
         onChange={(e) => setName(e.target.value)}
         onBlur={() => {
           const v = name.trim()
-          if (v && v !== u.name) onPatch(u, { name: v })
-          else setName(u.name)
+          if (v && v !== u.name) {
+            void onPatch(u, { name: v }).then((ok) => {
+              if (!ok) {
+                window.alert(`'${v}'(으)로 변경할 수 없습니다 — 이미 있는 이름이거나 오류입니다.`)
+                setName(u.name)
+              }
+            })
+          } else {
+            setName(u.name)
+          }
         }}
         className="w-24 min-w-0 bg-transparent text-[13px] font-semibold px-1 py-0.5 rounded hover:bg-muted focus:bg-fillable focus:outline-none"
       />

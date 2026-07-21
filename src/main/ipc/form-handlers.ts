@@ -1,6 +1,7 @@
 import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { FORM_SCOPES } from '@shared/ipc-types'
+import { isExampleCopyBlocked } from '@shared/form-validation'
 import { getSqlite } from '../database/connection'
 import { nextFormSerial } from '../database/serial'
 import { generate as aiGenerate } from '../ai'
@@ -63,6 +64,30 @@ function rowToField(row: Record<string, unknown>): FormFieldDto {
 
 export function registerFormHandlers(): void {
   const db = getSqlite()
+
+  // H1: 예시값 완전일치(기록 조작) 차단 — 데이터 계층. 모든 저장 경로(초안·완료·이어서·출력)가 통과.
+  // form_examples 있는 양식만 검사(정답 따라쓰기 대상). 위반 필드 label 반환(없으면 null).
+  const detectExampleCopy = (formCode: string, values: Record<string, unknown>): string | null => {
+    let rows: Array<{ fk: string; ev: string | null; fc: string | null; ty: string | null; lb: string | null }>
+    try {
+      rows = db
+        .prepare(
+          `SELECT e.field_key AS fk, e.example_value AS ev, f.field_class AS fc, f.type AS ty, f.label AS lb
+           FROM form_examples e LEFT JOIN form_fields f ON f.form_code = e.form_code AND f.field_key = e.field_key
+           WHERE e.form_code = ?`
+        )
+        .all(formCode) as typeof rows
+    } catch {
+      return null // form_examples 미존재(구버전 DB) — 검증 스킵
+    }
+    for (const r of rows) {
+      const actual = values[r.fk]
+      if (isExampleCopyBlocked(r.fc, r.ty ?? 'text', r.ev ?? '', actual == null ? '' : String(actual))) {
+        return r.lb ?? r.fk
+      }
+    }
+    return null
+  }
 
   // ──── Form list ────
   ipcMain.handle(IPC_CHANNELS.FORM_LIST, (): FormListItemDto[] => {
@@ -226,6 +251,10 @@ export function registerFormHandlers(): void {
         createdBy?: string
       }
     ): { id: number } => {
+      const copied = detectExampleCopy(data.formCode, data.values || {})
+      if (copied) {
+        throw new Error(`예시값을 그대로 저장할 수 없습니다: '${copied}' — 실제 값을 입력하세요(기록 조작 방지).`)
+      }
       const now = new Date().toISOString()
       const result = db
         .prepare(
@@ -253,8 +282,18 @@ export function registerFormHandlers(): void {
         id: number
         values: Record<string, unknown>
         status?: 'draft' | 'submitted' | 'approved'
+        createdBy?: string
       }
     ): { success: boolean } => {
+      const sub = db.prepare('SELECT form_code FROM form_submissions WHERE id = ?').get(data.id) as
+        | { form_code: string }
+        | undefined
+      if (sub) {
+        const copied = detectExampleCopy(sub.form_code, data.values || {})
+        if (copied) {
+          throw new Error(`예시값을 그대로 저장할 수 없습니다: '${copied}' — 실제 값을 입력하세요(기록 조작 방지).`)
+        }
+      }
       const now = new Date().toISOString()
       if (data.status) {
         db.prepare(
@@ -264,6 +303,12 @@ export function registerFormHandlers(): void {
         db.prepare(
           'UPDATE form_submissions SET values_json = ?, updated_at = ? WHERE id = ?'
         ).run(JSON.stringify(data.values || {}), now, data.id)
+      }
+      // M2: created_by 가 아직 비어 있을 때만 채움(이어쓰기 시 원작성자 보존, §4)
+      if (data.createdBy) {
+        db.prepare(
+          "UPDATE form_submissions SET created_by = ? WHERE id = ? AND (created_by IS NULL OR created_by = '')"
+        ).run(data.createdBy, data.id)
       }
       return { success: true }
     }

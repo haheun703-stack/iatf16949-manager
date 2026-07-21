@@ -28,7 +28,7 @@ function shortYmd(ymd: string): string {
   const [, m, d] = ymd.split('-')
   return `${Number(m)}/${Number(d)}`
 }
-type Entry = { task: TodayTaskDto; teamId: TeamId }
+type Entry = { task: TodayTaskDto; teamId: TeamId | null }
 const PROMPT_SEEN_KEY = 'user_prompt_seen'
 
 /**
@@ -170,7 +170,11 @@ export function PortalHome(): JSX.Element {
   })()
 
   // 히어로 = 내 할 일: 활성 사용자 assignee 우선, 없으면 소속 팀 공동 업무 폴백(§0.6 결정1)
-  const allEntries: Entry[] = board.teams.flatMap((t) => t.tasks.map((task) => ({ task, teamId: t.teamId })))
+  const allEntries: Entry[] = [
+    ...board.teams.flatMap((t) => t.tasks.map((task) => ({ task, teamId: t.teamId }))),
+    // 팀 미지정이지만 담당자가 지정된 업무도 히어로/개인보드에 표시(M4 — 담당자가 자기 일을 놓치지 않게)
+    ...board.unassigned.map((task) => ({ task, teamId: null }))
+  ]
   const myTeamId = currentUser ? normalizeTeam(currentUser.teamDept) : null
   let heroEntries: Entry[] = []
   let heroMode: 'assignee' | 'team' = 'assignee'
@@ -429,6 +433,7 @@ export function PortalHome(): JSX.Element {
         {boardView === 'person' ? (
           <PersonBoard
             teams={board.teams}
+            unassignedTasks={board.unassigned}
             onlyOpen={onlyOpen}
             completing={completing}
             onComplete={(t, source) => void complete(t, source)}
@@ -1001,6 +1006,7 @@ function TaskRow({
 /** 개인별 보드 — 담당자(0066)가 지정된 업무를 사람 단위로 재그룹. 미지정은 카드 대신 안내. */
 function PersonBoard({
   teams,
+  unassignedTasks,
   onlyOpen,
   completing,
   onComplete,
@@ -1010,6 +1016,8 @@ function PersonBoard({
   currentName
 }: {
   teams: TeamTodayDto[]
+  /** 팀 미지정 업무(board.unassigned) — 담당자가 있으면 사람 카드에 포함(M4) */
+  unassignedTasks: TodayTaskDto[]
   onlyOpen: boolean
   completing: number | null
   onComplete: (task: TodayTaskDto, source: 'manual' | 'form') => void
@@ -1018,20 +1026,21 @@ function PersonBoard({
   onGoObligations: () => void
   currentName: string | null
 }): JSX.Element {
-  type Entry = { task: TodayTaskDto; teamId: TeamId }
-  const persons = new Map<string, Entry[]>()
+  type PEntry = { task: TodayTaskDto; teamId: TeamId | null }
+  const persons = new Map<string, PEntry[]>()
   let unassigned = 0
-  for (const team of teams) {
-    for (const task of team.tasks) {
-      if (onlyOpen && task.status !== 'due' && task.status !== 'overdue') continue
-      if (!task.assignee) {
-        unassigned++
-        continue
-      }
-      if (!persons.has(task.assignee)) persons.set(task.assignee, [])
-      persons.get(task.assignee)!.push({ task, teamId: team.teamId })
+  const collect = (task: TodayTaskDto, teamId: TeamId | null): void => {
+    if (onlyOpen && task.status !== 'due' && task.status !== 'overdue') return
+    if (!task.assignee) {
+      unassigned++
+      return
     }
+    if (!persons.has(task.assignee)) persons.set(task.assignee, [])
+    persons.get(task.assignee)!.push({ task, teamId })
   }
+  for (const team of teams) for (const task of team.tasks) collect(task, team.teamId)
+  // 팀 미지정이지만 담당자 지정된 업무도 사람 카드에(M4)
+  for (const task of unassignedTasks) collect(task, null)
   const names = [...persons.keys()].sort((a, b) => a.localeCompare(b, 'ko'))
 
   if (names.length === 0) {
@@ -1067,7 +1076,7 @@ function PersonBoard({
               </div>
               <div className="flex-1">
                 {entries.map(({ task, teamId }) => {
-                  const theme = teamTheme(teamId)
+                  const theme = teamId ? teamTheme(teamId) : null
                   return (
                     <TaskRow
                       key={task.id}
@@ -1077,7 +1086,7 @@ function PersonBoard({
                       onOpenForm={onOpenForm}
                       onOpenPage={onOpenPage}
                       currentName={currentName}
-                      teamDot={{ color: theme.border, label: theme.label }}
+                      teamDot={theme ? { color: theme.border, label: theme.label } : undefined}
                     />
                   )
                 })}

@@ -772,7 +772,7 @@ export interface FormExampleDto {
   whyNote: string | null
   /** form_fields.field_class — frame=[틀 가져오기] 대상 / fact=자동주입 금지·저장검증 대상 */
   fieldClass: 'frame' | 'fact'
-  /** form_fields.type — 'date' 는 예시값 완전일치 차단에서 제외(오탐 방지, 코워크 §0.7 ①) */
+  /** form_fields.type — date·select·radio·checkbox·auto + 판정류 값은 완전일치 차단에서 제외(form-validation.ts, 오탐 방지) */
   fieldType: string
 }
 
@@ -2223,7 +2223,7 @@ export interface IpcChannelMap {
     response: { id: number }
   }
   [IPC_CHANNELS.FORM_SUBMISSION_UPDATE]: {
-    request: { id: number; values: Record<string, unknown>; status?: 'draft' | 'submitted' | 'approved' }
+    request: { id: number; values: Record<string, unknown>; status?: 'draft' | 'submitted' | 'approved'; createdBy?: string }
     response: { success: boolean }
   }
   [IPC_CHANNELS.FORM_SUBMISSION_LIST]: {

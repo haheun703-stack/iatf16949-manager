@@ -237,9 +237,11 @@ export const useFormStore = create<FormState>((set, get) => ({
     if (!currentForm) throw new Error('양식이 로드되지 않았습니다.')
 
     if (currentSubmissionId) {
+      // createdBy 는 created_by 가 비어 있을 때만 반영됨(핸들러 가드) — 원작성자 보존
       await window.api.invoke(ch('FORM_SUBMISSION_UPDATE'), {
         id: currentSubmissionId,
-        values
+        values,
+        createdBy: createdBy ?? undefined
       })
       return currentSubmissionId
     }

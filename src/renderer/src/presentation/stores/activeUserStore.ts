@@ -25,12 +25,8 @@ interface ActiveUserState {
   /** app_users 목록 로드 + 저장된 활성 id 유효성 재검(삭제/비활성 시 해제) */
   loadUsers: () => Promise<void>
   setActiveUser: (id: number | null) => void
-  /** 현재 활성 사용자 객체(없으면 null) */
-  currentUser: () => AppUserDto | null
-  /** 기록 주체로 넘길 이름(없으면 null → 호출측이 defaultAuthor 폴백) */
-  currentName: () => string | null
-  /** 사용자 추가/편집(SettingsMenu 관리). 성공 후 목록 재로드 */
-  upsertUser: (input: AppUserUpsertInput) => Promise<void>
+  /** 사용자 추가/편집(SettingsMenu 관리). 성공 여부 반환(이름 UNIQUE 충돌 시 false) + 목록 재로드 */
+  upsertUser: (input: AppUserUpsertInput) => Promise<boolean>
   /** 완전 삭제 — 오타 정리용. 퇴사자는 삭제 대신 active=false 로 비활성(기록 주체 이름 보존) */
   deleteUser: (id: number) => Promise<void>
 }
@@ -69,22 +65,16 @@ export const useActiveUserStore = create<ActiveUserState>((set, get) => ({
     set({ activeUserId: id })
   },
 
-  currentUser: () => {
-    const { users, activeUserId } = get()
-    return users.find((u) => u.id === activeUserId) || null
-  },
-
-  currentName: () => {
-    const u = get().currentUser()
-    return u ? u.name : null
-  },
-
   upsertUser: async (input) => {
     try {
-      await window.api.invoke(window.api.channels.APP_USER_UPSERT, input)
+      const res = (await window.api.invoke(window.api.channels.APP_USER_UPSERT, input)) as {
+        success: boolean
+        id?: number
+      }
       await get().loadUsers()
+      return res.success
     } catch {
-      /* 실패 시 목록 불변 */
+      return false
     }
   },
 
