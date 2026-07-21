@@ -25,11 +25,11 @@
   },
   {
     "id": "p-004",
-    "name": "안진성",
+    "name": "서명진",
     "teamId": "team-pu",
     "role": "과장",
     "email": null,
-    "qualifications": null
+    "qualifications": "자재관리"
   },
   {
     "id": "p-005",
@@ -37,7 +37,7 @@
     "teamId": "team-pu",
     "role": "대리",
     "email": null,
-    "qualifications": null
+    "qualifications": "납품관리"
   },
   {
     "id": "p-006",
@@ -45,7 +45,7 @@
     "teamId": "team-pu",
     "role": "계장",
     "email": null,
-    "qualifications": null
+    "qualifications": "납품(물류기사)"
   },
   {
     "id": "p-007",
@@ -59,56 +59,72 @@
     "id": "p-008",
     "name": "장석봉",
     "teamId": "team-pr",
-    "role": "사원",
+    "role": "계장",
     "email": null,
     "qualifications": null
   },
   {
     "id": "p-009",
-    "name": "박민수",
+    "name": "예지용",
     "teamId": "team-pr",
-    "role": "사원",
+    "role": "계장",
     "email": null,
-    "qualifications": null
+    "qualifications": "가공·조립"
   },
   {
     "id": "p-010",
-    "name": "김기범",
-    "teamId": "team-qc",
-    "role": "차장",
+    "name": "김병철",
+    "teamId": "team-pr",
+    "role": "사원",
     "email": null,
-    "qualifications": null
+    "qualifications": "보전"
   },
   {
     "id": "p-011",
-    "name": "고형진",
+    "name": "임하수",
+    "teamId": "team-qc",
+    "role": "부장",
+    "email": null,
+    "qualifications": "품질팀장(2026-07-23 부임)"
+  },
+  {
+    "id": "p-012",
+    "name": "류형석",
+    "teamId": "team-qc",
+    "role": "과장",
+    "email": null,
+    "qualifications": "품질보증"
+  },
+  {
+    "id": "p-013",
+    "name": "박세진",
     "teamId": "team-qc",
     "role": "계장",
     "email": null,
     "qualifications": null
   },
   {
-    "id": "p-012",
-    "name": "홍길동",
+    "id": "p-014",
+    "name": "이화준",
+    "teamId": "team-qc",
+    "role": "대리",
+    "email": null,
+    "qualifications": "수입검사(전수·측정·서류)"
+  },
+  {
+    "id": "p-015",
+    "name": "하헌",
     "teamId": "team-de",
     "role": "부장",
     "email": null,
     "qualifications": null
   },
   {
-    "id": "p-013",
+    "id": "p-016",
     "name": "김민수",
     "teamId": "team-de",
     "role": "과장",
     "email": null,
-    "qualifications": null
-  },
-  {
-    "id": "p-014",
-    "name": "서명진",
-    "teamId": "team-qc",
-    "role": "과장",
-    "email": null,
-    "qualifications": null
+    "qualifications": "Core Tool(FMEA·APQP·MSA)"
   }
 ]

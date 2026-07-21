@@ -1,12 +1,12 @@
 [
   {
     "id": "team-mg",
-    "name": "관리지원팀",
+    "name": "관리팀",
     "managerId": "p-001"
   },
   {
     "id": "team-pu",
-    "name": "자재/납품팀",
+    "name": "영업/자재팀",
     "managerId": "p-003"
   },
   {
@@ -17,11 +17,11 @@
   {
     "id": "team-qc",
     "name": "품질팀",
-    "managerId": "p-010"
+    "managerId": "p-011"
   },
   {
     "id": "team-de",
     "name": "개발팀",
-    "managerId": "p-012"
+    "managerId": "p-015"
   }
 ]
