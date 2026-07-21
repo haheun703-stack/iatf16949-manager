@@ -19,6 +19,8 @@ interface NavItem {
   label: string
   icon: typeof LayoutDashboard
   desc: string
+  /** 관리 드롭다운 내 소그룹 헤더(이 항목 앞에 구분선+라벨). 소그룹 첫 항목에만 지정 */
+  section?: string
 }
 
 interface NavGroup {
@@ -27,37 +29,16 @@ interface NavGroup {
   items: NavItem[]
 }
 
-// 삼성닷컴식 상단 카테고리 바(포털 1단계) — 사이드바 4그룹을 GNB 드롭다운으로 이관.
+// 겉노출 간소화(P4, 12번 지시서 §6): 직행 3 = 홈·문서 작성·일정표.
+// 팀별 허브는 홈 타팀 스트립이 대체 → 직행에서 빼고 '관리 ▾'로 이동(페이지 자체는 유지).
 const DIRECT_ITEMS: NavItem[] = [
-  { id: 'home', label: '홈', icon: Home, desc: '관제탑 — 팀별 오늘 할 일' },
-  { id: 'team-hub', label: '팀별 허브', icon: Users, desc: '7팀 준비도 · 책임 규정' }
+  { id: 'home', label: '홈', icon: Home, desc: '관제탑 — 오늘 내 할 일' },
+  // 문서 작성 = doc-browse 승격(정답 따라쓰기 통합 작성 진입점, P5)
+  { id: 'doc-browse', label: '문서 작성', icon: BookOpen, desc: '규정·양식 찾아 바로 작성' },
+  { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' }
 ]
 
 const NAV_GROUPS: NavGroup[] = [
-  {
-    key: 'daily',
-    label: '매일 관리',
-    items: [
-      { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '심사 준비 현황 · 채점' },
-      { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
-      { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' },
-      { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '일·주·월·분기·년 반복' },
-      // 사이드카 mes_records.db — 4종 기록이 들어왔는지/비었는지 커버리지 (7/20)
-      { id: 'mes-records', label: 'MES 기록 현황', icon: Activity, desc: '자주·수입·패트롤·설비점검 — 들어왔나/비었나' }
-    ]
-  },
-  {
-    key: 'apqp',
-    label: 'APQP · Core Tool',
-    items: [
-      { id: 'apqp', label: 'APQP 여정', icon: Route, desc: '5단계 43산출물 순차 진행' },
-      { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
-      { id: 'ppap', label: 'PPAP 승인', icon: ClipboardCheck, desc: '양산부품승인 18요구사항' },
-      // 2026-07-07 회의: 고객사(삼보 외 1차사) 신판 미도입 → 제출 표준 = 구판 J1101-01(0058 복원).
-      { id: 'fmea', label: '공정 FMEA (신판)', icon: GitBranch, desc: '전환 대비 — 제출은 구판 양식' },
-      { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR 분석' }
-    ]
-  },
   {
     key: 'audit',
     label: '심사 대응',
@@ -68,26 +49,40 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'sq-readiness', label: 'SQ 준비도 (42항목)', icon: ShieldCheck, desc: '항목별 신호등 상세' },
       { id: 'sq-track', label: 'SQ 심사 트랙', icon: ClipboardList, desc: '품번 4종 · 심사 동선 체크리스트 (10월 LEVEL-UP)' },
       { id: 'iatf-dashboard', label: 'IATF 대시보드', icon: Gauge, desc: '조항·핵심 의무·문서화 — 인증 심사 한 장' },
-      { id: 'clause-tree', label: '조항 커버리지 (IATF)', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑 상세' },
+      { id: 'clause-tree', label: '조항 커버리지', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑 — 인증용 상세' },
       // 리콜 시뮬레이션·모의 역추적 훈련(의무 62)의 데이터 기반 — MES POP_TRACE 실측 (7/19)
-      { id: 'mes-trace', label: 'LOT 계보 조회', icon: Network, desc: '자재↔생산 LOT 정·역추적 — ms 단위 전개' }
+      { id: 'mes-trace', label: 'LOT 계보 조회', icon: Network, desc: '자재↔생산 LOT 정·역추적 — 추적성' }
     ]
   },
   {
-    key: 'docs',
-    label: '문서 · 양식',
+    key: 'manage',
+    label: '관리',
     items: [
-      { id: 'doc-browse', label: '규정·양식 찾아보기', icon: BookOpen, desc: '카드 → 규정 본문 → 양식 작성 (포털)' },
-      { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '프로세스·규정·양식 원장' },
+      // ── 매일 관리 ──
+      { section: '매일 관리', id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '심사 준비 현황 · 채점' },
+      { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
+      { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '일·주·월·분기·년 반복 업무 등록' },
+      // 사이드카 mes_records.db — 4종 기록이 들어왔는지/비었는지 커버리지 (7/20)
+      { id: 'mes-records', label: 'MES 기록 현황', icon: Activity, desc: '자주·수입·패트롤·설비점검 — 들어왔나/비었나' },
+      { id: 'team-hub', label: '팀별 허브', icon: Users, desc: '팀별 준비도 · 책임 규정 상세' },
+      // ── APQP · Core Tool ──
+      { section: 'APQP · Core Tool', id: 'apqp', label: 'APQP 여정', icon: Route, desc: '5단계 43산출물 순차 진행' },
+      { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
+      { id: 'ppap', label: 'PPAP 승인', icon: ClipboardCheck, desc: '양산부품승인 18요구사항' },
+      // 2026-07-07 회의: 고객사(삼보 외 1차사) 신판 미도입 → 제출 표준 = 구판 J1101-01(0058 복원).
+      { id: 'fmea', label: '공정 FMEA (신판)', icon: GitBranch, desc: '전환 대비 — 제출은 구판 양식' },
+      { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR 분석' },
+      // ── 문서 · 양식 ──
+      { section: '문서 · 양식', id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '프로세스·규정·양식 원장' },
       { id: 'form-builder', label: '양식 단독 작성', icon: FileEdit, desc: '양식만 빠르게 작성' },
       { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '흐름도 등록 · AI 추출' }
     ]
   }
 ]
 
-/** currentPage 가 속한 그룹 key ('home'·'team-hub' 등 직접 항목은 자기 id). */
+/** currentPage 가 속한 그룹 key (직접 항목은 자기 id). team-detail 은 팀별 허브(관리) 소속. */
 function activeKey(page: PageId): string {
-  if (page === 'team-detail') return 'team-hub'
+  if (page === 'team-detail') return 'manage'
   for (const g of NAV_GROUPS) if (g.items.some((i) => i.id === page)) return g.key
   return page
 }
@@ -207,28 +202,39 @@ export function Gnb(): JSX.Element {
             </button>
 
             {openGroup === group.key && (
-              <div className="absolute left-0 top-full w-72 bg-popover border border-border rounded-xl shadow-lg p-1.5 z-50">
-                {group.items.map((item) => {
+              <div className="absolute left-0 top-full w-72 max-h-[72vh] overflow-y-auto bg-popover border border-border rounded-xl shadow-lg p-1.5 z-50">
+                {group.items.map((item, idx) => {
                   const Icon = item.icon
                   const isActive = currentPage === item.id
                   return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => go(item.id)}
-                      className={cn(
-                        'w-full flex items-start gap-2.5 text-left rounded-lg px-2.5 py-2 transition-colors',
-                        isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                    <div key={item.id}>
+                      {item.section && (
+                        <div
+                          className={cn(
+                            'px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60',
+                            idx > 0 ? 'pt-2.5 mt-1 border-t border-border' : 'pt-1'
+                          )}
+                        >
+                          {item.section}
+                        </div>
                       )}
-                    >
-                      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                      <span className="leading-snug">
-                        <span className="block text-[13px] font-semibold">{item.label}</span>
-                        <span className={cn('block text-[11px] mt-0.5', isActive ? 'text-primary/80' : 'text-muted-foreground')}>
-                          {item.desc}
+                      <button
+                        type="button"
+                        onClick={() => go(item.id)}
+                        className={cn(
+                          'w-full flex items-start gap-2.5 text-left rounded-lg px-2.5 py-2 transition-colors',
+                          isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                        )}
+                      >
+                        <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                        <span className="leading-snug">
+                          <span className="block text-[13px] font-semibold">{item.label}</span>
+                          <span className={cn('block text-[11px] mt-0.5', isActive ? 'text-primary/80' : 'text-muted-foreground')}>
+                            {item.desc}
+                          </span>
                         </span>
-                      </span>
-                    </button>
+                      </button>
+                    </div>
                   )
                 })}
               </div>
