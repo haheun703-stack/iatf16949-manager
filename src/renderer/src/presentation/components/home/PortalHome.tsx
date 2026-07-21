@@ -124,6 +124,14 @@ export function PortalHome(): JSX.Element {
   // source='form' = [작성기록으로 확정](§0.6 결정2) / 'manual' = 무연결 의무 수동 완료.
   // 기록 주체 = 활성 사용자 우선, 없으면 defaultAuthor 폴백(§4).
   const complete = async (task: TodayTaskDto, source: 'manual' | 'form' = 'manual'): Promise<void> => {
+    // 대리 완료 confirm(P3-fix, 코워크): 담당이 타인인 업무는 확인 1회 — 차단이 아니라
+    // "누가 누구 대신 완료했는지" 정직 기록이 목적. 본인·미지정 업무는 원클릭 유지.
+    if (task.assignee && currentUser && task.assignee !== currentUser.name) {
+      const ok = window.confirm(
+        `이 업무의 담당은 ${task.assignee}입니다.\n${currentUser.name} 이름으로 대리 완료를 기록할까요?`
+      )
+      if (!ok) return
+    }
     setCompleting(task.id)
     try {
       await window.api.invoke(window.api.channels.OBLIGATION_COMPLETE, {

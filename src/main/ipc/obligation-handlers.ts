@@ -200,4 +200,35 @@ export function registerObligationHandlers(): void {
       return { success: true, nextDueDate: next }
     }
   )
+
+  // 도래일 일괄 재설정(실사용 개시) — 코워크 §0.7 ④. 모든 active 의무의 next_due_date/anchor_date 를
+  // 오늘로 맞추고 last_done_date 초기화(오늘부터 관리 시작). 데이터 조작이 아니라 가동 개시일 설정.
+  // 완료 이력(obligation_completions)은 보존. 권한 체크는 렌더러(executive/manager만 버튼 노출).
+  ipcMain.handle(
+    IPC_CHANNELS.OBLIGATION_RESET_DUE,
+    (_event, { by }: { by?: string }): { success: boolean; count: number } => {
+      try {
+        const today = todayYmd()
+        const info = db
+          .prepare(
+            `UPDATE recurring_obligations
+             SET next_due_date = ?, anchor_date = ?, last_done_date = NULL, updated_at = datetime('now')
+             WHERE active = 1`
+          )
+          .run(today, today)
+        const count = info.changes
+        try {
+          db.prepare(
+            `INSERT INTO obligation_reset_log (reset_by, affected_count) VALUES (?, ?)`
+          ).run(by ?? null, count)
+        } catch {
+          /* 0086 미적용 구버전 — 이력 없이 동작 */
+        }
+        return { success: true, count }
+      } catch (err) {
+        console.error('[obligation:resetDue] failed:', (err as Error).message)
+        return { success: false, count: 0 }
+      }
+    }
+  )
 }

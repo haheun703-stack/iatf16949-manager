@@ -124,6 +124,8 @@ export const IPC_CHANNELS = {
   OBLIGATION_UPDATE: 'obligation:update',
   OBLIGATION_DELETE: 'obligation:delete',
   OBLIGATION_COMPLETE: 'obligation:complete',
+  // 도래일 일괄 재설정(실사용 개시) — executive/manager만. 실행 이력 obligation_reset_log(0086)
+  OBLIGATION_RESET_DUE: 'obligation:resetDue',
 
   // PPAP (양산부품승인) — Core Tool #1
   PPAP_SUBMISSION_LIST: 'ppap:submissionList',

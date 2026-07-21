@@ -2419,6 +2419,10 @@ export interface IpcChannelMap {
     request: { id: number; doneDate?: string; doneBy?: string; source?: 'manual' | 'form' }
     response: { success: boolean; nextDueDate: string | null }
   }
+  [IPC_CHANNELS.OBLIGATION_RESET_DUE]: {
+    request: { by?: string }
+    response: { success: boolean; count: number }
+  }
   [IPC_CHANNELS.PPAP_SUBMISSION_LIST]: {
     request: void
     response: PpapSubmissionDto[]

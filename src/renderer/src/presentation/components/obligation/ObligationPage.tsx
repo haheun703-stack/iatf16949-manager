@@ -1,23 +1,46 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarClock, Plus, Loader2, Check, AlertTriangle, Network } from 'lucide-react'
+import { CalendarClock, Plus, Loader2, Check, AlertTriangle, Network, RotateCcw } from 'lucide-react'
 import { OBLIGATION_CADENCES, type ObligationCadence, type ObligationDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { traceDeepLink } from '../../../lib/deeplink'
 import { useUIStore } from '../../stores/uiStore'
 import { PageHeader } from '../shared/PageHeader'
 import { useObligationStore } from '../../stores/obligationStore'
+import { useActiveUserStore } from '../../stores/activeUserStore'
 import { CADENCE_META, CATEGORY_CHIP, dueStatus } from './obligationMeta'
 import { ObligationModal } from './ObligationModal'
 
 type Filter = 'all' | ObligationCadence
 
 export function ObligationPage(): JSX.Element {
-  const { items, loading, load, openCreate, openEdit, complete } = useObligationStore()
+  const { items, loading, load, openCreate, openEdit, complete, resetDueDates } = useObligationStore()
   const [filter, setFilter] = useState<Filter>('all')
+  const [resetting, setResetting] = useState(false)
+  // 도래일 재설정은 관리자 액션 — executive/manager 만 노출(§0.7 ④)
+  const users = useActiveUserStore((s) => s.users)
+  const activeUserId = useActiveUserStore((s) => s.activeUserId)
+  const currentUser = users.find((u) => u.id === activeUserId) ?? null
+  const canReset = currentUser?.role === 'executive' || currentUser?.role === 'manager'
 
   useEffect(() => {
     void load()
   }, [load])
+
+  const handleReset = async (): Promise<void> => {
+    const ok = window.confirm(
+      '가동 개시일 재설정\n\n' +
+        '모든 정기 의무의 도래일을 오늘로 맞춥니다. 과거 연체 표시가 사라지고 오늘부터 관리가 시작됩니다.\n' +
+        '※ 데이터 조작이 아니라 이 프로그램의 실사용 개시일 설정입니다(완료 이력은 보존).\n\n계속할까요?'
+    )
+    if (!ok) return
+    setResetting(true)
+    try {
+      const count = await resetDueDates(currentUser?.name)
+      window.alert(`도래일을 오늘로 재설정했습니다 — 대상 ${count}건. 오늘부터 관리가 시작됩니다.`)
+    } finally {
+      setResetting(false)
+    }
+  }
 
   // 신호등 요약 (활성 의무 기준)
   const summary = useMemo(() => {
@@ -63,6 +86,18 @@ export function ObligationPage(): JSX.Element {
           actions={
             <>
               {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              {canReset && (
+                <button
+                  type="button"
+                  onClick={() => void handleReset()}
+                  disabled={resetting}
+                  title="가동 개시일 재설정 — 모든 도래일을 오늘로(실사용 개시, 데이터 조작 아님)"
+                  className="text-[13px] font-semibold px-3.5 py-2 rounded-lg border border-border text-foreground hover:bg-muted flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  {resetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                  도래일 재설정
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => openCreate()}

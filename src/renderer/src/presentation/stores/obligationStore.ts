@@ -20,6 +20,8 @@ interface ObligationState {
   update: (input: ObligationUpdateInput) => Promise<void>
   remove: (id: number) => Promise<void>
   complete: (id: number) => Promise<void>
+  /** 도래일 일괄 재설정(실사용 개시) — 재설정된 건수 반환 */
+  resetDueDates: (by?: string) => Promise<number>
 
   // 모달 (생성/편집)
   modalOpen: boolean
@@ -62,6 +64,15 @@ export const useObligationStore = create<ObligationState>((set, get) => ({
   complete: async (id) => {
     await window.api.invoke(ch('OBLIGATION_COMPLETE'), { id })
     await get().load()
+  },
+
+  resetDueDates: async (by) => {
+    const res = (await window.api.invoke(ch('OBLIGATION_RESET_DUE'), { by })) as {
+      success: boolean
+      count: number
+    }
+    await get().load()
+    return res.success ? res.count : 0
   },
 
   modalOpen: false,
