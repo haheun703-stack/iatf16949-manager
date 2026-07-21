@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { useFormStore } from '../../stores/formStore'
 import type { FormRenderModelDto, RenderCellDto, RenderEditCellDto } from '@shared/ipc-types'
@@ -15,6 +15,12 @@ export function ExcelSheetView(): JSX.Element {
 
   const [model, setModel] = useState<FormRenderModelDto | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // P8② — 원본 시트 배율. 기본 '폭 맞춤'(축소해 한눈에 다 보임 — "잘렸나?" 오해 방지),
+  //  '100%'로 실제 크기 확인. availW = 스크롤 컨테이너 안쪽 폭(세로 스크롤바 제외).
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [availW, setAvailW] = useState(0)
+  const [mode, setMode] = useState<'fit' | 'full'>('fit')
 
   const formCode = currentForm?.code
 
@@ -44,6 +50,18 @@ export function ExcelSheetView(): JSX.Element {
       alive = false
     }
   }, [formCode])
+
+  // 컨테이너 폭 추적 → '폭 맞춤' 배율 계산(창 크기·글자 배율·패널 접힘에 실시간 반응).
+  //  useLayoutEffect = 페인트 전에 측정·반영 → 뷰가 열릴 때 100%→폭맞춤 깜빡임 방지.
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const measure = (): void => setAvailW(el.clientWidth)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [model])
 
   // (r,c) → 셀/입력셀 lookup
   const editLut = useMemo(() => {
@@ -90,6 +108,12 @@ export function ExcelSheetView(): JSX.Element {
   }
 
   const totalW = model.colWidthsPx.reduce((a, b) => a + b, 0)
+  // 폭 맞춤 = 컨테이너에 딱 맞게 축소(1 이하로만 — 작은 시트는 100% 유지, 확대는 안 함).
+  const fitScale = availW > 0 && totalW > 0 ? Math.min(1, availW / totalW) : 1
+  const scale = mode === 'fit' ? fitScale : 1
+  const scaledPct = Math.round(scale * 100)
+  // 100% 배율에서 실제로 옆으로 넘칠 때만 첫 열 고정을 켠다(폭 맞춤에선 스크롤이 없어 불필요).
+  const canScrollX = mode === 'full' && totalW > availW + 1
 
   return (
     <div>
@@ -99,11 +123,56 @@ export function ExcelSheetView(): JSX.Element {
           <span className="inline-block w-3 h-3 rounded-sm bg-amber-100 border border-amber-400" />
           입력 가능 셀 {model.editCells.length}개 — 클릭해서 작성
         </span>
+        {canScrollX && (
+          <span className="inline-flex items-center gap-1 text-primary/70">← → 가로로 넘겨 보세요 (첫 열 고정)</span>
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          {mode === 'fit' && scale < 1 && (
+            <span className="tabular-nums text-muted-foreground/70">폭 맞춤 {scaledPct}%</span>
+          )}
+          <div className="flex items-center rounded-md border border-border p-0.5 bg-muted/40">
+            <button
+              type="button"
+              onClick={() => setMode('fit')}
+              title="원본 시트를 화면 폭에 맞게 축소해 한눈에 보여줍니다"
+              className={
+                'px-2 py-1 rounded text-[11px] font-semibold transition-colors ' +
+                (mode === 'fit'
+                  ? 'bg-card shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground')
+              }
+            >
+              폭 맞춤
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('full')}
+              title="실제 크기(100%)로 봅니다 — 넘치면 가로 스크롤·첫 열 고정"
+              className={
+                'px-2 py-1 rounded text-[11px] font-semibold transition-colors ' +
+                (mode === 'full'
+                  ? 'bg-card shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground')
+              }
+            >
+              100%
+            </button>
+          </div>
+        </div>
       </div>
-      <div className="overflow-auto border border-border rounded-lg bg-white shadow-sm max-h-[calc(100vh-260px)]">
+      <div
+        ref={scrollRef}
+        // scrollbar-gutter:stable — 세로 스크롤바 유무와 무관하게 안쪽 폭을 일정하게(폭 맞춤 배율 진동 방지)
+        className="overflow-auto border border-border rounded-lg bg-white shadow-sm max-h-[calc(100vh-260px)] [scrollbar-gutter:stable]"
+      >
         <table
           className="border-collapse"
-          style={{ width: totalW, tableLayout: 'fixed', fontFamily: "'맑은 고딕', 'Malgun Gothic', sans-serif" }}
+          style={{
+            width: totalW,
+            tableLayout: 'fixed',
+            zoom: scale,
+            fontFamily: "'맑은 고딕', 'Malgun Gothic', sans-serif"
+          }}
         >
           <colgroup>
             {model.colWidthsPx.map((w, i) => (
@@ -126,6 +195,7 @@ export function ExcelSheetView(): JSX.Element {
                         key={key}
                         cell={cell}
                         edit={edit}
+                        frozen={c === 1 && canScrollX}
                         value={edit ? String(values[edit.fieldKey] ?? '') : undefined}
                         onChange={edit ? (v) => setValue(edit.fieldKey, v) : undefined}
                       />
@@ -144,11 +214,13 @@ export function ExcelSheetView(): JSX.Element {
 function SheetCell({
   cell,
   edit,
+  frozen,
   value,
   onChange
 }: {
   cell?: RenderCellDto
   edit?: RenderEditCellDto
+  frozen?: boolean
   value?: string
   onChange?: (v: string) => void
 }): JSX.Element {
@@ -167,6 +239,15 @@ function SheetCell({
     overflow: 'hidden',
     padding: '1px 3px',
     lineHeight: 1.25
+  }
+  // P8② 첫 열 고정 — 가로 스크롤 시 식별 열(NO 등)이 항상 보이게 sticky 처리.
+  //  투명 셀은 뒤가 비치지 않게 흰색으로 채우고, 우측에 얇은 구분선을 준다.
+  if (frozen) {
+    style.position = 'sticky'
+    style.left = 0
+    style.zIndex = edit ? 3 : 2
+    style.backgroundColor = cell?.bg ?? '#fff'
+    style.boxShadow = 'inset -1px 0 0 #d4d4d8, 2px 0 5px -3px rgba(0,0,0,0.18)'
   }
 
   if (edit && onChange) {

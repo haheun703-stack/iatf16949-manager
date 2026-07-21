@@ -15,9 +15,18 @@ import { RevisionsModal } from './RevisionsModal'
 import { AiCopilot } from './AiCopilot'
 import type { FormFieldDto } from '@shared/ipc-types'
 
-type ViewMode = 'input' | 'excel' | 'document'
+export type ViewMode = 'input' | 'excel' | 'document'
 
-export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }): JSX.Element {
+export function FormCanvas({
+  onUnfoldAnswer,
+  viewMode: viewModeProp,
+  onViewModeChange
+}: {
+  onUnfoldAnswer?: () => void
+  /** 부모가 뷰 모드를 관장할 때 전달(FormBuilderPage). 미전달 시 내부 상태로 단독 동작. */
+  viewMode?: ViewMode
+  onViewModeChange?: (m: ViewMode) => void
+} = {}): JSX.Element {
   const { currentForm, currentFormLoading, saveDraft, values, examples, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
@@ -29,7 +38,10 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
   })
   const [saveWarn, setSaveWarn] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [viewMode, setViewMode] = useState<ViewMode>('input')
+  // 뷰 모드 — 부모 제어(props) 우선, 없으면 내부 상태(단독 사용처: BOM·공정 워크벤치)
+  const [viewModeLocal, setViewModeLocal] = useState<ViewMode>('input')
+  const viewMode = viewModeProp ?? viewModeLocal
+  const changeView = onViewModeChange ?? setViewModeLocal
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [submissionsOpen, setSubmissionsOpen] = useState(false)
@@ -206,7 +218,7 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
             <div className="flex items-center rounded-lg border border-border p-0.5 bg-muted/40 mr-1">
               <button
                 type="button"
-                onClick={() => setViewMode('input')}
+                onClick={() => changeView('input')}
                 className={cn(
                   'text-[12px] font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-colors',
                   viewMode === 'input' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -217,7 +229,7 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode('excel')}
+                onClick={() => changeView('excel')}
                 title="원본 양식 모양 그대로 보면서 입력 셀만 채웁니다"
                 className={cn(
                   'text-[12px] font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-colors',
@@ -229,7 +241,7 @@ export function FormCanvas({ onUnfoldAnswer }: { onUnfoldAnswer?: () => void }):
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode('document')}
+                onClick={() => changeView('document')}
                 className={cn(
                   'text-[12px] font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-colors',
                   viewMode === 'document' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'

@@ -34,6 +34,10 @@ import { SimilarCaseModal } from '../copilot/SimilarCaseModal'
 export function AppShell(): JSX.Element {
   const { currentPage } = useUIStore()
 
+  // P8 — 양식 작성 화면(3분할 워크벤치)은 중앙 1400px 틀을 벗어나 모니터 전체 폭을 쓴다.
+  //  좁은 폭에서 정답·목록·캔버스가 눌려 엑셀 뷰가 잘리던 문제 해소. 그 외 화면은 기존 중앙 정렬 유지.
+  const fullBleed = currentPage === 'form-builder'
+
   return (
     <div className="h-screen flex flex-col">
       {/* 포털 1단계(7/16): 사이드바 제거 → 상단 GNB 통일. 홈 = 관제탑(팀별 오늘 할 일). */}
@@ -42,10 +46,15 @@ export function AppShell(): JSX.Element {
         <main className="flex-1 min-w-0 overflow-y-auto">
           {/* 전 화면 공통 중앙 칼럼 — 화면의 94%·최대 1400px: 어떤 창 크기/글자 배율에서도
               좌우 여백이 반드시 생긴다 (7/16 사장님: "전체적인" 가운데 정렬·좌우 비율).
-              인라인 스타일 고정 — 유틸리티 클래스 미생성/충돌에도 영향받지 않는 정본. */}
+              인라인 스타일 고정 — 유틸리티 클래스 미생성/충돌에도 영향받지 않는 정본.
+              단, 작성 화면(full-bleed)만 예외로 전체 폭. */}
           <div
-            className="min-w-0 w-full px-2 py-7"
-            style={{ maxWidth: 'min(1400px, 94vw)', marginLeft: 'auto', marginRight: 'auto' }}
+            className={fullBleed ? 'min-w-0 w-full h-full' : 'min-w-0 w-full px-2 py-7'}
+            style={
+              fullBleed
+                ? undefined
+                : { maxWidth: 'min(1400px, 94vw)', marginLeft: 'auto', marginRight: 'auto' }
+            }
           >
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}
           <ErrorBoundary key={currentPage}>

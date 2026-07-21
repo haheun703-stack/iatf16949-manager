@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FileEdit, ChevronRight, Search, X } from 'lucide-react'
+import { FileEdit, ChevronRight, Search, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useUIStore } from '../../stores/uiStore'
 
-export function FormListPanel(): JSX.Element {
+export function FormListPanel({
+  collapsed = false,
+  canToggle = true,
+  onToggle
+}: {
+  /** 접힘 상태 — 얇은 레일만 표시 */
+  collapsed?: boolean
+  /** 펼치기 버튼 노출 여부(엑셀·문서 뷰 자동 접힘 중에는 false) */
+  canToggle?: boolean
+  onToggle?: () => void
+} = {}): JSX.Element {
   const { formList, formListLoading, loadFormList, loadFormDefinition, loadSubmission } = useFormStore()
   const { selectedFormCode, setSelectedFormCode, pendingSubmissionId, setPendingSubmissionId } =
     useUIStore()
@@ -39,13 +49,48 @@ export function FormListPanel(): JSX.Element {
     setSelectedFormCode(code)
   }
 
+  // P8 — 접힘: 얇은 레일만. 엑셀·문서 뷰 자동 접힘(canToggle=false) 중엔 펼치기 버튼을 감춘다.
+  if (collapsed) {
+    return (
+      <aside className="w-11 bg-card border-r border-border flex flex-col items-center py-3 shrink-0">
+        {canToggle && onToggle ? (
+          <button
+            type="button"
+            onClick={onToggle}
+            title="양식 목록 펼치기"
+            className="text-muted-foreground/70 hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        ) : (
+          <FileEdit className="w-4 h-4 text-muted-foreground/50" />
+        )}
+        <span className="[writing-mode:vertical-rl] text-[11px] text-muted-foreground/70 mt-3 tracking-wider select-none">
+          양식 목록
+        </span>
+      </aside>
+    )
+  }
+
   return (
     <aside className="w-80 bg-card border-r border-border flex flex-col shrink-0">
       <header className="px-5 py-4 border-b border-border">
-        <h2 className="text-[15px] font-bold flex items-center gap-2 tracking-tight">
-          <FileEdit className="w-4 h-4 text-primary" />
-          양식 목록
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[15px] font-bold flex items-center gap-2 tracking-tight">
+            <FileEdit className="w-4 h-4 text-primary" />
+            양식 목록
+          </h2>
+          {onToggle && (
+            <button
+              type="button"
+              onClick={onToggle}
+              title="양식 목록 접기 (작성 화면 넓게)"
+              className="text-muted-foreground/70 hover:text-foreground p-1 -mr-1 rounded-md hover:bg-muted transition-colors"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
+        </div>
         {/* 코드·이름 검색 */}
         <div className="relative mt-2.5">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60 pointer-events-none" />
