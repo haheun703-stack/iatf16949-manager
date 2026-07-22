@@ -206,7 +206,9 @@ export function ExcelSheetView(): JSX.Element {
                         cell={cell}
                         edit={edit}
                         frozen={c === 1 && canScrollX}
-                        frozenTop={r === 1 && canScrollX}
+                        // #5 — 머리행(1행)은 세로 스크롤 시에도 고정(폭맞춤=가로 스크롤 없어도).
+                        //  sticky top 은 스크롤 없으면 무효과 → 짧은 폼 영향 없음, 긴 폼에서 머리행 유지.
+                        frozenTop={r === 1}
                         value={edit ? String(values[edit.fieldKey] ?? '') : undefined}
                         onChange={edit ? (v) => setValue(edit.fieldKey, v) : undefined}
                       />
