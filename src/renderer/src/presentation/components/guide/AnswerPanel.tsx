@@ -93,10 +93,15 @@ export function AnswerPanel({ onFold }: { onFold: () => void }): JSX.Element {
 
       <div className="flex-1 overflow-y-auto p-4 break-keep">
         {examples.length === 0 ? (
-          <div className="text-[13px] text-muted-foreground leading-relaxed py-8 text-center">
+          <div className="text-[13px] text-muted-foreground leading-relaxed py-8 px-4 text-center">
             이 양식은 아직 <b>모범 예시</b>가 준비되지 않았습니다.
             <br />
             (예시가 등록된 양식은 왼쪽에 90% 정답이 함께 뜹니다)
+            <span className="mt-3 block rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] text-emerald-800">
+              💡 자주 쓰는 양식인데 예시가 없다면 <b>관리자(품질팀)에게 예시 등록을 요청</b>하세요.
+              <br />
+              관리자는 <span className="font-mono">form_examples</span> 시드로 모범 작성본을 추가할 수 있습니다.
+            </span>
           </div>
         ) : tab === 'example' ? (
           <ExampleTable examples={examples} frameCount={frameCount} factCount={factCount} />
