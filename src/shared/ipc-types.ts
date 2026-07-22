@@ -124,6 +124,12 @@ export interface FormListItemDto {
   fieldsCount: number
   submissionsCount: number
   draftCount: number
+  // P10 — 문서 작성 화면(양식 행 리스트)용 부가 메타
+  respDept: string | null // 책임부서(팀 뱃지·내 관련순 정렬)
+  hasExample: boolean // 모범 예시(form_examples) 보유
+  obligationLinked: boolean // 정기 의무(recurring_obligations)에 연결됨
+  lastWrittenAt: string | null // 최근 작성본 시각(updated_at 우선)
+  deprecated: boolean // 구판(대체됨) — 기본 목록에서 숨김
 }
 
 export interface FormSubmissionDto {

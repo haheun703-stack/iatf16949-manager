@@ -115,7 +115,7 @@ export function FormCanvas({
     }
     for (const f of facts) {
       const ex = examples.find((e) => e.fieldKey === f.fieldKey)
-      if (ex && isExampleCopyBlocked('fact', f.type, ex.exampleValue, String(values[f.fieldKey] ?? ''))) {
+      if (ex && isExampleCopyBlocked('fact', f.type, ex.exampleValue, String(values[f.fieldKey] ?? ''), f.label)) {
         return `'${f.label}' — 예시값을 그대로 저장할 수 없습니다. 본인이 확인한 실제 값을 입력하세요(기록 조작 방지).`
       }
     }

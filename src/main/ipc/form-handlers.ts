@@ -82,7 +82,7 @@ export function registerFormHandlers(): void {
     }
     for (const r of rows) {
       const actual = values[r.fk]
-      if (isExampleCopyBlocked(r.fc, r.ty ?? 'text', r.ev ?? '', actual == null ? '' : String(actual))) {
+      if (isExampleCopyBlocked(r.fc, r.ty ?? 'text', r.ev ?? '', actual == null ? '' : String(actual), r.lb)) {
         return r.lb ?? r.fk
       }
     }
@@ -92,10 +92,13 @@ export function registerFormHandlers(): void {
   // ──── Form list ────
   ipcMain.handle(IPC_CHANNELS.FORM_LIST, (): FormListItemDto[] => {
     const rows = db.prepare(`
-      SELECT f.code, f.name, f.reg_code, f.approvals_json,
+      SELECT f.code, f.name, f.reg_code, f.approvals_json, f.resp_dept, f.deprecated,
              (SELECT COUNT(*) FROM form_fields ff WHERE ff.form_code = f.code) AS fields_count,
              (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code) AS submissions_count,
-             (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code AND fs.status = 'draft') AS draft_count
+             (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code AND fs.status = 'draft') AS draft_count,
+             EXISTS(SELECT 1 FROM form_examples e WHERE e.form_code = f.code) AS has_example,
+             EXISTS(SELECT 1 FROM recurring_obligations o WHERE o.form_code = f.code AND o.active = 1) AS obligation_linked,
+             (SELECT MAX(COALESCE(fs.updated_at, fs.created_at)) FROM form_submissions fs WHERE fs.form_code = f.code) AS last_written_at
       FROM forms f
       ORDER BY f.code
     `).all() as Array<Record<string, unknown>>
@@ -109,7 +112,12 @@ export function registerFormHandlers(): void {
         approvalsCount: approvals.length,
         fieldsCount: (r.fields_count as number) ?? 0,
         submissionsCount: (r.submissions_count as number) ?? 0,
-        draftCount: (r.draft_count as number) ?? 0
+        draftCount: (r.draft_count as number) ?? 0,
+        respDept: (r.resp_dept as string) || null,
+        hasExample: !!(r.has_example as number),
+        obligationLinked: !!(r.obligation_linked as number),
+        lastWrittenAt: (r.last_written_at as string) || null,
+        deprecated: !!(r.deprecated as number)
       }
     })
   })
