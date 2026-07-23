@@ -27,3 +27,6 @@ scripts/__pycache__/
 
 # CDP 캡처 산출물(scripts/capture.mjs 기본 --out) — 검수 이미지는 재생성 가능, 커밋 안 함
 captures/
+
+# 웹 전환 서버 번들 산출물(npm run build:server 로 재생성)
+server/dist/

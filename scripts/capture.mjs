@@ -151,13 +151,15 @@ async function main() {
   await cdp.send('Page.enable')
   await cdp.send('Runtime.enable')
 
-  // window.__cap 준비 확인(렌더러가 dev 노출을 마쳤는지)
+  // window.__cap 준비 확인(dev 빌드에만 노출). 없으면 네비게이션 없이 현재 화면만 캡처 —
+  // 웹 전환(브라우저·프로덕션 빌드) 캡처를 위해 필수 조건이 아니라 선택 기능으로 둔다.
   const ready = await cdp.send('Runtime.evaluate', {
     expression: 'typeof window.__cap',
     returnByValue: true
   })
-  if (ready.result.value !== 'object') {
-    throw new Error('window.__cap 미노출 — dev 빌드(import.meta.env.DEV)인지, main.tsx 반영됐는지 확인.')
+  const hasCap = ready.result.value === 'object'
+  if (!hasCap) {
+    console.warn('[capture] window.__cap 없음 → 네비게이션 생략, 현재 화면만 캡처(웹/프로덕션 빌드)')
   }
 
   const saved = []
@@ -169,12 +171,14 @@ async function main() {
     if (shot.processCode != null) opts.processCode = shot.processCode
     if (shot.clauseId != null) opts.clauseId = shot.clauseId
 
-    // 결정론적 네비게이션
-    await cdp.send('Runtime.evaluate', {
-      expression: `window.__cap.goto(${JSON.stringify(shot.page)}, ${JSON.stringify(opts)})`,
-      awaitPromise: true,
-      returnByValue: true
-    })
+    // 결정론적 네비게이션(__cap 있을 때만 — 웹 캡처는 현재 화면 그대로)
+    if (hasCap) {
+      await cdp.send('Runtime.evaluate', {
+        expression: `window.__cap.goto(${JSON.stringify(shot.page)}, ${JSON.stringify(opts)})`,
+        awaitPromise: true,
+        returnByValue: true
+      })
+    }
     await sleep(shot.waitMs ?? args.wait) // 렌더/데이터 로드 안정화
 
     // 네비 후 특정 버튼 클릭(예: '엑셀 뷰' 탭 전환) 후 재대기 — 뷰 상태 캡처용.

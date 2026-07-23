@@ -7,6 +7,8 @@
     "dev": "node scripts/dev.mjs",
     "build": "electron-vite build",
     "build:win": "electron-vite build && electron-builder --win",
+    "build:server": "esbuild server/bridge.ts --bundle --platform=node --format=cjs --outfile=server/dist/bridge.cjs --external:better-sqlite3 --alias:electron=./server/electron-shim.cjs --tsconfig=tsconfig.node.json && esbuild server/polyfill/web-api.ts --bundle --format=iife --platform=browser --outfile=server/dist/web-api.js",
+    "start:server": "node scripts/start-server.mjs",
     "preview": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",

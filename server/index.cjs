@@ -35,26 +35,61 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, db: DB_PATH, forms, obligations: obl, users, runtime: `electron-node ${process.versions.modules}` })
 })
 
-// ── POST /api/{channel} 디스패처 (W1b 에서 홈 핸들러 등록) ──
-// 채널→핸들러 맵. registerAllIpcHandlers 를 shim 으로 재사용하는 방식은 W1b 에서 결정/구현.
-const routes = new Map()
+// ── 채널 맵: main/ipc 핸들러를 electron shim 위에서 등록해 그대로 재사용(W1b, 소스 무수정) ──
+// bridge.cjs = esbuild 번들(electron → server/electron-shim.cjs alias). 빌드: npm run build:server
+let routes = new Map()
+try {
+  const bridge = require('./dist/bridge.cjs')
+  routes = bridge.buildRoutes()
+  console.log(`[server] 채널 ${routes.size}개 등록 (main/ipc 재사용)`)
+} catch (e) {
+  console.error('[server] bridge 로드 실패 — /api 는 404 로 응답합니다:', (e && e.message) || e)
+}
+
+// ── POST /api/{channel} 디스패처 ──
+// IPC 핸들러 시그니처 (event, payload) 를 그대로 호출한다(event 미사용 — §0.5 대조로 확인).
 app.post('/api/:channel', (req, res) => {
   const ch = req.params.channel
   const fn = routes.get(ch)
   if (!fn) return res.status(404).json({ error: `미구현 채널: ${ch}` })
   try {
-    Promise.resolve(fn(req.body)).then((result) => res.json(result))
-      .catch((e) => res.status(500).json({ error: String(e && e.message || e) }))
+    Promise.resolve(fn(null, req.body))
+      .then((result) => res.json(result === undefined ? null : result))
+      .catch((e) => res.status(500).json({ error: String((e && e.message) || e) }))
   } catch (e) {
-    res.status(500).json({ error: String(e && e.message || e) })
+    res.status(500).json({ error: String((e && e.message) || e) })
   }
 })
 
-// ── 정적 서빙 (renderer 빌드) — W1b 에서 out/renderer + window.api 폴리필 ──
+// ── 정적 서빙 (renderer 빌드) + window.api 폴리필 주입 ──
+// 렌더러 산출물은 무수정. 서버가 index.html <head> 에 폴리필 <script> 를 끼워 넣어 서빙한다
+// (Electron 의 preload 자리 = 브라우저에선 이 스크립트). 지시서 §1.1 "어댑터 한 겹".
 const RENDERER_DIR = path.join(__dirname, '..', 'out', 'renderer')
+const INDEX_HTML = path.join(RENDERER_DIR, 'index.html')
+const POLYFILL_JS = path.join(__dirname, 'dist', 'web-api.js')
+
+app.get('/__web-api.js', (_req, res) => {
+  if (!fs.existsSync(POLYFILL_JS)) return res.status(404).send('// 폴리필 미빌드: npm run build:server')
+  res.type('application/javascript').send(fs.readFileSync(POLYFILL_JS, 'utf-8'))
+})
+
 if (fs.existsSync(RENDERER_DIR)) {
-  app.use(express.static(RENDERER_DIR))
+  // index.html 은 아래 주입 라우트가 담당 → static 의 자동 index 서빙은 끈다
+  app.use(express.static(RENDERER_DIR, { index: false }))
 }
+
+function sendInjectedIndex(res) {
+  if (!fs.existsSync(INDEX_HTML)) {
+    return res.status(404).send('renderer 빌드 없음 — npm run build 후 다시 시도하세요.')
+  }
+  const html = fs.readFileSync(INDEX_HTML, 'utf-8')
+  const tag = '<script src="/__web-api.js"></script>'
+  const injected = html.includes(tag) ? html : html.replace(/<head([^>]*)>/i, `<head$1>\n    ${tag}`)
+  res.type('html').send(injected)
+}
+
+// SPA 라우팅 — /api 외 모든 GET 은 주입된 index.html
+app.get(/^\/(?!api\/|__web-api\.js).*/, (_req, res) => sendInjectedIndex(res))
 
 const PORT = Number(process.env.PORT) || 8080
 const HOST = process.env.HOST || '127.0.0.1' // 사내망 한정(§1.5) — 외부 노출 금지
