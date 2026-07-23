@@ -35,6 +35,7 @@ function parseArgs(argv) {
     else if (k === '--out') a.out = argv[++i]
     else if (k === '--port') a.port = Number(argv[++i])
     else if (k === '--wait') a.wait = Number(argv[++i])
+    else if (k === '--click') a.click = argv[++i]
     else if (k === '--full') a.full = true
     else console.warn('[capture] 알 수 없는 인자 무시:', k)
   }
@@ -132,7 +133,8 @@ async function main() {
         name: args.name || args.page,
         page: args.page,
         formCode: args.form,
-        full: args.full
+        full: args.full,
+        clickAfter: args.click
       }
     ]
   } else {
@@ -174,6 +176,15 @@ async function main() {
       returnByValue: true
     })
     await sleep(shot.waitMs ?? args.wait) // 렌더/데이터 로드 안정화
+
+    // 네비 후 특정 버튼 클릭(예: '엑셀 뷰' 탭 전환) 후 재대기 — 뷰 상태 캡처용.
+    if (shot.clickAfter) {
+      await cdp.send('Runtime.evaluate', {
+        expression: `(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent && x.textContent.includes(${JSON.stringify(shot.clickAfter)})); if (b) { b.click(); return true } return false })()`,
+        returnByValue: true
+      })
+      await sleep(shot.clickWaitMs ?? 900)
+    }
 
     // 캡처 — DPI 무관. full 이면 뷰포트 밖까지.
     const params = { format: 'png', captureBeyondViewport: !!shot.full }
