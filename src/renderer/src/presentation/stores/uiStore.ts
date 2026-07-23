@@ -31,9 +31,59 @@ export type PageId =
   | 'mes-trace'
   | 'mes-records'
 
+// P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
+export const PAGE_LABELS: Record<PageId, string> = {
+  home: '홈',
+  'team-hub': '팀 허브',
+  'team-detail': '팀 상세',
+  dashboard: '대시보드',
+  'sq-dashboard': 'SQ 대시보드',
+  'sq-assessment': 'SQ 자체평가',
+  'sq-readiness': 'SQ 준비도',
+  'sq-track': 'SQ 심사 트랙',
+  'iatf-dashboard': 'IATF 대시보드',
+  'doc-browse': '문서 작성',
+  parts: '품번 관리',
+  'case-work': '부적합/8D',
+  'process-workbench': '공정 워크벤치',
+  'form-builder': '양식 작성',
+  'document-bom': '문서 BOM',
+  schedule: '일정표',
+  obligations: '정기 의무',
+  ppap: 'PPAP',
+  fmea: 'FMEA',
+  msa: 'MSA',
+  apqp: 'APQP',
+  'form-chain': '양식 연결',
+  'clause-tree': '조항 트리',
+  team: '팀 관리',
+  about: '제품 정보',
+  integrity: '무결성',
+  'mes-trace': 'MES 역추적',
+  'mes-records': 'MES 기록'
+}
+
+// P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).
+// 웹 전환(14) 시 URL 히스토리로 자연 대체되도록 페이지+파라미터 형태로 설계.
+export interface NavSnapshot {
+  page: PageId
+  formCode: string | null
+  processCode: string | null
+  clauseId: string | null
+  team: TeamId | null
+  submissionId: number | null
+}
+
+const NAV_HISTORY_MAX = 20
+
 interface UIState {
   currentPage: PageId
   setPage: (page: PageId) => void
+
+  /** 뒤로가기 히스토리 스택(P11). setPage 시 직전 화면+컨텍스트를 push(상한 20). */
+  history: NavSnapshot[]
+  /** 직전 화면으로 복귀(컨텍스트 복원). 스택 비면 false. */
+  goBack: () => boolean
 
   /** 글자 크기 배율(0.9~1.4). 전체 UI 확대. localStorage 영속. UI P3. */
   fontScale: number
@@ -90,9 +140,40 @@ export function applyFontScale(scale: number): void {
   }
 }
 
-export const useUIStore = create<UIState>((set) => ({
+export const useUIStore = create<UIState>((set, get) => ({
   currentPage: 'home', // 관제탑(팀별 오늘 할 일)이 첫 화면 (포털 1단계, 7/16)
-  setPage: (page) => set({ currentPage: page }),
+  setPage: (page) =>
+    set((s) => {
+      // 같은 화면 재설정은 히스토리를 쌓지 않는다(중복 방지).
+      if (page === s.currentPage) return {}
+      // 떠나는 화면 + 그 컨텍스트를 스냅샷(뒤로가기로 복원). 상한 20.
+      const snap: NavSnapshot = {
+        page: s.currentPage,
+        formCode: s.selectedFormCode,
+        processCode: s.selectedProcessCode,
+        clauseId: s.selectedClauseId,
+        team: s.selectedTeam,
+        submissionId: s.pendingSubmissionId
+      }
+      return { history: [...s.history, snap].slice(-NAV_HISTORY_MAX), currentPage: page }
+    }),
+
+  history: [],
+  goBack: () => {
+    const s = get()
+    if (s.history.length === 0) return false
+    const prev = s.history[s.history.length - 1]
+    set({
+      history: s.history.slice(0, -1),
+      currentPage: prev.page,
+      selectedFormCode: prev.formCode,
+      selectedProcessCode: prev.processCode,
+      selectedClauseId: prev.clauseId,
+      selectedTeam: prev.team,
+      pendingSubmissionId: prev.submissionId
+    })
+    return true
+  },
 
   fontScale: readFontScale(),
   setFontScale: (scale) => {

@@ -1,10 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
-import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History, Table2, CheckCircle2, PanelLeftOpen, ShieldAlert } from 'lucide-react'
+import { Save, ArrowLeft, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History, Table2, CheckCircle2, PanelLeftOpen, ShieldAlert } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { isExampleCopyBlocked } from '@shared/form-validation'
 import { useUIStore, type PageId } from '../../stores/uiStore'
+import { goBackWithGuard } from '../../lib/navBack'
 import { ApprovalBar } from './ApprovalBar'
 import { FormFieldInput } from './FormFieldInput'
 import { FormDocument } from './FormDocument'
@@ -36,6 +37,7 @@ export function FormCanvas({
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const setPage = useUIStore((s) => s.setPage)
+  const hasHistory = useUIStore((s) => s.history.length > 0)
   // 기록 주체 = 활성 사용자(§4). [저장하고 완료] 시 createdBy 로 전달
   const currentName = useActiveUserStore((s) => {
     const u = s.users.find((x) => x.id === s.activeUserId)
@@ -219,6 +221,17 @@ export function FormCanvas({
       <header className="px-6 py-5 border-b border-border">
         <div className="flex items-start justify-between gap-3 mb-2.5">
           <div className="flex items-center gap-2 pt-1">
+            {hasHistory && (
+              <button
+                type="button"
+                onClick={goBackWithGuard}
+                title="뒤로 (Alt+←)"
+                className="flex items-center gap-1 -ml-1 pr-2 py-1 rounded-md text-[12px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                뒤로
+              </button>
+            )}
             <span className="text-[11px] font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded tracking-tight">
               {currentForm.code}
             </span>

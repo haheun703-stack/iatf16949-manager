@@ -53,6 +53,10 @@ interface FormState {
   mergeValues: (partial: Record<string, unknown>) => void
   resetValues: (initial?: Record<string, unknown>) => void
 
+  /** 사용자가 직접 입력한 뒤 아직 저장하지 않았는가(P11 뒤로가기 confirm용).
+   *  setValue(사람 입력)=true, mergeValues(auto 주입·틀 가져오기)는 건드리지 않음. 저장·로드 시 false. */
+  dirty: boolean
+
   // P5 — 좌측 정답 패널: 모범 예시(form_examples). 양식 로드 시 함께 로드
   examples: FormExampleDto[]
   /** [틀 가져오기] — frame 필드만·빈 칸만 예시값 주입. fact 필드는 절대 건드리지 않음(원칙2) */
@@ -132,6 +136,7 @@ export const useFormStore = create<FormState>((set, get) => ({
       currentForm: res,
       currentFormLoading: false,
       values: {},
+      dirty: false,
       serialPreview: null,
       currentSubmissionId: null,
       aiError: null,
@@ -180,10 +185,11 @@ export const useFormStore = create<FormState>((set, get) => ({
   },
 
   values: {},
+  dirty: false,
   serialPreview: null,
-  setValue: (key, value) => set((s) => ({ values: { ...s.values, [key]: value } })),
+  setValue: (key, value) => set((s) => ({ values: { ...s.values, [key]: value }, dirty: true })),
   mergeValues: (partial) => set((s) => ({ values: { ...s.values, ...partial } })),
-  resetValues: (initial = {}) => set({ values: initial }),
+  resetValues: (initial = {}) => set({ values: initial, dirty: false }),
 
   examples: [],
   importFrame: () => {
@@ -222,6 +228,7 @@ export const useFormStore = create<FormState>((set, get) => ({
     }
     set({
       values: sub.values,
+      dirty: false,
       currentSubmissionId: sub.id,
       serialPreview: sub.serialNo ?? null
     })
@@ -243,6 +250,7 @@ export const useFormStore = create<FormState>((set, get) => ({
         values,
         createdBy: createdBy ?? undefined
       })
+      set({ dirty: false })
       return currentSubmissionId
     }
 
@@ -253,7 +261,7 @@ export const useFormStore = create<FormState>((set, get) => ({
       serialNo: serialPreview ?? undefined,
       createdBy: createdBy ?? undefined
     })) as { id: number }
-    set({ currentSubmissionId: id })
+    set({ currentSubmissionId: id, dirty: false })
     return id
   },
 
