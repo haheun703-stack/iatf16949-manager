@@ -188,7 +188,10 @@ async function main() {
   console.log(`\n[capture] 완료 — ${saved.length}장 저장: ${outDir}`)
 }
 
-main().catch((err) => {
-  console.error('[capture] 실패:', err.message)
-  process.exit(1)
-})
+// 성공/실패 모두 명시적 종료 — 내장 WebSocket close 후에도 이벤트 루프가 남아 매달리는 것 방지.
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('[capture] 실패:', err.message)
+    process.exit(1)
+  })

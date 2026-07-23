@@ -416,8 +416,6 @@ export function registerFormHandlers(): void {
 
       const today = new Date().toISOString().split('T')[0]
       const year = new Date().getFullYear()
-      // 로그인 도입 전 stub: 회사정보 defaultAuthor. 도입 후 로그인 사용자명으로 대체.
-      const author = getProfileValue(db, 'defaultAuthor')
 
       const values: Record<string, string> = {}
       let serialPreview: string | null = null
@@ -432,11 +430,12 @@ export function registerFormHandlers(): void {
             values[f.field_key] = s
             serialPreview = s
           }
-        } else if (f.type === 'auto' && /사용자/.test(ph)) {
-          if (author) values[f.field_key] = author
         } else if (f.type === 'date' && /(작성일|발행일)/.test(f.label)) {
           values[f.field_key] = today
         }
+        // 작성자 auto(placeholder '로그인 사용자')는 여기서 채우지 않는다 —
+        // 활성 사용자(§4 기록 주체)를 클라이언트(formStore)에서 주입. 미선택이면 빈값 유지
+        // (회사 defaultAuthor 폴백 금지: 서류상 작성자와 시스템 기록이 어긋나는 왜곡 방지).
       }
 
       return { values, serialPreview }

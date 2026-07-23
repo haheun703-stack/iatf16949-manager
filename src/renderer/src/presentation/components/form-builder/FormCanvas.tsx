@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Save, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History, Table2, CheckCircle2, PanelLeftOpen, ShieldAlert } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
@@ -17,6 +17,11 @@ import type { FormFieldDto } from '@shared/ipc-types'
 
 export type ViewMode = 'input' | 'excel' | 'document'
 
+// 작성자 auto 자동채움 필드 판별(0097): type='auto' + placeholder '로그인 사용자'.
+// 발행번호(자동부여)·날짜 등 다른 auto 는 걸리지 않음. meta default 판별과 동일 기준.
+const isAuthorAuto = (f: FormFieldDto): boolean =>
+  f.type === 'auto' && /사용자/.test(f.placeholder ?? '')
+
 export function FormCanvas({
   onUnfoldAnswer,
   viewMode: viewModeProp,
@@ -27,7 +32,7 @@ export function FormCanvas({
   viewMode?: ViewMode
   onViewModeChange?: (m: ViewMode) => void
 } = {}): JSX.Element {
-  const { currentForm, currentFormLoading, saveDraft, values, examples, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx } =
+  const { currentForm, currentFormLoading, saveDraft, values, examples, aiError, copilotOpen, toggleCopilot, scoreForm, scoreLoading, loadFormDefinition, mergeValues, exportOfficialXlsx, exportingXlsx, currentSubmissionId } =
     useFormStore()
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const setPage = useUIStore((s) => s.setPage)
@@ -48,6 +53,18 @@ export function FormCanvas({
   const [revisionsOpen, setRevisionsOpen] = useState(false)
   const [xlsxMsg, setXlsxMsg] = useState<string | null>(null)
   const revisionCount = useFormStore((s) => s.revisions.length)
+
+  // 작성자 auto 자동채움(0097·§4): 새 작성 폼의 작성자 칸을 활성 사용자로 채운다.
+  // 활성 사용자 미선택이면 빈값 유지 — 회사 defaultAuthor 폴백 금지(가짜 이름 방지, 저장 시 안내).
+  // 사용자 전환 시(currentName 변경) 자동 갱신. 저장본 이어쓰기(submissionId≠null)는 원작성자 보존.
+  useEffect(() => {
+    if (!currentForm || currentSubmissionId != null) return
+    const authorFields = currentForm.fields.filter(isAuthorAuto)
+    if (authorFields.length === 0) return
+    const patch: Record<string, string> = {}
+    for (const f of authorFields) patch[f.fieldKey] = currentName ?? ''
+    mergeValues(patch)
+  }, [currentForm, currentName, currentSubmissionId, mergeValues])
 
   const handleExportXlsx = async (): Promise<void> => {
     setXlsxMsg(null)
@@ -105,6 +122,11 @@ export function FormCanvas({
   // P5 저장 검증 — ①필수 fact 공란 ②text fact 예시값 완전일치(date 제외: 오늘 날짜 우연일치 오탐 방지, 코워크 ①)
   const validateFactValues = (): string | null => {
     if (!currentForm) return null
+    // 작성자 auto 필드가 있는데 활성 사용자 미선택 → 빈 작성자로 저장 차단(§4·2026-07-23 방침).
+    // "빈칸이 가짜 이름보다 낫다" — 사람에게 사용자 선택을 요구한다.
+    if (!currentName && currentForm.fields.some(isAuthorAuto)) {
+      return '작성자를 기록하려면 먼저 우측 상단에서 사용자를 선택하세요. (작성자 칸을 빈 채로 저장할 수 없습니다)'
+    }
     // auto 타입(작성자 등 시스템 자동채움)은 입력 불가라 fact 여도 검증 제외(M1 — 저장불가 폼 방지)
     const facts = currentForm.fields.filter((f) => f.fieldClass === 'fact' && f.type !== 'auto')
     for (const f of facts) {
