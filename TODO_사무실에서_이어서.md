@@ -1,4 +1,29 @@
-# TODO — 이어서 작업 (갱신: 2026-07-23 오후)
+# TODO — 이어서 작업 (갱신: 2026-07-23 저녁)
+
+## 🟢 7/23 (목) 저녁 — 재설치(봇 수행) + 웹전환 W1 착수 (커밋 3, HEAD `b2356ba`)
+
+**커밋**: 71f79cc(reinstall.ps1) · b2356ba(W1 서버 골격). +docs.
+
+- **사일런트 재설치(봇 수행)**: 실행중 설치판 종료 → Setup /S(13:58판) 교체 → 마이그 0096~0099 번들·
+  라이브 DB(0099·defaultAuthor빈값·금형의무) 검증 → 정상 기동. **확인② 경미-통과**(사장님 판정,
+  제목 온전·격자선=원본특성·셀맵불요) → **설치판 검수 공식 종료**. 바탕화면 바로가기 유효화(OneDrive
+  리다이렉트 경로, 중복정리 → 'IATF16949 QMS.lnk' 단일). `scripts/reinstall.ps1`(재설치 자동화+바로가기).
+- **웹전환 W1 착수**(사장님 "W1 시작해"). **§0.5 ABI 관문 해소 실증**: better-sqlite3 native=Electron
+  ABI **125**, 시스템 node(127) `ERR_DLOPEN_FAILED` → **`ELECTRON_RUN_AS_NODE=1`+electron.exe 로
+  구동하면 DB 열기 OK**(forms 301). 지시서 §0.5 난관1 채택 추기.
+  - **W1a ✅ 서버 골격 관통 실증**: `server/index.cjs`(express) = 정적서빙+`POST /api/{channel}`
+    디스패처+DB(라이브 readonly, `IATF_DATA_DIR` env). 구동=`ELECTRON_RUN_AS_NODE=1 electron.exe
+    server/index.cjs`. **`/api/health`→forms301·정기의무73·users17**(라이브 DB를 HTTP 서빙 성공).
+  - **▶ W1b 남음**(홈 브라우저 표출 = W1 완료조건): ①홈 핸들러 등록(team:todayBoard+computeSqReadiness·
+    kpi:home·company:profileGet·obligation:complete·appUser:list) — **재사용 방식 결정 필요**(electron
+    shim 으로 main 핸들러 재사용 vs 로직 복사) ②`out/renderer` 정적서빙 ③**window.api 폴리필**
+    (invoke→fetch, index.html 주입, renderer 무수정) ④크롬에서 홈 표출 캡처.
+  - ⚠️ 서버는 electron-node 구동이라 `electron.exe` 프로세스 — 정리 시 설치판('IATF16949 품질경영시스템')과
+    구분. express 는 deps 추가됨.
+
+---
+
+## 🟢 7/23 (목) 오후 — 사장님 재설치 실사용 피드백 5건 (커밋 5, HEAD `0af2665`)
 
 ## 🟢 7/23 (목) 오후 — 사장님 재설치 실사용 피드백 5건 (커밋 5, HEAD `0af2665`)
 
