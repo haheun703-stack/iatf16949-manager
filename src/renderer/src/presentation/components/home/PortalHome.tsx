@@ -934,7 +934,7 @@ function TaskRow({
           title={teamDot.label}
         />
       )}
-      <span className="flex-1 min-w-0 break-keep leading-snug" title={`${task.title} · ${task.cadence} 주기`}>
+      <span className="flex-1 min-w-0 break-keep leading-snug line-clamp-2" title={`${task.title} · ${task.cadence} 주기`}>
         {task.title}
         {task.status === 'overdue' && task.daysLeft != null && (
           <em className="not-italic text-destructive font-bold text-[13.5px]"> 연체 {Math.abs(task.daysLeft)}일</em>

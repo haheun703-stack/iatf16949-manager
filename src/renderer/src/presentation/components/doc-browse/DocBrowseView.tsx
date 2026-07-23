@@ -147,12 +147,12 @@ function FormBrowse({ onRegs }: { onRegs: () => void }): JSX.Element {
       {/* ② 검색 + 필터 */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[220px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="양식명·코드 검색"
-            className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-card text-[13.5px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="w-full h-10 pl-10 pr-3 rounded-lg border border-border bg-card text-[13.5px] focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
         </div>
         <select value={team} onChange={(e) => setTeam(e.target.value as TeamId | 'all')} className="h-10 px-3 rounded-lg border border-border bg-card text-[13px] font-medium">
@@ -186,6 +186,17 @@ function FormBrowse({ onRegs }: { onRegs: () => void }): JSX.Element {
         </div>
       ) : (
         <div className="rounded-xl border border-border overflow-hidden bg-card">
+          {/* 칼럼 헤더 — 우측 고정 칼럼 정렬(P10-fix ①) */}
+          <div className="flex items-center gap-3 px-4 py-1.5 bg-muted/40 border-b border-border text-[10.5px] font-bold text-muted-foreground uppercase tracking-wide">
+            <span className="w-[72px] shrink-0">책임팀</span>
+            <span className="flex-1 min-w-0">양식명 · 코드 · 규정</span>
+            <span className="w-[54px] text-center shrink-0">정기의무</span>
+            <span className="w-[46px] text-center shrink-0">예시</span>
+            <span className="w-[52px] text-right shrink-0">작성본</span>
+            <span className="w-[84px] text-right shrink-0 hidden md:block">최근작성</span>
+            <span className="w-[68px] text-center shrink-0">상태</span>
+            <span className="w-4 shrink-0" />
+          </div>
           {view.map((f, i) => {
             const tid = teamOf(f)
             const th = tid ? teamTheme(tid) : null
@@ -198,47 +209,63 @@ function FormBrowse({ onRegs }: { onRegs: () => void }): JSX.Element {
                 onClick={() => write(f)}
                 disabled={!ok}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
+                  'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
                   i > 0 && 'border-t border-border',
                   ok ? 'hover:bg-muted/60 cursor-pointer' : 'cursor-default opacity-70'
                 )}
               >
-                {/* 팀색 뱃지 */}
+                {/* 팀색 뱃지 — 내 팀은 아웃라인(별도 '내 팀' 뱃지 폐지, ④) */}
                 <span
-                  className="shrink-0 text-[10.5px] font-bold px-2 py-1 rounded-md w-[76px] text-center truncate"
-                  style={th ? { backgroundColor: th.tintBg, color: th.darkText } : { backgroundColor: 'var(--color-muted)', color: 'var(--color-muted-foreground)' }}
-                  title={th?.label ?? '미지정'}
+                  className="shrink-0 text-[10.5px] font-bold px-2 py-1 rounded-md w-[72px] text-center truncate"
+                  style={
+                    th
+                      ? { backgroundColor: th.tintBg, color: th.darkText, ...(mine ? { outline: `2px solid ${th.border}`, outlineOffset: '-2px' } : {}) }
+                      : { backgroundColor: 'var(--color-muted)', color: 'var(--color-muted-foreground)' }
+                  }
+                  title={(th?.label ?? '미지정') + (mine ? ' · 내 팀' : '')}
                 >
                   {th?.label ?? '미지정'}
                 </span>
-                {/* 양식명 + 부가설명(위계) */}
+                {/* 양식명(굵게) + 코드·규정만(부가설명 슬림, ①) */}
                 <span className="flex-1 min-w-0">
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-[14px] font-bold truncate">{f.name}</span>
-                    {mine && <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">내 팀</span>}
-                  </span>
-                  <span className="flex items-center gap-1.5 mt-0.5 text-[11.5px] text-muted-foreground">
-                    <span className="font-mono">{f.code}</span>
-                    <span>· 규정 {f.regCode}</span>
-                    {f.obligationLinked && <span className="text-primary font-semibold">· 정기 의무</span>}
-                    {f.hasExample && <span className="text-amber-600 font-semibold">· 예시 있음</span>}
+                  <span className="block text-[13.5px] font-bold truncate">{f.name}</span>
+                  <span className="block text-[11px] text-muted-foreground truncate">
+                    <span className="font-mono">{f.code}</span> · 규정 {f.regCode}
                   </span>
                 </span>
-                {/* 우측 상태 */}
-                <span className="shrink-0 flex items-center gap-3 text-[11.5px]">
-                  {f.draftCount > 0 && <span className="text-muted-foreground tabular-nums">작성본 {f.draftCount}</span>}
-                  <span className="text-muted-foreground tabular-nums hidden md:inline">{fmtDate(f.lastWrittenAt)}</span>
+                {/* 우측 고정 칼럼 그리드 — 값 없으면 '—'로 칸 유지 */}
+                <span className="w-[54px] text-center shrink-0">
+                  {f.obligationLinked ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">의무</span>
+                  ) : (
+                    <span className="text-muted-foreground/40">—</span>
+                  )}
+                </span>
+                <span className="w-[46px] text-center shrink-0">
+                  {f.hasExample ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">예시</span>
+                  ) : (
+                    <span className="text-muted-foreground/40">—</span>
+                  )}
+                </span>
+                <span className="w-[52px] text-right shrink-0 text-[11.5px] tabular-nums text-muted-foreground">
+                  {f.draftCount > 0 ? `${f.draftCount}건` : <span className="text-muted-foreground/40">—</span>}
+                </span>
+                <span className="w-[84px] text-right shrink-0 text-[11.5px] tabular-nums text-muted-foreground hidden md:block">
+                  {f.lastWrittenAt ? fmtDate(f.lastWrittenAt) : <span className="text-muted-foreground/40">—</span>}
+                </span>
+                <span className="w-[68px] text-center shrink-0">
                   {ok ? (
-                    <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
-                      <CircleCheck className="w-4 h-4" /> 작성
+                    <span className="inline-flex items-center gap-1 font-bold text-emerald-700 text-[11.5px]">
+                      <CircleCheck className="w-3.5 h-3.5" /> 작성
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 font-semibold" style={{ color: ALERT_RED.border }}>
-                      <CircleAlert className="w-4 h-4" /> 등록만
+                    <span className="inline-flex items-center gap-1 font-semibold text-[11.5px]" style={{ color: ALERT_RED.border }}>
+                      <CircleAlert className="w-3.5 h-3.5" /> 등록만
                     </span>
                   )}
-                  <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
                 </span>
+                <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground/40" />
               </button>
             )
           })}
@@ -269,14 +296,14 @@ function StatTile({
       type="button"
       onClick={onClick}
       className={cn(
-        'text-left rounded-xl border px-4 py-3 transition-all',
+        'text-left rounded-lg border px-3.5 py-2 transition-all flex items-center justify-between gap-2',
         active ? 'border-primary ring-1 ring-primary/30 bg-primary/5' : 'border-border bg-card hover:border-primary/40'
       )}
     >
       <span className={cn('inline-flex items-center gap-1.5 text-[11.5px] font-semibold', toneCls[tone])}>
         {icon} {label}
       </span>
-      <div className="text-2xl font-bold tabular-nums mt-0.5">{value}</div>
+      <div className="text-xl font-bold tabular-nums leading-none">{value}</div>
     </button>
   )
 }
