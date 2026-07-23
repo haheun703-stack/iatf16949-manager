@@ -1,4 +1,33 @@
-# TODO — 이어서 작업 (갱신: 2026-07-23 저녁)
+# TODO — 이어서 작업 (갱신: 2026-07-24 오전)
+
+## 🟢 7/24 (금) 오전 — **W1 완료: 홈이 브라우저에서 뜬다** (커밋 `48a9d99`)
+
+**W1 완료조건 달성** — 크롬에서 관제탑 홈이 설치판과 동일하게 표출(라이브 데이터: D-160·MES "8일 지남"
+·팀 스트립·오늘 할 일 보드·SQ 배지·사용자 모달 17명). typecheck 통과.
+
+**핵심 = "재작성이 아니라 이사"(§1)를 코드로 실현 — 렌더러도 main 핸들러도 소스 무수정.**
+- `server/electron-shim.cjs`: `app.getPath`→env(`IATF_DATA_DIR`) · `ipcMain.handle`→**라우트 맵** ·
+  dialog/shell/BrowserWindow 안전스텁. §0.5 대조(홈 체인의 electron 의존=ipcMain 뿐)로 성립.
+- `server/bridge.ts`: `registerAllIpcHandlers()` → **채널 139개 전량 등록** = **W2 백엔드 사실상 개통**.
+  esbuild 번들(`--alias:electron=shim`, better-sqlite3 external).
+- `server/polyfill/web-api.ts`: **window.api**(invoke→fetch·channels·setZoomFactor) = preload 자리 대체.
+  서버가 `index.html <head>`에 `<script src="/__web-api.js">` **주입 서빙**(정적 산출물 무수정).
+- `server/index.cjs`: `POST /api/{channel}` 디스패처 + 정적서빙(SPA fallback) + 폴리필 라우트. 사내망 한정(127.0.0.1).
+- `npm run build:server` / `npm run start:server`(scripts/start-server.mjs = **electron-node 구동**,
+  better-sqlite3 ABI 회피). capture.mjs 는 `__cap` 없으면 네비 생략(웹 캡처 지원).
+
+**실증**: `/api/health`(forms301·의무73·users17) · `team:todayBoard` 200(date·totals·trend·teams·unassigned)
+· `appUser:list` 17명 · `kpi:home` 35지표 · 크롬 홈 캡처(`w1-browser-home.png`).
+
+**▶ W2 남은 것**(핸들러는 이미 139개 등록됨 — 남은 건 비-DB 경로): ①**쓰기 경로 검증**(obligation:complete
+등 — index.cjs health용 db 는 readonly 지만 bridge 의 connection 은 R/W. 실제 쓰기 E2E 확인 필요)
+②**파일 업/다운로드**(dialog 스텁 자리: 공식 엑셀 출력→스트림 다운로드, ISIR/사진 업로드→multipart,
+COM-PDF 는 Windows 서버 한정) ③전 화면 브라우저 작동 확인 ④**조작 차단 E2E-B 브라우저 재실증**
+(예시복제 차단은 이미 서버측, **fact 공란검사는 서버 이식 필요** — §0.5 보정3) ⑤W3=로그인·권한.
+
+---
+
+## 🟢 7/23 (목) 저녁 — 재설치(봇 수행) + 웹전환 W1 착수 (커밋 3, HEAD `b2356ba`)
 
 ## 🟢 7/23 (목) 저녁 — 재설치(봇 수행) + 웹전환 W1 착수 (커밋 3, HEAD `b2356ba`)
 
