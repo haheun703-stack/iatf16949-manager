@@ -272,28 +272,33 @@ function SheetCell({
 
   if (edit && onChange) {
     const isArea = edit.type === 'textarea'
+    // auto(작성자 등 시스템 자동채움)는 엑셀 뷰에서도 편집 불가 — 입력 뷰의 disabled 렌더와 일관.
+    // 값(활성 사용자)은 표시하되 회색 배경으로 "자동칸"임을 드러낸다.
+    const isAuto = edit.type === 'auto'
     return (
       <td
         rowSpan={cell?.rowspan ?? 1}
         colSpan={cell?.colspan ?? 1}
-        style={{ ...style, backgroundColor: '#FFFBEB', padding: 0 }}
-        title={`${edit.label} (${edit.cell})`}
+        style={{ ...style, backgroundColor: isAuto ? '#F4F4F5' : '#FFFBEB', padding: 0 }}
+        title={`${edit.label} (${edit.cell})${isAuto ? ' · 자동' : ''}`}
       >
         {isArea ? (
           <textarea
             value={value}
+            disabled={isAuto}
             onChange={(e) => onChange(e.target.value)}
             placeholder={edit.label}
-            className="w-full h-full min-h-[100%] resize-none bg-transparent px-1.5 py-1 text-[13px] leading-snug focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-400 placeholder:text-amber-400/70"
+            className="w-full h-full min-h-[100%] resize-none bg-transparent px-1.5 py-1 text-[13px] leading-snug focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-400 placeholder:text-amber-400/70 disabled:text-muted-foreground"
             style={{ textAlign: cell?.align ?? 'left' }}
           />
         ) : (
           <input
             type={edit.type === 'date' ? 'date' : edit.type === 'number' ? 'number' : 'text'}
             value={value}
+            disabled={isAuto}
             onChange={(e) => onChange(e.target.value)}
             placeholder={edit.label}
-            className="w-full h-full bg-transparent px-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-400 placeholder:text-amber-400/70"
+            className="w-full h-full bg-transparent px-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-400 placeholder:text-amber-400/70 disabled:text-muted-foreground"
             style={{ textAlign: cell?.align ?? 'center' }}
           />
         )}

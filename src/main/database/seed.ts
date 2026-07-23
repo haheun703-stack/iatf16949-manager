@@ -152,8 +152,9 @@ function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {
     factoryName: '2공장 AM사업부',
     revisionNumber: 'REV.8',
     revisionDate: new Date().toISOString().split('T')[0],
-    // 양식 작성자 기본값(로그인 도입 전 stub). 로그인 후 사용자명으로 대체.
-    defaultAuthor: '홍길동',
+    // 양식 작성자 기본값 = 빈값. 작성자는 활성 사용자(§4)로 자동채움하고, 미선택 시 빈칸 유지.
+    // 가짜 이름(예: '홍길동') 폴백 금지(2026-07-23 방침) — export 폴백도 created_by 없으면 빈값이 정답.
+    defaultAuthor: '',
     // 정기 인증심사일 데모 기본값 — Sidebar 에서 실제 일정으로 변경(useDday·브리핑 기준일)
     auditDate: '2026-12-31'
   }
