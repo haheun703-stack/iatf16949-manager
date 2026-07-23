@@ -24,3 +24,6 @@ _demo_output/0026_remap_process_forms.sql
 
 # Python 캐시
 scripts/__pycache__/
+
+# CDP 캡처 산출물(scripts/capture.mjs 기본 --out) — 검수 이미지는 재생성 가능, 커밋 안 함
+captures/

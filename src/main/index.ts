@@ -11,6 +11,15 @@ import { reindexKb } from './ai/kb'
 // 설치판·dev 모두 같은 데이터 폴더를 보도록 최우선으로 고정한다.
 app.setPath('userData', join(app.getPath('appData'), 'iatf16949-manager'))
 
+// CDP 캡처 파이프라인(scripts/capture.mjs)용 원격 디버깅 포트 — dev 전용.
+// Page.captureScreenshot 은 DPI 무관·가려진 창도 렌더러 픽셀 그대로 캡처(PrintWindow 불필요).
+// ⚠️ 반드시 dev(!isPackaged)에서만: 설치판에서 열면 임의 프로세스가 렌더러를 제어 가능해 보안 위험.
+// 127.0.0.1 바인딩(외부 노출 X). app ready 전에 appendSwitch 해야 적용된다.
+if (!app.isPackaged) {
+  app.commandLine.appendSwitch('remote-debugging-port', '9222')
+  app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1')
+}
+
 let mainWindow: BrowserWindow | null = null
 
 // 단일 인스턴스 잠금(설치판만): 아이콘 더블클릭 2번 등으로 같은 DB(userData)를
