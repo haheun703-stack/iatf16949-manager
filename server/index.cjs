@@ -51,12 +51,40 @@ app.get('/api/__channels', (_req, res) => {
   res.json({ count: routes.size, channels: [...routes.keys()].sort() })
 })
 
+// ── 채널별 필수 payload 가드 (W2 2착 2순위) ──
+// 프레임워크 아님 — DTO(shared/ipc-types)가 `{ id: number }` 로 못박은 채널만 넣는다(추측 금지,
+// 오차단 방지). W2 1착 스모크에서 빈 payload 로 삭제/수정/조회가 통과하던 것을 400 으로 거부한다.
+// 권한(누가 부를 수 있나)은 여전히 W3 범위 — 여기서는 "형태"만 본다.
+const REQUIRED_FIELDS = {
+  'appUser:delete': ['id'],
+  'case:distribute': ['id'],
+  'case:get': ['id'],
+  'case:update': ['id'],
+  'fmea:rowDelete': ['id'],
+  'form:revisionGet': ['id'],
+  'form:submissionDelete': ['id'],
+  'form:submissionGet': ['id'],
+  'msa:delete': ['id'],
+  'obligation:complete': ['id'],
+  'obligation:delete': ['id'],
+  'schedule:delete': ['id']
+}
+
 // ── POST /api/{channel} 디스패처 ──
 // IPC 핸들러 시그니처 (event, payload) 를 그대로 호출한다(event 미사용 — §0.5 대조로 확인).
 app.post('/api/:channel', (req, res) => {
   const ch = req.params.channel
   const fn = routes.get(ch)
   if (!fn) return res.status(404).json({ error: `미구현 채널: ${ch}` })
+
+  const required = REQUIRED_FIELDS[ch]
+  if (required) {
+    const body = req.body || {}
+    const missing = required.filter((k) => body[k] === undefined || body[k] === null || body[k] === '')
+    if (missing.length > 0) {
+      return res.status(400).json({ error: `필수 값 누락: ${missing.join(', ')} — 채널 ${ch}` })
+    }
+  }
   try {
     Promise.resolve(fn(null, req.body))
       .then((result) => res.json(result === undefined ? null : result))

@@ -89,6 +89,36 @@ export function registerFormHandlers(): void {
     return null
   }
 
+  // W2 2착(1순위): fact 공란검사 **서버 이식** — 그동안 FormCanvas.validateFactValues(클라)에만
+  // 있던 최종 관문을 데이터 계층으로 내린다. 웹(HTTP)이 열리면 클라 검증은 우회 가능하므로
+  // 서버가 최종 관문이어야 한다(지시서 §1.3).
+  //
+  // ⚠️ 적용 시점 = "완료 저장"에 한정한다. 판별 신호는 **createdBy 동반 여부** —
+  //   FormCanvas 의 [저장하고 완료]만 `saveDraft(currentName)` 으로 createdBy 를 넘기고(§4 기록 주체),
+  //   초안 저장·엑셀 출력용 자동저장은 createdBy 없이 부른다. 렌더러 무수정 원칙(지시서 §1.1) 하에서
+  //   완료 의도를 구분할 수 있는 유일한 신호다.
+  // ⚠️ 알려진 한계: createdBy 를 빼고 호출하면 이 검사를 우회할 수 있다. 다만 그렇게 저장된 기록은
+  //   created_by 가 비어 "작성자 불명"으로 남아 증거 가치가 없다. W3(로그인)에서 created_by 를
+  //   세션 사용자로 강제하면 이 구멍은 닫힌다.
+  const detectEmptyFact = (formCode: string, values: Record<string, unknown>): string | null => {
+    let rows: Array<{ fk: string; lb: string | null }>
+    try {
+      rows = db
+        .prepare(
+          `SELECT field_key AS fk, label AS lb FROM form_fields
+           WHERE form_code = ? AND field_class = 'fact' AND type <> 'auto'`
+        )
+        .all(formCode) as typeof rows
+    } catch {
+      return null // form_fields 미존재(구버전 DB) — 검증 스킵
+    }
+    for (const r of rows) {
+      const v = values[r.fk]
+      if (v == null || String(v).trim() === '') return r.lb ?? r.fk
+    }
+    return null
+  }
+
   // ──── Form list ────
   ipcMain.handle(IPC_CHANNELS.FORM_LIST, (): FormListItemDto[] => {
     const rows = db.prepare(`
@@ -263,6 +293,13 @@ export function registerFormHandlers(): void {
       if (copied) {
         throw new Error(`예시값을 그대로 저장할 수 없습니다: '${copied}' — 실제 값을 입력하세요(기록 조작 방지).`)
       }
+      // 완료 저장(createdBy 동반)에는 fact 공란도 서버에서 막는다(W2 2착 — 서버가 최종 관문)
+      if (data.createdBy) {
+        const empty = detectEmptyFact(data.formCode, data.values || {})
+        if (empty) {
+          throw new Error(`'${empty}' 칸(오늘의 사실)이 비어 있습니다 — 실제 값을 입력하세요.`)
+        }
+      }
       const now = new Date().toISOString()
       const result = db
         .prepare(
@@ -300,6 +337,13 @@ export function registerFormHandlers(): void {
         const copied = detectExampleCopy(sub.form_code, data.values || {})
         if (copied) {
           throw new Error(`예시값을 그대로 저장할 수 없습니다: '${copied}' — 실제 값을 입력하세요(기록 조작 방지).`)
+        }
+        // 완료 저장(createdBy 동반)에는 fact 공란도 서버에서 막는다(W2 2착 — 서버가 최종 관문)
+        if (data.createdBy) {
+          const empty = detectEmptyFact(sub.form_code, data.values || {})
+          if (empty) {
+            throw new Error(`'${empty}' 칸(오늘의 사실)이 비어 있습니다 — 실제 값을 입력하세요.`)
+          }
         }
       }
       const now = new Date().toISOString()
