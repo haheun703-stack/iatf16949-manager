@@ -2065,6 +2065,18 @@ export interface IpcChannelMap {
     request: void
     response: ClauseCoverageDto[]
   }
+  [IPC_CHANNELS.SEMIMES_SUMMARY]: {
+    request: void
+    response: SemimesSummaryDto
+  }
+  [IPC_CHANNELS.SEMIMES_TREE]: {
+    request: void
+    response: SemimesTreeDto
+  }
+  [IPC_CHANNELS.SEMIMES_ITEM]: {
+    request: { itemCode: string }
+    response: SemimesItemDetailDto | null
+  }
   [IPC_CHANNELS.APQP_BOARD]: {
     request: void
     response: ApqpBoardDto
@@ -2710,4 +2722,65 @@ export interface BomDocDetail extends BomDocListItem {
 export interface BomFormUsage {
   formNoNorm: string
   usedBy: { docNoNorm: string; docNoRaw: string; name: string }[]
+}
+
+// ── 반(半)-MES 코어 (15번 M0 — 품번 트리·마스터 요약) ─────────────────
+
+export interface SemimesSummaryDto {
+  items: number
+  itemsByType: { type: string; count: number }[]
+  edgesActive: number
+  edgesTotal: number
+  routingSteps: number
+  processes: number
+  partners: number
+  defectTypes: number
+  lastImport: {
+    runAt: string
+    source: string
+    fileName: string | null
+    added: number
+    updated: number
+    deactivated: number
+    unchanged: number
+    itemsNew: number
+  } | null
+}
+
+export interface SemimesTreeEdgeDto {
+  parent: string
+  child: string
+  qty: number
+  active: number
+  source: string | null
+}
+
+export interface SemimesTreeDto {
+  roots: string[]
+  edges: SemimesTreeEdgeDto[]
+  /** item_code → [item_type, source] (트리 렌더 뱃지용 압축 맵) */
+  items: Record<string, [string, string]>
+}
+
+export interface SemimesRoutingStepDto {
+  seq: number
+  procCode: string
+  procName: string | null
+  outYn: number
+}
+
+export interface SemimesItemDetailDto {
+  itemCode: string
+  itemName: string | null
+  itemType: string
+  source: string | null
+  active: number
+  traceGbn: number
+  inlotuse: number
+  outYn: number
+  custPno1: string | null
+  carType: string | null
+  routing: SemimesRoutingStepDto[]
+  children: { code: string; qty: number; active: number }[]
+  usedBy: { code: string; qty: number; active: number }[]
 }

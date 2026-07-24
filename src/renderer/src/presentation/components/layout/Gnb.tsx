@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import {
   LayoutDashboard, AlertTriangle, CalendarDays, CalendarClock, Route, Package, ClipboardCheck,
   GitBranch, Ruler, ShieldCheck, ListChecks, FolderTree, FileEdit, Factory, Home, Users,
-  ChevronDown, Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList, Network, Activity
+  ChevronDown, Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList, Network, Activity,
+  ListTree
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -68,6 +69,8 @@ const NAV_GROUPS: NavGroup[] = [
       // ── APQP · Core Tool ──
       { section: 'APQP · Core Tool', id: 'apqp', label: 'APQP 여정', icon: Route, desc: '5단계 43산출물 순차 진행' },
       { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
+      // 반-MES 기반층 1호 화면 (15번 M0) — 제조 기준정보: BOM 트리·라우팅·공정
+      { id: 'item-tree', label: '품번 트리 (반-MES)', icon: ListTree, desc: 'BOM·라우팅·공정 — 제조 기준정보' },
       { id: 'ppap', label: 'PPAP 승인', icon: ClipboardCheck, desc: '양산부품승인 18요구사항' },
       // 2026-07-07 회의: 고객사(삼보 외 1차사) 신판 미도입 → 제출 표준 = 구판 J1101-01(0058 복원).
       { id: 'fmea', label: '공정 FMEA (신판)', icon: GitBranch, desc: '전환 대비 — 제출은 구판 양식' },

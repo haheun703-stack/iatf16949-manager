@@ -192,6 +192,11 @@ export const IPC_CHANNELS = {
   MES_RECORDS_COVERAGE: 'mesRecords:coverage',
   MES_RECORDS_DETAIL: 'mesRecords:detail',
 
+  // 반(半)-MES 코어 (15번 M0 — 마스터 6종·BOM 트리·라우팅. 0101 스키마)
+  SEMIMES_SUMMARY: 'semimes:summary',
+  SEMIMES_TREE: 'semimes:tree',
+  SEMIMES_ITEM: 'semimes:item',
+
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',
   PART_DETAIL: 'parts:detail',

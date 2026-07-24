@@ -26,6 +26,7 @@ import { AboutView } from '../about/AboutView'
 import { IntegrityView } from '../integrity/IntegrityView'
 import { MesTraceView } from '../mestrace/MesTraceView'
 import { MesRecordsView } from '../mesrecords/MesRecordsView'
+import { ItemTreeView } from '../semimes/ItemTreeView'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
@@ -84,6 +85,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'integrity' && <IntegrityView />}
             {currentPage === 'mes-trace' && <MesTraceView />}
             {currentPage === 'mes-records' && <MesRecordsView />}
+            {currentPage === 'item-tree' && <ItemTreeView />}
           </ErrorBoundary>
           </div>
         </main>
