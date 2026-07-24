@@ -46,6 +46,11 @@ try {
   console.error('[server] bridge 로드 실패 — /api 는 404 로 응답합니다:', (e && e.message) || e)
 }
 
+// ── 등록된 채널 목록(W2 스모크 리스트용) ──
+app.get('/api/__channels', (_req, res) => {
+  res.json({ count: routes.size, channels: [...routes.keys()].sort() })
+})
+
 // ── POST /api/{channel} 디스패처 ──
 // IPC 핸들러 시그니처 (event, payload) 를 그대로 호출한다(event 미사용 — §0.5 대조로 확인).
 app.post('/api/:channel', (req, res) => {
