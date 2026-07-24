@@ -38,12 +38,40 @@ app.get('/api/health', (_req, res) => {
 // ── 채널 맵: main/ipc 핸들러를 electron shim 위에서 등록해 그대로 재사용(W1b, 소스 무수정) ──
 // bridge.cjs = esbuild 번들(electron → server/electron-shim.cjs alias). 빌드: npm run build:server
 let routes = new Map()
+let setPendingSave = () => {}
 try {
   const bridge = require('./dist/bridge.cjs')
   routes = bridge.buildRoutes()
+  setPendingSave = bridge.setPendingSave || setPendingSave
   console.log(`[server] 채널 ${routes.size}개 등록 (main/ipc 재사용)`)
 } catch (e) {
   console.error('[server] bridge 로드 실패 — /api 는 404 로 응답합니다:', (e && e.message) || e)
+}
+
+// ── 파일 다운로드(W2 3착): 저장 다이얼로그 채널 → 서버 temp 생성 → 스트림 다운로드 ──
+// 핸들러 소스 무수정: 서버가 showSaveDialog 반환 경로를 주입하면 핸들러가 그 경로에 파일을 만든다.
+// 응답에 download URL 을 실어 보내면 폴리필(web-api)이 브라우저 다운로드를 트리거한다.
+const EXPORT_DIR = path.join(DATA_DIR, 'exports')
+mkdirSafe(EXPORT_DIR)
+const downloadTokens = new Map() // token → { filePath, name }
+// 저장 다이얼로그를 쓰는 채널 → 다운로드 확장자
+const SAVE_DIALOG_CHANNELS = {
+  'form:exportXlsx': 'xlsx',
+  'fmea:export': 'xlsx',
+  'report:export': 'xlsx',
+  'sqReport:export': 'xlsx',
+  'docgen:saveDialog': 'xlsx'
+}
+function mkdirSafe(d) {
+  try {
+    fs.mkdirSync(d, { recursive: true })
+  } catch {
+    /* 존재 */
+  }
+}
+function randToken() {
+  // Math.random 사용(파일 토큰용, 보안 토큰 아님). 시간+랜덤.
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
 }
 
 // ── 등록된 채널 목록(W2 스모크 리스트용) ──
@@ -85,13 +113,59 @@ app.post('/api/:channel', (req, res) => {
       return res.status(400).json({ error: `필수 값 누락: ${missing.join(', ')} — 채널 ${ch}` })
     }
   }
-  try {
-    Promise.resolve(fn(null, req.body))
-      .then((result) => res.json(result === undefined ? null : result))
-      .catch((e) => res.status(500).json({ error: String((e && e.message) || e) }))
-  } catch (e) {
-    res.status(500).json({ error: String((e && e.message) || e) })
+
+  // 저장 다이얼로그 채널 → 서버 temp 경로 주입(핸들러가 그 경로에 파일 생성)
+  const ext = SAVE_DIALOG_CHANNELS[ch]
+  let token = null
+  if (ext) {
+    token = randToken()
+    const raw = (req.body && (req.body.defaultName || req.body.fileName)) || `${ch.replace(/:/g, '_')}.${ext}`
+    const name = String(raw).endsWith('.' + ext) ? String(raw) : `${raw}.${ext}`
+    const filePath = path.join(EXPORT_DIR, `${token}.${ext}`)
+    downloadTokens.set(token, { filePath, name })
+    setPendingSave(filePath)
   }
+
+  ;(async () => {
+    try {
+      const result = await Promise.resolve(fn(null, req.body))
+      if (token) {
+        setPendingSave(null)
+        const info = downloadTokens.get(token)
+        const ok = result && result.success !== false && info && fs.existsSync(info.filePath)
+        if (ok) {
+          result.download = `/download/${token}` // 폴리필이 브라우저 다운로드 트리거
+          result.canceled = false
+        } else {
+          downloadTokens.delete(token)
+        }
+      }
+      res.json(result === undefined ? null : result)
+    } catch (e) {
+      if (token) {
+        setPendingSave(null)
+        downloadTokens.delete(token)
+      }
+      res.status(500).json({ error: String((e && e.message) || e) })
+    }
+  })()
+})
+
+// ── GET /download/:token — 서버가 생성한 파일 스트림(Content-Disposition) ──
+app.get('/download/:token', (req, res) => {
+  const info = downloadTokens.get(req.params.token)
+  if (!info || !fs.existsSync(info.filePath)) return res.status(404).send('다운로드 만료 또는 없음')
+  res.download(info.filePath, info.name, (err) => {
+    if (!err) {
+      // 1회 전달 후 정리(temp 누적 방지)
+      try {
+        fs.unlinkSync(info.filePath)
+      } catch {
+        /* 잠김 등 — 다음 기회 */
+      }
+      downloadTokens.delete(req.params.token)
+    }
+  })
 })
 
 // ── 정적 서빙 (renderer 빌드) + window.api 폴리필 주입 ──

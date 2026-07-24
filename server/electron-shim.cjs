@@ -62,10 +62,29 @@ const ipcMain = {
   removeAllListeners() {}
 }
 
-// ── 서버에서 의미 없는 데스크톱 UI — 안전 스텁(호출되면 취소/무동작). W2 에서 HTTP 로 대체 ──
+// ── 데스크톱 파일 UI 대체(W2 3착) ──
+// 서버가 요청 처리 직전 "이번 저장/열기 경로"를 주입하면, 핸들러의 dialog 호출이 그 경로를 반환한다.
+// → 핸들러 소스 무수정으로 파일이 서버 경로에 생성/사용되고, 서버가 그 파일을 스트림 다운로드/업로드 처리.
+// 미주입 상태(주입 없이 호출)면 canceled 반환 = 데스크톱과 동일한 "취소" 동작(안전).
+let pendingSave = null // { filePath } | null
+let pendingOpen = null // { filePaths: string[] } | null
 const dialog = {
-  showSaveDialog: async () => ({ canceled: true, filePath: undefined }),
-  showOpenDialog: async () => ({ canceled: true, filePaths: [] }),
+  showSaveDialog: async () => {
+    if (pendingSave) {
+      const r = { canceled: false, filePath: pendingSave.filePath }
+      pendingSave = null // 1회 소비
+      return r
+    }
+    return { canceled: true, filePath: undefined }
+  },
+  showOpenDialog: async () => {
+    if (pendingOpen) {
+      const r = { canceled: false, filePaths: pendingOpen.filePaths }
+      pendingOpen = null // 1회 소비
+      return r
+    }
+    return { canceled: true, filePaths: [] }
+  },
   showMessageBox: async () => ({ response: 0 }),
   showErrorBox() {}
 }
@@ -92,5 +111,13 @@ module.exports = {
   BrowserWindow: BrowserWindowStub,
   /** 서버가 읽는 채널 맵(shim 전용 확장) */
   __routes: routes,
-  __dataDir: DATA_DIR
+  __dataDir: DATA_DIR,
+  /** 다음 showSaveDialog 가 반환할 저장 경로 주입(1회 소비). null 이면 취소 동작. */
+  __setPendingSave(filePath) {
+    pendingSave = filePath ? { filePath } : null
+  },
+  /** 다음 showOpenDialog 가 반환할 열기 경로 주입(1회 소비, 업로드용). */
+  __setPendingOpen(filePaths) {
+    pendingOpen = filePaths && filePaths.length ? { filePaths } : null
+  }
 }

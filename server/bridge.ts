@@ -30,3 +30,11 @@ export function buildRoutes(): Map<string, ChannelHandler> {
 export function dataDir(): string {
   return (electronShim as unknown as { __dataDir: string }).__dataDir
 }
+
+// ── 파일 다이얼로그 제어(W2 3착) — 서버가 핸들러 호출 직전 저장/열기 경로를 주입 ──
+export function setPendingSave(filePath: string | null): void {
+  ;(electronShim as unknown as { __setPendingSave: (p: string | null) => void }).__setPendingSave(filePath)
+}
+export function setPendingOpen(filePaths: string[] | null): void {
+  ;(electronShim as unknown as { __setPendingOpen: (p: string[] | null) => void }).__setPendingOpen(filePaths)
+}

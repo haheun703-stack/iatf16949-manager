@@ -26,7 +26,24 @@ async function invoke(channel: string, payload?: unknown): Promise<unknown> {
     }
     throw new Error(msg)
   }
-  return res.json()
+  const json = (await res.json()) as unknown
+
+  // 파일 다운로드(W2 3착): 서버가 생성한 파일을 브라우저가 저장하게 <a download> 트리거.
+  // 렌더러는 결과 요약만 보므로(res.download 는 안 봄) 무수정 원칙 유지 — 폴리필이 흡수.
+  const dl = (json as { download?: string } | null)?.download
+  if (dl) {
+    try {
+      const a = document.createElement('a')
+      a.href = dl
+      a.download = ''
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    } catch {
+      /* 다운로드 트리거 실패 무시 — 결과는 그대로 반환 */
+    }
+  }
+  return json
 }
 
 const api = {
