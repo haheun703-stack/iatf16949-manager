@@ -12,6 +12,7 @@ const express = require('express')
 const Database = require('better-sqlite3')
 const path = require('path')
 const fs = require('fs')
+const auth = require('./auth.cjs')
 
 // ── DB 연결 (env 로 데이터 루트 외부화 — 서버엔 userData 개념 없음) ──
 const DATA_DIR = process.env.IATF_DATA_DIR || path.join(process.env.APPDATA || '', 'iatf16949-manager')
@@ -20,9 +21,12 @@ if (!fs.existsSync(DB_PATH)) {
   console.error(`[server] DB 없음: ${DB_PATH} — IATF_DATA_DIR 로 지정하세요.`)
   process.exit(1)
 }
-// W1 은 읽기 위주(홈). 쓰기(obligation:complete 등)는 W1b/W2 에서 readonly 해제.
+// health/조회용 읽기 연결(별도) + 인증용 R/W 연결(auth 는 password_hash UPDATE 필요).
 const db = new Database(DB_PATH, { readonly: true, fileMustExist: true })
 db.pragma('busy_timeout = 4000')
+const authDb = new Database(DB_PATH, { fileMustExist: true })
+authDb.pragma('busy_timeout = 4000')
+authDb.pragma('journal_mode = WAL')
 
 const app = express()
 app.use(express.json({ limit: '8mb' }))
@@ -33,6 +37,59 @@ app.get('/api/health', (_req, res) => {
   const obl = db.prepare('SELECT COUNT(*) AS c FROM recurring_obligations WHERE active=1').get().c
   const users = db.prepare('SELECT COUNT(*) AS c FROM app_users WHERE active=1').get().c
   res.json({ ok: true, db: DB_PATH, forms, obligations: obl, users, runtime: `electron-node ${process.versions.modules}` })
+})
+
+// ══ W3 인증 (로그인·세션·권한) — 아래 라우트는 인증 미들웨어 앞(미인증 허용) ══
+app.get('/login', (_req, res) => res.type('html').sendFile(path.join(__dirname, 'login.html')))
+
+app.post('/api/auth:login', (req, res) => {
+  const { name, password } = req.body || {}
+  if (!name) return res.status(400).json({ error: '이름을 입력하세요.' })
+  const r = auth.login(authDb, String(name), String(password || ''))
+  if (r.error) return res.status(401).json({ error: r.error })
+  res.setHeader('Set-Cookie', auth.sessionCookie(r.sid))
+  res.json({ success: true, user: r.user })
+})
+
+app.post('/api/auth:logout', (req, res) => {
+  const s = auth.sessionOf(req)
+  if (s) auth.logout(s.sid)
+  res.setHeader('Set-Cookie', auth.clearCookie())
+  res.json({ success: true })
+})
+
+app.get('/api/auth:me', (req, res) => {
+  const s = auth.sessionOf(req)
+  if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
+  res.json({ id: s.userId, name: s.name, role: s.role, teamDept: s.teamDept })
+})
+
+app.post('/api/auth:changePassword', (req, res) => {
+  const s = auth.sessionOf(req)
+  if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
+  const r = auth.changePassword(authDb, s.userId, String((req.body && req.body.newPassword) || ''))
+  if (r.error) return res.status(400).json({ error: r.error })
+  res.json(r)
+})
+
+// ── 인증 미들웨어: 이 지점 이후의 /api/* 와 SPA(/) 는 세션 필수 ──
+// 권한(누가)은 아래 디스패처의 PROTECTED 로. 여기서는 "로그인 여부"만 본다.
+// 로그인 페이지·인증 라우트는 이 미들웨어보다 앞에 등록됨 → 여기 도달 안 함.
+// 나머지(정적 자산·폴리필·SPA·디스패처)는 전부 인증 필요(자산은 인증 후 index.html 이 요청).
+const PUBLIC_PREFIX = ['/login']
+app.use((req, res, next) => {
+  if (req.path === '/api/health') return next()
+  const s = auth.sessionOf(req)
+  if (s) {
+    req.session = s
+    return next()
+  }
+  if (PUBLIC_PREFIX.some((p) => req.path.startsWith(p))) return next()
+  // API 는 401 JSON, 화면 요청은 로그인 페이지로
+  if (req.path.startsWith('/api/') || req.path.startsWith('/download/')) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' })
+  }
+  return res.redirect('/login')
 })
 
 // ── 채널 맵: main/ipc 핸들러를 electron shim 위에서 등록해 그대로 재사용(W1b, 소스 무수정) ──
@@ -98,12 +155,42 @@ const REQUIRED_FIELDS = {
   'schedule:delete': ['id']
 }
 
+// 권한 가드(W3-4): 채널 → 허용 role. 없는 채널은 "로그인만"(미들웨어가 이미 보장).
+// 스모크 표에서 무인증 응답하던 관리성 채널 — 지시서 §3(도래일=exec/manager, 사용자관리=manager+).
+const PROTECTED = {
+  'obligation:resetDue': ['executive', 'manager'],
+  'appUser:upsert': ['manager', 'executive'],
+  'appUser:delete': ['manager', 'executive']
+}
+
+// 세션 기록주체 강제 주입(W3-3, 2착 봉쇄 해소): 클라가 보낸 값은 무시하고 세션 사용자로 덮어쓴다.
+// → created_by/done_by 가 항상 로그인 사용자로 스탬프되어 "작성자 불명" 우회가 불가능해진다.
+//   (defaultAuthor 폴백 금지 원칙 유지 — 세션이 유일한 기록 주체.)
+const STAMP_FIELDS = {
+  'form:submissionCreate': ['createdBy'],
+  'form:submissionUpdate': ['createdBy'],
+  'obligation:complete': ['doneBy']
+}
+
 // ── POST /api/{channel} 디스패처 ──
 // IPC 핸들러 시그니처 (event, payload) 를 그대로 호출한다(event 미사용 — §0.5 대조로 확인).
 app.post('/api/:channel', (req, res) => {
   const ch = req.params.channel
   const fn = routes.get(ch)
   if (!fn) return res.status(404).json({ error: `미구현 채널: ${ch}` })
+
+  // 권한 가드(W3-4): 로그인은 미들웨어가 이미 보장 — 여기서는 role 확인.
+  const allowedRoles = PROTECTED[ch]
+  if (allowedRoles && !(req.session && allowedRoles.includes(req.session.role))) {
+    return res.status(403).json({ error: `권한 부족: '${ch}' 는 ${allowedRoles.join('/')} 전용입니다.` })
+  }
+
+  // 세션 기록주체 강제 주입(W3-3): 클라 값 무시, 세션 사용자로 덮어씀.
+  const stamp = STAMP_FIELDS[ch]
+  if (stamp && req.session) {
+    req.body = req.body || {}
+    for (const fld of stamp) req.body[fld] = req.session.name
+  }
 
   const required = REQUIRED_FIELDS[ch]
   if (required) {

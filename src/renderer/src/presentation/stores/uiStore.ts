@@ -23,9 +23,7 @@ export type PageId =
   | 'fmea'
   | 'msa'
   | 'apqp'
-  | 'form-chain'
   | 'clause-tree'
-  | 'team'
   | 'about'
   | 'integrity'
   | 'mes-trace'
@@ -54,9 +52,7 @@ export const PAGE_LABELS: Record<PageId, string> = {
   fmea: 'FMEA',
   msa: 'MSA',
   apqp: 'APQP',
-  'form-chain': '양식 연결',
   'clause-tree': '조항 트리',
-  team: '팀 관리',
   about: '제품 정보',
   integrity: '무결성',
   'mes-trace': 'MES 역추적',
