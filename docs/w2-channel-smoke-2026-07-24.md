@@ -10,9 +10,35 @@
 |---|---:|---|
 | ✅ OK | 132 | 빈 payload 로도 정상 응답 — 웹에서 그대로 작동 |
 | 🟡 인자필요 | 5 | 핸들러 도달 O, payload 만 필요 — 화면에서 호출 시 정상 예상 |
-| 🔵 쓰기 | 0 | 쓰기 경로(스모크는 readonly 라 차단) — W2 2착 대상 |
+| 🔵 쓰기 | 0 | **분류 미발생** — 아래 🔴 경고 참조(readonly 로 차단될 줄 알았으나 실제로는 쓰기가 됐다) |
 | ⚪ 스텁 | 2 | dialog/shell 스텁 — W2 3착(파일 API) 대상 |
 | ❌ 실패 | 0 | 원인 규명 필요 |
+
+## 🔴 이 표의 최대 성과 — 서버 입력 검증 부재 (W2 2착 대상)
+
+빈 payload(`{}`) 로도 **쓰기가 실제로 일어났다**. 요약표의 "🔵 쓰기 0" 은 readonly 로 차단될 것을
+가정한 분류였으나, bridge 의 `connection.ts` 는 R/W 로 DB 를 열기 때문에 실제로는 레코드가 생성됐다
+(스모크 대상은 **복사본** — 라이브 무손상 확인).
+
+| 채널 | 빈 payload 결과 | 의미 |
+|---|---|---|
+| `case:create` | `{id, caseNo}` | 빈 케이스 레코드 생성됨 |
+| `fmea:docCreate` · `msa:create` | `{id}` | 빈 문서/스터디 생성됨 |
+| `appUser:upsert` · `appUser:delete` | `{success}` | 사용자 조작이 무인증으로 통과 |
+| `obligation:resetDue` | `{success, count}` | **경영진 전용** 도래일 재설정이 무인증 실행 |
+| `kpi:save` · `company:profileSave` 등 | `{success}` | 설정·실적 갱신이 무검증 통과 |
+
+데스크톱에선 UI 가 유일한 입구라 무해했으나, HTTP 가 열리면 곧바로 쓰레기·악의 레코드 유입 경로가 된다
+(§1.3 "조작 차단은 서버 검증이 정본"). → **2착에서 조작 차단 정본 이식 + 채널별 필수값 가드**로 막는다.
+그때까지 서버는 `127.0.0.1` 바인딩 고정(코드 하드코딩, W3 전 해제 금지).
+
+## ⚪ dialog/shell 의존(스텁 지대) — 소스 기준
+
+스모크는 응답 패턴상 2건만 스텁으로 잡았지만, 소스에는 데스크톱 UI 의존이 **8곳**이다(W2 3착 정밀 매핑 대상):
+`form-handlers`(showSaveDialog·showItemInFolder) · `fmea-handlers`(showSaveDialog) ·
+`isir-handlers`(showOpenDialog) · `process-handlers`(showOpenDialog ×2) ·
+`register.ts`(showOpenDialog ×2 · showSaveDialog ×2 · printToPDF) · `report-handlers`(showSaveDialog) ·
+`docgen/sq-report-exporter`(showSaveDialog). → 업로드 multipart / 다운로드 스트림으로 대체.
 
 ## 전체 채널
 
@@ -62,7 +88,7 @@
 | `dashboard:dailyBoard` | ✅ OK | 객체 {overdue,dueSoon,sqRed,drafts} |
 | `dashboard:v5` | ✅ OK | 객체 {formsTotal,formsScored,formsWithDraft,avgScore,gradeDist,…} |
 | `docgen:generate` | ✅ OK | 객체 {success,error} |
-| `docgen:saveDialog` | ✅ OK | 객체 {filePath} |
+| `docgen:saveDialog` | ⚪ 스텁 | **정오(2026-07-24)**: dialog.showSaveDialog 의존(register.ts) — shim 이 취소를 반환해 `{filePath: undefined}` 가 나온 것이라 실제 저장은 없다. 3착 대상 |
 | `fmea:board` | ✅ OK | null 반환 |
 | `fmea:docCreate` | ✅ OK | 객체 {id} |
 | `fmea:docList` | ✅ OK | 배열 2건 |

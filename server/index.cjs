@@ -97,7 +97,14 @@ function sendInjectedIndex(res) {
 app.get(/^\/(?!api\/|__web-api\.js).*/, (_req, res) => sendInjectedIndex(res))
 
 const PORT = Number(process.env.PORT) || 8080
-const HOST = process.env.HOST || '127.0.0.1' // 사내망 한정(§1.5) — 외부 노출 금지
+
+// ⚠️⚠️ 바인딩 가드레일 — W3(로그인·권한) 완료 전까지 127.0.0.1 고정. **해제 금지**.
+// 사유: 현재 서버에는 권한 가드가 0이다. 스모크(W2 1착)에서 확인된 대로
+//   obligation:resetDue(경영진 전용 도래일 재설정)·appUser:upsert/delete 같은 채널이
+//   무인증 빈 payload 호출에도 응답한다. 사내망(0.0.0.0)에 열면 누구나 호출 가능해진다.
+// 해제 조건: W3 로그인 세션 + role 가드(executive/manager) 적용 후에만 HOST 를 개방한다.
+// (코워크 지시 2026-07-24 — env 로도 못 바꾸도록 하드코딩)
+const HOST = '127.0.0.1'
 app.listen(PORT, HOST, () => {
   console.log(`[server] IATF QMS (W1 골격) → http://${HOST}:${PORT}`)
   console.log(`[server] DB=${DB_PATH} (readonly)`)

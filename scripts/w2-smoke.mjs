@@ -70,8 +70,15 @@ for (const ch of channels) {
     }
     const ms = Date.now() - started
     if (r.ok) {
+      // 스텁 판정: dialog shim 은 취소를 반환하므로 canceled / 빈 filePaths / 값 없는 filePath 가 신호.
+      // (undefined 는 JSON 직렬화에서 사라지므로 키 존재 + falsy 도 함께 본다 — 2026-07-24 정오)
       const stubbed =
-        json && typeof json === 'object' && (json.canceled === true || json.filePaths?.length === 0)
+        json &&
+        typeof json === 'object' &&
+        (json.canceled === true ||
+          json.filePaths?.length === 0 ||
+          ('filePath' in json && !json.filePath) ||
+          ('path' in json && !json.path))
       if (stubbed) rows.push({ ch, status: '스텁', note: 'dialog 스텁(취소 반환) — 파일 API 로 대체 필요', ms })
       else rows.push({ ch, status: 'OK', note: summarize(json), ms })
     } else {
