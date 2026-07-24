@@ -1,4 +1,25 @@
-# TODO — 이어서 작업 (갱신: 2026-07-24 오후)
+# TODO — 이어서 작업 (갱신: 2026-07-24 오후 · W3 로컬 완료)
+
+## 🟢 7/24 (금) 오후 — **W3(로컬) 완료: 로그인·권한·세션 기록주체** (커밋 `e25b2f1`)
+
+**바인딩 해제·실비번만 사장님 결정 대기 — 나머지 W3 전부 127.0.0.1 로컬에서 완성·검증.**
+- **0100** app_users password_hash·must_change_pw(bcrypt, role은 0085 기존). 마이그 체인 이어서.
+- `server/auth.cjs`: 로그인(name+bcrypt)·세션(httponly sid, 유휴4시간, 메모리 Map)·changePassword.
+- `server/login.html`: 로그인 화면(§0.9 톤, 서버 사이드 = 렌더러 무수정).
+- `server/index.cjs`: 인증 라우트+미들웨어(미로그인 /api→401·화면→/login) + 권한가드
+  (PROTECTED: resetDue=exec/manager, appUser upsert/delete=manager+) + **세션 기록주체 강제주입**
+  (STAMP_FIELDS: createdBy/doneBy=세션 사용자, 클라값 무시 → **2착 봉쇄 완전 해소**).
+- `scripts/seed-local-passwords.cjs`(로컬 검증용, 배포 미포함). 데드라우트 form-chain·team 제거(uiStore).
+- 검증(복사본): 미로그인401·member 조회200/관리403·manager/executive 권한200·**가짜 createdBy→DB엔
+  세션 '김초연' 스탬프**. 캡처 3장(cap_w3_login·role_member·role_executive). typecheck 통과.
+- ⚠️ **렌더러 activeUserStore(사용자선택 UI)는 웹에서 세션과 별개 로컬** — 기록은 서버 세션강제로
+  정확하나 UI 정합(로그인 사용자 표시·로그아웃)은 별도 마무리 필요(렌더러 무수정 범위에서 폴리필 검토).
+
+**▶ 남은 것 = 사장님 결정 3(코워크가 올림)**: ①서버 PC 지정 ②호스트명/포트 ③초기 비번 정책.
+→ 결정 도착 시 **바인딩 해제**(server/index.cjs HOST 127.0.0.1 하드코딩 → 사내망)+**실비번 일괄발급**
+→ **W4**(서버 서비스 등록·라이브 DB 이관[전 테이블 건수 대조]·백업·전환일 지정·일렉트론 정본 종료).
+
+---
 
 ## 🟢 7/24 (금) 오후 — **W2 완료: 전 화면·조작차단·파일이 브라우저에서 작동**
 
