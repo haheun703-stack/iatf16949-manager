@@ -28,6 +28,39 @@ const authDb = new Database(DB_PATH, { fileMustExist: true })
 authDb.pragma('busy_timeout = 4000')
 authDb.pragma('journal_mode = WAL')
 
+// ── 서버 기동 시 pending 마이그 적용(설치판/dev 와 동일 체인) ──
+// 서버가 라이브 DB 를 직접 여므로, 로그인 컬럼(0100) 등 최신 마이그를 여기서 정식 적용한다.
+// _migrations 에 기록하므로 설치판이 나중에 같은 마이그를 봐도 스킵 = 충돌 없음(마이그 체인 보존).
+// W4 에서 일렉트론 은퇴 후에는 서버가 마이그의 유일 주체가 된다.
+function runServerMigrations(database) {
+  database.exec(
+    "CREATE TABLE IF NOT EXISTS _migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, applied_at TEXT DEFAULT (datetime('now')))"
+  )
+  const migDir = path.join(__dirname, '..', 'resources', 'migrations')
+  if (!fs.existsSync(migDir)) return
+  const files = fs.readdirSync(migDir).filter((f) => f.endsWith('.sql')).sort()
+  const has = database.prepare('SELECT 1 FROM _migrations WHERE name = ?')
+  const ins = database.prepare('INSERT INTO _migrations (name) VALUES (?)')
+  let applied = 0
+  for (const f of files) {
+    if (has.get(f)) continue
+    const sqlText = fs.readFileSync(path.join(migDir, f), 'utf-8')
+    const tx = database.transaction(() => {
+      database.exec(sqlText)
+      ins.run(f)
+    })
+    tx()
+    applied++
+    console.log(`[server] migration applied: ${f}`)
+  }
+  if (applied === 0) console.log('[server] migrations up-to-date')
+}
+try {
+  runServerMigrations(authDb)
+} catch (e) {
+  console.error('[server] 마이그 적용 실패(계속 진행):', (e && e.message) || e)
+}
+
 const app = express()
 app.use(express.json({ limit: '8mb' }))
 
