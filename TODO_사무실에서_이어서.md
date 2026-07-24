@@ -1,4 +1,29 @@
-# TODO — 이어서 작업 (갱신: 2026-07-24 오전)
+# TODO — 이어서 작업 (갱신: 2026-07-24 오후)
+
+## 🟢 7/24 (금) 오후 — **W2 완료: 전 화면·조작차단·파일이 브라우저에서 작동**
+
+**커밋**: 6cb721a(1착 스모크)·7044dbd(바인딩+정오)·d94a2f5(2착 조작차단)·6da2d85(3착 파일)·
+(4착 O/X 표). 전부 푸시, 트리 클린. **핵심=렌더러 무수정·핸들러 무수정 유지하며 W2 전부.**
+
+- **1착 스모크**(docs/w2-channel-smoke-2026-07-24.md): 139채널 빈 payload 호출 → OK132·인자필요5·
+  스텁2·**실패0**. 표가 "등록≠작동"의 답(입력검증 부재) 드러냄 — 빈 payload 로 쓰기가 실제로 됨.
+- **2착 조작차단 서버이식**: form-handlers detectEmptyFact(CREATE/UPDATE, **createdBy 동반=완료저장
+  게이트**, 초안 보존) + 예시복제 차단 재확인 + 필수값 가드(server REQUIRED_FIELDS, DTO `{id}` 12채널
+  400) + **바인딩 가드레일**(HOST='127.0.0.1' 하드코딩, W3 전 해제금지). E2E-B 브라우저 캡처.
+- **3착 파일**: 다운로드=shim 경로슬롯(__setPendingSave)→서버 SAVE_DIALOG_CHANNELS 가로채기→
+  EXPORT_DIR temp→`GET /download/:token` 스트림→폴리필 `<a download>` 트리거. 업로드=PhotoField
+  웹표준(FileReader, electron API 0) 이미 작동. 실증: xlsx 1.8MB 브라우저 다운로드 확인.
+- **4착 전화면 O/X**(docs/w2-screens-2026-07-24.md): 26 렌더화면 **전부 O**·데드라우트 2(form-chain·
+  team=AppShell 미매핑). GNB 클릭→문서작성 렌더 캡처. **= W2 종합 검수 기준.**
+- 도구: `scripts/w2-smoke.mjs`·`w2-screens.mjs`. 캡처 4장 납품(cap_w1_browser·w2_e2eb·w2_files·w2_screen).
+  검증은 전부 라이브 **복사본**에서 실행 후 폐기(라이브 무손상).
+
+**▶ 다음 = W3 로그인·권한**(사장님 결정 3 필요): ①서버 PC 지정 ②호스트명/포트 ③초기 비번 정책.
+**★W3 필수 완료조건**: createdBy 게이트→**세션 사용자 강제 주입**으로 봉쇄(공란검사 '항상' 승격)+
+바인딩 해제(127.0.0.1→사내망). app_users 는 password_hash·must_change_pw 2컬럼만(role 기존). 14번 §3 명문화.
+**작업수칙(코워크)**: 선처리(가드레일·정오)한 건 보고에 한 줄 명기 — 잘한 일은 알려야 검수가 빠르다.
+
+---
 
 ## 🟢 7/24 (금) 오전 — **W1 완료: 홈이 브라우저에서 뜬다** (커밋 `48a9d99`)
 
