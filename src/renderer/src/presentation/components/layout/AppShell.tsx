@@ -1,5 +1,5 @@
 import { useUIStore } from '../../stores/uiStore'
-import { Gnb } from './Gnb'
+import { Sidebar, TopBar } from './Sidebar'
 import { Dashboard } from '../dashboard/Dashboard'
 import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
 import { SqDashboardView } from '../sq-dashboard/SqDashboardView'
@@ -40,21 +40,22 @@ export function AppShell(): JSX.Element {
   const fullBleed = currentPage === 'form-builder'
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* 포털 1단계(7/16): 사이드바 제거 → 상단 GNB 통일. 홈 = 관제탑(팀별 오늘 할 일). */}
-      <Gnb />
-      <div className="flex flex-1 min-h-0">
+    <div className="h-screen flex">
+      {/* 대시보드형 리프레시(17번, 7/26): 상단 GNB → 좌측 다크 사이드바 + 상단 도구 스트립.
+          라우팅·PageId·화면 무수정 — 껍데기 교체만. */}
+      <Sidebar />
+      <div className="flex-1 min-w-0 flex flex-col min-h-0">
+        <TopBar />
         <main className="flex-1 min-w-0 overflow-y-auto">
-          {/* 전 화면 공통 중앙 칼럼 — 화면의 94%·최대 1400px: 어떤 창 크기/글자 배율에서도
-              좌우 여백이 반드시 생긴다 (7/16 사장님: "전체적인" 가운데 정렬·좌우 비율).
+          {/* 전 화면 공통 중앙 칼럼 — 최대 1400px 유지(7/16 정본), 사이드바 만큼 줄어든 가용폭 기준.
               인라인 스타일 고정 — 유틸리티 클래스 미생성/충돌에도 영향받지 않는 정본.
               단, 작성 화면(full-bleed)만 예외로 전체 폭. */}
           <div
-            className={fullBleed ? 'min-w-0 w-full h-full' : 'min-w-0 w-full px-2 py-7'}
+            className={fullBleed ? 'min-w-0 w-full h-full' : 'min-w-0 w-full px-6 py-6'}
             style={
               fullBleed
                 ? undefined
-                : { maxWidth: 'min(1400px, 94vw)', marginLeft: 'auto', marginRight: 'auto' }
+                : { maxWidth: 'min(1400px, 100%)', marginLeft: 'auto', marginRight: 'auto' }
             }
           >
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}

@@ -3,36 +3,55 @@
 @import "pretendard/dist/web/variable/pretendardvariable.css";
 
 @theme {
-  /* 파스텔 블루 시스템 (2026-07-13 UI 업그레이드 A안 확정)
-     원칙: 파스텔은 면(배경·틴트)에, 딥블루는 점(액션·앵커)에.
-     팀 7색(team-theme)·채움칸 베이지·빨강=경고 예약 원칙은 유지. */
-  --color-background: #eef4fa;        /* 파스텔 블루 캔버스 */
-  --color-foreground: #1f3348;        /* 네이비 잉크 */
+  /* 대시보드형 리프레시 토큰 (17번 §1, 2026-07-26 — 시각 정본 = 16번 목업 v1).
+     원칙: 원색 배경 금지 — 상태는 전부 틴트+진한 글자. 화면별 하드코딩 금지, 여기가 유일 정의처.
+     팀 5색(team-theme)·채움칸 베이지·빨강=경고 예약 원칙은 유지. */
+  --color-background: #F6F7F9;        /* 뉴트럴 그레이 캔버스 */
+  --color-foreground: #1A1F27;        /* 잉크 */
   --color-card: #ffffff;
-  --color-card-foreground: #1f3348;
-  --color-primary: #2a78d6;           /* 액션 블루 — 버튼·링크·포커스(대시보드 v3와 동일) */
+  --color-card-foreground: #1A1F27;
+  --color-primary: #2563EB;           /* 액션 블루(액센트) */
   --color-primary-foreground: #ffffff;
-  --color-secondary: #e7f1fc;         /* 파스텔 블루 틴트(칩/비활성) */
-  --color-secondary-foreground: #1c4d80;
-  --color-muted: #edf3fa;             /* hover / subtle fill */
-  --color-muted-foreground: #5c7288;  /* 쿨 그레이 보조 텍스트 */
-  --color-accent: #2a78d6;
+  --color-secondary: #EFF4FF;         /* 액센트 틴트(칩/비활성) */
+  --color-secondary-foreground: #1D4ED8;
+  --color-muted: #F1F2F4;             /* hover / subtle fill / 중립 칩 */
+  --color-muted-foreground: #6B7280;  /* 보조 텍스트 */
+  --color-faint: #9AA1AB;             /* 캡션(11px) 전용 */
+  --color-accent: #2563EB;
   --color-accent-foreground: #ffffff;
-  --color-border: #dbe6f1;            /* 파스텔 블루 보더 */
-  --color-ring: #2a78d6;
-  --color-destructive: #d03b3b;
-  --color-success: #0ca30c;
-  --color-warning: #b97707;
+  --color-border: #EAECEF;
+  --color-ring: #2563EB;
+  --color-destructive: #DC2626;
+  --color-success: #16A34A;
+  --color-warning: #D97706;
   --color-input: #ffffff;
+  /* 상태 칩(틴트 문법) — 완료/연체/경고/데이터(시스템 발행) */
+  --color-ok-tint: #E8F7EE;
+  --color-ok-ink: #15803D;
+  --color-bad-tint: #FDECEC;
+  --color-bad-ink: #B91C1C;
+  --color-warn-tint: #FEF3E2;
+  --color-warn-ink: #B45309;
+  --color-data: #7C3AED;
+  --color-data-tint: #F3EEFD;
+  --color-data-ink: #6D28D9;
+  /* 다크 사이드바 (17번 §2) */
+  --color-side-bg: #171C26;
+  --color-side-ink: #C6CBD4;
+  --color-side-active: #252C3A;
+  --color-side-hover: #1F2530;
+  --color-side-sec: #697384;
+  --color-side-line: #232A37;
   /* 사람이 채워야 하는 칸 표시용 — 따뜻한 베이지(시인성, 유지) */
   --color-fillable: #f8f1df;
   --color-fillable-border: #ece0bf;
   --color-popover: #ffffff;
-  --color-popover-foreground: #1f3348;
+  --color-popover-foreground: #1A1F27;
   --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
-  --radius-lg: 12px;
+  --radius-lg: 14px;
   --radius-md: 8px;
   --radius-sm: 5px;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.05);
 }
 
 * {
