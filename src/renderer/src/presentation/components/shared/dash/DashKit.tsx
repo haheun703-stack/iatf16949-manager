@@ -14,13 +14,20 @@ export function CardShell({
   cap,
   actions,
   children,
-  className
+  className,
+  status = 'ready',
+  onRetry,
+  skeleton
 }: {
   title?: string
   cap?: string
   actions?: ReactNode
   children: ReactNode
   className?: string
+  /** "말 없는 공백" 금지(19번 규칙④ 로딩판, 7/26 사장님 제보): loading=스켈레톤 · error=재시도 */
+  status?: 'ready' | 'loading' | 'error'
+  onRetry?: () => void
+  skeleton?: ReactNode
 }): JSX.Element {
   return (
     <div className={cn('bg-card border border-border rounded-[14px] shadow-card', className)}>
@@ -32,7 +39,40 @@ export function CardShell({
           {actions}
         </div>
       )}
-      {children}
+      {status === 'loading' ? (
+        (skeleton ?? <ChipGridSkeleton />)
+      ) : status === 'error' ? (
+        <div className="px-[18px] py-8 flex items-center gap-3 text-[13px] text-muted-foreground">
+          불러오지 못했습니다.
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="h-8 px-3 rounded-lg text-[12.5px] font-bold bg-primary/10 text-primary hover:bg-primary/20"
+            >
+              다시 시도
+            </button>
+          )}
+        </div>
+      ) : (
+        children
+      )}
+    </div>
+  )
+}
+
+/** 로딩 스켈레톤 — 회색 칩 그리드(매트릭스류 기본) */
+export function ChipGridSkeleton({ rows = 5, cols = 12 }: { rows?: number; cols?: number }): JSX.Element {
+  return (
+    <div className="px-[18px] py-4 animate-pulse" aria-hidden>
+      {Array.from({ length: rows }, (_, r) => (
+        <div key={r} className="flex items-center gap-1.5 mb-2">
+          <span className="w-[140px] h-[26px] rounded-lg bg-muted shrink-0" />
+          {Array.from({ length: cols }, (_, c) => (
+            <span key={c} className="w-[26px] h-[26px] rounded-lg bg-muted shrink-0" />
+          ))}
+        </div>
+      ))}
     </div>
   )
 }

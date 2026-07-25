@@ -51,6 +51,7 @@ export function PortalHome(): JSX.Element {
   const [completing, setCompleting] = useState<number | null>(null)
   const [mesStatus, setMesStatus] = useState<MesRecordsStatusDto | null>(null)
   const [matrix, setMatrix] = useState<ObligationMatrixDto | null>(null)
+  const [matrixStatus, setMatrixStatus] = useState<'ready' | 'loading' | 'error'>('loading')
   const [matrixView, setMatrixView] = useState<'team' | 'person'>('team')
   const [showPrompt, setShowPrompt] = useState(false)
   const [kpiBatchOpen, setKpiBatchOpen] = useState(false)
@@ -71,12 +72,18 @@ export function PortalHome(): JSX.Element {
     } catch {
       setBoard(null)
     }
-    // 이행 매트릭스(17번 §3-2) — 보드와 함께 갱신(완료 처리 후 셀 즉시 반영)
+    // 이행 매트릭스(17번 §3-2) — 보드와 함께 갱신. 5초 타임아웃 → 에러 상태(말 없는 공백 금지)
+    setMatrixStatus('loading')
     try {
-      const m = (await window.api.invoke(window.api.channels.OBLIGATION_MATRIX, {})) as ObligationMatrixDto
+      const m = (await Promise.race([
+        window.api.invoke(window.api.channels.OBLIGATION_MATRIX, {}),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+      ])) as ObligationMatrixDto
       setMatrix(m)
+      setMatrixStatus('ready')
     } catch {
       setMatrix(null)
+      setMatrixStatus('error')
     }
   }, [])
 
@@ -310,6 +317,8 @@ export function PortalHome(): JSX.Element {
         <CardShell
           title="이행 매트릭스"
           cap="사람 × 최근 14일 — 했는지 · 안 했는지"
+          status={matrixStatus}
+          onRetry={() => void load()}
           actions={
             <SegTabs
               value={matrixView}
@@ -328,7 +337,7 @@ export function PortalHome(): JSX.Element {
             </>
           ) : (
             <div className="px-[18px] py-10 text-[13px] text-muted-foreground">
-              {matrix ? '표시할 의무가 없습니다 — 정기 의무에서 등록하세요.' : '집계 중…'}
+              표시할 의무가 없습니다 — 정기 의무에서 등록하세요.
             </div>
           )}
         </CardShell>
