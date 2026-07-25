@@ -316,7 +316,7 @@ export function PortalHome(): JSX.Element {
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4 items-start">
         <CardShell
           title="이행 매트릭스"
-          cap="사람 × 최근 14일 — 했는지 · 안 했는지"
+          cap={`사람 × 최근 ${matrix ? matrix.days.length : 7}일 — 했는지 · 안 했는지`}
           status={matrixStatus}
           onRetry={() => void load()}
           actions={

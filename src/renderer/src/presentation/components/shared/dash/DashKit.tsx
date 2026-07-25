@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
-import type { ObligationMatrixDto, MatrixCellState } from '@shared/ipc-types'
+import type { ObligationMatrixDto, ObligationMatrixCellDto, MatrixCellState } from '@shared/ipc-types'
 import { teamTheme, type TeamId } from '@shared/team-theme'
 import { cn } from '../../../../lib/utils'
 
@@ -183,13 +184,59 @@ export function TeamDonut({
   )
 }
 
-/** 이행 매트릭스 — 사람×일자 칩 표 (HRMS 근태 패턴, 17번 §3-2 셀 계약) */
-const CELL: Record<MatrixCellState, { cls: string; glyph: (n?: number) => string; title: string }> = {
+/** 이행 매트릭스 — 사람×일자 칩 표 (HRMS 근태 패턴, 17번 §3-2 셀 계약)
+ *  팀별 탭 = 사람당 1행 집약(셀=그날 최악 상태, 7/26 사장님 지적) — 클릭 시 의무별 아코디언.
+ *  'na(—)'는 칩이 아니라 옅은 점 — 유의미 셀(✓·연체·⚡·!)만 시각 무게를 갖는다. */
+const CELL: Record<Exclude<MatrixCellState, 'na'>, { cls: string; glyph: (n?: number) => string; title: string }> = {
   done: { cls: 'bg-ok-tint text-ok-ink', glyph: () => '✓', title: '완료(작성기록/완료처리)' },
   overdue: { cls: 'bg-bad-tint text-bad-ink', glyph: (n) => (n != null ? String(n) : '·'), title: '연체 — 숫자=연체 일수' },
   due: { cls: 'bg-warn-tint text-warn-ink', glyph: () => '!', title: '오늘 해야 함' },
-  data: { cls: 'bg-data-tint text-data-ink', glyph: () => '⚡', title: '데이터 할 일(시스템 발행)' },
-  na: { cls: 'bg-muted text-[#B4BAC3]', glyph: () => '—', title: '해당 없음' }
+  data: { cls: 'bg-data-tint text-data-ink', glyph: () => '⚡', title: '데이터 할 일(시스템 발행)' }
+}
+
+function Cell({ c }: { c: ObligationMatrixCellDto }): JSX.Element {
+  if (c.s === 'na') {
+    return (
+      <td className="text-center px-[3px] py-0.5" title={c.d + ' — 해당 없음'}>
+        <span className="inline-flex w-[26px] h-[26px] items-center justify-center">
+          <i className="w-[5px] h-[5px] rounded-full bg-[#E3E6EA]" />
+        </span>
+      </td>
+    )
+  }
+  const spec = CELL[c.s]
+  return (
+    <td className="text-center px-[3px] py-0.5" title={c.d + ' — ' + spec.title}>
+      <span
+        className={cn(
+          'inline-flex w-[26px] h-[26px] rounded-lg items-center justify-center text-[10.5px] font-extrabold',
+          spec.cls
+        )}
+      >
+        {spec.glyph(c.n)}
+      </span>
+    </td>
+  )
+}
+
+type MatrixRow = ObligationMatrixDto['teams'][0]['rows'][0]
+type PersonAgg = { key: string; person: string; sub: string; agg: ObligationMatrixCellDto[]; items: MatrixRow[] }
+
+/** 그날 최악 상태로 병합: 연체 > 오늘 > 데이터 > 완료 > 없음. 숫자=최대 연체일 하나만. */
+function worstCells(rows: MatrixRow[], days: string[]): ObligationMatrixCellDto[] {
+  const rank: Record<MatrixCellState, number> = { overdue: 4, due: 3, data: 2, done: 1, na: 0 }
+  return days.map((d, i) => {
+    let best: ObligationMatrixCellDto = { d, s: 'na' }
+    let maxN: number | undefined
+    for (const r of rows) {
+      const c = r.cells[i]
+      if (!c) continue
+      if (c.s === 'overdue' && c.n != null) maxN = maxN == null ? c.n : Math.max(maxN, c.n)
+      if (rank[c.s] > rank[best.s]) best = { d, s: c.s }
+    }
+    if (best.s === 'overdue') return { d, s: 'overdue', n: maxN }
+    return best
+  })
 }
 
 export function MatrixBoard({
@@ -197,33 +244,93 @@ export function MatrixBoard({
   personView
 }: {
   matrix: ObligationMatrixDto
-  /** true=개인별(사람 기준 재그룹), false=팀별 */
+  /** true=개인별(의무별 상세 나열), false=팀별(사람당 1행 집약) */
   personView?: boolean
 }): JSX.Element {
+  const [open, setOpen] = useState<Set<string>>(new Set())
+  const toggle = (k: string): void =>
+    setOpen((prev) => {
+      const n = new Set(prev)
+      if (n.has(k)) n.delete(k)
+      else n.add(k)
+      return n
+    })
   const dayLabel = (d: string): string => {
     if (d === matrix.today) return '오늘'
     const [, , dd] = d.split('-')
     return String(Number(dd))
   }
-  const groups = personView
+
+  type Group = { label: string; persons: PersonAgg[] }
+  const groups: Group[] = personView
     ? (() => {
-        const by = new Map<string, { label: string; rows: ObligationMatrixDto['teams'][0]['rows'] }>()
+        // 개인별 = 사람 헤더 아래 의무별 상세 나열(펼친 전모)
+        const by = new Map<string, MatrixRow[]>()
         for (const t of matrix.teams)
           for (const r of t.rows) {
-            const k = r.person
-            if (!by.has(k)) by.set(k, { label: k, rows: [] })
-            by.get(k)!.rows.push(r)
+            if (!by.has(r.person)) by.set(r.person, [])
+            by.get(r.person)!.push(r)
           }
-        return [...by.values()]
+        return [...by.entries()].map(([person, rows]) => ({
+          label: person,
+          persons: rows.map((r) => ({
+            key: r.key,
+            person: r.data ? r.person : r.label,
+            sub: r.data ? r.label : '',
+            agg: r.cells,
+            items: []
+          }))
+        }))
       })()
-    : matrix.teams.map((t) => ({ label: t.label, rows: t.rows }))
+    : matrix.teams.map((t) => {
+        const humans = new Map<string, MatrixRow[]>()
+        const dataRows: MatrixRow[] = []
+        for (const r of t.rows) {
+          if (r.data) dataRows.push(r)
+          else {
+            if (!humans.has(r.person)) humans.set(r.person, [])
+            humans.get(r.person)!.push(r)
+          }
+        }
+        const persons: PersonAgg[] = [...humans.entries()].map(([person, rows]) => {
+          const openCnt = rows.filter((r) => r.cells.some((c) => c.s === 'overdue' || c.s === 'due')).length
+          return {
+            key: t.label + '|' + person,
+            person,
+            sub:
+              '의무 ' + rows.length + '건' + (openCnt > 0 ? ' · 미이행 ' + openCnt : '') +
+              (rows.length > 1 ? ' · 펼치기' : ''),
+            agg: worstCells(rows, matrix.days),
+            items: rows.length > 1 ? rows : []
+          }
+        })
+        if (dataRows.length > 0) {
+          // 팀당 [데이터] 집계 1행 — 심사갭·MES 등 합쳐 최악 상태로
+          persons.push({
+            key: t.label + '|data',
+            person: '[데이터]',
+            sub: dataRows.map((r) => r.label).join(' · '),
+            agg: worstCells(dataRows, matrix.days),
+            items: []
+          })
+        }
+        return { label: t.label, persons }
+      })
 
   return (
     <div className="px-[18px] pb-2 overflow-x-auto">
       <table className="border-separate border-spacing-y-1 w-full">
         <tbody>
           {groups.map((g, gi) => (
-            <GroupRows key={g.label + gi} label={g.label} rows={g.rows} days={matrix.days} dayLabel={dayLabel} first={gi === 0} />
+            <MatrixGroup
+              key={g.label + gi}
+              group={g}
+              days={matrix.days}
+              dayLabel={dayLabel}
+              first={gi === 0}
+              open={open}
+              onToggle={toggle}
+            />
           ))}
         </tbody>
       </table>
@@ -231,65 +338,90 @@ export function MatrixBoard({
   )
 }
 
-function GroupRows({
-  label,
-  rows,
+function MatrixGroup({
+  group,
   days,
   dayLabel,
-  first
+  first,
+  open,
+  onToggle
 }: {
-  label: string
-  rows: ObligationMatrixDto['teams'][0]['rows']
+  group: { label: string; persons: PersonAgg[] }
   days: string[]
   dayLabel: (d: string) => string
   first: boolean
+  open: Set<string>
+  onToggle: (k: string) => void
 }): JSX.Element {
   return (
     <>
       <tr>
-        <th className={cn('text-left pl-2 text-[11px] font-bold text-faint min-w-[150px]', !first && 'pt-2.5')}>{label}</th>
+        <th className={cn('text-left pl-2 text-[11px] font-bold text-faint min-w-[150px]', !first && 'pt-2.5')}>{group.label}</th>
         {days.map((d) => (
           <th key={d} className="text-center text-[11px] font-bold text-faint px-[3px] py-1">
             {first ? dayLabel(d) : ''}
           </th>
         ))}
       </tr>
-      {rows.map((r) => (
-        <tr key={r.key}>
-          <td className="text-left px-2 py-1.5 bg-[#FAFBFC] rounded-l-lg whitespace-nowrap">
-            <div className="leading-tight">
-              <b className={cn('block text-[12.5px]', r.data && 'text-data-ink')}>{r.person}</b>
-              <span className="text-[10.5px] text-faint">{r.label}</span>
-            </div>
-          </td>
-          {r.cells.map((c) => {
-            const spec = CELL[c.s]
-            return (
-              <td key={c.d} className="text-center px-[3px] py-0.5" title={`${c.d} — ${spec.title}`}>
-                <span
-                  className={cn(
-                    'inline-flex w-[26px] h-[26px] rounded-lg items-center justify-center text-[10.5px] font-extrabold',
-                    spec.cls
-                  )}
-                >
-                  {spec.glyph(c.n)}
-                </span>
-              </td>
-            )
-          })}
-        </tr>
+      {group.persons.map((p) => (
+        <PersonRows key={p.key} p={p} expanded={open.has(p.key)} onToggle={onToggle} />
       ))}
     </>
   )
 }
 
+function PersonRows({
+  p,
+  expanded,
+  onToggle
+}: {
+  p: PersonAgg
+  expanded: boolean
+  onToggle: (k: string) => void
+}): JSX.Element {
+  const expandable = p.items.length > 0
+  const isData = p.person === '[데이터]'
+  return (
+    <>
+      <tr
+        className={cn(expandable && 'cursor-pointer')}
+        onClick={expandable ? () => onToggle(p.key) : undefined}
+        title={expandable ? (expanded ? '접기' : '의무별로 펼치기') : undefined}
+      >
+        <td className="text-left px-2 py-1.5 bg-[#FAFBFC] rounded-l-lg whitespace-nowrap">
+          <div className="leading-tight flex items-center gap-1">
+            {expandable && <span className="text-[10px] text-faint w-3 shrink-0">{expanded ? '▾' : '▸'}</span>}
+            <span className="min-w-0">
+              <b className={cn('block text-[12.5px]', isData && 'text-data-ink')}>{p.person}</b>
+              <span className="block text-[10.5px] text-faint truncate max-w-[180px]">{p.sub}</span>
+            </span>
+          </div>
+        </td>
+        {p.agg.map((c) => (
+          <Cell key={c.d} c={c} />
+        ))}
+      </tr>
+      {expanded &&
+        p.items.map((r) => (
+          <tr key={r.key}>
+            <td className="text-left pl-7 pr-2 py-1 whitespace-nowrap">
+              <span className="text-[11px] text-muted-foreground">{r.label}</span>
+            </td>
+            {r.cells.map((c) => (
+              <Cell key={c.d} c={c} />
+            ))}
+          </tr>
+        ))}
+    </>
+  )
+}
+
 export function MatrixLegend(): JSX.Element {
-  const items: { s: MatrixCellState; label: string }[] = [
+  const items: { s: Exclude<MatrixCellState, 'na'>; label: string }[] = [
     { s: 'done', label: '✓ 완료(작성기록)' },
-    { s: 'overdue', label: '숫자 = 연체 일수' },
+    { s: 'overdue', label: '숫자 = 최대 연체 일수' },
     { s: 'due', label: '! 오늘 해야 함' },
-    { s: 'data', label: '⚡ 데이터 할 일(시스템 발행)' },
-    { s: 'na', label: '— 해당 없음' }
+    { s: 'data', label: '⚡ 데이터 할 일(시스템 발행)' }
   ]
   return (
     <div className="flex gap-4 px-[18px] pb-4 text-[11.5px] text-muted-foreground flex-wrap">
@@ -299,6 +431,7 @@ export function MatrixLegend(): JSX.Element {
           {i.label}
         </span>
       ))}
+      <span className="inline-flex items-center gap-1.5"><i className="w-[5px] h-[5px] rounded-full bg-[#E3E6EA]" /> 해당 없음</span>
     </div>
   )
 }

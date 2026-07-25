@@ -275,7 +275,17 @@ export function registerTriggerIssueHandlers(): void {
 export function registerObligationMatrixHandler(): void {
   const db = getSqlite()
   ipcMain.handle(IPC_CHANNELS.OBLIGATION_MATRIX, (_e, req?: { days?: number }) => {
-    const span = Math.min(Math.max(req?.days ?? 14, 7), 31)
+    // 기본 기간 자동(7/26 사장님 제보 — 이력이 오늘부터라 과거 칸이 회색 바다):
+    // 완료 이력이 7일 이상 쌓이기 전엔 7일, 쌓이면 14일로 자동 확장.
+    let autoSpan = 7
+    try {
+      const oldest = (db.prepare('SELECT MIN(done_date) d FROM obligation_completions').get() as { d: string | null }).d
+      if (oldest) {
+        const age = Math.round((Date.now() - new Date(`${oldest}T00:00:00`).getTime()) / 86400000)
+        if (age >= 6) autoSpan = 14
+      }
+    } catch { /* 0063 미적용 */ }
+    const span = Math.min(Math.max(req?.days ?? autoSpan, 5), 31)
     const ymd = (d: Date): string =>
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     const today = new Date()
