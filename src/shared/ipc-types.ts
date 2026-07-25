@@ -717,6 +717,11 @@ export interface TodayTaskDto {
   triggerIssueId?: number
   /** 원천 데이터가 해소함('해소표시') — ✓ 확정은 사람 대기(자동 완료 금지 §3-2). */
   triggerResolved?: boolean
+  /**
+   * [심사 갭] 팀당 집계 행(코워크 7/25 판단①-b) — N=장기연체 의무 수. 완료 개념 없음(자동
+   * 소멸형: 원 의무 완료로 N 감소, 0이면 행 소멸). 팀 done/open 집계에 미포함(표출 전용).
+   */
+  gapCount?: number
 }
 
 export interface TeamTodayDto {

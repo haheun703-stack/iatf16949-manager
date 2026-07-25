@@ -364,24 +364,30 @@ export function registerTeamHandlers(): void {
       //    "오늘 할 일"의 정본은 관제탑 하나 — 별도 화면·엔진 금지(§1-3).
       try {
         evaluateDataTriggers(db, { today, mesDataEndYmd: getMesDataEndYmd() })
+        // T1 [심사 갭] = 팀당 집계 1행(코워크 7/25 판단①-b): 원 연체 행이 이미 "할 일"이므로
+        // 의무별 갭 행은 중복 — N건 집계·자동 소멸형(완료 개념 없음)·팀 집계수 미포함(표출 전용).
+        const gapAgg = new Map<TeamId | 'unassigned', { count: number; oldest: string }>()
         for (const it of listBoardIssues(db, today)) {
-          let team: TeamId | null = null
-          let title = it.entityKind === 'mes-feed'
-            ? `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`
-            : `[심사 갭] ${it.obTitle ?? `의무#${it.entityKey}`}`
           if (it.entityKind === 'obligation') {
+            if (it.status !== '발행') continue // 해소표시(원 의무 이행)·완료는 N 에서 제외
             const meta = it.obFormCode ? formMeta.get(it.obFormCode) : undefined
-            team = meta?.team ?? normalizeOwnerTeam(it.obOwner ?? '')
-          } else {
-            team = normalizeTeam(it.teamHint) ?? normalizeOwnerTeam(it.teamHint ?? '')
+            const team = meta?.team ?? normalizeOwnerTeam(it.obOwner ?? '')
+            const key = team ?? 'unassigned'
+            const cur = gapAgg.get(key) ?? { count: 0, oldest: it.bucket }
+            cur.count++
+            if (it.bucket < cur.oldest) cur.oldest = it.bucket
+            gapAgg.set(key, cur)
+            continue
           }
+          // T2 [증거 공백] — 원 의무와 중복 아님 → 개별 행 유지(완료는 사람 ✓)
+          const team = normalizeTeam(it.teamHint) ?? normalizeOwnerTeam(it.teamHint ?? '')
           const done = it.status === '완료'
           const daysLeft = Math.round(
             (new Date(`${it.bucket}T00:00:00`).getTime() - t0.getTime()) / 86400000
           )
           const task: TodayTaskDto = {
             id: -it.issueId, // 의무 id 와 키 충돌 방지(프론트 completing/key 용도뿐)
-            title,
+            title: `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`,
             cadence: '데이터',
             assignee: null, // §3-4 팀 단위 발행 — 개인 자동 지정 금지
             status: done ? 'done' : 'overdue',
@@ -409,6 +415,28 @@ export function registerTeamHandlers(): void {
           }
           if (bucket) bucket.tasks.push(task)
           else unassigned.push(task)
+        }
+        let gapSeq = 0
+        for (const [key, agg] of gapAgg) {
+          gapSeq++
+          const task: TodayTaskDto = {
+            id: -(1_000_000 + gapSeq), // 합성 행 — 의무·이슈 id 와 충돌 없는 표출 전용 키
+            title: `[심사 갭] 장기연체(7일+) ${agg.count}건`,
+            cadence: '데이터',
+            assignee: null,
+            status: 'overdue',
+            dueDate: agg.oldest,
+            daysLeft: null, // 집계 행은 "연체 N일" 표기 억제 — N건이 신호
+            doneAt: null,
+            doneSource: null,
+            formCode: null,
+            hasFormRecord: false,
+            sqBadges: [],
+            gapCount: agg.count
+          }
+          if (key === 'unassigned') unassigned.push(task)
+          else byTeam.get(key)!.tasks.push(task)
+          // 팀 done/open/overdue 집계 미포함 — 원 의무가 이미 세어짐(이중 계상 방지)
         }
       } catch (err) {
         console.error('[team:todayBoard] 데이터 트리거 합류 실패(보드는 계속):', (err as Error).message)

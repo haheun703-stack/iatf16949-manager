@@ -516,6 +516,7 @@ export function PortalHome(): JSX.Element {
                         key={task.id}
                         task={task}
                         completing={completing === task.id}
+                        onShowOverdue={task.gapCount ? () => setOnlyOpen(true) : undefined}
                         onComplete={(source) => void complete(task, source)}
                         onOpenForm={openForm}
                         onOpenPage={setPage}
@@ -916,7 +917,8 @@ function TaskRow({
   onOpenForm,
   onOpenPage,
   currentName,
-  teamDot
+  teamDot,
+  onShowOverdue
 }: {
   task: TodayTaskDto
   completing: boolean
@@ -929,6 +931,8 @@ function TaskRow({
   currentName: string | null
   /** 개인별 보드에서 소속 팀 표시(팀 고유색 점) */
   teamDot?: { color: string; label: string }
+  /** [심사 갭] 집계 행의 드릴다운 — 미이행만 보기 전환(팀별 보드 전용) */
+  onShowOverdue?: () => void
 }): JSX.Element {
   const st = STATUS_STYLE[task.status]
   const Icon = st.icon
@@ -959,7 +963,7 @@ function TaskRow({
           <span className="text-muted-foreground text-[13.5px] tabular-nums"> D-{task.daysLeft}</span>
         )}
       </span>
-      {task.triggerIssueId && (
+      {(task.triggerIssueId || task.gapCount) && (
         <span
           className="text-[11px] font-bold bg-violet-100 text-violet-800 rounded px-1.5 py-0.5 shrink-0"
           title="데이터 트리거 발행 건(M3) — 데이터가 만든 할 일"
@@ -994,7 +998,27 @@ function TaskRow({
           <Network className="w-3 h-3" /> {link.label}
         </button>
       )}
-      {task.status === 'done' ? (
+      {task.gapCount ? (
+        // [심사 갭] 팀당 집계 행(판단①-b) — 완료 개념 없음(원 의무 완료로 자동 소멸)
+        <span className="flex items-center gap-1.5 shrink-0">
+          <span
+            className="hidden md:inline text-[11px] font-semibold text-muted-foreground"
+            title="원 연체 의무들이 완료되면 건수가 줄고 0이면 이 행이 사라집니다(자동 소멸형)"
+          >
+            원 의무 완료 시 자동 소멸
+          </span>
+          {onShowOverdue && (
+            <button
+              type="button"
+              onClick={onShowOverdue}
+              className="h-8 px-2.5 rounded-md text-[12px] font-bold bg-destructive/10 text-destructive hover:bg-destructive/20 inline-flex items-center gap-1"
+              title="연체 목록으로 드릴다운 — 미이행만 보기로 전환"
+            >
+              연체 보기
+            </button>
+          )}
+        </span>
+      ) : task.status === 'done' ? (
         <span
           className="text-[13px] font-semibold shrink-0"
           style={{ color: task.doneSource === 'form' ? '#4f9e3c' : undefined }}
