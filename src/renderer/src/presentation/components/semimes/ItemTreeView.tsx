@@ -171,7 +171,7 @@ export function ItemTreeView(): JSX.Element {
             ['BOM 간선(활성)', summary.edgesActive],
             ['라우팅', summary.routingSteps],
             ['공정', summary.processes],
-            ['거래처', summary.partners],
+            ['거래처(활성)', summary.partners],
             ['불량유형', summary.defectTypes]
           ].map(([label, n]) => (
             <div key={label as string} className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">

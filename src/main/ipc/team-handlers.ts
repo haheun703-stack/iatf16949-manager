@@ -2,6 +2,8 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { computeSqReadiness } from './sq-handlers'
+import { evaluateDataTriggers, listBoardIssues } from './trigger-engine'
+import { getMesDataEndYmd } from './mes-records-handlers'
 import { TEAMS, normalizeTeam, normalizeOwnerTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import type {
   TeamSummaryDto,
@@ -356,6 +358,60 @@ export function registerTeamHandlers(): void {
         }
         if (bucket) bucket.tasks.push(task)
         else unassigned.push(task)
+      }
+
+      // 4) 데이터 트리거 의무(M3, 15번 §3) — 엔진 평가(멱등) 후 보드 합류.
+      //    "오늘 할 일"의 정본은 관제탑 하나 — 별도 화면·엔진 금지(§1-3).
+      try {
+        evaluateDataTriggers(db, { today, mesDataEndYmd: getMesDataEndYmd() })
+        for (const it of listBoardIssues(db, today)) {
+          let team: TeamId | null = null
+          let title = it.entityKind === 'mes-feed'
+            ? `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`
+            : `[심사 갭] ${it.obTitle ?? `의무#${it.entityKey}`}`
+          if (it.entityKind === 'obligation') {
+            const meta = it.obFormCode ? formMeta.get(it.obFormCode) : undefined
+            team = meta?.team ?? normalizeOwnerTeam(it.obOwner ?? '')
+          } else {
+            team = normalizeTeam(it.teamHint) ?? normalizeOwnerTeam(it.teamHint ?? '')
+          }
+          const done = it.status === '완료'
+          const daysLeft = Math.round(
+            (new Date(`${it.bucket}T00:00:00`).getTime() - t0.getTime()) / 86400000
+          )
+          const task: TodayTaskDto = {
+            id: -it.issueId, // 의무 id 와 키 충돌 방지(프론트 completing/key 용도뿐)
+            title,
+            cadence: '데이터',
+            assignee: null, // §3-4 팀 단위 발행 — 개인 자동 지정 금지
+            status: done ? 'done' : 'overdue',
+            dueDate: it.bucket,
+            daysLeft: done ? null : daysLeft,
+            doneAt: done ? ((it.completedAt ?? '').slice(0, 10) || today) : null,
+            doneSource: done ? 'manual' : null,
+            formCode: null,
+            hasFormRecord: false,
+            sqBadges: [],
+            triggerIssueId: it.issueId,
+            triggerResolved: it.status === '해소표시'
+          }
+          const bucket = team ? byTeam.get(team)! : null
+          if (done) {
+            totals.done++
+            if (bucket) bucket.done++
+          } else {
+            totals.overdue++
+            totals.open++
+            if (bucket) {
+              bucket.overdue++
+              bucket.open++
+            }
+          }
+          if (bucket) bucket.tasks.push(task)
+          else unassigned.push(task)
+        }
+      } catch (err) {
+        console.error('[team:todayBoard] 데이터 트리거 합류 실패(보드는 계속):', (err as Error).message)
       }
 
       // 팀 내 정렬: 연체 → 오늘 마감 → 완료 → 예정

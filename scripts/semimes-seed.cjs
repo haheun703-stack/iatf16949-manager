@@ -85,14 +85,27 @@ const stats = {}
 const S = (k) => (stats[k] = stats[k] || { src: 0, inserted: 0, skipped: 0 })
 
 // ── 시드 1: 공정 마스터 (2021) ──
+// 동일 공정코드 복수행(예: P10=포밍·축관)은 코드 하나 유지 + 공정명 '/' 병기 (코워크 판단 7/25:
+// 접미사 체계가 -P1 하나이므로 공정도 하나 — 새 코드 발급 금지, 정보 손실만 방지).
 {
   const st = S('process_master')
   const rows = readCsv('process_master_2021.csv')
-  const ins = db.prepare(`INSERT OR IGNORE INTO process_master (proc_code, proc_name, source) VALUES (?, ?, '2021')`)
+  const byCode = new Map()
+  for (const r of rows) {
+    st.src++
+    if (!r.proc_code) { st.skipped++; continue }
+    const names = byCode.get(r.proc_code) ?? []
+    if (r.proc_name && !names.includes(r.proc_name)) names.push(r.proc_name)
+    byCode.set(r.proc_code, names)
+  }
+  const up = db.prepare(`INSERT INTO process_master (proc_code, proc_name, source) VALUES (?, ?, '2021')
+                         ON CONFLICT(proc_code) DO UPDATE SET proc_name = excluded.proc_name`)
   db.transaction(() => {
-    for (const r of rows) {
-      st.src++
-      ins.run(r.proc_code, r.proc_name).changes ? st.inserted++ : st.skipped++
+    for (const [code, names] of byCode) {
+      const before = db.prepare('SELECT proc_name FROM process_master WHERE proc_code=?').get(code)
+      up.run(code, names.join('/'))
+      if (!before) st.inserted++
+      else st.skipped++
     }
   })()
 }

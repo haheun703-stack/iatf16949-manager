@@ -11,6 +11,12 @@ import { reindexKb } from './ai/kb'
 // 설치판·dev 모두 같은 데이터 폴더를 보도록 최우선으로 고정한다.
 app.setPath('userData', join(app.getPath('appData'), 'iatf16949-manager'))
 
+// 검증용 데이터 폴더 오버라이드(dev 전용) — 복사본 DB로 앱을 띄워 E2E 검증할 때 사용.
+// 예: IATF_USERDATA_DIR=<복사본 폴더> npm run dev  (M3 E2E — 라이브 무손상 검증, 15번)
+if (!app.isPackaged && process.env.IATF_USERDATA_DIR) {
+  app.setPath('userData', process.env.IATF_USERDATA_DIR)
+}
+
 // CDP 캡처 파이프라인(scripts/capture.mjs)용 원격 디버깅 포트 — dev 전용.
 // Page.captureScreenshot 은 DPI 무관·가려진 창도 렌더러 픽셀 그대로 캡처(PrintWindow 불필요).
 // ⚠️ 반드시 dev(!isPackaged)에서만: 설치판에서 열면 임의 프로세스가 렌더러를 제어 가능해 보안 위험.

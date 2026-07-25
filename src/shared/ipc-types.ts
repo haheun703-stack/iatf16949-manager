@@ -713,6 +713,10 @@ export interface TodayTaskDto {
   hasFormRecord: boolean
   /** 연계 SQ 항목 코드(예: '2_7') — 심사는 항목 각주로만. */
   sqBadges: string[]
+  /** 데이터 트리거 이슈(M3, 15번 §3) — 있으면 이 항목은 의무가 아니라 트리거 발행 건. */
+  triggerIssueId?: number
+  /** 원천 데이터가 해소함('해소표시') — ✓ 확정은 사람 대기(자동 완료 금지 §3-2). */
+  triggerResolved?: boolean
 }
 
 export interface TeamTodayDto {
@@ -2076,6 +2080,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.SEMIMES_ITEM]: {
     request: { itemCode: string }
     response: SemimesItemDetailDto | null
+  }
+  [IPC_CHANNELS.OBLIGATION_TRIGGER_COMPLETE]: {
+    request: { issueId: number; doneBy?: string }
+    response: { success: boolean }
   }
   [IPC_CHANNELS.APQP_BOARD]: {
     request: void

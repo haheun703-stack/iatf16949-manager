@@ -263,3 +263,14 @@ export function registerMesRecordsHandlers(): void {
     return { key: t.key, label: t.label, rows, recent }
   })
 }
+
+/** M3 트리거 엔진(T2 증거 공백)용 — 사이드카 최신 데이터 일자(YYYY-MM-DD). 사이드카 없으면 null. */
+export function getMesDataEndYmd(): string | null {
+  try {
+    const db = openSide()
+    if (!db) return null
+    return typeStats(db).dataEndYmd
+  } catch {
+    return null
+  }
+}

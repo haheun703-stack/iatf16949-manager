@@ -128,6 +128,8 @@ export const IPC_CHANNELS = {
   OBLIGATION_UPDATE: 'obligation:update',
   OBLIGATION_DELETE: 'obligation:delete',
   OBLIGATION_COMPLETE: 'obligation:complete',
+  // 데이터 트리거 이슈 완료(M3, 15번 §3-2) — ✓는 사람만
+  OBLIGATION_TRIGGER_COMPLETE: 'obligation:triggerComplete',
   // 도래일 일괄 재설정(실사용 개시) — executive/manager만. 실행 이력 obligation_reset_log(0086)
   OBLIGATION_RESET_DUE: 'obligation:resetDue',
 

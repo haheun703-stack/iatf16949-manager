@@ -126,6 +126,22 @@ export function PortalHome(): JSX.Element {
   // source='form' = [작성기록으로 확정](§0.6 결정2) / 'manual' = 무연결 의무 수동 완료.
   // 기록 주체 = 활성 사용자 우선, 없으면 defaultAuthor 폴백(§4).
   const complete = async (task: TodayTaskDto, source: 'manual' | 'form' = 'manual'): Promise<void> => {
+    // 데이터 트리거 이슈(M3) — 의무와 별도 대장(obligation_trigger_issues). ✓는 사람만(§3-2).
+    if (task.triggerIssueId) {
+      setCompleting(task.id)
+      try {
+        await window.api.invoke(window.api.channels.OBLIGATION_TRIGGER_COMPLETE, {
+          issueId: task.triggerIssueId,
+          doneBy: currentUser?.name || profile?.defaultAuthor || undefined
+        })
+        await load()
+      } catch {
+        /* 실패 시 화면 유지 */
+      } finally {
+        setCompleting(null)
+      }
+      return
+    }
     // 대리 완료 confirm(P3-fix, 코워크): 담당이 타인인 업무는 확인 1회 — 차단이 아니라
     // "누가 누구 대신 완료했는지" 정직 기록이 목적. 본인·미지정 업무는 원클릭 유지.
     if (task.assignee && currentUser && task.assignee !== currentUser.name) {
@@ -943,6 +959,22 @@ function TaskRow({
           <span className="text-muted-foreground text-[13.5px] tabular-nums"> D-{task.daysLeft}</span>
         )}
       </span>
+      {task.triggerIssueId && (
+        <span
+          className="text-[11px] font-bold bg-violet-100 text-violet-800 rounded px-1.5 py-0.5 shrink-0"
+          title="데이터 트리거 발행 건(M3) — 데이터가 만든 할 일"
+        >
+          데이터
+        </span>
+      )}
+      {task.triggerResolved && task.status !== 'done' && (
+        <span
+          className="text-[11px] font-semibold text-emerald-700 shrink-0"
+          title="원천 데이터가 조건을 해소했습니다 — 완료 ✓ 확정은 사람이 합니다(자동 완료 금지)"
+        >
+          데이터로 해소됨
+        </span>
+      )}
       {task.sqBadges.length > 0 && (
         <span
           className="text-[11px] font-bold bg-secondary text-secondary-foreground rounded px-1.5 py-0.5 shrink-0 tabular-nums"

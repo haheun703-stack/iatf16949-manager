@@ -185,6 +185,7 @@ const REQUIRED_FIELDS = {
   'msa:delete': ['id'],
   'obligation:complete': ['id'],
   'obligation:delete': ['id'],
+  'obligation:triggerComplete': ['issueId'],
   'schedule:delete': ['id']
 }
 

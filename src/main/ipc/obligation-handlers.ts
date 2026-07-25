@@ -232,3 +232,30 @@ export function registerObligationHandlers(): void {
     }
   )
 }
+
+/**
+ * 데이터 트리거 이슈 완료(M3, 15번 §3-2) — ✓는 사람만.
+ * 웹 모드에선 doneBy 가 세션 주체로 강제 주입(W3 STAMP_FIELDS)되어 위조 불가.
+ * 완료된 건은 불변(§3-3) — 발행/해소표시 상태에서만 전이 허용.
+ */
+export function registerTriggerIssueHandlers(): void {
+  const db = getSqlite()
+  ipcMain.handle(
+    IPC_CHANNELS.OBLIGATION_TRIGGER_COMPLETE,
+    (_e, { issueId, doneBy }: { issueId: number; doneBy?: string }) => {
+      try {
+        const res = db
+          .prepare(
+            `UPDATE obligation_trigger_issues
+             SET status='완료', completed_at = datetime('now','localtime'), completed_by = ?
+             WHERE id = ? AND status IN ('발행','해소표시')`
+          )
+          .run(doneBy ?? null, issueId)
+        return { success: res.changes > 0 }
+      } catch (err) {
+        console.error('[obligation:triggerComplete] failed:', (err as Error).message)
+        return { success: false }
+      }
+    }
+  )
+}
