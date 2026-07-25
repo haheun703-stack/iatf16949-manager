@@ -134,8 +134,8 @@ export function PartsView(): JSX.Element {
       )}
 
       <div className="flex gap-4 flex-1 min-h-0">
-        {/* 좌측 — 품번 목록 */}
-        <div className="w-[340px] shrink-0 overflow-y-auto pr-1 space-y-1.5">
+        {/* 좌측 — 품번 목록 (템플릿 C 규격: 380px 고정·행 확대 — 19번·화면문법노트 §2-3) */}
+        <div className="w-[380px] shrink-0 overflow-y-auto pr-1 space-y-1.5">
           {loadingList && list.length === 0 && (
             <div className="text-center text-sm text-muted-foreground py-12">불러오는 중...</div>
           )}
@@ -158,7 +158,7 @@ export function PartsView(): JSX.Element {
                 )}
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[13px] font-bold">{p.partNo}</span>
+                  <span className="font-mono text-[14px] font-bold">{p.partNo}</span>
                   {p.defectCount > 0 && (
                     <span className="text-[10px] text-amber-600 flex items-center gap-0.5">
                       <AlertTriangle className="w-3 h-3" />{p.defectCount}
