@@ -80,4 +80,28 @@ export function registerAppUsersHandlers(): void {
       }
     }
   )
+
+  // 관리형 비번 체계(W4, 사장님 7/25): 관리팀이 4자리 숫자 비번을 지정·재설정.
+  // must_change_pw=0 고정 — 강제 변경 없음, 대장(관리팀 보관)이 정본. 웹 모드는 manager+ 가드(server PROTECTED).
+  ipcMain.handle(
+    IPC_CHANNELS.APP_USER_RESET_PASSWORD,
+    (_e, { id, newPassword }: { id: number; newPassword: string }): { success: boolean; error?: string } => {
+      try {
+        if (!/^\d{4}$/.test(newPassword ?? '')) {
+          return { success: false, error: '비밀번호는 4자리 숫자입니다(관리팀 대장 정책).' }
+        }
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const bcrypt = require('bcryptjs') as { hashSync: (s: string, r: number) => string }
+        const hash = bcrypt.hashSync(newPassword, 10)
+        const res = db
+          .prepare('UPDATE app_users SET password_hash=?, must_change_pw=0 WHERE id=?')
+          .run(hash, id)
+        return res.changes > 0 ? { success: true } : { success: false, error: '대상 사용자가 없습니다.' }
+      } catch (err) {
+        // 0100 미적용 DB(구 설치판) 등 — 정직 실패
+        console.error('[appUser:resetPassword] failed:', (err as Error).message)
+        return { success: false, error: (err as Error).message }
+      }
+    }
+  )
 }

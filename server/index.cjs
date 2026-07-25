@@ -175,6 +175,7 @@ app.get('/api/__channels', (_req, res) => {
 // 권한(누가 부를 수 있나)은 여전히 W3 범위 — 여기서는 "형태"만 본다.
 const REQUIRED_FIELDS = {
   'appUser:delete': ['id'],
+  'appUser:resetPassword': ['id', 'newPassword'],
   'case:distribute': ['id'],
   'case:get': ['id'],
   'case:update': ['id'],
@@ -193,6 +194,7 @@ const REQUIRED_FIELDS = {
 // 스모크 표에서 무인증 응답하던 관리성 채널 — 지시서 §3(도래일=exec/manager, 사용자관리=manager+).
 const PROTECTED = {
   'obligation:resetDue': ['executive', 'manager'],
+  'appUser:resetPassword': ['manager', 'executive'],
   'appUser:upsert': ['manager', 'executive'],
   'appUser:delete': ['manager', 'executive']
 }

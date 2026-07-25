@@ -2090,6 +2090,10 @@ export interface IpcChannelMap {
     request: { issueId: number; doneBy?: string }
     response: { success: boolean }
   }
+  [IPC_CHANNELS.APP_USER_RESET_PASSWORD]: {
+    request: { id: number; newPassword: string }
+    response: { success: boolean; error?: string }
+  }
   [IPC_CHANNELS.APQP_BOARD]: {
     request: void
     response: ApqpBoardDto

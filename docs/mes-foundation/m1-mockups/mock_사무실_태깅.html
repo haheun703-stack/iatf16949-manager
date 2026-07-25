@@ -1,0 +1,80 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<title>M1 목업 — 사무실 태깅 화면</title>
+<style>
+  * { margin:0; box-sizing:border-box; font-family:'Malgun Gothic','Segoe UI',sans-serif; }
+  body { width:1400px; height:900px; background:#f4f7fb; color:#1a2b45; padding:26px 34px; }
+  h1 { font-size:22px; font-weight:800; } .sub { font-size:13.5px; color:#6b7c99; margin-top:4px; }
+  .chips { display:flex; gap:8px; margin:16px 0 14px; }
+  .chip { background:#fff; border:1px solid #dde5f0; border-radius:10px; padding:7px 14px; font-size:13px; }
+  .chip b { font-size:15px; }
+  .amber { background:#fff7e0; border-color:#eeda9a; color:#8a6d1a; }
+  .grid { display:grid; grid-template-columns:340px 1fr 360px; gap:16px; height:700px; }
+  .card { background:#fff; border:1px solid #dde5f0; border-radius:14px; padding:16px; overflow:hidden; }
+  .card h2 { font-size:13.5px; color:#54678a; margin-bottom:10px; }
+  .item { display:flex; gap:10px; padding:8px; border-radius:10px; margin-bottom:6px; align-items:center; }
+  .item.sel { background:#eaf2fe; outline:1.5px solid #9dbdf0; }
+  .thumb { width:64px; height:48px; border-radius:7px; background:repeating-linear-gradient(45deg,#e8eef7,#e8eef7 6px,#dbe5f2 6px,#dbe5f2 12px); border:1px solid #cfdaea; flex:none; }
+  .meta { font-size:12.5px; color:#54678a; line-height:1.5; }
+  .meta b { color:#1a2b45; font-size:13px; }
+  .badge { font-size:10.5px; background:#f3e8ff; color:#7b3ff2; border-radius:5px; padding:1px 6px; font-weight:700; }
+  .photo { height:100%; display:flex; flex-direction:column; }
+  .paper { flex:1; margin:4px 8px; background:#fff; border:1px solid #c9d4e6; border-radius:6px; box-shadow:0 8px 26px rgba(26,43,69,.12); padding:26px 30px; transform:rotate(-.6deg); }
+  .paper .ttl { text-align:center; font-weight:800; font-size:18px; letter-spacing:6px; border-bottom:2px solid #1a2b45; padding-bottom:8px; }
+  .ln { height:11px; background:#e6ecf5; border-radius:3px; margin-top:12px; }
+  .ln.w60{width:60%} .ln.w80{width:80%} .ln.w40{width:40%}
+  table.doc { width:100%; margin-top:14px; border-collapse:collapse; font-size:12px; color:#54678a; }
+  table.doc td { border:1px solid #dbe3f0; height:26px; padding:2px 8px; }
+  form label { display:block; font-size:12.5px; font-weight:700; color:#54678a; margin:12px 0 5px; }
+  .inp { width:100%; border:1.5px solid #cfdaea; border-radius:9px; padding:10px 12px; font-size:14px; background:#fbfdff; }
+  .inp.sel { color:#1a2b45; }
+  .save { width:100%; margin-top:18px; border:none; border-radius:11px; background:#2456a6; color:#fff; font-size:16px; font-weight:800; padding:14px; }
+  .note { font-size:12px; color:#8494ad; margin-top:10px; line-height:1.6; }
+  .ai { margin-top:14px; background:#f6f1ff; border:1px dashed #c9b2f5; border-radius:10px; padding:10px 12px; font-size:12px; color:#6a3fd0; }
+</style></head><body>
+  <h1>입고 사진함 — 태깅</h1>
+  <div class="sub">현장이 찍은 입고 증거에 거래처·품번·업체LOT를 붙입니다 (하루 1회, 관리팀/담당) · 저장 시 자재 입고 기록(mat_receipt) 생성</div>
+  <div class="chips">
+    <div class="chip">미분류 <b>5</b>장</div>
+    <div class="chip">오늘 태깅 완료 <b>12</b>건</div>
+    <div class="chip amber">태깅 전 사진도 '미분류 입고 증거'로 보존됩니다</div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h2>미분류 입고 사진 (최신순)</h2>
+      <div class="item sel"><div class="thumb"></div><div class="meta"><b>07-27 14:22</b> · 조성민<br><span class="badge">입고</span> 미분류</div></div>
+      <div class="item"><div class="thumb"></div><div class="meta"><b>07-27 11:05</b> · 조성민<br><span class="badge">입고</span> 미분류</div></div>
+      <div class="item"><div class="thumb"></div><div class="meta"><b>07-27 09:31</b> · 차현수<br><span class="badge">입고</span> 미분류</div></div>
+      <div class="item"><div class="thumb"></div><div class="meta"><b>07-26 16:40</b> · 조성민<br><span class="badge">입고</span> 미분류</div></div>
+      <div class="item"><div class="thumb"></div><div class="meta"><b>07-26 10:12</b> · 조성민<br><span class="badge">입고</span> 미분류</div></div>
+    </div>
+    <div class="card photo">
+      <h2>선택한 사진 — 07-27 14:22 · 조성민 · '입고'</h2>
+      <div class="paper">
+        <div class="ttl">거 래 명 세 서</div>
+        <div class="ln w60"></div><div class="ln w80"></div><div class="ln w40"></div>
+        <table class="doc">
+          <tr><td>품명</td><td>STKM11A-0845-07 (파이프 원자재)</td><td>수량</td><td>1,200</td></tr>
+          <tr><td>LOT</td><td>SJ26-0725-A</td><td>공급</td><td>세진스틸</td></tr>
+          <tr><td colspan="4"></td></tr>
+        </table>
+        <div class="ln w80"></div><div class="ln w60"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>태깅 → 입고 기록 생성</h2>
+      <form>
+        <label>거래처(자재공급처)</label>
+        <div class="inp sel">세진스틸 ▾</div>
+        <label>품번(원자재)</label>
+        <div class="inp sel">STKM11A-0845-07 ▾</div>
+        <label>업체 LOT (밀시트 번호 — 내부 LOT로 승계)</label>
+        <div class="inp sel">SJ26-0725-A</div>
+        <label>수량 (선택)</label>
+        <div class="inp">1,200</div>
+        <button class="save" type="button">저장 — 입고 기록 생성 (태깅: 서규하)</button>
+      </form>
+      <div class="ai">✦ M4 예정: AI가 전표를 읽어 위 칸을 초안 자동 채움 — 사람은 확인만</div>
+      <div class="note">저장 시 mat_receipt 1건 생성(사진↔기록 연결). 기록 주체=세션. 잘못 태깅은 정정 이력으로 남김(삭제 없음).</div>
+    </div>
+  </div>
+</body></html>

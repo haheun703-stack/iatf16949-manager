@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, UserPlus, Trash2, Power, PowerOff } from 'lucide-react'
+import { X, UserPlus, Trash2, Power, PowerOff, KeyRound } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { TEAMS, normalizeTeam, teamTheme } from '@shared/team-theme'
@@ -205,6 +205,31 @@ function UserRow({
       </select>
 
       <div className="ml-auto flex items-center gap-0.5 shrink-0">
+        {/* 비밀번호 재설정(관리형 비번 체계, W4) — 관리팀이 4자리 지정·대장 관리. 웹은 manager+ 서버 가드 */}
+        <button
+          type="button"
+          onClick={() => {
+            const pw = window.prompt(`'${u.name}' 새 비밀번호 (4자리 숫자)\n\n관리팀 비번 대장에 함께 기록하세요.`, '')
+            if (pw == null) return
+            if (!/^\d{4}$/.test(pw.trim())) {
+              window.alert('비밀번호는 4자리 숫자입니다(관리팀 대장 정책).')
+              return
+            }
+            void window.api
+              .invoke(window.api.channels.APP_USER_RESET_PASSWORD, { id: u.id, newPassword: pw.trim() })
+              .then((r) => {
+                window.alert(
+                  r.success
+                    ? `'${u.name}' 비밀번호가 재설정됐습니다 — 대장 갱신을 잊지 마세요.`
+                    : `실패: ${r.error ?? '알 수 없는 오류'}`
+                )
+              })
+          }}
+          title="비밀번호 재설정 — 4자리 숫자 지정(관리팀 비번 대장 정책)"
+          className="rounded p-1 text-muted-foreground hover:bg-amber-50 hover:text-amber-700 transition-colors"
+        >
+          <KeyRound className="w-3.5 h-3.5" />
+        </button>
         {/* 비활성/활성 토글 — 퇴사 처리의 기본 동작 */}
         <button
           type="button"
