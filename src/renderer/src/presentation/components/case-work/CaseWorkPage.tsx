@@ -140,8 +140,12 @@ function CaseSummary({
   onPick: (id: number) => void
   onIntake: () => void
 }): JSX.Element {
-  const open = list.filter((c) => c.status !== 'closed')
+  // 캡션 약속("회신 요구일이 있는 건부터")대로 정렬 — 요구일 임박순, 없는 건 뒤로
+  const open = [...list.filter((c) => c.status !== 'closed')].sort((a, b) =>
+    (a.dueDate ?? '9999-99-99').localeCompare(b.dueDate ?? '9999-99-99')
+  )
   const closed = list.length - open.length
+  const today = new Date().toLocaleDateString('sv-SE')
   return (
     <div className="grid gap-4">
       <CardShell title="불량 대응 현황" cap="접수 → 선별 → 8D → 개선대책서">
@@ -176,6 +180,16 @@ function CaseSummary({
             >
               <span className="font-mono text-[11px] text-muted-foreground shrink-0">{c.caseNo}</span>
               <span className="flex-1 text-[13.5px] font-medium truncate">{c.defectDesc || c.title}</span>
+              {c.dueDate && (
+                <span
+                  className={cn(
+                    'text-[10.5px] font-bold rounded-full px-1.5 py-0.5 shrink-0',
+                    c.dueDate < today ? 'bg-bad-tint text-bad-ink' : 'bg-warn-tint text-warn-ink'
+                  )}
+                >
+                  회신 {c.dueDate.slice(5)}
+                </span>
+              )}
               <span className="text-[11.5px] text-muted-foreground shrink-0">{c.customer}</span>
             </button>
           ))}

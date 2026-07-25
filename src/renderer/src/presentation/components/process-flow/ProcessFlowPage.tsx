@@ -160,7 +160,7 @@ export function ProcessFlowPage(): JSX.Element {
 
 /** 흐름도 문서 — 화면과 인쇄가 같은 DOM(.flow-print-root). 기호·외주·검사양식·관리항목 표기. */
 function FlowDocument({ flow, company }: { flow: ProcessFlowDto; company: string }): JSX.Element {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = new Date().toLocaleDateString('sv-SE') // 로컬 날짜 YYYY-MM-DD (toISOString=UTC 는 오전에 전날로 밀림)
   return (
     <div className="print-document bg-card border border-border rounded-xl overflow-hidden">
       {/* 문서 헤더 — SPEC REVISION(화면문법노트 §2-4) 1급 표기 */}

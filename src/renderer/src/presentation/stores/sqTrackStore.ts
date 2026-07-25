@@ -15,7 +15,6 @@ interface SqTrackState {
   detail: SqTrackPartDetailDto | null
   loadingDetail: boolean
   selectPart: (partNo: string | null) => Promise<void>
-  back: () => void
 
   /** 상태·메모 낙관 갱신 → IPC → 실패 시 상세 재로드. 오버뷰 카운트는 재조회. */
   updateItem: (input: SqTrackItemUpdateInput) => Promise<void>
@@ -53,7 +52,6 @@ export const useSqTrackStore = create<SqTrackState>((set, get) => ({
       set((s) => (s.selected === partNo ? { loadingDetail: false } : {}))
     }
   },
-  back: () => set({ selected: null, detail: null }),
 
   updateItem: async (input) => {
     const { detail, selected } = get()

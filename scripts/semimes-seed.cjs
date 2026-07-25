@@ -251,10 +251,13 @@ const classify = (c) => (RE_SEMI.test(c) ? '반제품' : RE_FIN.test(c) ? '완�
 //    - 외주 공정(표면처리 등) — 외주 성적서 전용 양식 부재              → NULL (양식 신설 시 여기서 연결)
 {
   const st = (stats['routing_step(cp)'] = { src: 0, inserted: 0, skipped: 0, updated: 0, deactivated: 0 })
+  // 품번당 최신 ISIR 패키지만 대사 — 재적재 시 rev_code 가 다르면 구 패키지가 공존(replace 아님)하므로
+  // 전 리비전 합산을 막는다(공정 흐름 맵 조회 handler 와 동일 기준 = MAX(id)).
   const cpRows = db.prepare(`
     SELECT p.part_no, c.process_no, c.process_name, c.control_method
     FROM control_plan_items c JOIN isir_packages p ON p.id = c.isir_id
-    WHERE c.process_no GLOB '[0-9]*'
+    WHERE TRIM(c.process_no) GLOB '[0-9]*'
+      AND c.isir_id = (SELECT MAX(x.id) FROM isir_packages x WHERE x.part_no = p.part_no)
     ORDER BY p.part_no, CAST(c.process_no AS INTEGER), c.seq`).all()
   const inspForm = (name, cm) => {
     if (/외주/.test(name)) return null
