@@ -2094,6 +2094,10 @@ export interface IpcChannelMap {
     request: { id: number; newPassword: string }
     response: { success: boolean; error?: string }
   }
+  [IPC_CHANNELS.OBLIGATION_MATRIX]: {
+    request: { days?: number } | undefined
+    response: ObligationMatrixDto
+  }
   [IPC_CHANNELS.APQP_BOARD]: {
     request: void
     response: ApqpBoardDto
@@ -2800,4 +2804,40 @@ export interface SemimesItemDetailDto {
   routing: SemimesRoutingStepDto[]
   children: { code: string; qty: number; active: number }[]
   usedBy: { code: string; qty: number; active: number }[]
+}
+
+// ── 이행 매트릭스 (17번 §3-2 — 사람×최근 14일, HRMS 근태 패턴) ────────
+
+/** 셀 상태 계약(17번): done=✓ · overdue=연체(·, n=그 시점 연체일수 — 구간 첫 셀만) ·
+ *  due=! 오늘 해야 함 · data=⚡ 데이터 할 일 활성 · na=— 해당 없음 */
+export type MatrixCellState = 'done' | 'overdue' | 'due' | 'data' | 'na'
+
+export interface ObligationMatrixCellDto {
+  d: string
+  s: MatrixCellState
+  n?: number
+}
+
+export interface ObligationMatrixRowDto {
+  key: string
+  /** 표시 사람: assignee → owner → '팀 공동'. 데이터 행은 '[데이터]' */
+  person: string
+  /** 부라벨 = 의무명(또는 데이터 행 설명) */
+  label: string
+  /** 데이터 트리거 행(시스템 발행) */
+  data?: boolean
+  cells: ObligationMatrixCellDto[]
+}
+
+export interface ObligationMatrixTeamDto {
+  teamId: string | null
+  label: string
+  rows: ObligationMatrixRowDto[]
+}
+
+export interface ObligationMatrixDto {
+  /** 표시 일자(주말 제외, 오늘 포함) — YYYY-MM-DD */
+  days: string[]
+  today: string
+  teams: ObligationMatrixTeamDto[]
 }

@@ -15,7 +15,7 @@ import { registerBomHandlers } from './bom-handlers'
 import { registerScoringHandlers } from './scoring-handlers'
 import { registerDashboardHandlers } from './dashboard-handlers'
 import { registerScheduleHandlers } from './schedule-handlers'
-import { registerObligationHandlers, registerTriggerIssueHandlers } from './obligation-handlers'
+import { registerObligationHandlers, registerTriggerIssueHandlers, registerObligationMatrixHandler } from './obligation-handlers'
 import { registerPpapHandlers } from './ppap-handlers'
 import { registerFmeaHandlers } from './fmea-handlers'
 import { registerApqpHandlers } from './apqp-handlers'
@@ -47,6 +47,7 @@ export function registerAllIpcHandlers(): void {
   registerScheduleHandlers()
   registerObligationHandlers()
   registerTriggerIssueHandlers()
+  registerObligationMatrixHandler()
   registerPpapHandlers()
   registerFmeaHandlers()
   registerApqpHandlers()

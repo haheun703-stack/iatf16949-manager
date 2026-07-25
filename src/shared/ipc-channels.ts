@@ -132,6 +132,8 @@ export const IPC_CHANNELS = {
   OBLIGATION_COMPLETE: 'obligation:complete',
   // 데이터 트리거 이슈 완료(M3, 15번 §3-2) — ✓는 사람만
   OBLIGATION_TRIGGER_COMPLETE: 'obligation:triggerComplete',
+  // 이행 매트릭스(17번 §3-2, 조회 전용 — 사람×14일 칩. 신규 테이블 금지)
+  OBLIGATION_MATRIX: 'obligation:matrix',
   // 도래일 일괄 재설정(실사용 개시) — executive/manager만. 실행 이력 obligation_reset_log(0086)
   OBLIGATION_RESET_DUE: 'obligation:resetDue',
 

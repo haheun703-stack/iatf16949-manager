@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Check, X, AlertCircle, Clock, Loader2, ShieldCheck, ChevronRight, FileEdit, Users, User, Network,
-  Database, Download, UserCircle2, ChevronDown, Lock, ClipboardList
+  Check, X, AlertCircle, Clock, Loader2, FileEdit, Users, User, Network,
+  Database, Download, UserCircle2, Lock, ClipboardList
 } from 'lucide-react'
 import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import type {
@@ -11,12 +11,13 @@ import type {
   TodayTaskDto,
   KpiIndicatorDto,
   MesRecordsStatusDto,
-  AppUserDto
+  AppUserDto,
+  ObligationMatrixDto
 } from '@shared/ipc-types'
+import { CardShell, KpiTile as StatTile, TeamDonut, MatrixBoard, MatrixLegend, SegTabs } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
 import { traceDeepLink } from '../../../lib/deeplink'
 import { useUIStore, type PageId } from '../../stores/uiStore'
-import { useDday } from '../../hooks/useDday'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { KpiBatchEntryModal } from './KpiBatchEntryModal'
 
@@ -49,12 +50,13 @@ export function PortalHome(): JSX.Element {
   const [boardView, setBoardView] = useState<'team' | 'person'>('team')
   const [completing, setCompleting] = useState<number | null>(null)
   const [mesStatus, setMesStatus] = useState<MesRecordsStatusDto | null>(null)
+  const [matrix, setMatrix] = useState<ObligationMatrixDto | null>(null)
+  const [matrixView, setMatrixView] = useState<'team' | 'person'>('team')
   const [showPrompt, setShowPrompt] = useState(false)
   const [kpiBatchOpen, setKpiBatchOpen] = useState(false)
   const setPage = useUIStore((s) => s.setPage)
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const setSelectedTeam = useUIStore((s) => s.setSelectedTeam)
-  const { dday } = useDday()
   // 활성 사용자 — 원시값 셀렉터로 구독(currentUser() 셀렉터 함정 회피, 렌더러 리뷰 메모)
   const users = useActiveUserStore((s) => s.users)
   const activeUserId = useActiveUserStore((s) => s.activeUserId)
@@ -68,6 +70,13 @@ export function PortalHome(): JSX.Element {
       setBoard(res)
     } catch {
       setBoard(null)
+    }
+    // 이행 매트릭스(17번 §3-2) — 보드와 함께 갱신(완료 처리 후 셀 즉시 반영)
+    try {
+      const m = (await window.api.invoke(window.api.channels.OBLIGATION_MATRIX, {})) as ObligationMatrixDto
+      setMatrix(m)
+    } catch {
+      setMatrix(null)
     }
   }, [])
 
@@ -208,150 +217,169 @@ export function PortalHome(): JSX.Element {
   }
   const heroToday = heroEntries.filter((e) => e.task.status !== 'upcoming') // 오늘 것만(예정 제외)
 
+  // ── 템플릿 A 파생 수치 (17번 §3-1 스탯 타일 — 기존 채널 재사용) ──
+  const longGap = allEntries.reduce((a, e) => a + (e.task.gapCount ?? 0), 0)
+  const dataCount =
+    longGap + allEntries.filter((e) => e.task.triggerIssueId && e.task.status !== 'done').length
+  const writtenToday = allEntries.filter(
+    (e) => e.task.hasFormRecord || e.task.doneSource === 'form'
+  ).length
+  const upcomingSum = board.teams.reduce((a, t) => a + t.upcoming, 0)
+  const denomAll = board.teams.reduce((a, t) => a + t.done + t.open, 0)
+  const donutSegs = board.teams.map((t) => ({
+    teamId: t.teamId,
+    share: denomAll > 0 ? t.done / denomAll : 0,
+    done: t.done,
+    denom: t.done + t.open
+  }))
+  const mesBehind =
+    mesStatus?.available && mesStatus.dataEndYmd ? daysBetweenYmd(mesStatus.dataEndYmd, board.date) : null
+
   return (
-    <div className="space-y-5 break-keep">
-      {/* 1. 히어로 — 내 할 일(활성 사용자). 목업 v2 화면① 최상단 */}
-      <Hero
-        user={currentUser}
-        entries={heroToday}
-        mode={heroMode}
-        teamLabel={myTeamId ? teamTheme(myTeamId).label : null}
-        dateLabel={dateLabel}
-        completing={completing}
-        onComplete={(t, source) => void complete(t, source)}
-        onOpenForm={openForm}
-        onOpenPage={setPage}
-        onSelectUser={() => setShowPrompt(true)}
-        currentName={currentUser?.name ?? null}
-      />
-
-      {/* 2. 타팀 스트립 — 5팀 한 줄(내 팀은 아웃라인) */}
-      <TeamStrip
-        teams={board.teams}
-        myTeamId={myTeamId}
-        onOpenTeam={(id) => {
-          setSelectedTeam(id)
-          setPage('team-detail')
-        }}
-      />
-
-      {/* MES 기록 커버리지 한 줄 — ⚠️dmp 스냅샷이라 기준일 표기(오늘 아님). 7일+ 묵으면 앰버→다운로드 의무 */}
-      <MesCoverageStrip status={mesStatus} today={board.date} onDownload={() => setPage('obligations')} />
-
-      {/* 3. 경영지표 — 접힘(role=executive 자동 펼침). 기존 위젯 삭제 없이 이동만 */}
-      <details open={currentUser?.role === 'executive'} className="group rounded-2xl border border-border bg-card">
-        <summary className="cursor-pointer select-none list-none flex items-center gap-2 px-6 py-4 text-[15px] font-bold hover:bg-muted/40 rounded-2xl transition-colors">
-          <ChevronDown className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" />
-          경영지표
-          <span className="ml-1 text-[13px] font-medium text-muted-foreground">
-            전사 이행률 {ratePct == null ? '—' : `${ratePct}%`} · 심사 D-{Math.abs(dday)}
+    <div className="space-y-4 break-keep">
+      {/* ── 템플릿 A 헤더 밴드 (19번 규칙②) — 제목+캡션+우측 상태 칩 ── */}
+      <div className="flex items-center gap-3.5 flex-wrap">
+        <h1 className="text-[20px] font-extrabold tracking-[-0.02em]">관제탑</h1>
+        <span className="text-[13px] text-muted-foreground">
+          {profile?.companyName || '데일리Q'} · {dateLabel}
+        </span>
+        <span className="flex-1" />
+        {mesBehind != null && mesBehind >= 7 ? (
+          <button
+            type="button"
+            onClick={() => setPage('mes-records')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-bold bg-warn-tint text-warn-ink border border-[#F5D9A8]"
+            title="MES 일일 기록이 오래됐습니다 — 현황 보기"
+          >
+            <Download className="w-3.5 h-3.5" /> MES {mesBehind}일 지남 — 다운로드 필요
+          </button>
+        ) : mesStatus?.available && mesStatus.dataEndYmd ? (
+          <button
+            type="button"
+            onClick={() => setPage('mes-records')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-semibold bg-muted text-muted-foreground"
+            title="MES 기록 현황 보기"
+          >
+            <Database className="w-3.5 h-3.5" /> MES 기준 {shortYmd(mesStatus.dataEndYmd)}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => setShowPrompt(true)}
+          className="inline-flex items-center gap-2 bg-card border border-border rounded-full pl-1.5 pr-3.5 py-1 shadow-card text-[13px] font-bold"
+          title="사용자 전환 — 완료·작성 기록에 남는 이름"
+        >
+          <span className="w-7 h-7 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-[13px] font-extrabold">
+            {currentUser ? currentUser.name.charAt(0) : <UserCircle2 className="w-4 h-4" />}
           </span>
-        </summary>
-        <div className="space-y-5 px-6 pb-6 pt-1">
-      {/* 회사 밴드 — 파스텔 면(7/16 사장님: 전체 파스텔 밝게). 딥블루는 활성 버튼 점에만 */}
-      <div className="rounded-2xl px-8 py-6 flex items-center gap-6 flex-wrap border border-border bg-gradient-to-r from-white via-[#eaf3fc] to-[#dcebfa]">
-        <div className="min-w-0">
-          <div className="text-[14px] font-semibold text-muted-foreground break-keep leading-snug">
-            {profile?.companyName || 'IATF 16949 품질경영시스템'} · {dateLabel}
-          </div>
-          {/* 톤 원칙(코워크 09 검토 반영): 하루가 끝나기 전 이행률은 경보가 아니라 진행 현황 — 위기어는 연체에만 */}
-          <h1 className="text-[23px] font-extrabold leading-snug tracking-[-0.02em] mt-1">
-            {denom === 0
-              ? '오늘 도래한 정기 업무가 없습니다'
-              : `오늘 ${totals.done} / ${denom}건 완료 — 진행 중${totals.overdue > 0 ? ` · 연체 ${totals.overdue}건` : ''}`}
-          </h1>
-        </div>
-        <div className="flex-1" />
-        <button
-          type="button"
-          onClick={() => setOnlyOpen((v) => !v)}
-          className={cn(
-            'h-10 px-5 rounded-lg text-[13.5px] font-bold border transition-colors',
-            onlyOpen
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-white border-border text-foreground hover:bg-muted'
-          )}
-          title="미이행(오늘 마감·연체) 업무만 표시"
-        >
-          {onlyOpen ? '전체 보기' : '미이행만 보기'}
+          {currentUser ? `${currentUser.name} · ${currentUser.teamDept ?? ''}` : '사용자 선택'}
         </button>
-        <button
-          type="button"
+      </div>
+
+      {/* ── KPI 스탯 타일 5 (17번 §3-1) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <StatTile
+          icon="✓" iconTint="bg-secondary text-primary" label="오늘 완료율"
+          value={ratePct == null ? '—' : ratePct} unit={ratePct == null ? undefined : '%'}
+          chip={denom === 0 ? '오늘 도래 없음' : `${totals.done}/${denom}건 · 실시간`}
+          chipTone={ratePct != null && ratePct >= 50 ? 'up' : 'fx'}
+        />
+        <StatTile
+          icon="!" iconTint="bg-bad-tint text-bad-ink" label="연체 의무"
+          value={totals.overdue} unit="건"
+          chip={longGap > 0 ? `장기 7일+ ${longGap}건` : '장기 연체 없음'}
+          chipTone={totals.overdue > 0 ? 'dn' : 'up'}
+        />
+        <StatTile
+          icon="⚡" iconTint="bg-data-tint text-data-ink" label="데이터 할 일"
+          value={dataCount} unit="건" chip="시스템 발행 — 국내 SME MES에 없는 계층" chipTone="fx"
+        />
+        <StatTile
+          icon="▤" iconTint="bg-ok-tint text-ok-ink" label="오늘 작성 기록"
+          value={writtenToday} unit="건" chip="연결 양식 작성 감지" chipTone={writtenToday > 0 ? 'up' : 'fx'}
+        />
+        <StatTile
+          icon="◷" iconTint="bg-warn-tint text-warn-ink" label="이번주 도래"
+          value={upcomingSum} unit="건" chip="리드타임 내 예정" chipTone="fx"
           onClick={() => setPage('obligations')}
-          className="h-10 px-5 rounded-lg text-[13.5px] font-bold bg-white border border-border text-foreground hover:bg-muted transition-colors"
-          title="정기 의무 등록·수정 — 팀별 일상 업무를 여기서 등록"
-        >
-          정기 의무 관리 ›
-        </button>
+        />
       </div>
 
-      {/* KPI 타일 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi label="오늘 이행률 (전사)" value={ratePct == null ? '—' : `${ratePct}%`} sub={denom === 0 ? '오늘 도래 업무 없음' : `${totals.done} / ${denom}건 완료 · 실시간 집계`} />
-        <Kpi label="남은 업무 (오늘 마감)" value={String(totals.open)} sub="완료 처리 전 — 하루 안엔 정상" />
-        <Kpi label="연체 (기한 경과)" value={String(totals.overdue)} bad={totals.overdue > 0} sub="가장 먼저 해소" />
-        <button
-          type="button"
-          onClick={() => setPage('sq-readiness')}
-          className="text-left bg-card border border-border rounded-xl px-6 py-5 hover:shadow-md transition-shadow"
-          title="심사 준비는 '심사 대응' 탭에서 — SQ 42항목"
+      {/* ── 메인 그리드: 이행 매트릭스 | 우측 레일 (16번 목업) ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4 items-start">
+        <CardShell
+          title="이행 매트릭스"
+          cap="사람 × 최근 14일 — 했는지 · 안 했는지"
+          actions={
+            <SegTabs
+              value={matrixView}
+              options={[
+                { key: 'team', label: '팀별' },
+                { key: 'person', label: '개인별' }
+              ]}
+              onChange={setMatrixView}
+            />
+          }
         >
-          <div className="text-[16.5px] font-bold text-foreground inline-flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5" /> 심사 대비 <span className="opacity-70">(항목)</span>
-          </div>
-          <div className="text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1">
-            D-{Math.abs(dday)}
-          </div>
-          <div className="text-[13px] font-semibold text-primary mt-1.5 inline-flex items-center">
-            SQ 준비도 보기 <ChevronRight className="w-3.5 h-3.5" />
-          </div>
-        </button>
+          {matrix && matrix.teams.length > 0 ? (
+            <>
+              <MatrixBoard matrix={matrix} personView={matrixView === 'person'} />
+              <MatrixLegend />
+            </>
+          ) : (
+            <div className="px-[18px] py-10 text-[13px] text-muted-foreground">
+              {matrix ? '표시할 의무가 없습니다 — 정기 의무에서 등록하세요.' : '집계 중…'}
+            </div>
+          )}
+        </CardShell>
+
+        <div className="grid gap-4">
+          <CardShell title="전사 이행률" cap="오늘">
+            <TeamDonut
+              segments={donutSegs}
+              centerPct={ratePct}
+              centerCap="오늘"
+              onPickTeam={(id) => {
+                setSelectedTeam(id)
+                setPage('team-detail')
+              }}
+            />
+            <div className="px-[18px] pb-4">
+              <div className="text-[12px] font-semibold text-muted-foreground mb-1.5">주간 완료 추이</div>
+              <TrendBars trend={board.trend} />
+            </div>
+          </CardShell>
+
+          <CardShell
+            title="내 할 일"
+            cap={currentUser ? `${currentUser.name} · 오늘` : '사용자 미선택'}
+            actions={
+              <button
+                type="button"
+                onClick={() => setBoardView('person')}
+                className="text-[12px] font-bold text-primary"
+                title="아래 보드를 개인별 보기로 전환"
+              >
+                전체 보기 ›
+              </button>
+            }
+          >
+            <RailTasks
+              user={currentUser}
+              entries={heroToday}
+              mode={heroMode}
+              completing={completing}
+              onComplete={(t, source) => void complete(t, source)}
+              onOpenForm={openForm}
+              onSelectUser={() => setShowPrompt(true)}
+            />
+          </CardShell>
+        </div>
       </div>
 
-      {/* 위젯: 주간 완료 추이 + 팀별 오늘 이행률 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="text-[16.5px] font-bold text-foreground mb-3.5">주간 완료 추이 (전사)</div>
-          <TrendBars trend={board.trend} />
-        </div>
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="mb-3.5 flex items-baseline">
-            <span className="flex-1 text-[16.5px] font-bold text-foreground">팀별 오늘 이행률</span>
-            <button
-              type="button"
-              onClick={() => setPage('team-hub')}
-              className="text-[13px] font-bold text-primary"
-            >
-              팀별 허브 ›
-            </button>
-          </div>
-          <div className="grid gap-3">
-            {board.teams.map((t) => {
-              const theme = teamTheme(t.teamId)
-              const d = t.done + t.open
-              const pct = d > 0 ? Math.round((t.done / d) * 100) : null
-              return (
-                <div key={t.teamId} className="flex items-center gap-3 text-[14.5px]">
-                  <span className="w-[118px] font-semibold break-keep leading-snug" style={{ color: theme.darkText }}>
-                    {theme.label}
-                  </span>
-                  <span className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
-                    {pct != null && (
-                      <span
-                        className="block h-full rounded-full"
-                        style={{ width: `${pct}%`, backgroundColor: theme.border }}
-                      />
-                    )}
-                  </span>
-                  <span className="w-16 text-right tabular-nums text-[14px] text-muted-foreground">
-                    {d === 0 ? '없음' : `${t.done}/${d}건`}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+      {/* (구)회사밴드·경영지표 위젯 = 헤더 밴드·KPI 타일·도넛·스파크로 흡수(정보손실 0 확인표).
+          미이행만 보기·정기 의무 관리 버튼은 아래 '오늘 할 일 보드' 헤더로 이동. */}
+
 
       {/* KPI 지수 스트립 (0066 대표 + 0082 v4 §04 팀별) — 목표 대비 실적, 미입력=정직 회색 */}
       <div className="bg-card border border-border rounded-xl p-6">
@@ -429,8 +457,6 @@ export function PortalHome(): JSX.Element {
           onSaved={loadKpis}
         />
       )}
-        </div>
-      </details>
 
       {/* 메인: 오늘 할 일 보드 — 팀별 ⇄ 개인별 (전체 보드, 삭제 없이 유지) */}
       <div>
@@ -442,6 +468,28 @@ export function PortalHome(): JSX.Element {
             ✓ = 완료 처리 또는 연결 양식의 오늘 작성 기록 · 심사(SQ) 연계는 배지로만
           </span>
           <span className="flex-1" />
+          {/* (구)회사밴드에서 이동 — 기능 무변 */}
+          <button
+            type="button"
+            onClick={() => setOnlyOpen((v) => !v)}
+            className={cn(
+              'h-9 px-4 rounded-lg text-[13px] font-bold border transition-colors',
+              onlyOpen
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-card border-border text-foreground hover:bg-muted'
+            )}
+            title="미이행(오늘 마감·연체) 업무만 표시"
+          >
+            {onlyOpen ? '전체 보기' : '미이행만 보기'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage('obligations')}
+            className="h-9 px-4 rounded-lg text-[13px] font-bold bg-card border border-border text-foreground hover:bg-muted transition-colors"
+            title="정기 의무 등록·수정"
+          >
+            정기 의무 관리 ›
+          </button>
           <span className="inline-flex rounded-lg border border-border overflow-hidden">
             <button
               type="button"
@@ -572,226 +620,117 @@ export function PortalHome(): JSX.Element {
   )
 }
 
-// ── 히어로: 내 할 일(활성 사용자 중심) ──────────────────────────────
-function Hero({
+// ── 우측 레일: 내 할 일(컴팩트) — 기존 히어로의 액션(완료·작성·확인) 보존 ──
+function RailTasks({
   user,
   entries,
   mode,
-  teamLabel,
-  dateLabel,
   completing,
   onComplete,
   onOpenForm,
-  onOpenPage,
-  onSelectUser,
-  currentName
+  onSelectUser
 }: {
   user: AppUserDto | null
   entries: Entry[]
   mode: 'assignee' | 'team'
-  teamLabel: string | null
-  dateLabel: string
   completing: number | null
   onComplete: (t: TodayTaskDto, source: 'manual' | 'form') => void
   onOpenForm: (formCode: string) => void
-  onOpenPage: (page: PageId) => void
   onSelectUser: () => void
-  currentName: string | null
 }): JSX.Element {
   if (!user) {
     return (
-      <div className="rounded-2xl px-8 py-7 border border-amber-200 bg-amber-50 flex items-center gap-5 flex-wrap">
-        <UserCircle2 className="w-9 h-9 text-amber-500 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <h1 className="text-[21px] font-extrabold tracking-[-0.01em] leading-snug">
-            사용자를 선택하면 내 할 일이 보입니다
-          </h1>
-          <p className="text-[13.5px] text-amber-800 mt-1">
-            완료·작성 기록에 남길 이름을 골라주세요 — 우측 상단에서 언제든 전환할 수 있습니다
-          </p>
-        </div>
+      <div className="px-[18px] pb-[18px] pt-1 text-[13px] text-muted-foreground leading-relaxed">
+        이름을 선택하면 오늘 내 할 일이 보입니다.
         <button
           type="button"
           onClick={onSelectUser}
-          className="h-10 px-5 rounded-lg text-[13.5px] font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity shrink-0"
+          className="block mt-2.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-[13px] font-bold"
         >
           사용자 선택
         </button>
       </div>
     )
   }
-
-  const done = entries.filter((e) => e.task.status === 'done').length
-  const total = entries.length
-  const pct = total > 0 ? Math.round((done / total) * 100) : null
-  const overdue = entries.filter((e) => e.task.status === 'overdue').length
-
+  if (entries.length === 0) {
+    return <div className="px-[18px] pb-[18px] pt-1 text-[13px] text-muted-foreground">오늘 내 할 일 없음 👍</div>
+  }
+  const shown = entries.slice(0, 7)
   return (
-    <div className="rounded-2xl px-8 py-6 border border-border bg-gradient-to-r from-white via-[#eaf3fc] to-[#dcebfa]">
-      <div className="flex items-baseline gap-3 flex-wrap">
-        <h1 className="text-[23px] font-extrabold leading-snug tracking-[-0.02em]">
-          {total === 0 ? (
-            <>{user.name}님, 오늘 도래한 할 일이 없습니다</>
-          ) : (
-            <>
-              {user.name}님, 오늘 할 일 <b className="text-primary">{total}건</b> 중{' '}
-              <b className="text-primary">{done}건</b> 끝냈어요
-            </>
-          )}
-        </h1>
-        <span className="text-[13.5px] text-muted-foreground">
-          {dateLabel} · {user.teamDept ?? ''}
-          {overdue > 0 && <span className="text-destructive font-bold"> · 연체 {overdue}건</span>}
-        </span>
-      </div>
-
-      {mode === 'team' && total > 0 && (
-        <div className="mt-1 text-[12.5px] text-muted-foreground">
-          담당 지정 업무가 없어 <b>{teamLabel ?? '소속 팀'}</b> 공동 업무를 보여드립니다
-        </div>
+    <div className="px-[18px] pb-4 pt-1 grid gap-2">
+      {mode === 'team' && (
+        <div className="text-[11px] text-faint -mt-1">담당 지정 업무가 없어 팀 공동 업무를 보여드립니다</div>
       )}
-
-      {total > 0 && (
-        <div className="mt-3 flex items-center gap-3">
-          <span className="flex-1 h-2.5 rounded-full bg-white/70 overflow-hidden">
-            {pct != null && (
-              <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-            )}
-          </span>
-          <span className="text-[13px] font-bold tabular-nums text-primary">{pct ?? 0}%</span>
-        </div>
-      )}
-
-      {entries.length > 0 && (
-        <div className="mt-3 bg-card rounded-xl border border-border overflow-hidden">
-          {entries.map(({ task }) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              completing={completing === task.id}
-              onComplete={(source) => onComplete(task, source)}
-              onOpenForm={onOpenForm}
-              onOpenPage={onOpenPage}
-              currentName={currentName}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── 타팀 스트립: 5팀 한 줄(내 팀 아웃라인, 연체 1건 노출) ──────────
-function TeamStrip({
-  teams,
-  myTeamId,
-  onOpenTeam
-}: {
-  teams: TeamTodayDto[]
-  myTeamId: TeamId | null
-  onOpenTeam: (id: TeamId) => void
-}): JSX.Element {
-  return (
-    <div className="flex gap-2.5 flex-wrap">
-      {teams.map((t) => {
-        const theme = teamTheme(t.teamId)
-        const d = t.done + t.open
-        const pct = d > 0 ? Math.round((t.done / d) * 100) : null
-        const firstOverdue = t.tasks.find((x) => x.status === 'overdue')
-        const isMine = t.teamId === myTeamId
+      {shown.map(({ task, teamId }) => {
+        const done = task.status === 'done'
+        const badge = done
+          ? { cls: 'bg-ok-tint text-ok-ink', label: task.doneSource === 'form' ? '작성기록 ✓' : '완료 ✓' }
+          : task.gapCount
+            ? { cls: 'bg-data-tint text-data-ink', label: '데이터' }
+            : task.triggerIssueId
+              ? { cls: 'bg-data-tint text-data-ink', label: task.triggerResolved ? '해소됨' : '데이터' }
+              : task.status === 'overdue'
+                ? { cls: 'bg-bad-tint text-bad-ink', label: `연체 ${Math.abs(task.daysLeft ?? 0)}일` }
+                : task.status === 'due'
+                  ? { cls: 'bg-warn-tint text-warn-ink', label: '오늘' }
+                  : { cls: 'bg-muted text-muted-foreground', label: `D-${task.daysLeft ?? ''}` }
         return (
-          <button
-            key={t.teamId}
-            type="button"
-            onClick={() => onOpenTeam(t.teamId)}
-            title={`${theme.label} 상세 보기`}
-            className={cn(
-              'flex-1 min-w-[150px] text-left rounded-xl border bg-card px-3.5 py-2.5 hover:shadow-md transition-shadow',
-              isMine ? 'border-2' : 'border-border'
+          <div key={task.id} className="flex items-center gap-2.5 border border-border rounded-[11px] px-3 py-2.5">
+            <span
+              className="w-1 h-8 rounded-full shrink-0"
+              style={{ backgroundColor: task.gapCount || task.triggerIssueId ? 'var(--color-data)' : teamId ? teamTheme(teamId).border : 'var(--color-border)' }}
+            />
+            <span className="flex-1 min-w-0 leading-snug">
+              <b className="block text-[12.5px] truncate">{task.title}</b>
+              <span className="text-[11px] text-faint">{task.cadence} 주기{task.assignee ? ` · ${task.assignee}` : ''}</span>
+            </span>
+            <span className={cn('text-[10.5px] font-extrabold px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap', badge.cls)}>
+              {badge.label}
+            </span>
+            {!done && !task.gapCount && (
+              task.formCode ? (
+                task.hasFormRecord ? (
+                  <button
+                    type="button"
+                    onClick={() => onComplete(task, 'form')}
+                    disabled={completing === task.id}
+                    className="h-7 px-2 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 shrink-0"
+                    title="오늘 작성기록으로 완료 확정"
+                  >
+                    확정
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onOpenForm(task.formCode!)}
+                    className="h-7 px-2 rounded-md text-[11px] font-bold bg-primary/10 text-primary hover:bg-primary/20 shrink-0"
+                    title={`연결 양식(${task.formCode}) 정답 보고 작성`}
+                  >
+                    작성
+                  </button>
+                )
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onComplete(task, 'manual')}
+                  disabled={completing === task.id}
+                  className="h-7 px-2 rounded-md text-[11px] font-bold bg-primary/10 text-primary hover:bg-primary/20 shrink-0"
+                  title="이행 완료 처리"
+                >
+                  {completing === task.id ? '…' : '완료'}
+                </button>
+              )
             )}
-            style={isMine ? { borderColor: theme.border } : undefined}
-          >
-            <div className="flex items-center gap-1.5 text-[13.5px] font-bold" style={{ color: theme.darkText }}>
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: theme.border }} />
-              <span className="truncate">{theme.label}</span>
-              {isMine && <span className="text-[10px] font-semibold text-muted-foreground">내 팀</span>}
-              <span className="ml-auto text-[12.5px] tabular-nums text-muted-foreground shrink-0">
-                {d === 0 ? '없음' : `${t.done}/${d}`}
-              </span>
-            </div>
-            <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
-              {pct != null && (
-                <span className="block h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: theme.border }} />
-              )}
-            </div>
-            {firstOverdue ? (
-              <div className="mt-1.5 text-[11.5px] text-destructive font-semibold truncate" title={firstOverdue.title}>
-                연체 · {firstOverdue.title}
-              </div>
-            ) : (
-              <div className="mt-1.5 text-[11.5px] text-muted-foreground">
-                {d === 0 ? '오늘 도래 없음' : pct === 100 ? '오늘 다 함 👍' : '진행 중'}
-              </div>
-            )}
-          </button>
+          </div>
         )
       })}
-    </div>
-  )
-}
-
-// ── MES 커버리지 한 줄: dmp 스냅샷 기준일 표기 + 7일+ 앰버 → 다운로드 의무 딥링크 ──
-function MesCoverageStrip({
-  status,
-  today,
-  onDownload
-}: {
-  status: MesRecordsStatusDto | null
-  today: string
-  onDownload: () => void
-}): JSX.Element | null {
-  if (!status || !status.available || !status.dataEndYmd) return null
-  const end = status.dataEndYmd
-  const staleDays = daysBetweenYmd(end, today)
-  const stale = staleDays >= 7
-  // 커버리지 대상 4종만(출하 O는 MES 무기록이라 제외)
-  const shown = status.types.filter((t) => ['W', 'I', 'P', 'MAC'].includes(t.key))
-  const fmt = (n: number): string => (n >= 10000 ? `${(n / 10000).toFixed(1)}만` : n.toLocaleString())
-
-  return (
-    <div
-      className={cn(
-        'rounded-xl border px-4 py-2.5 flex items-center gap-x-3 gap-y-1 flex-wrap text-[13px]',
-        stale ? 'border-amber-300 bg-amber-50' : 'border-border bg-card'
-      )}
-    >
-      <span className="inline-flex items-center gap-1.5 font-bold shrink-0">
-        <Database className={cn('w-3.5 h-3.5', stale ? 'text-amber-600' : 'text-muted-foreground')} />
-        MES 기록
-      </span>
-      <span className={cn('font-semibold tabular-nums', stale ? 'text-amber-700' : 'text-foreground')}>
-        {shortYmd(end)} 기준
-      </span>
-      <span className="text-muted-foreground">·</span>
-      {shown.map((t) => (
-        <span key={t.key} className="tabular-nums text-muted-foreground">
-          {t.label} <b className="text-foreground">{fmt(t.totalItems)}</b>
-        </span>
-      ))}
-      <span className="text-[11.5px] text-muted-foreground/70">(누적 · 정기 의무 ✓와 별개)</span>
-      {stale && (
-        <button
-          type="button"
-          onClick={onDownload}
-          className="ml-auto inline-flex items-center gap-1 text-[12px] font-bold text-amber-700 hover:bg-amber-100 rounded px-2 py-1 transition-colors shrink-0"
-          title="MES 데이터가 오래됨 — 새 덤프 반입 필요(MES 다운로드 정기 의무)"
-        >
-          <Download className="w-3.5 h-3.5" /> {staleDays}일 지남 — MES 다운로드 필요 ›
-        </button>
+      {entries.length > shown.length && (
+        <div className="text-[11px] text-faint">+{entries.length - shown.length}건 더 — [전체 보기 ›]</div>
       )}
     </div>
   )
 }
+
 
 // ── §4 사용자 선택 모달(첫 실행 1회) ──────────────────────────────
 function UserPromptModal({
@@ -855,22 +794,6 @@ function UserPromptModal({
   )
 }
 
-function Kpi({ label, value, sub, bad }: { label: string; value: string; sub: string; bad?: boolean }): JSX.Element {
-  return (
-    <div className="bg-card border border-border rounded-xl px-6 py-5">
-      <div className="text-[16.5px] font-bold text-foreground">{label}</div>
-      <div
-        className={cn(
-          'text-[30px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1',
-          bad && 'text-destructive'
-        )}
-      >
-        {value}
-      </div>
-      <div className="text-[13px] text-muted-foreground mt-1.5">{sub}</div>
-    </div>
-  )
-}
 
 /** 최근 7일 완료 건수 미니 바 차트 (0063 이력 — 오늘부터 쌓임). */
 function TrendBars({ trend }: { trend: TeamTodayBoardDto['trend'] }): JSX.Element {
