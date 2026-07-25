@@ -1,12 +1,10 @@
-import { ArrowLeft } from 'lucide-react'
 import { useSqTrackStore } from '../../stores/sqTrackStore'
 import { SqTrackItemRow } from './SqTrackItemRow'
 
-/** 품번 상세 — 4단계(서류/정합성/현장/인터뷰) 섹션별 체크리스트. */
+/** 품번 상세 — 4단계(서류/정합성/현장/인터뷰) 섹션별 체크리스트. 좌측 목록이 상주하므로 뒤로가기 없음(템플릿 C). */
 export function SqTrackPartDetail(): JSX.Element {
   const detail = useSqTrackStore((s) => s.detail)
   const loading = useSqTrackStore((s) => s.loadingDetail)
-  const back = useSqTrackStore((s) => s.back)
 
   if (!detail) {
     return (
@@ -18,25 +16,16 @@ export function SqTrackPartDetail(): JSX.Element {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 min-w-0">
-        <button
-          type="button"
-          onClick={back}
-          className="flex items-center gap-1 text-[12.5px] text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5 bg-card shrink-0"
-        >
-          <ArrowLeft size={14} /> 품번 목록
-        </button>
-        <div className="min-w-0">
-          <div className="text-[16px] font-extrabold tabular-nums truncate">
-            {detail.partNo}
-            <span className="ml-2 text-[12.5px] font-medium text-muted-foreground">
-              {detail.partName ?? ''}
-              {detail.model ? ` · ${detail.model}` : ''}
-              {detail.customer ? ` · ${detail.customer}` : ''}
-            </span>
-          </div>
-          {detail.binderInfo && <div className="text-[11.5px] text-muted-foreground truncate">{detail.binderInfo}</div>}
+      <div className="min-w-0">
+        <div className="text-[16px] font-extrabold tabular-nums truncate">
+          {detail.partNo}
+          <span className="ml-2 text-[12.5px] font-medium text-muted-foreground">
+            {detail.partName ?? ''}
+            {detail.model ? ` · ${detail.model}` : ''}
+            {detail.customer ? ` · ${detail.customer}` : ''}
+          </span>
         </div>
+        {detail.binderInfo && <div className="text-[11.5px] text-muted-foreground truncate">{detail.binderInfo}</div>}
       </div>
 
       {detail.phases.map((p) => {

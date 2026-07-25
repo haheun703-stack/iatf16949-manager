@@ -78,6 +78,7 @@ export function registerSqTrackHandlers(): void {
         auditDate: getConfig(CONFIG_KEYS.auditDate),
         title: getConfig(CONFIG_KEYS.title) ?? 'SQ LEVEL-UP 심사',
         goal: getConfig(CONFIG_KEYS.goal),
+        primaryPartNo: getConfig('audit.primaryPartNo'),
         parts,
         totals: { total, open: total - done - na, done }
       }

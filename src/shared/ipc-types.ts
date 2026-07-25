@@ -1154,6 +1154,8 @@ export interface SqTrackOverviewDto {
   auditDate: string | null
   title: string
   goal: string | null
+  /** 심사 대상 정본 품번 (app_config audit.primaryPartNo — 2026-07-25 사장님 확정 28236-2MAA0) */
+  primaryPartNo: string | null
   parts: SqTrackPartCardDto[]
   totals: { total: number; open: number; done: number }
 }
