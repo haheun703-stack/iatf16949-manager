@@ -1,5 +1,6 @@
 /* eslint-disable */
 // 반(半)-MES 코어스키마 시드 로더 + POP_BOM 갱신 파이프라인 (15번 M0)
+// + CP(관리계획서)→라우팅 갱신 파이프라인 (§0.5 승인 2026-07-25 — 파이프라인 2 주석 참조)
 //
 // 시드는 마이그에 인라인 금지(15번 §5) → 이 스크립트가 TPC팩 시드의 정본 적재기.
 // 멱등: 전 시드 INSERT OR IGNORE / 파이프라인은 upsert+deactivate (재실행 안전).
@@ -239,6 +240,81 @@ const classify = (c) => (RE_SEMI.test(c) ? '반제품' : RE_FIN.test(c) ? '완�
   stats['bom_edge(popbom)'] = { src: rows.length, inserted: run.added, skipped: run.unchanged, updated: run.updated, deactivated: run.deactivated, items_new: run.items_new }
 }
 
+// ── 파이프라인 2: CP(관리계획서) → 라우팅 갱신 (§0.5 승인 2026-07-25, 조건 3개) ──
+// ① source='cp' — 2021 설계분·POP 갱신분과 구분 유지.
+// ② 일회성 복사 금지 — 실행마다 현재 control_plan_items 전체와 대사해 upsert + 사라진 스텝 deactivate.
+//    CP 개정 경로: ISIR 재적재(관리계획서 갱신) → 본 스크립트 재실행 = 갱신 파이프라인(POP_BOM 과 동일 원칙).
+// ③ insp_form_code 연결 근거 (CP 확인방법·관리방안 → forms.code, 2026-07-25 라이브 forms 실측):
+//    - 단품입고·수입검사 (control_method "수입검사 이력카드")          → L2100-07 수입검사 관리대장
+//    - 사내 가공/검사 공정 (method 육안·V/C·C/F·M-SHEET = 자주검사 계열) → M1200-10 공정 자주검사 CHECK SHEET
+//    - 포장(최종·출하)                                               → M3100-05 완성품·출하검사 성적서
+//    - 외주 공정(표면처리 등) — 외주 성적서 전용 양식 부재              → NULL (양식 신설 시 여기서 연결)
+{
+  const st = (stats['routing_step(cp)'] = { src: 0, inserted: 0, skipped: 0, updated: 0, deactivated: 0 })
+  const cpRows = db.prepare(`
+    SELECT p.part_no, c.process_no, c.process_name, c.control_method
+    FROM control_plan_items c JOIN isir_packages p ON p.id = c.isir_id
+    WHERE c.process_no GLOB '[0-9]*'
+    ORDER BY p.part_no, CAST(c.process_no AS INTEGER), c.seq`).all()
+  const inspForm = (name, cm) => {
+    if (/외주/.test(name)) return null
+    if (/입고/.test(name) || /수입검사/.test(cm || '')) return 'L2100-07'
+    if (/포장/.test(name)) return 'M3100-05'
+    return 'M1200-10'
+  }
+  // 공정명 → CP 공정코드: 기존 source='cp' 마스터를 이름으로 재사용(결정적), 없으면 CPnn 발급
+  const procByName = new Map(
+    db.prepare(`SELECT proc_name, proc_code FROM process_master WHERE source='cp'`).all().map((r) => [r.proc_name, r.proc_code])
+  )
+  let cpN = db.prepare(`SELECT COUNT(*) c FROM process_master WHERE source='cp'`).get().c
+  const insProc = db.prepare(`INSERT INTO process_master (proc_code, proc_name, proc_type, insp_form_code, sort_order, source)
+                              VALUES (?, ?, ?, ?, ?, 'cp')`)
+  const insItemCp = db.prepare(`INSERT OR IGNORE INTO item_master (item_code, item_type, source) VALUES (?, ?, 'cp')`)
+  const selStep = db.prepare(`SELECT id, active, out_yn FROM routing_step WHERE item_code=? AND seq=? AND proc_code=?`)
+  const upStep = db.prepare(`INSERT INTO routing_step (item_code, seq, proc_code, out_yn, active, source)
+                             VALUES (?, ?, ?, ?, 1, 'cp')
+                             ON CONFLICT(item_code, seq, proc_code) DO UPDATE SET active=1, out_yn=excluded.out_yn`)
+  db.transaction(() => {
+    // 품번별 집약: 같은 process_no 의 CP 행 여러 개(관리항목별) → 라우팅 스텝 1개
+    const byPart = new Map()
+    for (const r of cpRows) {
+      st.src++
+      const seq = parseInt(r.process_no, 10)
+      if (!r.part_no || !Number.isFinite(seq)) { st.skipped++; continue }
+      const m = byPart.get(r.part_no) ?? new Map()
+      if (!m.has(seq)) m.set(seq, r)
+      byPart.set(r.part_no, m)
+    }
+    for (const [part, steps] of byPart) {
+      insItemCp.run(part, classify(part))
+      const maxSeq = Math.max(...steps.keys())
+      const desired = new Set()
+      for (const [seq, r] of [...steps.entries()].sort((a, b) => a[0] - b[0])) {
+        const name = (r.process_name || '').trim() || `공정 ${seq}`
+        let code = procByName.get(name)
+        if (!code) {
+          code = 'CP' + String(++cpN).padStart(2, '0')
+          insProc.run(code, name, /외주/.test(name) ? '외주' : '사내', inspForm(name, r.control_method), 900 + cpN)
+          procByName.set(name, code)
+        }
+        desired.add(seq + '|' + code)
+        const ex = selStep.get(part, seq, code)
+        upStep.run(part, seq, code, seq === maxSeq ? 1 : 0)
+        if (!ex) st.inserted++
+        else if (!ex.active || ex.out_yn !== (seq === maxSeq ? 1 : 0)) st.updated++
+        else st.skipped++
+      }
+      // 이번 대사에서 사라진 CP 스텝 = CP 개정 소멸 → active=0 (삭제 금지)
+      for (const ex of db.prepare(`SELECT id, seq, proc_code FROM routing_step WHERE item_code=? AND source='cp' AND active=1`).all(part)) {
+        if (!desired.has(ex.seq + '|' + ex.proc_code)) {
+          db.prepare('UPDATE routing_step SET active=0 WHERE id=?').run(ex.id)
+          st.deactivated++
+        }
+      }
+    }
+  })()
+}
+
 // ── 사후 집계 (리포트) ──
 const count = (sql) => db.prepare(sql).get().c
 const totals = {
@@ -249,6 +325,7 @@ const totals = {
   bom_edge: count('SELECT COUNT(*) c FROM bom_edge'),
   'bom_edge(active)': count('SELECT COUNT(*) c FROM bom_edge WHERE active=1'),
   routing_step: count('SELECT COUNT(*) c FROM routing_step'),
+  'routing_step(cp active)': count(`SELECT COUNT(*) c FROM routing_step WHERE source='cp' AND active=1`),
   partner: count('SELECT COUNT(*) c FROM partner'),
   defect_type: count('SELECT COUNT(*) c FROM defect_type'),
   lot_registry: count('SELECT COUNT(*) c FROM lot_registry'),
