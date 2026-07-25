@@ -3,7 +3,7 @@ import {
   LayoutDashboard, AlertTriangle, CalendarDays, CalendarClock, Route, Package, ClipboardCheck,
   GitBranch, Ruler, ShieldCheck, ListChecks, FolderTree, FileEdit, Factory, Home, Users,
   Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList, Network,
-  Activity, ListTree, Camera
+  Activity, ListTree, Camera, Workflow
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -55,6 +55,7 @@ const SECTIONS: { key: string; label: string; items: NavItem[] }[] = [
     label: '반-MES',
     items: [
       { id: 'item-tree', label: '품번 트리', icon: ListTree, desc: 'BOM·라우팅·공정 — 제조 기준정보' },
+      { id: 'process-flow', label: '공정 흐름 맵', icon: Workflow, desc: '품번별 공정 흐름 — 공정 흐름도 출력' },
       { id: 'mes-trace', label: 'LOT 계보 조회', icon: Network, desc: '자재↔생산 LOT 정·역추적' },
       { id: 'mes-records', label: 'MES 기록 현황', icon: Activity, desc: '자주·수입·패트롤·설비점검 커버리지' },
       { id: 'home', label: '입고 사진함', icon: Camera, desc: 'M1 파일럿 후 활성(원버튼 사진함)', disabled: true }

@@ -2088,6 +2088,14 @@ export interface IpcChannelMap {
     request: { itemCode: string }
     response: SemimesItemDetailDto | null
   }
+  [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
+    request: void
+    response: ProcessFlowPartDto[]
+  }
+  [IPC_CHANNELS.PROCESS_FLOW_GET]: {
+    request: { partNo: string }
+    response: ProcessFlowDto | null
+  }
   [IPC_CHANNELS.OBLIGATION_TRIGGER_COMPLETE]: {
     request: { issueId: number; doneBy?: string }
     response: { success: boolean }
@@ -2806,6 +2814,46 @@ export interface SemimesItemDetailDto {
   routing: SemimesRoutingStepDto[]
   children: { code: string; qty: number; active: number }[]
   usedBy: { code: string; qty: number; active: number }[]
+}
+
+// ── 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력) ──
+
+export interface ProcessFlowPartDto {
+  partNo: string
+  partName: string | null
+  customer: string | null
+  model: string | null
+  stepCount: number
+  /** 심사 대상 정본 품번(app_config audit.primaryPartNo) 여부 */
+  isPrimary: boolean
+}
+
+/** 흐름도 기호 분류(공정흐름도 관례: ▽ 입고/저장 · ○ 가공 · ◇ 검사 · ◆ 출하) — 공정명 휴리스틱 */
+export type ProcessFlowSymbol = '입고' | '가공' | '검사' | '출하'
+
+export interface ProcessFlowStepDto {
+  seq: number
+  procCode: string
+  procName: string
+  procType: string // 사내 | 외주
+  inspFormCode: string | null
+  inspFormName: string | null
+  outYn: number
+  symbol: ProcessFlowSymbol
+  /** 해당 공정의 관리계획서 관리항목(제안 근거 표시용) */
+  controlItems: { item: string | null; method: string | null; frequency: string | null; equipment: string | null }[]
+}
+
+export interface ProcessFlowDto {
+  partNo: string
+  partName: string | null
+  customer: string | null
+  model: string | null
+  /** SPEC REVISION(화면문법노트 §2-4) — isir_packages rev_code·rev_date */
+  revCode: string | null
+  revDate: string | null
+  qaManager: string | null
+  steps: ProcessFlowStepDto[]
 }
 
 // ── 이행 매트릭스 (17번 §3-2 — 사람×최근 14일, HRMS 근태 패턴) ────────

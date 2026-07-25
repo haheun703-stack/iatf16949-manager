@@ -54,10 +54,14 @@
   --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.05);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* 무층(unlayered) 전역 리셋은 @layer utilities 를 이겨 margin/padding 유틸리티를 전부 죽인다
+   (캐스케이드: 무층 > 레이어). base 레이어로 내려 utilities 가 정상 승리하게 한다. */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 }
 
 html, body, #root {
@@ -164,5 +168,7 @@ body {
     box-shadow: none !important;
     resize: none !important;
   }
+  /* 공정 흐름 맵 — 스텝 카드가 페이지 경계에서 잘리지 않게 */
+  .flow-step { break-inside: avoid; }
   @page { size: A4 portrait; margin: 12mm; }
 }

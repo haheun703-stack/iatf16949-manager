@@ -29,6 +29,7 @@ export type PageId =
   | 'mes-trace'
   | 'mes-records'
   | 'item-tree'
+  | 'process-flow'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
@@ -58,7 +59,8 @@ export const PAGE_LABELS: Record<PageId, string> = {
   integrity: '무결성',
   'mes-trace': 'MES 역추적',
   'mes-records': 'MES 기록',
-  'item-tree': '품번 트리'
+  'item-tree': '품번 트리',
+  'process-flow': '공정 흐름 맵'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

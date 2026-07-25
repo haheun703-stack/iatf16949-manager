@@ -203,6 +203,10 @@ export const IPC_CHANNELS = {
   SEMIMES_TREE: 'semimes:tree',
   SEMIMES_ITEM: 'semimes:item',
 
+  // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
+  PROCESS_FLOW_LIST: 'processFlow:list',
+  PROCESS_FLOW_GET: 'processFlow:get',
+
   // 품번/ISIR 척추 (관리계획서·검사협정 = 부품 단위 통제)
   PARTS_LIST: 'parts:list',
   PART_DETAIL: 'parts:detail',
