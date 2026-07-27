@@ -1,4 +1,33 @@
-# TODO — 이어서 작업 (갱신: 2026-07-24 저녁 · W1~W3 로컬 완료 = 코워크 공식 도장)
+# TODO — 이어서 작업 (갱신: 2026-07-27 저녁 · UI 완주 C군 끝 · B군 3/4)
+
+## ✅ 7/27 (월) — **C군 완주 + B군 3/4**. 다음 = A군 잔여 → 완주 게이트
+
+**커밋 3건 전부 푸시**(e10213c → 09f6b69, 트리 클린):
+1. `bf475d7` **C군 2배치** — ppap·fmea·msa 템플릿 C. msaStore.create 가 새 id 반환 → 추가 직후 자동 선택.
+   MSA 는 표 일람 → 좌 게이지·우 상세 폼으로 성격이 바뀐 유일 화면(미선택 = 판정 분포·조치 필요·기준).
+2. `a925852` **C군 3배치 = C군 완주** — apqp(가로 스테퍼 폐지 → 좌 5단계·우 산출물)·mes-trace(좌 검색·LOT
+   목록·우 계보 전개)·process-workbench(**ProcessSelector 삭제** → 좌 9프로세스·우 작업장).
+3. `09f6b69` **B군 3화면 + ListKit 신설** — `shared/list/ListKit.tsx`(StatBand·StatTile·SearchBar·
+   FilterSelect·ListShell·GroupLabel·EmptyResult). doc-browse 내부 StatTile 을 여기로 승격(중복 제거),
+   clause-tree·obligations 에 숫자 밴드+검색 신설. obligations full-bleed 해제.
+
+**남은 UI**: ①**document-bom = 판정 질의 회신 대기**(분류표 §질의 — 이미 좌목록·우상세라 판정① 기준 C.
+권고 = C 재판정 후 380px 규격만) ②**A군 9종**(home 은 ⓑ에서 완료 — team-hub·team-detail·dashboard·
+sq-dashboard·iatf-dashboard·mes-records·integrity·schedule 이 홈 골격 공유) ③완주 게이트(코워크 전 화면 일람).
+
+**검수 대기 캡처**(captures/): cap_ui_c2_*(5) · cap_ui_c3_*(5) · cap_ui_b3_*(4).
+
+⚠️ **웹 캡처 함정 2건(오늘 실측·capture.mjs 에 명문화)**: ①크롬을 **--disable-gpu** 로 띄우지 않으면 큰
+이미지(공정 흐름도)가 뜬 화면에서 `Page.captureScreenshot` 이 무응답으로 매달린다. `fromSurface:false`
+폴백은 창이 가리면 **백지 PNG** 가 나오므로 증거로 쓰지 말 것 — 대신 스크롤로 리페인트 유발 후 재시도.
+②복사본 DB 로 캡처할 때 `process_pages.image_path` 는 라이브 절대경로라 safeRoot 검증에 걸려 이미지가
+안 뜬다(코드 결함 아님). 복사본 폴더로 `process-images` 복사 + 경로 치환이 필요.
+
+⚠️ 설치판은 여전히 **7/22판** — 오늘분 미반영. W4 배치 때 재빌드(마이그 0101+ 동반).
+
+---
+
+# (이전) TODO — 갱신: 2026-07-24 저녁 · W1~W3 로컬 완료 = 코워크 공식 도장
 
 ## ✅ 7/24 (금) — **W3 로컬 = 코워크 공식 합격**. 다음 입력 = ①사장님 UX 피드백 or ②3결정(→W4)
 
