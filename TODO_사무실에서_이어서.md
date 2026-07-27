@@ -28,7 +28,25 @@
 sq-dashboard·iatf-dashboard·mes-records·integrity·schedule 이 홈 골격(KPI 타일·매트릭스) 공유.
 그 뒤가 **완주 게이트**(코워크 전 화면 일람 검수 = 오픈 승인).
 
-**검수 대기 캡처**(captures/): cap_ui_c2_*(5) · cap_ui_c3_*(5) · cap_ui_b3_*(4).
+**검수 대기 캡처**(captures/): cap_ui_c2_*(5) · cap_ui_c3_*(5) · cap_ui_b3_*(4) · cap_review_*(4, 검수 수정본).
+
+### 마감 전체검수 (자체, `b55f6ab`) — 발견 5건 전부 수정·실증
+
+1. **[로직·중요] 조항 커버리지 거짓 갭 경고** — 커버/미커버 판정이 *검색·부서 필터로 걸러진 결과* 기준이라,
+   무매칭 검색어 + 미커버 필터를 걸면 멀쩡한 조항 7건 전부에 "이 조항을 커버하는 규정이 없습니다"가 떴다
+   (숫자 밴드는 미커버 0 — 밴드와 목록이 서로 다른 말을 함). 심사 대응 화면의 오정보라 판정을 **원본 규정 수
+   기준으로 고정**. 배지는 필터 중일 때 `결과 / 전체` 병기, 필터 때문에 결과만 0 인 경우는 중립 안내로 분리.
+   **재실증**: 무매칭+미커버 → 거짓경고 0·"조건에 맞는 조항이 없습니다" / 검색 "관리" → `규정 7 / 16` 병기 /
+   검색 해제 → 7조항 복귀.
+2. **[UX 규칙] ppap·fmea 로딩 중 우측 완전 공백** → CardShell `status=loading` 스켈레톤(19번 규칙④).
+3. **[슬러지] FmeaView `apCell` 의 reActionPriority 분기** — 시트에 재AP 칸이 없어 호출 불가능한 죽은 경로. 제거.
+4. **[슬러지] MesTraceView `LotChip.active`** — 넘기는 곳이 없는 죽은 prop. 제거.
+5. **[문서] 분류표 doc-browse "시각 동일" 정정** — 부품화로 밴드가 실제로 커졌다(동작·구조는 무변).
+   커버 판정 규칙도 분류표에 명문화.
+
+통과 확인: MSA 상세 전환 시 입력값 갱신(게이지1 %GRR 8.5 → 게이지3 33.7, `key={m.id}` 재마운트 정상 작동) ·
+`setSelectedProcessCode(null)` 은 캡처 헬퍼(main.tsx `__cap`)가 쓰므로 슬러지 아님 · obligations 숫자밴드는
+전체 기준(doc-browse 정본과 동일 패턴이라 목록 필터와 불일치 아님) · typecheck·빌드·ppap/fmea 회귀 없음.
 
 ⚠️ **웹 캡처 함정 2건(오늘 실측·capture.mjs 에 명문화)**: ①크롬을 **--disable-gpu** 로 띄우지 않으면 큰
 이미지(공정 흐름도)가 뜬 화면에서 `Page.captureScreenshot` 이 무응답으로 매달린다. `fromSurface:false`
