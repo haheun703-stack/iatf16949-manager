@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Loader2, BookOpen, ChevronRight, ArrowLeft, PencilLine, Sparkles, CircleCheck, CircleAlert,
-  Search, FileText, ListChecks, LayoutGrid, Rows3
+  FileText, ListChecks, LayoutGrid, Rows3
 } from 'lucide-react'
 import { TEAMS, normalizeTeam, teamTheme, ALERT_RED, type TeamId } from '@shared/team-theme'
 import type { RegBrowseDto, TeamRegFormDto, RegulationSectionDto, FormListItemDto } from '@shared/ipc-types'
@@ -10,6 +10,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { useAiAuthorStore } from '../../stores/aiAuthorStore'
 import { PageHeader } from '../shared/PageHeader'
+import { StatBand, StatTile, SearchBar, FilterSelect, ListShell, EmptyResult } from '../shared/list/ListKit'
 
 /**
  * 문서 작성 — 규정·양식 찾아보기 (포털 2단계).
@@ -137,43 +138,43 @@ function FormBrowse({ onRegs }: { onRegs: () => void }): JSX.Element {
       />
 
       {/* ① 숫자 요약 밴드 — 클릭 = 필터 점프 (건수 붙은 탭 겸용) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatTile label="전체 양식" value={totals.all} active={quick === 'all'} onClick={() => setQuick('all')} icon={<FileText className="w-4 h-4" />} />
-        <StatTile label="작성 가능" value={totals.fillable} active={quick === 'fillable'} onClick={() => setQuick('fillable')} icon={<PencilLine className="w-4 h-4" />} tone="emerald" />
-        <StatTile label="예시 있음" value={totals.hasExample} active={quick === 'hasExample'} onClick={() => setQuick('hasExample')} icon={<BookOpen className="w-4 h-4" />} tone="amber" />
-        <StatTile label="내 의무 연결" value={totals.obligation} active={quick === 'obligation'} onClick={() => setQuick('obligation')} icon={<ListChecks className="w-4 h-4" />} tone="primary" />
-      </div>
+      <StatBand>
+        <StatTile label="전체 양식" value={totals.all} active={quick === 'all'} onClick={() => setQuick('all')} icon={<FileText className="w-[18px] h-[18px]" />} />
+        <StatTile label="작성 가능" value={totals.fillable} active={quick === 'fillable'} onClick={() => setQuick('fillable')} icon={<PencilLine className="w-[18px] h-[18px]" />} tone="ok" />
+        <StatTile label="예시 있음" value={totals.hasExample} active={quick === 'hasExample'} onClick={() => setQuick('hasExample')} icon={<BookOpen className="w-[18px] h-[18px]" />} tone="warn" />
+        <StatTile label="내 의무 연결" value={totals.obligation} active={quick === 'obligation'} onClick={() => setQuick('obligation')} icon={<ListChecks className="w-[18px] h-[18px]" />} tone="primary" />
+      </StatBand>
 
       {/* ② 검색 + 필터 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="양식명·코드 검색"
-            className="w-full h-10 pl-10 pr-3 rounded-lg border border-border bg-card text-[13.5px] focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
-        </div>
-        <select value={team} onChange={(e) => setTeam(e.target.value as TeamId | 'all')} className="h-10 px-3 rounded-lg border border-border bg-card text-[13px] font-medium">
-          <option value="all">책임팀 · 전체</option>
-          {TEAMS.map((t) => (
-            <option key={t.id} value={t.id}>{t.label}</option>
-          ))}
-        </select>
-        <select value={reg} onChange={(e) => setReg(e.target.value)} className="h-10 px-3 rounded-lg border border-border bg-card text-[13px] font-medium max-w-[180px]">
-          <option value="all">규정 · 전체</option>
-          {regOptions.map((rc) => (
-            <option key={rc} value={rc}>{rc}</option>
-          ))}
-        </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="h-10 px-3 rounded-lg border border-border bg-card text-[13px] font-medium">
-          <option value="relevance">내 관련순</option>
-          <option value="recent">최근 작성순</option>
-          <option value="name">이름순</option>
-          <option value="code">코드순</option>
-        </select>
-      </div>
+      <SearchBar value={q} onChange={setQ} placeholder="양식명·코드 검색">
+        <FilterSelect
+          value={team}
+          onChange={setTeam}
+          options={[
+            { value: 'all' as TeamId | 'all', label: '책임팀 · 전체' },
+            ...TEAMS.map((t) => ({ value: t.id as TeamId | 'all', label: t.label }))
+          ]}
+        />
+        <FilterSelect
+          value={reg}
+          onChange={setReg}
+          className="max-w-[180px]"
+          options={[
+            { value: 'all', label: '규정 · 전체' },
+            ...regOptions.map((rc) => ({ value: rc, label: rc }))
+          ]}
+        />
+        <FilterSelect
+          value={sort}
+          onChange={setSort}
+          options={[
+            { value: 'relevance' as Sort, label: '내 관련순' },
+            { value: 'recent' as Sort, label: '최근 작성순' },
+            { value: 'name' as Sort, label: '이름순' },
+            { value: 'code' as Sort, label: '코드순' }
+          ]}
+        />
+      </SearchBar>
 
       {/* ④ 위계 있는 행 리스트 */}
       {!forms ? (
@@ -181,22 +182,26 @@ function FormBrowse({ onRegs }: { onRegs: () => void }): JSX.Element {
           <Loader2 className="w-4 h-4 animate-spin" /> 양식 목록 불러오는 중...
         </div>
       ) : view.length === 0 ? (
-        <div className="text-center py-16 text-[13px] text-muted-foreground">
-          조건에 맞는 양식이 없습니다. <button type="button" onClick={() => { setQuick('all'); setTeam('all'); setReg('all'); setQ('') }} className="text-primary font-semibold hover:underline">필터 초기화</button>
-        </div>
+        <EmptyResult
+          message="조건에 맞는 양식이 없습니다."
+          onReset={() => { setQuick('all'); setTeam('all'); setReg('all'); setQ('') }}
+        />
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden bg-card">
-          {/* 칼럼 헤더 — 우측 고정 칼럼 정렬(P10-fix ①) */}
-          <div className="flex items-center gap-3 px-4 py-1.5 bg-muted/40 border-b border-border text-[10.5px] font-bold text-muted-foreground uppercase tracking-wide">
-            <span className="w-[72px] shrink-0">책임팀</span>
-            <span className="flex-1 min-w-0">양식명 · 코드 · 규정</span>
-            <span className="w-[54px] text-center shrink-0">정기의무</span>
-            <span className="w-[46px] text-center shrink-0">예시</span>
-            <span className="w-[52px] text-right shrink-0">작성본</span>
-            <span className="w-[84px] text-right shrink-0 hidden md:block">최근작성</span>
-            <span className="w-[68px] text-center shrink-0">상태</span>
-            <span className="w-4 shrink-0" />
-          </div>
+        <ListShell
+          cols={
+            <>
+              {/* 우측 고정 칼럼 정렬(P10-fix ①) */}
+              <span className="w-[72px] shrink-0">책임팀</span>
+              <span className="flex-1 min-w-0">양식명 · 코드 · 규정</span>
+              <span className="w-[54px] text-center shrink-0">정기의무</span>
+              <span className="w-[46px] text-center shrink-0">예시</span>
+              <span className="w-[52px] text-right shrink-0">작성본</span>
+              <span className="w-[84px] text-right shrink-0 hidden md:block">최근작성</span>
+              <span className="w-[68px] text-center shrink-0">상태</span>
+              <span className="w-4 shrink-0" />
+            </>
+          }
+        >
           {view.map((f, i) => {
             const tid = teamOf(f)
             const th = tid ? teamTheme(tid) : null
@@ -269,42 +274,9 @@ function FormBrowse({ onRegs }: { onRegs: () => void }): JSX.Element {
               </button>
             )
           })}
-        </div>
+        </ListShell>
       )}
     </div>
-  )
-}
-
-function StatTile({
-  label, value, active, onClick, icon, tone = 'muted'
-}: {
-  label: string
-  value: number
-  active: boolean
-  onClick: () => void
-  icon: JSX.Element
-  tone?: 'muted' | 'emerald' | 'amber' | 'primary'
-}): JSX.Element {
-  const toneCls: Record<string, string> = {
-    muted: 'text-foreground',
-    emerald: 'text-emerald-700',
-    amber: 'text-amber-700',
-    primary: 'text-primary'
-  }
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'text-left rounded-lg border px-3.5 py-2 transition-all flex items-center justify-between gap-2',
-        active ? 'border-primary ring-1 ring-primary/30 bg-primary/5' : 'border-border bg-card hover:border-primary/40'
-      )}
-    >
-      <span className={cn('inline-flex items-center gap-1.5 text-[11.5px] font-semibold', toneCls[tone])}>
-        {icon} {label}
-      </span>
-      <div className="text-xl font-bold tabular-nums leading-none">{value}</div>
-    </button>
   )
 }
 

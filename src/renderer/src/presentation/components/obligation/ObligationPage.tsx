@@ -1,20 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarClock, Plus, Loader2, Check, AlertTriangle, Network, RotateCcw } from 'lucide-react'
+import { CalendarClock, Plus, Loader2, Check, AlertTriangle, Network, RotateCcw, ListChecks, Clock, PauseCircle } from 'lucide-react'
 import { OBLIGATION_CADENCES, type ObligationCadence, type ObligationDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { traceDeepLink } from '../../../lib/deeplink'
 import { useUIStore } from '../../stores/uiStore'
 import { PageHeader } from '../shared/PageHeader'
+import { StatBand, StatTile, SearchBar, FilterSelect, ListShell, GroupLabel, EmptyResult } from '../shared/list/ListKit'
 import { useObligationStore } from '../../stores/obligationStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { CADENCE_META, CATEGORY_CHIP, dueStatus } from './obligationMeta'
 import { ObligationModal } from './ObligationModal'
 
-type Filter = 'all' | ObligationCadence
+type Cadence = 'all' | ObligationCadence
+type Quick = 'all' | 'overdue' | 'soon' | 'inactive'
 
+/**
+ * 정기 의무 — IATF 주기적 의무(일/주/월/분기/반기/년) 도래 관리.
+ * 템플릿 B(19번): 숫자 밴드(클릭=필터) → 검색·주기 필터 → 주기별 그룹 행 리스트. 등록·편집은 행 액션(모달).
+ */
 export function ObligationPage(): JSX.Element {
   const { items, loading, load, openCreate, openEdit, complete, resetDueDates } = useObligationStore()
-  const [filter, setFilter] = useState<Filter>('all')
+  const [cadence, setCadence] = useState<Cadence>('all')
+  const [quick, setQuick] = useState<Quick>('all')
+  const [q, setQ] = useState('')
   const [resetting, setResetting] = useState(false)
   // 도래일 재설정은 관리자 액션 — executive/manager 만 노출(§0.7 ④)
   const users = useActiveUserStore((s) => s.users)
@@ -43,117 +51,157 @@ export function ObligationPage(): JSX.Element {
   }
 
   // 신호등 요약 (활성 의무 기준)
-  const summary = useMemo(() => {
+  const totals = useMemo(() => {
     let overdue = 0
     let soon = 0
+    let inactive = 0
     for (const it of items) {
-      if (!it.active) continue
+      if (!it.active) {
+        inactive++
+        continue
+      }
       const s = dueStatus(it.nextDueDate, it.leadDays, it.active)
       if (s.tone === 'overdue') overdue++
       else if (s.tone === 'soon') soon++
     }
-    return { overdue, soon }
+    return { all: items.length, overdue, soon, inactive }
   }, [items])
 
-  // 주기별 그룹 (필터 반영)
+  // 주기별 그룹 (숫자밴드·검색·주기 필터 반영)
   const groups = useMemo(() => {
-    const cadences = filter === 'all' ? OBLIGATION_CADENCES : [filter]
+    const kw = q.trim().toLowerCase()
+    let list = items
+    if (quick === 'inactive') list = list.filter((it) => !it.active)
+    else if (quick !== 'all')
+      list = list.filter((it) => it.active && dueStatus(it.nextDueDate, it.leadDays, it.active).tone === quick)
+    if (kw)
+      list = list.filter(
+        (it) =>
+          it.title.toLowerCase().includes(kw) ||
+          (it.owner ?? '').toLowerCase().includes(kw) ||
+          (it.clauseRef ?? '').toLowerCase().includes(kw)
+      )
+    const cadences = cadence === 'all' ? OBLIGATION_CADENCES : [cadence]
     return cadences
-      .map((c) => ({ cadence: c, list: items.filter((it) => it.cadence === c) }))
+      .map((c) => ({ cadence: c, list: list.filter((it) => it.cadence === c) }))
       .filter((g) => g.list.length > 0)
-  }, [items, filter])
+  }, [items, cadence, quick, q])
+
+  const resetFilters = (): void => {
+    setCadence('all')
+    setQuick('all')
+    setQ('')
+  }
 
   return (
-    <div className="-m-6 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
-      <header className="px-6 pt-5 pb-4 border-b border-border bg-card shrink-0">
-        <PageHeader
-          icon={<CalendarClock className="w-5 h-5" />}
-          title="정기 의무"
-          sub={
-            <>
-              IATF 주기적 의무(일/주/월/분기/년) 도래 관리 · 총 {items.length}건
-              {summary.overdue > 0 && (
-                <span className="ml-2 text-rose-600 font-semibold inline-flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  초과 {summary.overdue}
-                </span>
-              )}
-              {summary.soon > 0 && (
-                <span className="ml-2 text-amber-600 font-semibold">임박 {summary.soon}</span>
-              )}
-            </>
-          }
-          actions={
-            <>
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-              {canReset && (
-                <button
-                  type="button"
-                  onClick={() => void handleReset()}
-                  disabled={resetting}
-                  title="가동 개시일 재설정 — 모든 도래일을 오늘로(실사용 개시, 데이터 조작 아님)"
-                  className="text-[13px] font-semibold px-3.5 py-2 rounded-lg border border-border text-foreground hover:bg-muted flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                >
-                  {resetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-                  도래일 재설정
-                </button>
-              )}
+    <div className="space-y-4 break-keep">
+      <PageHeader
+        icon={<CalendarClock className="w-5 h-5" />}
+        title="정기 의무"
+        sub={`IATF 주기적 의무(일/주/월/분기/반기/년) 도래 관리 · 총 ${items.length}건`}
+        actions={
+          <>
+            {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+            {canReset && (
               <button
                 type="button"
-                onClick={() => openCreate()}
-                className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5 transition-opacity"
+                onClick={() => void handleReset()}
+                disabled={resetting}
+                title="가동 개시일 재설정 — 모든 도래일을 오늘로(실사용 개시, 데이터 조작 아님)"
+                className="text-[13px] font-semibold px-3.5 py-2 rounded-lg border border-border text-foreground hover:bg-muted flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
-                <Plus className="w-3.5 h-3.5" />
-                의무 추가
+                {resetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                도래일 재설정
               </button>
-            </>
-          }
+            )}
+            <button
+              type="button"
+              onClick={() => openCreate()}
+              className="text-[13px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 flex items-center gap-1.5 transition-opacity"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              의무 추가
+            </button>
+          </>
+        }
+      />
+
+      {/* ① 숫자 요약 밴드 — 클릭 = 필터 점프 */}
+      <StatBand>
+        <StatTile
+          label="전체 의무"
+          value={totals.all}
+          icon={<ListChecks className="w-[18px] h-[18px]" />}
+          active={quick === 'all'}
+          onClick={() => setQuick('all')}
         />
+        <StatTile
+          label="도래 초과"
+          value={totals.overdue}
+          icon={<AlertTriangle className="w-[18px] h-[18px]" />}
+          tone={totals.overdue > 0 ? 'bad' : 'muted'}
+          active={quick === 'overdue'}
+          onClick={() => setQuick('overdue')}
+        />
+        <StatTile
+          label="임박 (리드타임 내)"
+          value={totals.soon}
+          icon={<Clock className="w-[18px] h-[18px]" />}
+          tone={totals.soon > 0 ? 'warn' : 'muted'}
+          active={quick === 'soon'}
+          onClick={() => setQuick('soon')}
+        />
+        <StatTile
+          label="비활성"
+          value={totals.inactive}
+          icon={<PauseCircle className="w-[18px] h-[18px]" />}
+          active={quick === 'inactive'}
+          onClick={() => setQuick('inactive')}
+        />
+      </StatBand>
 
-        {/* 주기 필터 */}
-        <div className="mt-4 inline-flex items-center gap-1 p-1 rounded-lg bg-muted">
-          {(['all', ...OBLIGATION_CADENCES] as Filter[]).map((f) => {
-            const active = filter === f
-            const label = f === 'all' ? '전체' : CADENCE_META[f].label
-            return (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={cn(
-                  'text-[13px] font-semibold px-3 py-1.5 rounded-md transition-colors',
-                  active ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {label}
-              </button>
-            )
-          })}
+      {/* ② 검색 + 주기 필터 */}
+      <SearchBar value={q} onChange={setQ} placeholder="의무명·담당자·조항 검색">
+        <FilterSelect
+          value={cadence}
+          onChange={setCadence}
+          options={[
+            { value: 'all' as Cadence, label: '주기 · 전체' },
+            ...OBLIGATION_CADENCES.map((c) => ({ value: c as Cadence, label: CADENCE_META[c].label }))
+          ]}
+        />
+      </SearchBar>
+
+      {/* ③ 주기별 그룹 행 리스트 */}
+      {!loading && items.length === 0 ? (
+        <EmptyResult message="등록된 정기 의무가 없습니다. 우측 상단 “의무 추가”로 시작하세요." />
+      ) : groups.length === 0 ? (
+        <EmptyResult message="조건에 맞는 의무가 없습니다." onReset={resetFilters} />
+      ) : (
+        <div className="space-y-5">
+          {groups.map((g) => (
+            <section key={g.cadence}>
+              <GroupLabel
+                bar={CADENCE_META[g.cadence].bar}
+                title={CADENCE_META[g.cadence].label}
+                cap={`${CADENCE_META[g.cadence].desc} · ${g.list.length}건`}
+              />
+              <ListShell>
+                <div className="divide-y divide-border">
+                  {g.list.map((it) => (
+                    <ObligationRow
+                      key={it.id}
+                      item={it}
+                      onEdit={() => openEdit(it)}
+                      onComplete={() => void complete(it.id)}
+                    />
+                  ))}
+                </div>
+              </ListShell>
+            </section>
+          ))}
         </div>
-      </header>
-
-      <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
-        {!loading && items.length === 0 && (
-          <div className="text-center py-20 text-muted-foreground text-sm">
-            등록된 정기 의무가 없습니다. 우측 상단 “의무 추가”로 시작하세요.
-          </div>
-        )}
-
-        {groups.map((g) => (
-          <section key={g.cadence}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={cn('w-1.5 h-4 rounded-full', CADENCE_META[g.cadence].bar)} />
-              <h2 className="text-[19px] font-extrabold text-foreground">{CADENCE_META[g.cadence].label}</h2>
-              <span className="text-[13px] text-muted-foreground">{CADENCE_META[g.cadence].desc} · {g.list.length}건</span>
-            </div>
-            <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
-              {g.list.map((it) => (
-                <ObligationRow key={it.id} item={it} onEdit={() => openEdit(it)} onComplete={() => void complete(it.id)} />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+      )}
 
       <ObligationModal />
     </div>
@@ -178,7 +226,7 @@ function ObligationRow({
 
       <button type="button" onClick={onEdit} className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
-          <span className="text-[15px] font-semibold text-foreground break-keep leading-snug">{item.title}</span>
+          <span className="text-[14px] font-semibold text-foreground break-keep leading-snug">{item.title}</span>
           <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0', CATEGORY_CHIP[item.category])}>
             {item.category}
           </span>
@@ -188,7 +236,7 @@ function ObligationRow({
             </span>
           )}
         </div>
-        <div className="text-[13px] text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+        <div className="text-[12px] text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
           {item.owner && <span>{item.owner}</span>}
           {item.nextDueDate && <span>도래 {item.nextDueDate}</span>}
           {item.lastDoneDate && <span className="text-foreground/50">최근이행 {item.lastDoneDate}</span>}
@@ -214,7 +262,7 @@ function ObligationRow({
         onClick={onComplete}
         disabled={!item.active}
         title="이행 완료 — 오늘 처리하고 다음 도래일로 전진"
-        className="shrink-0 text-[12.5px] font-semibold px-2.5 py-1.5 rounded-md border border-border text-foreground hover:bg-green-50 hover:text-green-700 hover:border-green-300 disabled:opacity-40 flex items-center gap-1 transition-colors"
+        className="shrink-0 text-[12.5px] font-semibold px-2.5 py-1.5 rounded-md border border-border text-foreground hover:bg-ok-tint hover:text-ok-ink hover:border-ok-ink/30 disabled:opacity-40 flex items-center gap-1 transition-colors"
       >
         <Check className="w-3 h-3" />
         이행
