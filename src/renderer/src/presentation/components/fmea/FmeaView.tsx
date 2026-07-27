@@ -1,23 +1,28 @@
 import { useEffect, useState } from 'react'
 import { GitBranch, Loader2, Plus, Trash2, FileSpreadsheet } from 'lucide-react'
-import { type FmeaRowDto, type FmeaActionPriority } from '@shared/ipc-types'
+import { type FmeaDocDto, type FmeaRowDto, type FmeaActionPriority } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { PageHeader } from '../shared/PageHeader'
+import { CardShell } from '../shared/dash/DashKit'
 import { useFmeaStore } from '../../stores/fmeaStore'
 
 const AP_COLOR: Record<FmeaActionPriority, string> = {
-  H: 'bg-rose-100 text-rose-700',
-  M: 'bg-amber-100 text-amber-700',
-  L: 'bg-green-100 text-green-700'
+  H: 'bg-bad-tint text-bad-ink',
+  M: 'bg-warn-tint text-warn-ink',
+  L: 'bg-ok-tint text-ok-ink'
 }
 
 function rpnTone(rpn: number | null): string {
   if (rpn == null) return 'text-muted-foreground'
-  if (rpn >= 100) return 'text-rose-600 font-bold'
-  if (rpn >= 40) return 'text-amber-600 font-semibold'
+  if (rpn >= 100) return 'text-bad-ink font-bold'
+  if (rpn >= 40) return 'text-warn-ink font-semibold'
   return 'text-foreground'
 }
 
+/**
+ * 공정 FMEA 신판(AIAG-VDA) — 문서(품번) × 7-step 리스크 분석 시트.
+ * 템플릿 C: 좌 문서 목록 380px / 우 시트 보드(가로 스크롤). 스토어가 첫 문서를 자동 선택한다(공백 금지).
+ */
 export function FmeaView(): JSX.Element {
   const { docs, selectedId, board, loading, load, select, updateDoc, updateRow, addRow, deleteRow, exportXlsx } =
     useFmeaStore()
@@ -40,118 +45,172 @@ export function FmeaView(): JSX.Element {
   }
 
   return (
-    <div className="-m-6 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
-      <header className="px-6 pt-5 pb-4 border-b border-border bg-card shrink-0">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="shrink-0">
         <PageHeader
           icon={<GitBranch className="w-5 h-5" />}
           title="공정 FMEA"
           sub={
             <>
               <span className="font-semibold text-primary">신판 (AIAG-VDA)</span> ·
-              구조→기능→고장→리스크(S·O·D·AP)→최적화 7-step · 고객 제출용 공정 FMEA
+              구조→기능→고장→리스크(S·O·D·AP)→최적화 7-step · 문서 {docs.length}건
             </>
           }
-          actions={
-            <>
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-              {docs.length > 0 && (
-                <select
-                  value={selectedId ?? ''}
-                  onChange={(e) => void select(Number(e.target.value))}
-                  className="input-field max-w-xs text-sm"
-                >
-                  {docs.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.fmeaNo} · {d.partName ?? ''} {d.partNo ? `(${d.partNo})` : ''}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </>
-          }
+          actions={loading ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : undefined}
         />
+      </div>
 
-        {board && (
-          <div className="mt-3 flex items-center gap-4 flex-wrap text-xs">
-            <label className="flex items-center gap-1.5 text-muted-foreground">
-              <span className="font-medium">고객</span>
-              <input
-                key={board.doc.id}
-                defaultValue={board.doc.customer ?? ''}
-                onBlur={(e) => {
-                  const v = e.target.value.trim() || null
-                  if (v !== (board.doc.customer ?? null)) void updateDoc({ id: board.doc.id, customer: v })
-                }}
-                placeholder="고객사명 (출력 C5)"
-                className="bg-fillable border border-border rounded px-2 py-0.5 text-xs w-40 focus:outline-none focus:border-primary/50"
-              />
-            </label>
-            {board.doc.procOwner && <span className="text-muted-foreground">책임 {board.doc.procOwner}</span>}
-            {board.doc.teamMembers && <span className="text-muted-foreground">팀 {board.doc.teamMembers}</span>}
-            <span className="font-semibold">행 {board.summary.total}</span>
-            <span className="text-rose-600 font-semibold">High AP {board.summary.highAp}</span>
-            <span className="text-muted-foreground">평균 RPN {board.summary.avgRpn}</span>
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void handleExport()}
-                disabled={exporting}
-                title="신판 시트(J1101-01) 공식 xlsx 출력"
-                className="text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted disabled:opacity-50 flex items-center gap-1.5"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                {exporting ? '출력 중...' : '신판 시트 출력'}
-              </button>
-              <button
-                type="button"
-                onClick={() => void addRow()}
-                className="text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                행 추가
-              </button>
+      {/* 템플릿 C (19번): 좌 문서 목록 380px 고정 / 우 시트 보드 */}
+      <div className="flex gap-4 flex-1 min-h-0">
+        <div className="w-[380px] shrink-0 overflow-y-auto pr-1 space-y-1.5">
+          {docs.length === 0 && !loading && (
+            <div className="text-center text-[13px] text-muted-foreground py-12 px-4">
+              FMEA 문서가 없습니다.
             </div>
-          </div>
-        )}
-      </header>
+          )}
+          {docs.map((d) => (
+            <DocCard key={d.id} d={d} active={d.id === selectedId} onPick={() => void select(d.id)} />
+          ))}
+        </div>
 
-      <div className="flex-1 min-h-0 overflow-auto p-4">
-        {!board && !loading && (
-          <div className="text-center py-20 text-muted-foreground text-sm">FMEA 문서가 없습니다.</div>
-        )}
+        <div className="flex-1 min-w-0 flex flex-col min-h-0 gap-3">
+          {board ? (
+            <>
+              {/* 문서 정보 + 요약 스트립 */}
+              <div className="shrink-0 bg-card border border-border rounded-[14px] shadow-card px-[18px] py-3 flex items-center gap-x-4 gap-y-2 flex-wrap text-xs">
+                <span className="font-mono text-[13px] font-bold">{board.doc.fmeaNo}</span>
+                <label className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="font-medium">고객</span>
+                  <input
+                    key={board.doc.id}
+                    defaultValue={board.doc.customer ?? ''}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim() || null
+                      if (v !== (board.doc.customer ?? null)) void updateDoc({ id: board.doc.id, customer: v })
+                    }}
+                    placeholder="고객사명 (출력 C5)"
+                    className="bg-fillable border border-border rounded px-2 py-0.5 text-xs w-40 focus:outline-none focus:border-primary/50"
+                  />
+                </label>
+                {board.doc.procOwner && <span className="text-muted-foreground">책임 {board.doc.procOwner}</span>}
+                {board.doc.teamMembers && <span className="text-muted-foreground">팀 {board.doc.teamMembers}</span>}
+                <span className="font-semibold tabular-nums">행 {board.summary.total}</span>
+                <span
+                  className={cn(
+                    'font-bold px-1.5 py-0.5 rounded-full tabular-nums',
+                    board.summary.highAp > 0 ? 'bg-bad-tint text-bad-ink' : 'bg-ok-tint text-ok-ink'
+                  )}
+                >
+                  High AP {board.summary.highAp}
+                </span>
+                <span className="text-muted-foreground tabular-nums">평균 RPN {board.summary.avgRpn}</span>
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleExport()}
+                    disabled={exporting}
+                    title="신판 시트(J1101-01) 공식 xlsx 출력"
+                    className="text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    {exporting ? '출력 중...' : '신판 시트 출력'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void addRow()}
+                    className="text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    행 추가
+                  </button>
+                </div>
+              </div>
 
-        {board && <LegendTable />}
+              {/* 범례 — 접이식(시트 폭 우선) */}
+              <details className="shrink-0">
+                <summary className="text-xs font-bold text-muted-foreground cursor-pointer select-none hover:text-foreground w-fit">
+                  범례 (S·O·D·RPN·AP 지표 설명)
+                </summary>
+                <LegendTable />
+              </details>
 
-        {board && (
-          <table className="text-[11px] border-collapse">
-            <thead className="sticky top-0 z-10">
-              <tr className="bg-muted text-muted-foreground">
-                <Th rowSpan={2} className="w-8">#</Th>
-                <GroupTh span={3} className="bg-blue-50 text-blue-700">구조분석</GroupTh>
-                <GroupTh span={3} className="bg-teal-50 text-teal-700">기능분석</GroupTh>
-                <GroupTh span={4} className="bg-violet-50 text-violet-700">고장분석 (FE/FM/FC)</GroupTh>
-                <GroupTh span={7} className="bg-amber-50 text-amber-700">리스크분석 (현 관리·S/O/D·AP)</GroupTh>
-                <GroupTh span={5} className="bg-green-50 text-green-700">최적화 (조치·재평가)</GroupTh>
-                <Th rowSpan={2} className="w-8" />
-              </tr>
-              <tr className="bg-muted/70 text-[10px] text-muted-foreground">
-                {['공정항목','공정단계','작업요소','항목기능','단계기능','요소기능',
-                  '고장영향(FE)','S','고장형태(FM)','고장원인(FC)',
-                  '현예방관리','O','현검출관리','D','RPN','AP','특별특성',
-                  '예방조치','검출조치','책임자','재S','재O','재D'].map((h) => (
-                  <Th key={h}>{h}</Th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {board.rows.map((r) => (
-                <FmeaRow key={r.id} r={r} onUpdate={updateRow} onDelete={() => void deleteRow(r.id)} />
-              ))}
-            </tbody>
-          </table>
-        )}
+              {/* 신판 시트 — 23열 가로 스크롤 */}
+              <div className="flex-1 min-h-0 overflow-auto rounded-[14px] border border-border bg-card shadow-card p-2">
+                <table className="text-[11px] border-collapse">
+                  <thead className="sticky top-0 z-10">
+                    <tr className="bg-muted text-muted-foreground">
+                      <Th rowSpan={2} className="w-8">#</Th>
+                      <GroupTh span={3} className="bg-blue-50 text-blue-700">구조분석</GroupTh>
+                      <GroupTh span={3} className="bg-teal-50 text-teal-700">기능분석</GroupTh>
+                      <GroupTh span={4} className="bg-violet-50 text-violet-700">고장분석 (FE/FM/FC)</GroupTh>
+                      <GroupTh span={7} className="bg-amber-50 text-amber-700">리스크분석 (현 관리·S/O/D·AP)</GroupTh>
+                      <GroupTh span={5} className="bg-green-50 text-green-700">최적화 (조치·재평가)</GroupTh>
+                      <Th rowSpan={2} className="w-8" />
+                    </tr>
+                    <tr className="bg-muted/70 text-[10px] text-muted-foreground">
+                      {['공정항목','공정단계','작업요소','항목기능','단계기능','요소기능',
+                        '고장영향(FE)','S','고장형태(FM)','고장원인(FC)',
+                        '현예방관리','O','현검출관리','D','RPN','AP','특별특성',
+                        '예방조치','검출조치','책임자','재S','재O','재D'].map((h) => (
+                        <Th key={h}>{h}</Th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {board.rows.map((r) => (
+                      <FmeaRow key={r.id} r={r} onUpdate={updateRow} onDelete={() => void deleteRow(r.id)} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            !loading && (
+              <CardShell title="공정 FMEA 현황" cap="신판(AIAG-VDA) 7-step 시트">
+                <div className="px-[18px] pb-4 text-[13px] text-muted-foreground">
+                  등록된 FMEA 문서가 없습니다. 문서가 적재되면 좌측 목록에서 선택해 작성하세요.
+                </div>
+              </CardShell>
+            )
+          )}
+        </div>
       </div>
     </div>
+  )
+}
+
+/** 좌측 문서 카드 — FMEA No·품명·품번·고객 (템플릿 C 행 확대 문법) */
+function DocCard({
+  d,
+  active,
+  onPick
+}: {
+  d: FmeaDocDto
+  active: boolean
+  onPick: () => void
+}): JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className={cn(
+        'w-full text-left rounded-lg px-3 py-2.5 border transition-colors',
+        active ? 'bg-muted border-primary/40' : 'bg-card border-border hover:bg-muted/50'
+      )}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="font-mono text-[11px] text-muted-foreground shrink-0">{d.fmeaNo}</span>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary ml-auto shrink-0">
+          신판
+        </span>
+      </div>
+      <div className="text-[14px] font-semibold leading-snug truncate mt-0.5">{d.partName ?? d.partNo ?? '—'}</div>
+      <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+        {d.partNo && <span className="font-mono">{d.partNo}</span>}
+        {d.model ? ` · ${d.model}` : ''}
+        {d.customer ? ` · ${d.customer}` : ''}
+      </div>
+    </button>
   )
 }
 
@@ -164,8 +223,7 @@ function LegendTable(): JSX.Element {
     { abbr: 'AP', name: '조치우선순위', meaning: '부표4 기준표로 S·O·D에서 자동 산출 (신판, S 우선)', scale: 'H / M / L' }
   ]
   return (
-    <div className="mb-5 max-w-3xl">
-      <div className="text-xs font-bold text-muted-foreground mb-1.5">범례 (지표 설명)</div>
+    <div className="mt-2 max-w-3xl">
       <table className="text-[11px] border-collapse w-full">
         <thead>
           <tr className="bg-muted text-muted-foreground">

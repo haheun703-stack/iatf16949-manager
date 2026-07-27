@@ -12,7 +12,8 @@ interface MsaState {
   error: string | null
 
   load: () => Promise<void>
-  create: (input: MsaCreateInput) => Promise<void>
+  /** 생성 후 새 게이지 id 반환 — 템플릿 C 우측 상세 자동 선택용 */
+  create: (input: MsaCreateInput) => Promise<number | null>
   update: (input: MsaUpdateInput) => Promise<void>
   remove: (id: number) => Promise<void>
 }
@@ -33,8 +34,9 @@ export const useMsaStore = create<MsaState>((set, get) => ({
   },
 
   create: async (input) => {
-    await window.api.invoke(ch('MSA_CREATE'), input)
+    const res = (await window.api.invoke(ch('MSA_CREATE'), input)) as { id: number } | undefined
     await get().load()
+    return res?.id ?? null
   },
 
   update: async (input) => {
