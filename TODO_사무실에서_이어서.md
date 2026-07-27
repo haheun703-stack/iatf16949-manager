@@ -11,9 +11,22 @@
    FilterSelect·ListShell·GroupLabel·EmptyResult). doc-browse 내부 StatTile 을 여기로 승격(중복 제거),
    clause-tree·obligations 에 숫자 밴드+검색 신설. obligations full-bleed 해제.
 
-**남은 UI**: ①**document-bom = 판정 질의 회신 대기**(분류표 §질의 — 이미 좌목록·우상세라 판정① 기준 C.
-권고 = C 재판정 후 380px 규격만) ②**A군 9종**(home 은 ⓑ에서 완료 — team-hub·team-detail·dashboard·
-sq-dashboard·iatf-dashboard·mes-records·integrity·schedule 이 홈 골격 공유) ③완주 게이트(코워크 전 화면 일람).
+### ▶ 내일(7/28) 1순위 — 코워크 회신 확인 3건
+
+이 3건은 **7/27 저녁 코워크에 발신 완료**. 아침에 회신부터 확인하고 그 결과로 순서를 정한다.
+
+1. **[결정 요청] document-bom 템플릿 재판정** — 이미 좌 문서목록·우 상세(ResizableSplit)라 판정①("상세를
+   같은 화면 우측 = C") 기준으로는 C. **봇 권고 = (가) C 재판정** 후 좌폭 380px 규격+미선택 요약만 추가
+   (구조 변경 0). (나) B 유지 시 우측 상세를 걷어내야 해 동선이 길어짐. **회신 전 미착수** — 이 화면만
+   손대지 않고 남겨둠. 재판정 시 집계 A 9·**B 3·C 16**. 근거 전문 = `docs/ui17/화면분류표_초안_260726.md` §질의.
+2. **[검수 요청] C군 2·3배치 6화면** — cap_ui_c2_*(ppap·fmea 시트/범례·msa 요약/상세) + cap_ui_c3_*
+   (apqp·mes-trace 요약/전개·workbench 요약/상세). **C군 15종 잔여 0** 보고 포함.
+3. **[검수 요청] B군 3화면 + ListKit** — cap_ui_b3_*(doc-browse 부품승격판·clause·obligations·overdue 필터).
+   공통부품 `shared/list/ListKit.tsx` 신설이 19번 "화면별 복붙 금지" 원칙에 맞는지 확인 요청.
+
+**그 다음(회신 무관 착수 가능)**: **A군 9종** — home 은 ⓑ에서 완료. team-hub·team-detail·dashboard·
+sq-dashboard·iatf-dashboard·mes-records·integrity·schedule 이 홈 골격(KPI 타일·매트릭스) 공유.
+그 뒤가 **완주 게이트**(코워크 전 화면 일람 검수 = 오픈 승인).
 
 **검수 대기 캡처**(captures/): cap_ui_c2_*(5) · cap_ui_c3_*(5) · cap_ui_b3_*(4).
 
