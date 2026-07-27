@@ -17,6 +17,11 @@
 //   node scripts/capture.mjs --page form-builder --form L1100-04 --name l1100-04
 //   node scripts/capture.mjs --config caps.json      # [{name,page,formCode?,waitMs?,full?}]
 // 옵션: --out <dir>(기본 ./captures) --port <n>(9222) --wait <ms>(900) --full(전체페이지)
+//
+// ⚠️ 웹(:8080) 캡처를 크롬으로 붙일 때: 큰 이미지(프로세스 흐름도 등)가 떠 있으면
+//    GPU 합성 상태에서 Page.captureScreenshot 이 응답 없이 매달린다. 크롬을
+//    **--disable-gpu** 로 띄우면 해소된다(2026-07-27 실측). fromSurface:false 폴백은
+//    창이 가려지면 백지로 나오므로 증거용으로 쓰지 말 것.
 // ============================================================
 
 import { writeFileSync, mkdirSync } from 'fs'

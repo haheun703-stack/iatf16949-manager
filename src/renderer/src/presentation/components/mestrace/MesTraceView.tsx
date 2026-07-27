@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
-  ChevronRight,
   Loader2,
   Network,
   Search,
@@ -11,12 +10,13 @@ import {
 import type { MesTraceDirectionDto, MesTraceExpandDto, MesTraceLotDto, MesTraceStatusDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { PageHeader } from '../shared/PageHeader'
+import { CardShell } from '../shared/dash/DashKit'
 
 /**
  * LOT 계보 조회 (7/19 Scan-to-Trace) — "이 LOT 계보 보여줘"를 화면으로.
  * 데이터 = MES POP_TRACE 328만 링크 사이드카(mes_trace.db, scripts/mes_trace_build.py).
- * 리콜 시뮬레이션·모의 역추적 훈련(정기 의무)의 데이터 기반 — 전개 소요 ms 를 그대로 보여
- * 심사장에서 "역추적 몇 ms" 시연 카드가 된다.
+ * 템플릿 C(판정①): 좌 검색·LOT 목록 380px / 우 계보 전개(역·정추적)·미전개 시 상태 요약.
+ * 전개 소요 ms 를 그대로 보여 심사장 "역추적 몇 ms" 시연 카드가 된다.
  */
 
 const nf = (n: number): string => n.toLocaleString('ko-KR')
@@ -66,7 +66,7 @@ function DirectionPanel({
   onPick: (lot: MesTraceLotDto) => void
 }): JSX.Element {
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="bg-card border border-border rounded-[14px] shadow-card overflow-hidden">
       <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-border bg-muted/30">
         <span className="text-primary">{icon}</span>
         <span className="flex-1 min-w-0">
@@ -171,26 +171,28 @@ export function MesTraceView(): JSX.Element {
   }, [])
 
   return (
-    <div className="space-y-6 break-keep">
-      <PageHeader
-        icon={<Network size={18} />}
-        title="LOT 계보 조회"
-        sub="자재 LOT ↔ 생산 LOT 계보 전개(MES 계보 실측) — 리콜 시뮬레이션·모의 역추적 훈련의 데이터 기반"
-        actions={
-          status?.available ? (
-            <span className="text-[12.5px] text-muted-foreground text-right leading-snug">
-              계보 링크 <b className="text-foreground tabular-nums">{nf(status.edgeCount)}</b>
-              {status.yearRange && <> · {status.yearRange}</>}
-              <span className="block">
-                LOT {nf(status.lotCount)} · 빌드 {status.builtAt?.replace('T', ' ') ?? '—'}
+    <div className="flex flex-col h-full min-h-0 break-keep">
+      <div className="shrink-0">
+        <PageHeader
+          icon={<Network size={18} />}
+          title="LOT 계보 조회"
+          sub="자재 LOT ↔ 생산 LOT 계보 전개(MES 계보 실측) — 리콜 시뮬레이션·모의 역추적 훈련의 데이터 기반"
+          actions={
+            status?.available ? (
+              <span className="text-[12.5px] text-muted-foreground text-right leading-snug">
+                계보 링크 <b className="text-foreground tabular-nums">{nf(status.edgeCount)}</b>
+                {status.yearRange && <> · {status.yearRange}</>}
+                <span className="block">
+                  LOT {nf(status.lotCount)} · 빌드 {status.builtAt?.replace('T', ' ') ?? '—'}
+                </span>
               </span>
-            </span>
-          ) : undefined
-        }
-      />
+            ) : undefined
+          }
+        />
+      </div>
 
       {status && !status.available && (
-        <div className="bg-card border border-border rounded-xl px-6 py-5 space-y-2">
+        <div className="bg-card border border-border rounded-[14px] shadow-card px-6 py-5 space-y-2">
           <div className="text-[15.5px] font-bold text-foreground">계보 데이터가 아직 없습니다</div>
           <p className="text-[13.5px] text-muted-foreground leading-relaxed">
             MES 덤프에서 계보 사이드카를 먼저 생성하세요(관리자 1회 작업, 주기적 dmp 반입 시 재실행):
@@ -202,10 +204,10 @@ export function MesTraceView(): JSX.Element {
       )}
 
       {status?.available && (
-        <>
-          {/* 검색 */}
-          <div className="bg-card border border-border rounded-xl px-5 py-4">
-            <div className="flex items-center gap-2.5">
+        /* 템플릿 C (19번): 좌 검색·LOT 목록 380px 고정 / 우 계보 전개 */
+        <div className="flex gap-4 flex-1 min-h-0">
+          <div className="w-[380px] shrink-0 overflow-y-auto pr-1 space-y-2">
+            <div className="flex items-center gap-1.5">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -215,96 +217,97 @@ export function MesTraceView(): JSX.Element {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') void runSearch()
                   }}
-                  placeholder="LOT 바코드 또는 품번 앞자리 (예: 25450, H018) — 2자 이상"
-                  className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-[14px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  placeholder="LOT 바코드·품번 앞자리 (2자 이상)"
+                  className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-[13.5px] focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => void runSearch()}
                 disabled={searching || query.trim().length < 2}
-                className="h-10 inline-flex items-center gap-1.5 text-[13.5px] font-bold bg-primary text-primary-foreground px-4 rounded-lg hover:opacity-90 disabled:opacity-50"
+                className="h-10 inline-flex items-center gap-1.5 text-[13px] font-bold bg-primary text-primary-foreground px-3.5 rounded-lg hover:opacity-90 disabled:opacity-50 shrink-0"
               >
-                {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} 검색
+                {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               </button>
             </div>
 
-            {results && (
-              <div className="mt-3.5">
-                {results.length === 0 ? (
-                  <div className="text-[13.5px] text-muted-foreground py-1.5">
-                    일치하는 LOT 이 없습니다 — 바코드/품번 앞자리를 다시 확인하세요.
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border border border-border rounded-lg overflow-hidden overflow-y-auto max-h-[340px]">
-                    {results.map((r) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => void runExpand(r)}
-                        className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/50 transition-colors',
-                          expand?.start.id === r.id && 'bg-primary/10'
-                        )}
-                      >
-                        <span className="text-[13.5px] font-bold tabular-nums text-foreground shrink-0">
-                          {r.barcode}
-                          {r.lotseq > 0 && <span className="text-muted-foreground"> #{r.lotseq}</span>}
-                        </span>
-                        <span className="text-[13px] text-muted-foreground flex-1 min-w-0 truncate">
-                          {r.pno ?? '품번 미상'}
-                          {r.qty != null && ` · 수량 ${nf(r.qty)}`}
-                        </span>
-                        <span className="text-[12.5px] text-muted-foreground tabular-nums shrink-0">
-                          {r.addymd ?? ''}
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                      </button>
-                    ))}
-                  </div>
-                )}
+            {results === null && (
+              <div className="text-[12px] text-muted-foreground px-1 py-2 leading-relaxed">
+                예: <b>25450</b>(품번 앞자리), <b>H018</b>(바코드 앞자리) — 검색 후 LOT 을 클릭하면 우측에 계보가
+                전개됩니다.
               </div>
             )}
+            {results && results.length === 0 && (
+              <div className="text-[13px] text-muted-foreground px-1 py-2">
+                일치하는 LOT 이 없습니다 — 바코드/품번 앞자리를 다시 확인하세요.
+              </div>
+            )}
+            {results?.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => void runExpand(r)}
+                className={cn(
+                  'w-full text-left rounded-lg px-3 py-2.5 border transition-colors',
+                  expand?.start.id === r.id ? 'bg-muted border-primary/40' : 'bg-card border-border hover:bg-muted/50'
+                )}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[13.5px] font-bold tabular-nums truncate">
+                    {r.barcode}
+                    {r.lotseq > 0 && <span className="text-muted-foreground"> #{r.lotseq}</span>}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground tabular-nums ml-auto shrink-0">
+                    {r.addymd ?? ''}
+                  </span>
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                  {r.pno ?? '품번 미상'}
+                  {r.qty != null && ` · 수량 ${nf(r.qty)}`}
+                </div>
+              </button>
+            ))}
           </div>
 
-          {/* 전개 결과 */}
-          {expanding && (
-            <div className="flex items-center justify-center gap-2 py-16 text-[14.5px] text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin" /> 계보 전개 중...
-            </div>
-          )}
-
-          {!expanding && expand && (
-            <>
-              <div
-                ref={expandRef}
-                className="bg-card border border-border rounded-xl px-6 py-4 flex flex-wrap items-center gap-x-6 gap-y-1.5 scroll-mt-4"
-              >
-                <span>
-                  <span className="block text-[12px] text-muted-foreground">기준 LOT</span>
-                  <span className="block text-[18px] font-extrabold tabular-nums text-foreground">
-                    {expand.start.barcode}
-                    {expand.start.lotseq > 0 && (
-                      <span className="text-muted-foreground font-bold"> #{expand.start.lotseq}</span>
-                    )}
-                  </span>
-                </span>
-                <span>
-                  <span className="block text-[12px] text-muted-foreground">품번</span>
-                  <span className="block text-[15px] font-bold text-foreground">{expand.start.pno ?? '—'}</span>
-                </span>
-                <span>
-                  <span className="block text-[12px] text-muted-foreground">등록일</span>
-                  <span className="block text-[15px] font-bold tabular-nums text-foreground">
-                    {expand.start.addymd ?? '—'}
-                  </span>
-                </span>
-                <span className="ml-auto text-[12.5px] text-muted-foreground">
-                  칩을 클릭하면 그 LOT 기준으로 재전개됩니다
-                </span>
+          <div className="flex-1 min-w-0 overflow-y-auto">
+            {expanding && (
+              <div className="flex items-center justify-center gap-2 py-16 text-[14.5px] text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> 계보 전개 중...
               </div>
+            )}
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+            {!expanding && !expand && <TraceSummary status={status} />}
+
+            {!expanding && expand && (
+              <div className="grid gap-4">
+                <div
+                  ref={expandRef}
+                  className="bg-card border border-border rounded-[14px] shadow-card px-6 py-4 flex flex-wrap items-center gap-x-6 gap-y-1.5 scroll-mt-4"
+                >
+                  <span>
+                    <span className="block text-[12px] text-muted-foreground">기준 LOT</span>
+                    <span className="block text-[18px] font-extrabold tabular-nums text-foreground">
+                      {expand.start.barcode}
+                      {expand.start.lotseq > 0 && (
+                        <span className="text-muted-foreground font-bold"> #{expand.start.lotseq}</span>
+                      )}
+                    </span>
+                  </span>
+                  <span>
+                    <span className="block text-[12px] text-muted-foreground">품번</span>
+                    <span className="block text-[15px] font-bold text-foreground">{expand.start.pno ?? '—'}</span>
+                  </span>
+                  <span>
+                    <span className="block text-[12px] text-muted-foreground">등록일</span>
+                    <span className="block text-[15px] font-bold tabular-nums text-foreground">
+                      {expand.start.addymd ?? '—'}
+                    </span>
+                  </span>
+                  <span className="ml-auto text-[12.5px] text-muted-foreground">
+                    칩을 클릭하면 그 LOT 기준으로 재전개됩니다
+                  </span>
+                </div>
+
                 <DirectionPanel
                   title="역추적 — 이 LOT 에 들어온 것"
                   hint="자재 방향(입고 LOT까지 거슬러 올라감) — 불량 원인 소급"
@@ -320,17 +323,49 @@ export function MesTraceView(): JSX.Element {
                   onPick={(l) => void runExpand(l)}
                 />
               </div>
-            </>
-          )}
-
-          <p className="text-[13px] text-muted-foreground leading-relaxed">
-            원천: MES(TSPMES) 계보 테이블 실측 — 검사·전개는 읽기전용입니다. 새 덤프 반입 시{' '}
-            <b>scripts/mes_trace_build.py</b> 를 다시 실행하면 이 화면이 자동으로 새 데이터를 읽습니다(앱 재시작
-            불필요). 월 1회 <b>모의 역추적 훈련</b>(정기 의무·품질팀)의 실측 도구입니다 — 훈련 후 소요시간을 홈
-            KPI <b>역추적 소요시간</b>(분)에 입력하고 의무를 완료 처리하세요.
-          </p>
-        </>
+            )}
+          </div>
+        </div>
       )}
+    </div>
+  )
+}
+
+/** 미전개 요약(19번 공백 금지) — 계보 상태 + 사용법. */
+function TraceSummary({ status }: { status: MesTraceStatusDto | null }): JSX.Element {
+  return (
+    <div className="grid gap-4">
+      <CardShell title="계보 데이터 상태" cap="MES POP_TRACE 실측 사이드카 · 읽기전용">
+        <div className="px-[18px] pb-4 pt-1 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px]">
+          <div>
+            계보 링크 <b className="text-[15px] tabular-nums">{status ? nf(status.edgeCount) : '—'}</b>
+          </div>
+          <div>
+            LOT <b className="text-[15px] tabular-nums">{status ? nf(status.lotCount) : '—'}</b>
+          </div>
+          {status?.yearRange && <div className="text-muted-foreground">{status.yearRange}</div>}
+          {status?.builtAt && (
+            <div className="text-muted-foreground">빌드 {status.builtAt.replace('T', ' ')}</div>
+          )}
+        </div>
+      </CardShell>
+
+      <CardShell title="사용법" cap="좌측에서 LOT 을 검색해 선택하세요">
+        <div className="px-[18px] pb-4 pt-1 grid gap-1.5 text-[13px] leading-relaxed">
+          <div>
+            <b className="text-primary">역추적</b> — 이 LOT 에 들어온 자재(입고 LOT까지 소급) → 불량 원인 소급
+          </div>
+          <div>
+            <b className="text-primary">정추적</b> — 이 LOT 이 들어간 완제품·출하분 → 리콜 범위 확정
+          </div>
+          <div className="text-muted-foreground">전개된 칩을 클릭하면 그 LOT 기준으로 재전개됩니다.</div>
+          <div className="text-[12px] text-muted-foreground mt-1.5">
+            월 1회 <b>모의 역추적 훈련</b>(정기 의무·품질팀)의 실측 도구입니다 — 훈련 후 소요시간을 홈 KPI{' '}
+            <b>역추적 소요시간</b>(분)에 입력하고 의무를 완료 처리하세요. 새 덤프 반입 시{' '}
+            <b>scripts/mes_trace_build.py</b> 재실행이면 앱 재시작 없이 새 데이터를 읽습니다.
+          </div>
+        </div>
+      </CardShell>
     </div>
   )
 }

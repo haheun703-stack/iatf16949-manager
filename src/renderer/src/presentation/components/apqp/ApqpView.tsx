@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Check, ChevronDown, ChevronRight, ExternalLink, Loader2, Link2, Zap } from 'lucide-react'
+import { Route, Check, ExternalLink, Loader2, Link2, Zap } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { PageHeader } from '../shared/PageHeader'
 import { useApqpStore } from '../../stores/apqpStore'
@@ -14,9 +14,9 @@ const STATUS_LABEL: Record<ApqpStatus, string> = {
 }
 const STATUS_STYLE: Record<ApqpStatus, string> = {
   not_started: 'bg-muted text-muted-foreground',
-  in_progress: 'bg-amber-100 text-amber-700',
-  completed: 'bg-emerald-100 text-emerald-700',
-  na: 'bg-slate-100 text-slate-400'
+  in_progress: 'bg-warn-tint text-warn-ink',
+  completed: 'bg-ok-tint text-ok-ink',
+  na: 'bg-muted/60 text-faint'
 }
 
 // Core Tool 태그 → 기존 v5 모듈 딥링크 (SPC는 모듈 보류중 → 비활성)
@@ -29,8 +29,8 @@ const CORE_TOOL_LINK: Record<ApqpCoreTool, { page: PageId | null; label: string;
 }
 
 /**
- * APQP 여정 — 5단계(계획→제품설계→공정설계→검증→피드백) 순차 스테퍼.
- * 산출물 43개를 단계별 체크리스트로, Core Tool 산출물은 해당 모듈로 바로가기.
+ * APQP 여정 — 5단계(계획→제품설계→공정설계→검증→피드백) × 산출물 43개.
+ * 템플릿 C: 좌 단계 목록 380px / 우 선택 단계 산출물. 스토어가 현재 단계를 자동 선택한다(공백 금지).
  */
 export function ApqpView(): JSX.Element {
   const { board, loading, error, openPhaseId, load, setOpenPhase, updateElement } = useApqpStore()
@@ -40,129 +40,135 @@ export function ApqpView(): JSX.Element {
     void load()
   }, [load])
 
-  if (!board) {
-    return (
-      <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-        {error ?? '불러오는 중...'}
-      </div>
-    )
-  }
+  const openPhase = board?.phases.find((p) => p.id === openPhaseId) ?? null
 
   return (
-    <div className="max-w-6xl space-y-5">
-      <PageHeader
-        icon={<Route className="w-5 h-5" />}
-        title="APQP 여정"
-        sub="사전 제품 품질 계획 — 계획→설계→공정→검증→피드백 순서로 산출물을 채웁니다 · Core Tool은 배지 클릭으로 바로 작성"
-        actions={
-          <div className="text-right">
-            <div className="text-2xl font-bold tabular-nums">{board.overallPct}%</div>
-            <div className="text-[11px] text-muted-foreground">전체 진척률</div>
-          </div>
-        }
-      />
-
-      {/* ── 순차 스테퍼 ── */}
-      <div className="flex items-stretch gap-0 rounded-xl border border-border bg-card px-4 py-4 overflow-x-auto">
-        {board.phases.map((p, i) => {
-          const done = p.total > 0 && p.completed === p.total
-          const isCurrent = p.phaseNo === board.currentPhaseNo
-          const isOpen = openPhaseId === p.id
-          return (
-            <div key={p.id} className="flex items-center flex-1 min-w-[150px]">
-              <button
-                type="button"
-                onClick={() => setOpenPhase(isOpen ? null : p.id)}
-                className={cn(
-                  'flex-1 text-left rounded-lg px-3 py-2 transition-colors border',
-                  isOpen
-                    ? 'border-primary bg-primary/5'
-                    : 'border-transparent hover:bg-muted/60'
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      'inline-flex items-center justify-center w-7 h-7 rounded-full text-[13px] font-bold shrink-0',
-                      done
-                        ? 'bg-emerald-500 text-white'
-                        : isCurrent
-                          ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
-                          : 'bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {done ? <Check className="w-4 h-4" /> : p.phaseNo}
-                  </span>
-                  <div className="min-w-0">
-                    <div className={cn('text-[12.5px] font-bold leading-tight truncate', isCurrent && 'text-primary')}>
-                      {p.title}
-                    </div>
-                    <div className="text-[10.5px] text-muted-foreground tabular-nums">
-                      {p.completed}/{p.total} 완료
-                      {p.inProgress > 0 && ` · 진행 ${p.inProgress}`}
-                    </div>
-                  </div>
-                </div>
-                {/* 단계 미니 진척바 */}
-                <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={cn('h-full rounded-full', done ? 'bg-emerald-500' : 'bg-primary')}
-                    style={{ width: `${p.total ? Math.round((p.completed / p.total) * 100) : 0}%` }}
-                  />
-                </div>
-              </button>
-              {i < board.phases.length - 1 && (
-                <ChevronRight className="w-4 h-4 mx-1 text-muted-foreground/40 shrink-0" />
-              )}
+    <div className="flex flex-col h-full min-h-0">
+      <div className="shrink-0">
+        <PageHeader
+          icon={<Route className="w-5 h-5" />}
+          title="APQP 여정"
+          sub="사전 제품 품질 계획 — 계획→설계→공정→검증→피드백 순서로 산출물을 채웁니다 · Core Tool은 배지 클릭으로 바로 작성"
+          actions={
+            <div className="text-right">
+              <div className="text-2xl font-bold tabular-nums">{board?.overallPct ?? 0}%</div>
+              <div className="text-[11px] text-muted-foreground">전체 진척률</div>
             </div>
-          )
-        })}
+          }
+        />
       </div>
 
-      {/* ── 단계별 산출물 ── */}
-      {board.phases.map((p) => (
-        <PhaseSection
-          key={p.id}
-          phase={p}
-          open={openPhaseId === p.id}
-          isCurrent={p.phaseNo === board.currentPhaseNo}
-          onToggle={() => setOpenPhase(openPhaseId === p.id ? null : p.id)}
-          onUpdate={updateElement}
-          onGoTool={(page) => setPage(page)}
-        />
-      ))}
+      {!board ? (
+        <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          {error ?? '불러오는 중...'}
+        </div>
+      ) : (
+        /* 템플릿 C (19번): 좌 단계 목록 380px 고정 / 우 산출물 테이블 */
+        <div className="flex gap-4 flex-1 min-h-0">
+          <div className="w-[380px] shrink-0 overflow-y-auto pr-1 space-y-1.5">
+            {board.phases.map((p) => (
+              <PhaseCard
+                key={p.id}
+                phase={p}
+                active={openPhaseId === p.id}
+                isCurrent={p.phaseNo === board.currentPhaseNo}
+                onPick={() => setOpenPhase(p.id)}
+              />
+            ))}
+          </div>
+
+          <div className="flex-1 min-w-0 overflow-y-auto">
+            {openPhase && (
+              <PhaseDetail
+                phase={openPhase}
+                isCurrent={openPhase.phaseNo === board.currentPhaseNo}
+                onUpdate={updateElement}
+                onGoTool={(page) => setPage(page)}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function PhaseSection({
+/** 좌측 단계 카드 — 번호·제목·진척 (템플릿 C 행 확대 문법) */
+function PhaseCard({
   phase,
-  open,
+  active,
   isCurrent,
-  onToggle,
+  onPick
+}: {
+  phase: ApqpPhaseDto
+  active: boolean
+  isCurrent: boolean
+  onPick: () => void
+}): JSX.Element {
+  const done = phase.total > 0 && phase.completed === phase.total
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className={cn(
+        'w-full text-left rounded-lg px-3 py-2.5 border transition-colors',
+        active ? 'bg-muted border-primary/40' : 'bg-card border-border hover:bg-muted/50'
+      )}
+    >
+      <div className="flex items-center gap-2.5 min-w-0">
+        <span
+          className={cn(
+            'inline-flex items-center justify-center w-7 h-7 rounded-full text-[13px] font-bold shrink-0',
+            done
+              ? 'bg-ok-ink text-white'
+              : isCurrent
+                ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
+                : 'bg-muted text-muted-foreground'
+          )}
+        >
+          {done ? <Check className="w-4 h-4" /> : phase.phaseNo}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className={cn('text-[14px] font-semibold leading-tight truncate', isCurrent && 'text-primary')}>
+            {phase.title}
+          </div>
+          <div className="text-[11px] text-muted-foreground tabular-nums mt-0.5">
+            {phase.completed}/{phase.total} 완료
+            {phase.inProgress > 0 && ` · 진행 ${phase.inProgress}`}
+          </div>
+        </div>
+        {isCurrent && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+            현재
+          </span>
+        )}
+      </div>
+      <div className="mt-2 h-1 rounded-full bg-muted overflow-hidden">
+        <div
+          className={cn('h-full rounded-full', done ? 'bg-ok-ink' : 'bg-primary')}
+          style={{ width: `${phase.total ? Math.round((phase.completed / phase.total) * 100) : 0}%` }}
+        />
+      </div>
+    </button>
+  )
+}
+
+/** 우측 — 선택 단계의 산출물 테이블 */
+function PhaseDetail({
+  phase,
+  isCurrent,
   onUpdate,
   onGoTool
 }: {
   phase: ApqpPhaseDto
-  open: boolean
   isCurrent: boolean
-  onToggle: () => void
   onUpdate: (input: { id: string } & Record<string, unknown>) => void
   onGoTool: (page: PageId) => void
 }): JSX.Element {
   return (
-    <section className={cn('rounded-xl border bg-card overflow-hidden', isCurrent ? 'border-primary/50' : 'border-border')}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full px-4 py-3 flex items-center gap-2.5 hover:bg-muted/40 transition-colors"
-      >
-        {open ? (
-          <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-        )}
+    <section className={cn('rounded-[14px] border bg-card shadow-card overflow-hidden', isCurrent ? 'border-primary/50' : 'border-border')}>
+      <div className="px-4 py-3 flex items-center gap-2.5 border-b border-border">
         <span className="font-bold text-sm">
           Phase {phase.phaseNo}. {phase.title}
         </span>
@@ -174,35 +180,31 @@ function PhaseSection({
         <span className="ml-auto text-[11.5px] text-muted-foreground tabular-nums shrink-0">
           {phase.completed}/{phase.total}
         </span>
-      </button>
+      </div>
 
-      {open && (
-        <div className="border-t border-border">
-          {phase.description && (
-            <p className="px-4 pt-3 text-[12.5px] text-muted-foreground leading-relaxed">
-              {phase.description}
-            </p>
-          )}
-          <table className="w-full text-[12px] mt-2">
-            <thead>
-              <tr className="text-[10.5px] uppercase tracking-wide text-muted-foreground border-b border-border/60">
-                <th className="text-left font-semibold px-4 py-1.5 w-8">#</th>
-                <th className="text-left font-semibold px-2 py-1.5">산출물</th>
-                <th className="text-left font-semibold px-2 py-1.5 w-24">Core Tool</th>
-                <th className="text-left font-semibold px-2 py-1.5 w-20">조항</th>
-                <th className="text-left font-semibold px-2 py-1.5 w-24">담당</th>
-                <th className="text-left font-semibold px-2 py-1.5 w-24">상태</th>
-                <th className="text-left font-semibold px-2 py-1.5 w-32">목표일</th>
-              </tr>
-            </thead>
-            <tbody>
-              {phase.elements.map((e) => (
-                <ElementRow key={e.id} e={e} onUpdate={onUpdate} onGoTool={onGoTool} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {phase.description && (
+        <p className="px-4 pt-3 text-[12.5px] text-muted-foreground leading-relaxed">
+          {phase.description}
+        </p>
       )}
+      <table className="w-full text-[12px] mt-2">
+        <thead>
+          <tr className="text-[10.5px] uppercase tracking-wide text-muted-foreground border-b border-border/60">
+            <th className="text-left font-semibold px-4 py-1.5 w-8">#</th>
+            <th className="text-left font-semibold px-2 py-1.5">산출물</th>
+            <th className="text-left font-semibold px-2 py-1.5 w-24">Core Tool</th>
+            <th className="text-left font-semibold px-2 py-1.5 w-20">조항</th>
+            <th className="text-left font-semibold px-2 py-1.5 w-24">담당</th>
+            <th className="text-left font-semibold px-2 py-1.5 w-24">상태</th>
+            <th className="text-left font-semibold px-2 py-1.5 w-32">목표일</th>
+          </tr>
+        </thead>
+        <tbody>
+          {phase.elements.map((e) => (
+            <ElementRow key={e.id} e={e} onUpdate={onUpdate} onGoTool={onGoTool} />
+          ))}
+        </tbody>
+      </table>
     </section>
   )
 }
@@ -233,8 +235,8 @@ function ElementRow({
               className={cn(
                 'inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded',
                 e.evidence.suggestedStatus === e.status
-                  ? 'bg-emerald-50 text-emerald-600'
-                  : 'bg-amber-50 text-amber-700'
+                  ? 'bg-ok-tint text-ok-ink'
+                  : 'bg-warn-tint text-warn-ink'
               )}
               title="앱 실데이터에서 자동 집계된 증거"
             >
