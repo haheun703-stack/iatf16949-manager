@@ -165,13 +165,12 @@ export function FmeaView(): JSX.Element {
               </div>
             </>
           ) : (
-            !loading && (
-              <CardShell title="공정 FMEA 현황" cap="신판(AIAG-VDA) 7-step 시트">
-                <div className="px-[18px] pb-4 text-[13px] text-muted-foreground">
-                  등록된 FMEA 문서가 없습니다. 문서가 적재되면 좌측 목록에서 선택해 작성하세요.
-                </div>
-              </CardShell>
-            )
+            /* 로딩 중에도 빈 화면을 두지 않는다(19번 규칙④) */
+            <CardShell title="공정 FMEA 현황" cap="신판(AIAG-VDA) 7-step 시트" status={loading ? 'loading' : 'ready'}>
+              <div className="px-[18px] pb-4 text-[13px] text-muted-foreground">
+                등록된 FMEA 문서가 없습니다. 문서가 적재되면 좌측 목록에서 선택해 작성하세요.
+              </div>
+            </CardShell>
           )}
         </div>
       </div>
@@ -290,12 +289,12 @@ function FmeaRow({
       />
     </td>
   )
-  // AP는 S·O·D에서 자동 산출(부표4) → 읽기전용 배지
-  const apCell = (field: 'actionPriority' | 'reActionPriority'): JSX.Element => (
+  // AP는 S·O·D에서 자동 산출(부표4) → 읽기전용 배지. 재평가 AP(reActionPriority)는 시트에 칸이 없다.
+  const apCell = (): JSX.Element => (
     <td className="border border-border text-center p-0.5">
-      {r[field] ? (
-        <span className={cn('inline-block w-6 text-center text-[10px] font-bold rounded py-0.5', AP_COLOR[r[field] as FmeaActionPriority])}>
-          {r[field]}
+      {r.actionPriority ? (
+        <span className={cn('inline-block w-6 text-center text-[10px] font-bold rounded py-0.5', AP_COLOR[r.actionPriority as FmeaActionPriority])}>
+          {r.actionPriority}
         </span>
       ) : (
         <span className="text-muted-foreground/40">-</span>
@@ -321,7 +320,7 @@ function FmeaRow({
       {txt('detectionCtrl')}
       {score('detection')}
       <td className={cn('border border-border text-center tabular-nums px-1', rpnTone(r.rpn))}>{r.rpn ?? '-'}</td>
-      {apCell('actionPriority')}
+      {apCell()}
       {txt('specialChar')}
       {txt('preventionAction')}
       {txt('detectionAction')}

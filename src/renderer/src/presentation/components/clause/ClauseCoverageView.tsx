@@ -66,7 +66,10 @@ export function ClauseCoverageView(): JSX.Element {
     return [...s].sort()
   }, [data])
 
-  // 조항 단위로 거르되, 검색·팀 필터는 규정 행 단위로 적용(빈 조항은 숨김·미커버 필터 제외)
+  const narrowed = q.trim() !== '' || dept !== 'all'
+
+  // 검색·부서 필터는 규정 행 단위로 적용하되, **커버/미커버 판정은 언제나 원본(totalRegs) 기준**이다.
+  // 걸러진 결과를 갭으로 세면 심사 화면이 없는 갭을 보고한다.
   const view = useMemo(() => {
     const kw = q.trim().toLowerCase()
     const filtered = (data ?? []).map((c) => {
@@ -76,14 +79,16 @@ export function ClauseCoverageView(): JSX.Element {
         regs = regs.filter(
           (r) => r.name.toLowerCase().includes(kw) || r.regCode.toLowerCase().includes(kw)
         )
-      return { ...c, regs }
+      return { ...c, regs, totalRegs: c.regs.length }
     })
-    if (quick === 'gap') return filtered.filter((c) => c.regs.length === 0)
-    if (quick === 'covered') return filtered.filter((c) => c.regs.length > 0)
-    // 전체 보기에서도 검색·팀 필터가 걸렸으면 빈 조항은 감춘다(원래 미커버 조항은 유지)
-    if (kw || dept !== 'all') return filtered.filter((c) => c.regs.length > 0)
+    if (quick === 'gap') return filtered.filter((c) => c.totalRegs === 0)
+    if (quick === 'covered')
+      return filtered.filter((c) => c.totalRegs > 0 && (!narrowed || c.regs.length > 0))
+    // 전체 보기에서 검색·부서 필터가 걸렸으면 결과 없는 조항은 감춘다(원래 미커버 조항도 함께 감춤 —
+    // 검색 중에는 "검색 결과"만 보여야 하고, 갭 확인은 미커버 타일로 한다)
+    if (narrowed) return filtered.filter((c) => c.regs.length > 0)
     return filtered
-  }, [data, quick, q, dept])
+  }, [data, quick, q, dept, narrowed])
 
   const resetFilters = (): void => {
     setQuick('all')
@@ -168,15 +173,20 @@ export function ClauseCoverageView(): JSX.Element {
                 <span
                   className={cn(
                     'ml-auto text-xs font-bold px-2 py-0.5 rounded-full',
-                    c.regs.length ? 'bg-ok-tint text-ok-ink' : 'bg-bad-tint text-bad-ink'
+                    c.totalRegs ? 'bg-ok-tint text-ok-ink' : 'bg-bad-tint text-bad-ink'
                   )}
+                  title={narrowed ? '검색·필터 결과 / 이 조항의 전체 규정' : undefined}
                 >
-                  규정 {c.regs.length}
+                  규정 {narrowed && c.regs.length !== c.totalRegs ? `${c.regs.length} / ${c.totalRegs}` : c.totalRegs}
                 </span>
               </div>
-              {c.regs.length === 0 ? (
+              {c.totalRegs === 0 ? (
                 <div className="px-4 py-4 flex items-center gap-2 text-sm text-bad-ink">
                   <AlertTriangle className="w-4 h-4" /> 이 조항을 커버하는 규정이 없습니다.
+                </div>
+              ) : c.regs.length === 0 ? (
+                <div className="px-4 py-4 text-sm text-muted-foreground">
+                  검색·필터 조건에 맞는 규정이 없습니다 — 이 조항은 규정 {c.totalRegs}건으로 커버되어 있습니다.
                 </div>
               ) : (
                 <ul className="divide-y divide-border/60">

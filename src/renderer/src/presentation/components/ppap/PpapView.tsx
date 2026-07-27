@@ -119,14 +119,13 @@ export function PpapView(): JSX.Element {
               </div>
             </div>
           ) : (
-            !loading && (
-              <CardShell title="PPAP 제출 현황" cap="고객 승인 제출 단위로 관리합니다">
-                <div className="px-[18px] pb-4 text-[13px] text-muted-foreground">
-                  등록된 PPAP 제출이 없습니다. ISIR·양산 승인 대상 품번이 생기면 좌측 목록에서 선택해 18
-                  요구사항을 추적하세요.
-                </div>
-              </CardShell>
-            )
+            /* 로딩 중에도 빈 화면을 두지 않는다(19번 규칙④) */
+            <CardShell title="PPAP 제출 현황" cap="고객 승인 제출 단위로 관리합니다" status={loading ? 'loading' : 'ready'}>
+              <div className="px-[18px] pb-4 text-[13px] text-muted-foreground">
+                등록된 PPAP 제출이 없습니다. ISIR·양산 승인 대상 품번이 생기면 좌측 목록에서 선택해 18
+                요구사항을 추적하세요.
+              </div>
+            </CardShell>
           )}
         </div>
       </div>

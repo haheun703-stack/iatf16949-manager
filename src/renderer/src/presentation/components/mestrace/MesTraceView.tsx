@@ -23,22 +23,17 @@ const nf = (n: number): string => n.toLocaleString('ko-KR')
 
 function LotChip({
   lot,
-  onClick,
-  active
+  onClick
 }: {
   lot: MesTraceLotDto
   onClick?: (lot: MesTraceLotDto) => void
-  active?: boolean
 }): JSX.Element {
   return (
     <button
       type="button"
       onClick={() => onClick?.(lot)}
       title={onClick ? '이 LOT 을 기준으로 다시 전개' : undefined}
-      className={cn(
-        'text-left rounded-lg border px-2.5 py-1.5 leading-tight transition-colors',
-        active ? 'border-primary/50 bg-primary/10' : 'border-border bg-card hover:bg-muted/60'
-      )}
+      className="text-left rounded-lg border border-border bg-card px-2.5 py-1.5 leading-tight transition-colors hover:bg-muted/60"
     >
       <span className="block text-[13px] font-bold tabular-nums text-foreground">
         {lot.barcode}
