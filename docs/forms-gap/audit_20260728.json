@@ -1,10 +1,10 @@
 {
  "summary": {
   "dbPath": "C:/Users/ASUS/AppData/Local/Temp/claude/d--IATF16949-SQ-------/71c011e4-db3c-4ae0-a73e-c5f09f557709/scratchpad/e2e-batch1-data/iatf16949.db",
-  "ranAt": "2026-07-28T11:31:04.636Z",
+  "ranAt": "2026-07-28T12:11:00.341Z",
   "total": 301,
-  "writable_fields": 177,
-  "gapA_noFields": 124,
+  "writable_fields": 185,
+  "gapA_noFields": 116,
   "gapB_fieldsButNoCellmap": 0,
   "gapC_noTemplate": 283,
   "linkedObligation": 32,
@@ -132,90 +132,6 @@
    "sqPoints": 140,
    "sqMissingCp": 12,
    "prio": 321
-  },
-  {
-   "code": "L1100-01",
-   "name": "설비제작 사양서 ()",
-   "regCode": "L-1100",
-   "respDept": "생산기술팀",
-   "clause": "7,8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "CP-03"
-   ],
-   "sqItems": [
-    "3_1",
-    "3_2",
-    "3_4",
-    "3_5",
-    "3_6"
-   ],
-   "sqPoints": 140,
-   "sqMissingCp": 10,
-   "prio": 315
-  },
-  {
-   "code": "L1100-09",
-   "name": "설비 이력카드 ()",
-   "regCode": "L-1100",
-   "respDept": "생산기술팀",
-   "clause": "7,8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "CP-03"
-   ],
-   "sqItems": [
-    "3_1",
-    "3_2",
-    "3_4",
-    "3_5",
-    "3_6"
-   ],
-   "sqPoints": 140,
-   "sqMissingCp": 10,
-   "prio": 315
-  },
-  {
-   "code": "L1100-24",
-   "name": "설비능력 지수표 ()",
-   "regCode": "L-1100",
-   "respDept": "생산기술팀",
-   "clause": "7,8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "CP-03"
-   ],
-   "sqItems": [
-    "3_1",
-    "3_2",
-    "3_4",
-    "3_5",
-    "3_6"
-   ],
-   "sqPoints": 140,
-   "sqMissingCp": 10,
-   "prio": 315
   },
   {
    "code": "K2100-01",
@@ -576,32 +492,6 @@
    "prio": 158
   },
   {
-   "code": "F1100-01",
-   "name": "년 사내외 교육훈련 계획서 ()",
-   "regCode": "F-1100",
-   "respDept": "총무팀",
-   "clause": "7",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [
-    "#23 교육훈련 계획 수립·효과성"
-   ],
-   "coreDuty": true,
-   "processes": [
-    "MP-03"
-   ],
-   "sqItems": [
-    "6_5"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 6,
-   "prio": 153
-  },
-  {
    "code": "K1200-06",
    "name": "협력사 월별 모니터링 ()",
    "regCode": "K-1200",
@@ -776,6 +666,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 사업부별 실평점·지적사항 매트릭스 시드 — '한계 수용' 판정 후 처리",
    "prio": 118
   },
   {
@@ -802,6 +693,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 실데이터+사진 24장 시드·인발사업부 서식 — '한계 수용' 판정 후 처리",
    "prio": 118
   },
   {
@@ -828,6 +720,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 실데이터 시드(쌍용산업·24년7월)·인발사업부 서식 — '한계 수용' 판정 후 처리",
    "prio": 118
   },
   {
@@ -952,30 +845,6 @@
    "sqPoints": 40,
    "sqMissingCp": 4,
    "prio": 102
-  },
-  {
-   "code": "A2200-03",
-   "name": "(    )년 경영검토 보고서 ()",
-   "regCode": "A-2200",
-   "respDept": "총무팀",
-   "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [
-    "#18 경영검토 회의"
-   ],
-   "coreDuty": true,
-   "processes": [
-    "MP-01"
-   ],
-   "sqItems": [],
-   "sqPoints": 0,
-   "sqMissingCp": 0,
-   "prio": 95
   },
   {
    "code": "K1200-04-01",
@@ -1127,30 +996,6 @@
   {
    "code": "F2100-05-02",
    "name": "공정면허 이론평가서 2안",
-   "regCode": "F-2100",
-   "respDept": "총무팀",
-   "clause": "7",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "MP-03"
-   ],
-   "sqItems": [
-    "6_5"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 6,
-   "prio": 63
-  },
-  {
-   "code": "F2100-10",
-   "name": "작업자 숙련도 CHECK SHEET ()",
    "regCode": "F-2100",
    "respDept": "총무팀",
    "clause": "7",
@@ -1838,54 +1683,6 @@
    "prio": 54
   },
   {
-   "code": "M1100-02",
-   "name": "설비 비가동시간 관리 대장",
-   "regCode": "M-1100",
-   "respDept": "생산팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 9,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "CP-03"
-   ],
-   "sqItems": [
-    "1_1"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 3,
-   "prio": 54
-  },
-  {
-   "code": "M1100-03",
-   "name": "설비 비가동시간 이력관리 대장",
-   "regCode": "M-1100",
-   "respDept": "생산팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 16,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "CP-03"
-   ],
-   "sqItems": [
-    "1_1"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 3,
-   "prio": 54
-  },
-  {
    "code": "M1100-05",
    "name": "설비 비가동 주요 코드",
    "regCode": "M-1100",
@@ -1907,6 +1704,7 @@
    ],
    "sqPoints": 20,
    "sqMissingCp": 3,
+   "adoptedSheet": "[제외 상신] 고정 코드 정의표(E-1xx/2xx 참조 문서) — 작성 양식 아님(실측 반전), 문서 열람형 전환 제안",
    "prio": 54
   },
   {
@@ -2097,6 +1895,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 과거 심사 실데이터 시드(TPC24-0723) — '한계 수용' 판정 후 처리",
    "prio": 28
   },
   {
@@ -2121,6 +1920,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 필라넥워터사업부 전용 성적서 — '한계 수용' 판정 후 처리",
    "prio": 28
   },
   {
@@ -3197,12 +2997,12 @@
    "regCode": "A-2200",
    "respDept": "총무팀",
    "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 8,
+   "cells": 7,
+   "gridCols": 3,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [
     "#18 경영검토 회의"
    ],
@@ -3212,7 +3012,8 @@
    ],
    "sqItems": [],
    "sqPoints": 0,
-   "sqMissingCp": 0
+   "sqMissingCp": 0,
+   "adoptedSheet": "마스터 '(    )년 경영검토 보고서 (A2200-03)' — 빈 틀 실측(시드 없음), 검토항목 14블록(3행 병합)"
   },
   {
    "code": "A3200-01",
@@ -3526,7 +3327,8 @@
     "6_4"
    ],
    "sqPoints": 10,
-   "sqMissingCp": 1
+   "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 과거 심사 실데이터 시드(TPC24-0723) — '한계 수용' 판정 후 처리"
   },
   {
    "code": "A5100-04",
@@ -3551,7 +3353,8 @@
     "6_4"
    ],
    "sqPoints": 10,
-   "sqMissingCp": 1
+   "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 사업부별 실평점·지적사항 매트릭스 시드 — '한계 수용' 판정 후 처리"
   },
   {
    "code": "A5200-03",
@@ -3576,7 +3379,8 @@
     "6_4"
    ],
    "sqPoints": 10,
-   "sqMissingCp": 1
+   "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 실데이터+사진 24장 시드·인발사업부 서식 — '한계 수용' 판정 후 처리"
   },
   {
    "code": "A5200-04",
@@ -3601,7 +3405,8 @@
     "6_4"
    ],
    "sqPoints": 10,
-   "sqMissingCp": 1
+   "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 실데이터 시드(쌍용산업·24년7월)·인발사업부 서식 — '한계 수용' 판정 후 처리"
   },
   {
    "code": "A5200-04-01",
@@ -3624,7 +3429,8 @@
     "6_4"
    ],
    "sqPoints": 10,
-   "sqMissingCp": 1
+   "sqMissingCp": 1,
+   "adoptedSheet": "[조건② 보류] 필라넥워터사업부 전용 성적서 — '한계 수용' 판정 후 처리"
   },
   {
    "code": "A6100-01",
@@ -5213,12 +5019,12 @@
    "regCode": "F-1100",
    "respDept": "총무팀",
    "clause": "7",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 20,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [
     "#23 교육훈련 계획 수립·효과성"
    ],
@@ -5230,7 +5036,8 @@
     "6_5"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 6
+   "sqMissingCp": 6,
+   "adoptedSheet": "마스터 '년 사내외 교육훈련 계획서 (F1100-01)' — 대장형(월별 12열)"
   },
   {
    "code": "F1100-02",
@@ -5673,12 +5480,12 @@
    "regCode": "F-2100",
    "respDept": "총무팀",
    "clause": "7",
-   "fields": 0,
-   "cells": 0,
+   "fields": 5,
+   "cells": 5,
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -5688,7 +5495,8 @@
     "6_5"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 6
+   "sqMissingCp": 6,
+   "adoptedSheet": "마스터 '작업자 숙련도 CHECK SHEET (F2100-10)' — 매트릭스 채점형: 최소 매핑(점수·소계=시트 수식 보존)"
   },
   {
    "code": "F2100-11",
@@ -7551,12 +7359,12 @@
    "regCode": "L-1100",
    "respDept": "생산기술팀",
    "clause": "7,8",
-   "fields": 0,
-   "cells": 0,
+   "fields": 3,
+   "cells": 3,
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7570,7 +7378,8 @@
     "3_6"
    ],
    "sqPoints": 140,
-   "sqMissingCp": 10
+   "sqMissingCp": 10,
+   "adoptedSheet": "마스터 '설비제작 사양서 (L1100-01)' — 문서형 대작(226행): 식별 헤더 3만 매핑"
   },
   {
    "code": "L1100-02",
@@ -7769,12 +7578,12 @@
    "regCode": "L-1100",
    "respDept": "생산기술팀",
    "clause": "7,8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 9,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7788,7 +7597,8 @@
     "3_6"
    ],
    "sqPoints": 140,
-   "sqMissingCp": 10
+   "sqMissingCp": 10,
+   "adoptedSheet": "마스터 '설비 이력카드 (L1100-09)' — 카드+이력 대장"
   },
   {
    "code": "L1100-10",
@@ -8176,12 +7986,12 @@
    "regCode": "L-1100",
    "respDept": "생산기술팀",
    "clause": "7,8",
-   "fields": 0,
-   "cells": 0,
+   "fields": 10,
+   "cells": 10,
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8195,7 +8005,8 @@
     "3_6"
    ],
    "sqPoints": 140,
-   "sqMissingCp": 10
+   "sqMissingCp": 10,
+   "adoptedSheet": "마스터 '설비능력 지수표 (L1100-24)' — 계산기형(Cmk): 비수식 헤더 10만 매핑(L4102-02 선례)"
   },
   {
    "code": "L1100-25",
@@ -8208,7 +8019,7 @@
    "gridCols": 10,
    "template": 1,
    "newDesign": true,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [
     "#73 금형 점검(일상/정기/보관)"
    ],
@@ -8241,7 +8052,7 @@
    "gridCols": 11,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8329,7 +8140,7 @@
    "gridCols": 2,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8562,7 +8373,7 @@
    "gridCols": 10,
    "template": 1,
    "newDesign": true,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -8590,7 +8401,7 @@
    "gridCols": 6,
    "template": 1,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8669,7 +8480,7 @@
    "gridCols": 20,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8696,7 +8507,7 @@
    "gridCols": 6,
    "template": 1,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [
     "#45 공정 순회검사·LOT 라벨 상태 확인"
    ],
@@ -8803,7 +8614,7 @@
    "gridCols": 10,
    "template": 1,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -9015,7 +8826,7 @@
    "gridCols": 17,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -9411,12 +9222,12 @@
    "regCode": "M-1100",
    "respDept": "생산팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 9,
-   "gridCols": 0,
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 9,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -9426,7 +9237,8 @@
     "1_1"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 3
+   "sqMissingCp": 3,
+   "adoptedSheet": "마스터 '설비 비가동시간 관리 대장 (M1100-02)' — 3행 병합 블록 grid 6건"
   },
   {
    "code": "M1100-03",
@@ -9434,12 +9246,12 @@
    "regCode": "M-1100",
    "respDept": "생산팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 16,
+   "fields": 11,
+   "cells": 11,
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -9449,7 +9261,8 @@
     "1_1"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 3
+   "sqMissingCp": 3,
+   "adoptedSheet": "마스터 '설비 비가동시간 이력관리 대장 (M1100-03)' — 비가동 1건 카드형"
   },
   {
    "code": "M1100-05",
@@ -9472,7 +9285,8 @@
     "1_1"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 3
+   "sqMissingCp": 3,
+   "adoptedSheet": "[제외 상신] 고정 코드 정의표(E-1xx/2xx 참조 문서) — 작성 양식 아님(실측 반전), 문서 열람형 전환 제안"
   },
   {
    "code": "M1100-06",
@@ -9734,7 +9548,7 @@
    "gridCols": 6,
    "template": 1,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [
     "#1 초·중·종물 검사(초/중/종)"
    ],
@@ -9928,7 +9742,7 @@
    "gridCols": 12,
    "template": 1,
    "newDesign": true,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [
     "#47 출하검사·성적서 발행(생산 LOT 기재)"
    ],
