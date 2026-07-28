@@ -82,6 +82,9 @@ const forms = db
   )
   .all()
 
+// 신규 설계본(코워크 A-2 조건⑴): 회사 원본 부재로 리포 템플릿이 정본인 양식 — 심사 대체 이력 표시
+const isNewDesign = (tp) => !!tp && String(tp).includes('sq_gap_forms')
+
 const rows = []
 for (const f of forms) {
   if (f.deprecated) continue
@@ -105,6 +108,7 @@ for (const f of forms) {
     cells: cellCnt.get(f.code) || 0,
     gridCols: gridCnt.get(f.code) || 0,
     template: f.template_path ? 1 : 0,
+    newDesign: isNewDesign(f.template_path),
     submissions: subCnt.get(f.code) || 0,
     obligations: o.map((x) => `#${x.id} ${x.title}${x.active ? '' : '(비활성)'}`),
     coreDuty,
@@ -131,7 +135,8 @@ const sum = {
   gapC_noTemplate: noTemplate.length,
   linkedObligation: rows.filter((r) => r.obligations.length > 0).length,
   linkedProcess: rows.filter((r) => r.processes.length > 0).length,
-  linkedSq: rows.filter((r) => r.sqItems.length > 0).length
+  linkedSq: rows.filter((r) => r.sqItems.length > 0).length,
+  newDesign: rows.filter((r) => r.newDesign).length
 }
 console.log('=== 양식 갭 감사 요약 ===')
 console.log(JSON.stringify(sum, null, 1))
