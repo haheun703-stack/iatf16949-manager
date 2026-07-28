@@ -80,6 +80,13 @@ await extractYangsik(
   join(AM_OUT, 'L2100-05_공정순회_패트롤_AM.xlsx'),
   'L2100-05 공정패트롤(AM)'
 )
+// M1200-10 실물 교체(코워크 승인 7/28 오후 — 조도 선례 "실물 출현 시 교정" 일관 적용).
+// 조건 ⓑ: 구 신규설계본(15_공정자주검사)은 삭제하지 않고 sq_gap_forms 에 참고 보관.
+await extractYangsik(
+  join(SRC_MES, '자주검사체크시트 엑셀양식_개발팀_240313-07870 진행 完.xlsx'),
+  join(AM_OUT, 'M1200-10_공정자주검사_AM.xlsx'),
+  'M1200-10 공정자주검사(AM)'
+)
 
 // ── ①-b 추출본 시드값 클리어 ─────────────────────────────────
 // AM '양식' 시트는 2M100 품번의 실값이 시드로 남아 있다(작성 관행: 시트 복사 후 덮어쓰기).
@@ -108,6 +115,7 @@ const AM_SEED_CELLS = [
 ]
 await clearSeedCells(join(AM_OUT, 'L2100-01_수입검사표준_AM.xlsx'), AM_SEED_CELLS, 'L2100-01')
 await clearSeedCells(join(AM_OUT, 'L2100-05_공정순회_패트롤_AM.xlsx'), AM_SEED_CELLS, 'L2100-05')
+await clearSeedCells(join(AM_OUT, 'M1200-10_공정자주검사_AM.xlsx'), AM_SEED_CELLS, 'M1200-10')
 
 // ── ② 조도 실물: 무손상 원본 복사 ────────────────────────────
 copyFileSync(SRC_JODO, join(AM_OUT, 'L2100-11_조도측정_기록일지_AM.xlsx'))

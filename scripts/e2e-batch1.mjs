@@ -209,6 +209,29 @@ const CASES = [
     ]
   },
   {
+    // 1배치 후속(0105): 실물 출현 교체 — 코워크 승인. 레이아웃 = AM MES 3종 공통 '양식'
+    code: 'M1200-10',
+    values: {
+      차종: 'NX4 HEV', 품번: '25450-07870', 품명: 'PIPE ASSY', 공정명: '로봇스폿(영)',
+      설비명: '로봇스폿 M/C 1호', 원소재lot: 'SJ240601-3', 적입용기: '회색 11호', box수량: '120개',
+      items_l: [
+        { no: '1', 검사부위: '스폿 용접부', 검사항목: '용접 위치·개소 정확할 것' },
+        { no: '2', 검사부위: '너겟', 검사항목: '너겟 지름 기준 만족할 것' },
+        { no: '3', 검사부위: '외관', 검사항목: '스패터·눌림 없을 것' }
+      ],
+      items_r: [
+        { no: '4', 검사부위: '치수', 검사항목: '검사지그 안착 확인' },
+        { no: '5', 검사부위: '식별', 검사항목: '라벨 LOT 일치할 것' }
+      ],
+      비고: '자주검사 1회차(E2E)', 작성자: LOGIN
+    },
+    expect: [
+      ['C2', 'NX4 HEV'], ['F2', '25450-07870'], ['C4', '로봇스폿'],
+      ['D8', '스폿 용접부'], ['D11', '너겟'], ['G8', '치수'],
+      ['G14', '자주검사 1회차'], ['N3', LOGIN]
+    ]
+  },
+  {
     code: 'M3100-05',
     values: {
       품명: 'PIPE ASSY', 품번: '25450-07870', lot_no: '2607290A',
@@ -296,4 +319,4 @@ for (const c of CASES) {
     summary.push({ code: c.code, error: e.message })
   }
 }
-console.log(`\n합계: 셀검증 ${totalOk}/${totalChecks} · 폼 ${summary.filter((s) => !s.error && s.ok === s.total).length}/10 통과`)
+console.log(`\n합계: 셀검증 ${totalOk}/${totalChecks} · 폼 ${summary.filter((s) => !s.error && s.ok === s.total).length}/${CASES.length} 통과`)

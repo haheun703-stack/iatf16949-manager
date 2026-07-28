@@ -1,7 +1,7 @@
 {
  "summary": {
   "dbPath": "C:/Users/ASUS/AppData/Local/Temp/claude/d--IATF16949-SQ-------/71c011e4-db3c-4ae0-a73e-c5f09f557709/scratchpad/e2e-batch1-data/iatf16949.db",
-  "ranAt": "2026-07-28T11:11:39.537Z",
+  "ranAt": "2026-07-28T11:31:04.636Z",
   "total": 301,
   "writable_fields": 177,
   "gapA_noFields": 124,
@@ -10,7 +10,7 @@
   "linkedObligation": 32,
   "linkedProcess": 283,
   "linkedSq": 237,
-  "newDesign": 15
+  "newDesign": 14
  },
  "gapA": [
   {
@@ -9729,12 +9729,12 @@
    "regCode": "M-1200",
    "respDept": "생산팀",
    "clause": "8",
-   "fields": 7,
-   "cells": 6,
+   "fields": 12,
+   "cells": 10,
    "gridCols": 6,
    "template": 1,
-   "newDesign": true,
-   "submissions": 0,
+   "newDesign": false,
+   "submissions": 1,
    "obligations": [
     "#1 초·중·종물 검사(초/중/종)"
    ],
@@ -9747,7 +9747,8 @@
     "5_4"
    ],
    "sqPoints": 140,
-   "sqMissingCp": 14
+   "sqMissingCp": 14,
+   "adoptedSheet": "AM 실사용 'MES 자주검사체크시트 엑셀양식(240313-07870)' 양식 시트 → templates/am_forms/M1200-10_공정자주검사_AM.xlsx (실물 출현 교체 — 코워크 승인 7/28 오후, 구 신규설계본 15_공정자주검사 = 참고 보관)"
   },
   {
    "code": "M1200-11",
