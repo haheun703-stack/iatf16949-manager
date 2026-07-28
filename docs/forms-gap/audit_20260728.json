@@ -1,220 +1,18 @@
 {
  "summary": {
-  "dbPath": "C:/Users/ASUS/AppData/Local/Temp/claude/d--IATF16949-SQ-------/fa8ccecb-3107-4649-9269-e8446cf26769/scratchpad/a-cap-data/iatf16949.db",
-  "ranAt": "2026-07-28T04:41:38.415Z",
+  "dbPath": "C:/Users/ASUS/AppData/Local/Temp/claude/d--IATF16949-SQ-------/71c011e4-db3c-4ae0-a73e-c5f09f557709/scratchpad/e2e-batch1-data/iatf16949.db",
+  "ranAt": "2026-07-28T11:11:39.537Z",
   "total": 301,
-  "writable_fields": 167,
-  "gapA_noFields": 134,
+  "writable_fields": 177,
+  "gapA_noFields": 124,
   "gapB_fieldsButNoCellmap": 0,
-  "gapC_noTemplate": 285,
+  "gapC_noTemplate": 283,
   "linkedObligation": 32,
   "linkedProcess": 283,
   "linkedSq": 237,
-  "newDesign": 16
+  "newDesign": 15
  },
  "gapA": [
-  {
-   "code": "L1100-25",
-   "name": "금형 점검 체크시트(일상/정기/보관)",
-   "regCode": "L-1100",
-   "respDept": "생산기술팀",
-   "clause": "7,8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 1,
-   "newDesign": true,
-   "submissions": 0,
-   "obligations": [
-    "#73 금형 점검(일상/정기/보관)"
-   ],
-   "coreDuty": false,
-   "processes": [],
-   "sqItems": [
-    "4_1",
-    "4_2",
-    "4_3",
-    "4_4",
-    "4_5",
-    "3_1",
-    "3_2",
-    "3_4",
-    "3_5",
-    "3_6"
-   ],
-   "sqPoints": 240,
-   "sqMissingCp": 18,
-   "prio": 564
-  },
-  {
-   "code": "L2100-05",
-   "name": "조관공정 순회검사일지(-조)",
-   "regCode": "L-2100",
-   "respDept": "품질보증팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 149,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [
-    "#45 공정 순회검사·LOT 라벨 상태 확인"
-   ],
-   "coreDuty": false,
-   "processes": [
-    "SP-02"
-   ],
-   "sqItems": [
-    "2_1",
-    "2_7",
-    "2_8",
-    "2_2"
-   ],
-   "sqPoints": 170,
-   "sqMissingCp": 9,
-   "prio": 402
-  },
-  {
-   "code": "L2100-11",
-   "name": "조도관리 측정기록",
-   "regCode": "L-2100",
-   "respDept": "품질보증팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 1,
-   "newDesign": true,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [],
-   "sqItems": [
-    "6_8",
-    "2_1",
-    "2_7",
-    "2_8",
-    "2_2"
-   ],
-   "sqPoints": 180,
-   "sqMissingCp": 12,
-   "prio": 396
-  },
-  {
-   "code": "L2100-01",
-   "name": "수입검사표준 (-인)",
-   "regCode": "L-2100",
-   "respDept": "품질보증팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 1,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-02"
-   ],
-   "sqItems": [
-    "2_1",
-    "2_7",
-    "2_8",
-    "2_2"
-   ],
-   "sqPoints": 170,
-   "sqMissingCp": 9,
-   "prio": 372
-  },
-  {
-   "code": "L2100-04",
-   "name": "초품검사 및 불량폐기내역(-조6)",
-   "regCode": "L-2100",
-   "respDept": "품질보증팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 391,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-02"
-   ],
-   "sqItems": [
-    "2_1",
-    "2_7",
-    "2_8",
-    "2_2"
-   ],
-   "sqPoints": 170,
-   "sqMissingCp": 9,
-   "prio": 372
-  },
-  {
-   "code": "L1200-01",
-   "name": "치공구 관리대장()",
-   "regCode": "L-1200",
-   "respDept": "생산기술팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "CP-03"
-   ],
-   "sqItems": [
-    "3_3",
-    "3_7",
-    "4_1",
-    "4_2",
-    "4_3",
-    "4_4",
-    "4_5"
-   ],
-   "sqPoints": 140,
-   "sqMissingCp": 12,
-   "prio": 321
-  },
-  {
-   "code": "L1200-04",
-   "name": "지그 이력카드()",
-   "regCode": "L-1200",
-   "respDept": "생산기술팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "CP-03"
-   ],
-   "sqItems": [
-    "3_3",
-    "3_7",
-    "4_1",
-    "4_2",
-    "4_3",
-    "4_4",
-    "4_5"
-   ],
-   "sqPoints": 140,
-   "sqMissingCp": 12,
-   "prio": 321
-  },
   {
    "code": "L1200-07",
    "name": "CF 점검 시트()",
@@ -334,34 +132,6 @@
    "sqPoints": 140,
    "sqMissingCp": 12,
    "prio": 321
-  },
-  {
-   "code": "L1200-12",
-   "name": "지그·치공구 점검 체크시트",
-   "regCode": "L-1200",
-   "respDept": "생산기술팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 1,
-   "newDesign": true,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [],
-   "sqItems": [
-    "3_3",
-    "3_7",
-    "4_1",
-    "4_2",
-    "4_3",
-    "4_4",
-    "4_5"
-   ],
-   "sqPoints": 140,
-   "sqMissingCp": 12,
-   "prio": 316
   },
   {
    "code": "L1100-01",
@@ -830,30 +600,6 @@
    "sqPoints": 20,
    "sqMissingCp": 6,
    "prio": 153
-  },
-  {
-   "code": "M3100-05",
-   "name": "완성품·출하검사 성적서",
-   "regCode": "M-3100",
-   "respDept": "품질보증팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 1,
-   "newDesign": true,
-   "submissions": 0,
-   "obligations": [
-    "#47 출하검사·성적서 발행(생산 LOT 기재)"
-   ],
-   "coreDuty": false,
-   "processes": [],
-   "sqItems": [
-    "2_8"
-   ],
-   "sqPoints": 50,
-   "sqMissingCp": 1,
-   "prio": 133
   },
   {
    "code": "K1200-06",
@@ -2186,30 +1932,6 @@
    "sqPoints": 20,
    "sqMissingCp": 3,
    "prio": 54
-  },
-  {
-   "code": "L3100-01",
-   "name": "계측기 관리대장 ()",
-   "regCode": "L-3100",
-   "respDept": "품질보증팀",
-   "clause": "7",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-02"
-   ],
-   "sqItems": [
-    "2_5"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 2,
-   "prio": 51
   },
   {
    "code": "L3100-05",
@@ -4675,7 +4397,7 @@
    "gridCols": 12,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4698,7 +4420,7 @@
    "gridCols": 14,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4721,7 +4443,7 @@
    "gridCols": 13,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4744,7 +4466,7 @@
    "gridCols": 12,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4767,7 +4489,7 @@
    "gridCols": 13,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4790,7 +4512,7 @@
    "gridCols": 24,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7085,7 +6807,7 @@
    "gridCols": 11,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [
     "#44 4M 변경 기록·승인 확인"
    ],
@@ -7561,7 +7283,7 @@
    "gridCols": 9,
    "template": 1,
    "newDesign": true,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [
     "#34 외주 ISIR·검사협정 접수대장 갱신"
    ],
@@ -8216,7 +7938,7 @@
    "gridCols": 8,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8481,12 +8203,12 @@
    "regCode": "L-1100",
    "respDept": "생산기술팀",
    "clause": "7,8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 4,
+   "cells": 3,
+   "gridCols": 10,
    "template": 1,
    "newDesign": true,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [
     "#73 금형 점검(일상/정기/보관)"
    ],
@@ -8505,7 +8227,8 @@
     "3_6"
    ],
    "sqPoints": 240,
-   "sqMissingCp": 18
+   "sqMissingCp": 18,
+   "adoptedSheet": "신규 설계본 Rev.1 '양식' 시트(일자-행 전개 재설계) — 05_금형_점검체크시트"
   },
   {
    "code": "L1200-01",
@@ -8513,12 +8236,12 @@
    "regCode": "L-1200",
    "respDept": "생산기술팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 4,
+   "cells": 3,
+   "gridCols": 11,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8534,7 +8257,8 @@
     "4_5"
    ],
    "sqPoints": 140,
-   "sqMissingCp": 12
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '치공구 관리대장(L1200-01)'"
   },
   {
    "code": "L1200-02",
@@ -8600,12 +8324,12 @@
    "regCode": "L-1200",
    "respDept": "생산기술팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 17,
+   "cells": 16,
+   "gridCols": 2,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8621,7 +8345,8 @@
     "4_5"
    ],
    "sqPoints": 140,
-   "sqMissingCp": 12
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '지그 이력카드(L1200-04)'"
   },
   {
    "code": "L1200-05",
@@ -8832,12 +8557,12 @@
    "regCode": "L-1200",
    "respDept": "생산기술팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 10,
    "template": 1,
    "newDesign": true,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -8851,20 +8576,21 @@
     "4_5"
    ],
    "sqPoints": 140,
-   "sqMissingCp": 12
+   "sqMissingCp": 12,
+   "adoptedSheet": "신규 설계본 Rev.1 '양식' 시트(일자-행 전개 재설계) — 04_지그치공구_점검체크시트"
   },
   {
    "code": "L2100-01",
-   "name": "수입검사표준 (-인)",
+   "name": "수입검사표준(-AM)",
    "regCode": "L-2100",
    "respDept": "품질보증팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 1,
-   "gridCols": 0,
-   "template": 0,
+   "fields": 12,
+   "cells": 10,
+   "gridCols": 6,
+   "template": 1,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8877,7 +8603,8 @@
     "2_2"
    ],
    "sqPoints": 170,
-   "sqMissingCp": 9
+   "sqMissingCp": 9,
+   "adoptedSheet": "AM 실사용 'MES 수입검사 엑셀양식(240313-07870)' 양식 시트 → templates/am_forms/L2100-01_수입검사표준_AM.xlsx (마스터 '수입검사표준 (L2100-01-인)' = 5행 스텁이라 기각)"
   },
   {
    "code": "L2100-02",
@@ -8937,12 +8664,12 @@
    "regCode": "L-2100",
    "respDept": "품질보증팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 391,
-   "gridCols": 0,
+   "fields": 6,
+   "cells": 395,
+   "gridCols": 20,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -8955,20 +8682,21 @@
     "2_2"
    ],
    "sqPoints": 170,
-   "sqMissingCp": 9
+   "sqMissingCp": 9,
+   "adoptedSheet": "마스터 '초품검사 및 불량폐기내역(L2100-04-조6)' (AM 자체 변형 없음 실측 — 조관공정 전용 정본 유지)"
   },
   {
    "code": "L2100-05",
-   "name": "조관공정 순회검사일지(-조)",
+   "name": "공정 순회검사(패트롤) 시트(-AM)",
    "regCode": "L-2100",
    "respDept": "품질보증팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 149,
-   "gridCols": 0,
-   "template": 0,
+   "fields": 12,
+   "cells": 10,
+   "gridCols": 6,
+   "template": 1,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [
     "#45 공정 순회검사·LOT 라벨 상태 확인"
    ],
@@ -8983,7 +8711,8 @@
     "2_2"
    ],
    "sqPoints": 170,
-   "sqMissingCp": 9
+   "sqMissingCp": 9,
+   "adoptedSheet": "AM 실사용 'MES 공정패트롤 엑셀양식(240313-07870)' 양식 시트 → templates/am_forms/L2100-05_공정순회_패트롤_AM.xlsx (마스터 '조관공정 순회검사일지(L2100-05-조)' = 조관 전용이라 기각)"
   },
   {
    "code": "L2100-06",
@@ -9022,7 +8751,7 @@
    "gridCols": 15,
    "template": 1,
    "newDesign": true,
-   "submissions": 2,
+   "submissions": 0,
    "obligations": [
     "#29 수입검사 이력카드 당일 입고분 기입 확인"
    ],
@@ -9069,12 +8798,12 @@
    "regCode": "L-2100",
    "respDept": "품질보증팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 10,
    "template": 1,
-   "newDesign": true,
-   "submissions": 0,
+   "newDesign": false,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -9086,7 +8815,8 @@
     "2_2"
    ],
    "sqPoints": 180,
-   "sqMissingCp": 12
+   "sqMissingCp": 12,
+   "adoptedSheet": "AM 실물 '조도측정 일지.xlsx'(표면 거칠기 조도) → templates/am_forms/L2100-11_조도측정_기록일지_AM.xlsx (구 신규설계본 = 조명 조도(lux) 도메인 오인 — 실물 출현 시 교정 조건 발동)"
   },
   {
    "code": "L2200-01",
@@ -9280,12 +9010,12 @@
    "regCode": "L-3100",
    "respDept": "품질보증팀",
    "clause": "7",
-   "fields": 0,
+   "fields": 1,
    "cells": 0,
-   "gridCols": 0,
+   "gridCols": 17,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -9295,7 +9025,8 @@
     "2_5"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 2
+   "sqMissingCp": 2,
+   "adoptedSheet": "마스터 '계측기 관리대장 (L3100-01)'"
   },
   {
    "code": "L3100-02",
@@ -9519,7 +9250,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 2,
+   "submissions": 0,
    "obligations": [
     "#20 공정능력 재검증(CP/CPK)"
    ],
@@ -10003,7 +9734,7 @@
    "gridCols": 6,
    "template": 1,
    "newDesign": true,
-   "submissions": 2,
+   "submissions": 0,
    "obligations": [
     "#1 초·중·종물 검사(초/중/종)"
    ],
@@ -10029,7 +9760,7 @@
    "gridCols": 6,
    "template": 1,
    "newDesign": true,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [
     "#28 브레이징 조건 기록(3회/일) 확인"
    ],
@@ -10191,12 +9922,12 @@
    "regCode": "M-3100",
    "respDept": "품질보증팀",
    "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 8,
+   "cells": 7,
+   "gridCols": 12,
    "template": 1,
    "newDesign": true,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [
     "#47 출하검사·성적서 발행(생산 LOT 기재)"
    ],
@@ -10206,7 +9937,8 @@
     "2_8"
    ],
    "sqPoints": 50,
-   "sqMissingCp": 1
+   "sqMissingCp": 1,
+   "adoptedSheet": "신규 설계본 '02_완성품_출하검사_성적서' 양식 시트"
   },
   {
    "code": "M3100-06",
