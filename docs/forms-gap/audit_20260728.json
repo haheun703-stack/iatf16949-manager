@@ -1,16 +1,19 @@
 {
  "summary": {
   "dbPath": "C:/Users/ASUS/AppData/Local/Temp/claude/d--IATF16949-SQ-------/71c011e4-db3c-4ae0-a73e-c5f09f557709/scratchpad/e2e-batch1-data/iatf16949.db",
-  "ranAt": "2026-07-28T12:11:00.341Z",
+  "ranAt": "2026-07-28T12:59:36.640Z",
   "total": 301,
-  "writable_fields": 185,
-  "gapA_noFields": 116,
+  "writable_fields": 186,
+  "gapA_noFields": 114,
   "gapB_fieldsButNoCellmap": 0,
   "gapC_noTemplate": 283,
   "linkedObligation": 32,
   "linkedProcess": 283,
   "linkedSq": 237,
-  "newDesign": 14
+  "newDesign": 14,
+  "viewOnly": [
+   "M1100-05"
+  ]
  },
  "gapA": [
   {
@@ -666,7 +669,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 사업부별 실평점·지적사항 매트릭스 시드 — '한계 수용' 판정 후 처리",
+   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=사업부별 실평점 매트릭스 시드",
    "prio": 118
   },
   {
@@ -693,7 +696,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 실데이터+사진 24장 시드·인발사업부 서식 — '한계 수용' 판정 후 처리",
+   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터+사진 24장·인발 서식",
    "prio": 118
   },
   {
@@ -720,7 +723,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 실데이터 시드(쌍용산업·24년7월)·인발사업부 서식 — '한계 수용' 판정 후 처리",
+   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터(쌍용산업)·인발 서식",
    "prio": 118
   },
   {
@@ -1683,31 +1686,6 @@
    "prio": 54
   },
   {
-   "code": "M1100-05",
-   "name": "설비 비가동 주요 코드",
-   "regCode": "M-1100",
-   "respDept": "생산팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "CP-03"
-   ],
-   "sqItems": [
-    "1_1"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 3,
-   "adoptedSheet": "[제외 상신] 고정 코드 정의표(E-1xx/2xx 참조 문서) — 작성 양식 아님(실측 반전), 문서 열람형 전환 제안",
-   "prio": 54
-  },
-  {
    "code": "M1100-06",
    "name": "우발사고 및 이상발생 처리 절차서",
    "regCode": "M-1100",
@@ -1895,32 +1873,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 과거 심사 실데이터 시드(TPC24-0723) — '한계 수용' 판정 후 처리",
-   "prio": 28
-  },
-  {
-   "code": "A5200-04-01",
-   "name": "내부심사 성적서 A5200-04-01",
-   "regCode": "A-5200",
-   "respDept": "품질보증팀",
-   "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "MP-01"
-   ],
-   "sqItems": [
-    "6_4"
-   ],
-   "sqPoints": 10,
-   "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 필라넥워터사업부 전용 성적서 — '한계 수용' 판정 후 처리",
+   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(문항 구조 마스터 재사용·기록값 클리어, 9월 초 전) — 원본=과거 심사 실데이터 시드(TPC24-0723)",
    "prio": 28
   },
   {
@@ -3328,7 +3281,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 과거 심사 실데이터 시드(TPC24-0723) — '한계 수용' 판정 후 처리"
+   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(문항 구조 마스터 재사용·기록값 클리어, 9월 초 전) — 원본=과거 심사 실데이터 시드(TPC24-0723)"
   },
   {
    "code": "A5100-04",
@@ -3354,7 +3307,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 사업부별 실평점·지적사항 매트릭스 시드 — '한계 수용' 판정 후 처리"
+   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=사업부별 실평점 매트릭스 시드"
   },
   {
    "code": "A5200-03",
@@ -3380,7 +3333,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 실데이터+사진 24장 시드·인발사업부 서식 — '한계 수용' 판정 후 처리"
+   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터+사진 24장·인발 서식"
   },
   {
    "code": "A5200-04",
@@ -3406,7 +3359,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 실데이터 시드(쌍용산업·24년7월)·인발사업부 서식 — '한계 수용' 판정 후 처리"
+   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터(쌍용산업)·인발 서식"
   },
   {
    "code": "A5200-04-01",
@@ -3414,12 +3367,12 @@
    "regCode": "A-5200",
    "respDept": "품질보증팀",
    "clause": "9",
-   "fields": 0,
-   "cells": 0,
+   "fields": 4,
+   "cells": 4,
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3430,7 +3383,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[조건② 보류] 필라넥워터사업부 전용 성적서 — '한계 수용' 판정 후 처리"
+   "adoptedSheet": "마스터 '내부심사(제품) 성적서 A5200-04-01' — 판정2 재분류(7/28): ⓑ 제외, L2100-04 동일 유형 정본 완결(평가 블록 4 매핑, 빈 틀 확인)"
   },
   {
    "code": "A6100-01",
@@ -9286,7 +9239,7 @@
    ],
    "sqPoints": 20,
    "sqMissingCp": 3,
-   "adoptedSheet": "[제외 상신] 고정 코드 정의표(E-1xx/2xx 참조 문서) — 작성 양식 아님(실측 반전), 문서 열람형 전환 제안"
+   "adoptedSheet": "[열람형 전환 승인 7/28] 고정 코드 정의표 — 작성 양식 아님(fields 미정의 유지, form_change_log 기록)"
   },
   {
    "code": "M1100-06",

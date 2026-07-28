@@ -113,13 +113,17 @@ const ADOPTED_SHEETS = {
   'L1100-24': "마스터 '설비능력 지수표 (L1100-24)' — 계산기형(Cmk): 비수식 헤더 10만 매핑(L4102-02 선례)",
   'M1100-02': "마스터 '설비 비가동시간 관리 대장 (M1100-02)' — 3행 병합 블록 grid 6건",
   'M1100-03': "마스터 '설비 비가동시간 이력관리 대장 (M1100-03)' — 비가동 1건 카드형",
-  'A5100-03': "[조건② 보류] 과거 심사 실데이터 시드(TPC24-0723) — '한계 수용' 판정 후 처리",
-  'A5100-04': "[조건② 보류] 사업부별 실평점·지적사항 매트릭스 시드 — '한계 수용' 판정 후 처리",
-  'A5200-03': "[조건② 보류] 실데이터+사진 24장 시드·인발사업부 서식 — '한계 수용' 판정 후 처리",
-  'A5200-04': "[조건② 보류] 실데이터 시드(쌍용산업·24년7월)·인발사업부 서식 — '한계 수용' 판정 후 처리",
-  'A5200-04-01': "[조건② 보류] 필라넥워터사업부 전용 성적서 — '한계 수용' 판정 후 처리",
-  'M1100-05': "[제외 상신] 고정 코드 정의표(E-1xx/2xx 참조 문서) — 작성 양식 아님(실측 반전), 문서 열람형 전환 제안"
+  'A5100-03': "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(문항 구조 마스터 재사용·기록값 클리어, 9월 초 전) — 원본=과거 심사 실데이터 시드(TPC24-0723)",
+  'A5100-04': "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=사업부별 실평점 매트릭스 시드",
+  'A5200-03': "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터+사진 24장·인발 서식",
+  'A5200-04': "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터(쌍용산업)·인발 서식",
+  'A5200-04-01':
+    "마스터 '내부심사(제품) 성적서 A5200-04-01' — 판정2 재분류(7/28): ⓑ 제외, L2100-04 동일 유형 정본 완결(평가 블록 4 매핑, 빈 틀 확인)",
+  'M1100-05': "[열람형 전환 승인 7/28] 고정 코드 정의표 — 작성 양식 아님(fields 미정의 유지, form_change_log 기록)"
 }
+
+// 문서 열람형(작성 양식 아님 — 코워크 전환 승인): 갭A 집계에서 분리해 정직 표기
+const VIEW_ONLY = new Set(['M1100-05'])
 
 const rows = []
 for (const f of forms) {
@@ -159,7 +163,8 @@ for (const f of forms) {
 // ── 요약 ────────────────────────────────────────────────
 const N = rows.length
 const withFields = rows.filter((r) => r.fields > 0)
-const noFields = rows.filter((r) => r.fields === 0)
+const noFields = rows.filter((r) => r.fields === 0 && !VIEW_ONLY.has(r.code))
+const viewOnly = rows.filter((r) => VIEW_ONLY.has(r.code))
 const fieldsNoCells = withFields.filter((r) => r.cells === 0 && r.gridCols === 0)
 const noTemplate = rows.filter((r) => r.template === 0)
 const sum = {
@@ -173,7 +178,8 @@ const sum = {
   linkedObligation: rows.filter((r) => r.obligations.length > 0).length,
   linkedProcess: rows.filter((r) => r.processes.length > 0).length,
   linkedSq: rows.filter((r) => r.sqItems.length > 0).length,
-  newDesign: rows.filter((r) => r.newDesign).length
+  newDesign: rows.filter((r) => r.newDesign).length,
+  viewOnly: viewOnly.map((r) => r.code)
 }
 console.log('=== 양식 갭 감사 요약 ===')
 console.log(JSON.stringify(sum, null, 1))
