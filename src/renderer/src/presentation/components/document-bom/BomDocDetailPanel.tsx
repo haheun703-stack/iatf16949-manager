@@ -20,6 +20,79 @@ const STATUS_TONE: Record<string, string> = {
   '파일없음(작성/수집필요)': 'bg-destructive/15 text-destructive border-destructive/30'
 }
 
+/** 미선택 시 요약(템플릿 C 규칙④ — 안내문 대신 요약 카드, 7/28 C 재판정). stats 재사용(신규 채널 0). */
+function BomSummaryPanel(): JSX.Element {
+  const stats = useBomStore((s) => s.stats)
+  const statusOf = (key: string): number => stats?.byStatus.find((s) => s.status === key)?.count ?? 0
+  const ok = statusOf('현행일치')
+  const stale = statusOf('개정완료(목록표갱신필요)')
+  const fresh = statusOf('목록표미등록(신규)')
+  const missing = statusOf('파일없음(작성/수집필요)')
+  const attention = stale + fresh + missing
+
+  const rows: { label: string; value: number; cls: string; bar: string }[] = [
+    { label: '현행일치', value: ok, cls: 'text-success', bar: 'bg-success' },
+    { label: '갱신필요 (파일이 목록표보다 최신)', value: stale, cls: 'text-warning', bar: 'bg-warning' },
+    { label: '미등록(신규) — 목록표 등록 필요', value: fresh, cls: 'text-primary', bar: 'bg-primary' },
+    { label: '파일없음 — 작성·수집 필요', value: missing, cls: 'text-destructive', bar: 'bg-destructive' }
+  ]
+  const denom = Math.max(1, ok + stale + fresh + missing)
+
+  return (
+    <div className="h-full overflow-y-auto space-y-4">
+      <div className="bg-card border border-border rounded-[14px] shadow-card px-[18px] py-4">
+        <div className="text-[15px] font-extrabold tracking-[-0.01em]">현행화 상태 분포</div>
+        <div className="text-[12px] text-muted-foreground mb-3">
+          문서 {stats?.totalDocs ?? '—'}건 · 관련 양식 {stats?.totalForms ?? '—'}건 — 좌측에서 문서를 고르면 상세가 열립니다
+        </div>
+        <div className="space-y-2.5">
+          {rows.map((r) => (
+            <div key={r.label} className="flex items-center gap-3">
+              <span className="w-[240px] text-[13.5px] font-semibold break-keep leading-snug">{r.label}</span>
+              <span className="flex-1 h-3 rounded-full bg-secondary overflow-hidden">
+                <span className={cn('block h-full rounded-full', r.bar)} style={{ width: `${(r.value / denom) * 100}%` }} />
+              </span>
+              <span className={cn('w-12 text-right text-[14px] font-extrabold tabular-nums', r.cls)}>{r.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="bg-card border border-border rounded-[14px] shadow-card px-[18px] py-4">
+          <div className="text-[15px] font-extrabold tracking-[-0.01em] mb-2">다음 할 일</div>
+          <ul className="text-[13.5px] leading-relaxed space-y-1.5">
+            <li>
+              <b className={cn('tabular-nums', stale > 0 ? 'text-warning' : 'text-muted-foreground')}>{stale}건</b>
+              {' '}— 마스터 목록표 갱신(실제 파일 Rev 가 앞섬)
+            </li>
+            <li>
+              <b className={cn('tabular-nums', missing > 0 ? 'text-destructive' : 'text-muted-foreground')}>{missing}건</b>
+              {' '}— 파일 작성·수집(폴더에 실물 없음)
+            </li>
+            <li>
+              <b className={cn('tabular-nums', fresh > 0 ? 'text-primary' : 'text-muted-foreground')}>{fresh}건</b>
+              {' '}— 목록표 미등록 신규 문서 등록
+            </li>
+          </ul>
+          <div className="text-[12px] text-muted-foreground mt-2.5">
+            주의 필요 합계 <b className="tabular-nums text-foreground">{attention}건</b> — 좌측 상태 배지(갱신·신규·미작성)로 찾아 들어가세요
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-[14px] shadow-card px-[18px] py-4">
+          <div className="text-[15px] font-extrabold tracking-[-0.01em] mb-2">사용법</div>
+          <ol className="text-[13.5px] leading-relaxed list-decimal pl-4 space-y-1">
+            <li>좌측 트리에서 문서 선택 — 대항목 → 문서번호 → 관련 양식</li>
+            <li>우측에서 목록표 Rev ↔ 실제 파일 Rev 를 비교(자동 현행화 점검)</li>
+            <li>양식 행 클릭 = 그 양식을 인용하는 문서 역추적(공용 양식 N:M)</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const TYPE_META: Record<BomFormType, { label: string; icon: typeof FileText; tone: string }> = {
   form: { label: '정규 양식', icon: Files, tone: 'bg-primary/10 text-primary border-primary/30' },
   variant: { label: '변종 양식', icon: Files, tone: 'bg-warning/10 text-warning border-warning/30' },
@@ -43,13 +116,7 @@ export function BomDocDetailPanel(): JSX.Element {
   }, [detail?.docNoNorm])
 
   if (!detail && !detailLoading) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center bg-card border border-border rounded-xl shadow-sm text-sm text-muted-foreground gap-2">
-        <FileText className="w-8 h-8 opacity-40" />
-        <p>좌측에서 문서를 선택하세요.</p>
-        <p className="text-[11px]">대항목 → 문서번호 → 관련 양식 순으로 트리가 표시됩니다.</p>
-      </div>
-    )
+    return <BomSummaryPanel />
   }
 
   if (detailLoading || !detail) {
