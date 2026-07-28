@@ -3,17 +3,19 @@ import { Loader2, RefreshCw, ShieldCheck, ChevronDown, ChevronRight } from 'luci
 import type { IntegrityReportDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { PageHeader } from '../shared/PageHeader'
+import { CardShell, KpiTile } from '../shared/dash/DashKit'
 
 /**
  * 정합성 점검 (7/19 검수 체계 1층) — 팀→프로세스→규정→양식→의무→SQ 체인의
  * 결정론 검사 11종 결과. "문제 0건"이 정상 상태. 검사 정의는 main/integrity-handlers.
+ * 템플릿 A(7/28): KPI 타일(정상·주의·문제·검사 수) + 메인 카드 = 검사 목록. 틴트 토큰.
  * AI 검수 에이전트(.claude/agents/integrity-auditor)는 이 결과를 근거로 판단(결정론 우선).
  */
 
 const STATUS_STYLE = {
-  ok: { label: '정상', bg: '#e2f3e2', fg: '#1d6b1d' },
-  warn: { label: '주의', bg: '#faeeda', fg: '#7a4d05' },
-  fail: { label: '문제', bg: '#fcebeb', fg: '#a32d2d' }
+  ok: { label: '정상', pill: 'bg-ok-tint text-ok-ink', ink: 'text-ok-ink' },
+  warn: { label: '주의', pill: 'bg-warn-tint text-warn-ink', ink: 'text-warn-ink' },
+  fail: { label: '문제', pill: 'bg-bad-tint text-bad-ink', ink: 'text-bad-ink' }
 } as const
 
 export function IntegrityView(): JSX.Element {
@@ -40,7 +42,7 @@ export function IntegrityView(): JSX.Element {
   const t = report?.totals
 
   return (
-    <div className="space-y-6 break-keep">
+    <div className="space-y-4 break-keep">
       <PageHeader
         icon={<ShieldCheck size={18} />}
         title="정합성 점검"
@@ -63,29 +65,40 @@ export function IntegrityView(): JSX.Element {
         </div>
       ) : (
         <>
-          {/* 요약 */}
-          <div className="grid grid-cols-3 gap-5 max-w-[720px]">
-            {(['ok', 'warn', 'fail'] as const).map((s) => (
-              <div key={s} className="bg-card border border-border rounded-xl px-6 py-5">
-                <div className="text-[16.5px] font-bold text-foreground">{STATUS_STYLE[s].label}</div>
-                <div
-                  className="text-[40px] font-extrabold tabular-nums leading-tight mt-1"
-                  style={{ color: s === 'ok' ? '#1d6b1d' : s === 'warn' ? '#7a4d05' : '#a32d2d' }}
-                >
-                  {t ? t[s] : 0}
-                </div>
-                <div className="text-[13.5px] text-muted-foreground">/ {report.rows.length}개 검사</div>
-              </div>
-            ))}
+          {/* ── KPI 스탯 타일 (템플릿 A §3-1) ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <KpiTile
+              icon="✓" iconTint="bg-ok-tint text-ok-ink" label="정상"
+              value={t?.ok ?? 0} unit={`/${report.rows.length}`}
+              chip="문제 0건이 기본 상태" chipTone={t && t.ok === report.rows.length ? 'up' : 'fx'}
+            />
+            <KpiTile
+              icon="!" iconTint="bg-warn-tint text-warn-ink" label="주의"
+              value={t?.warn ?? 0} unit="건"
+              chip={t && t.warn > 0 ? '행에서 상세 확인' : '주의 없음'}
+              chipTone={t && t.warn > 0 ? 'dn' : 'up'}
+            />
+            <KpiTile
+              icon="✕" iconTint="bg-bad-tint text-bad-ink" label="문제"
+              value={t?.fail ?? 0} unit="건"
+              chip={t && t.fail > 0 ? '즉시 교정 대상' : '문제 없음'}
+              chipTone={t && t.fail > 0 ? 'dn' : 'up'}
+            />
+            <KpiTile
+              icon="◷" iconTint="bg-secondary text-primary" label="마지막 검사"
+              value={new Date(report.ranAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+              chip={new Date(report.ranAt).toLocaleDateString('ko-KR')} chipTone="fx"
+            />
           </div>
 
-          {/* 검사 목록 */}
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+          {/* ── 메인 카드: 검사 목록 ── */}
+          <CardShell title="검사 목록" cap="행 클릭 = 상세 펼침 · 검사 정의 = integrity-handlers">
+            <div className="mt-2">
             {report.rows.map((r) => {
               const st = STATUS_STYLE[r.status]
               const open = openKey === r.key
               return (
-                <div key={r.key} className="border-b border-border last:border-b-0">
+                <div key={r.key} className="border-t border-border first:border-t-0">
                   <button
                     type="button"
                     onClick={() => setOpenKey(open ? null : r.key)}
@@ -101,14 +114,11 @@ export function IntegrityView(): JSX.Element {
                       <span className="block text-[13.5px] text-muted-foreground mt-0.5 leading-snug">{r.note}</span>
                     </span>
                     {r.count > 0 && (
-                      <span className="text-[15px] font-extrabold tabular-nums shrink-0" style={{ color: st.fg }}>
+                      <span className={cn('text-[15px] font-extrabold tabular-nums shrink-0', st.ink)}>
                         {r.count}건
                       </span>
                     )}
-                    <span
-                      className="text-[12.5px] font-bold px-2.5 py-1 rounded-full shrink-0"
-                      style={{ backgroundColor: st.bg, color: st.fg }}
-                    >
+                    <span className={cn('text-[12.5px] font-bold px-2.5 py-1 rounded-full shrink-0', st.pill)}>
                       {st.label}
                     </span>
                   </button>
@@ -129,7 +139,8 @@ export function IntegrityView(): JSX.Element {
                 </div>
               )
             })}
-          </div>
+            </div>
+          </CardShell>
 
           <p className="text-[13.5px] text-muted-foreground">
             마지막 검사: {new Date(report.ranAt).toLocaleString('ko-KR')} — 마이그레이션·시드 추가 후에는 이

@@ -3,9 +3,11 @@ import { Activity, Loader2 } from 'lucide-react'
 import type { MesRecordsCoverageDto, MesRecordsDetailDto, MesRecordsStatusDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { PageHeader } from '../shared/PageHeader'
+import { CardShell, KpiTile } from '../shared/dash/DashKit'
 
 /**
  * MES 기록 현황 (7/20) — "하위코드 기록이 들어왔는지/비었는지"를 그대로 보여준다.
+ * 템플릿 A(7/28): KPI 타일(기준일·평일 공백·누적) + 메인 카드 = 커버리지 스트립.
  * 데이터 = 사이드카 mes_records.db(QMS_SQC 헤더 240만 + MAC_DESC 22만 집계).
  * 커버리지 스트립: 기록 있는 날=채움 / 평일 공백=빨강(결측 후보) / 주말 공백=회색.
  * 데이터 기준일 이후는 판정하지 않음(새 덤프 반입 전 — 결측 아님, 정직 표기).
@@ -18,27 +20,16 @@ function isWeekend(ymd: string): boolean {
   return d === 0 || d === 6
 }
 
+/** 'YYYY-MM-DD' 두 날짜 사이 일수(b-a). */
+function daysBetweenYmd(a: string, b: string): number {
+  return Math.round((new Date(`${b}T00:00:00`).getTime() - new Date(`${a}T00:00:00`).getTime()) / 86400000)
+}
+
 export function MesRecordsView(): JSX.Element {
   const [status, setStatus] = useState<MesRecordsStatusDto | null>(null)
   const [coverage, setCoverage] = useState<MesRecordsCoverageDto | null>(null)
   const [detail, setDetail] = useState<MesRecordsDetailDto | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const st = (await window.api.invoke(window.api.channels.MES_RECORDS_STATUS)) as MesRecordsStatusDto
-        setStatus(st)
-        if (st.available) {
-          setCoverage(
-            (await window.api.invoke(window.api.channels.MES_RECORDS_COVERAGE, { days: 30 })) as MesRecordsCoverageDto
-          )
-        }
-      } catch {
-        setStatus(null)
-      }
-    })()
-  }, [])
 
   const openDetail = useCallback(async (key: string) => {
     setLoadingDetail(true)
@@ -51,10 +42,29 @@ export function MesRecordsView(): JSX.Element {
     }
   }, [])
 
+  useEffect(() => {
+    void (async () => {
+      try {
+        const st = (await window.api.invoke(window.api.channels.MES_RECORDS_STATUS)) as MesRecordsStatusDto
+        setStatus(st)
+        if (st.available) {
+          const cov = (await window.api.invoke(window.api.channels.MES_RECORDS_COVERAGE, {
+            days: 30
+          })) as MesRecordsCoverageDto
+          setCoverage(cov)
+          // 규칙④ "말 없는 공백 금지" — 첫 스트립 상세를 자동으로 채운다(클릭 대기 공백 방지)
+          if (cov.strips.length > 0) void openDetail(cov.strips[0].key)
+        }
+      } catch {
+        setStatus(null)
+      }
+    })()
+  }, [openDetail])
+
   const today = new Date().toISOString().slice(0, 10)
 
   return (
-    <div className="space-y-6 break-keep">
+    <div className="space-y-4 break-keep">
       <PageHeader
         icon={<Activity size={18} />}
         title="MES 기록 현황"
@@ -86,28 +96,65 @@ export function MesRecordsView(): JSX.Element {
 
       {status?.available && (
         <>
+          {/* ── KPI 스탯 타일 (템플릿 A §3-1 — 상태·기준일·결측을 숫자로) ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {(() => {
+              const behind = status.dataEndYmd ? daysBetweenYmd(status.dataEndYmd, today) : null
+              const totalItems = status.types.reduce((a, t) => a + t.totalItems, 0)
+              const emptySum = coverage
+                ? coverage.strips.reduce(
+                    (a, s) => a + s.cells.filter((c) => c.items === 0 && !isWeekend(c.ymd)).length,
+                    0
+                  )
+                : null
+              return (
+                <>
+                  <KpiTile
+                    icon="◷" iconTint={behind != null && behind >= 7 ? 'bg-warn-tint text-warn-ink' : 'bg-secondary text-primary'}
+                    label="데이터 기준일" value={status.dataEndYmd ?? '—'}
+                    chip={behind == null ? '—' : behind >= 7 ? `오늘 대비 ${behind}일 지남 — 다운로드 필요` : `오늘 대비 ${behind}일 전`}
+                    chipTone={behind != null && behind >= 7 ? 'dn' : 'fx'}
+                  />
+                  <KpiTile
+                    icon="!" iconTint="bg-bad-tint text-bad-ink" label="평일 공백 (최근 30일)"
+                    value={emptySum == null ? '—' : emptySum} unit={emptySum == null ? undefined : '일'}
+                    chip="결측 후보 — 스트립 행에서 확인"
+                    chipTone={emptySum != null && emptySum > 0 ? 'dn' : 'up'}
+                  />
+                  <KpiTile
+                    icon="▤" iconTint="bg-ok-tint text-ok-ink" label="누적 기록"
+                    value={nf(totalItems)} unit="건" chip="전 종류 합계 (읽기전용 실측)" chipTone="fx"
+                  />
+                  <KpiTile
+                    icon="⚙" iconTint="bg-data-tint text-data-ink" label="기록 종류"
+                    value={status.types.length} unit="종" chip="자주·수입·패트롤·설비점검" chipTone="fx"
+                  />
+                </>
+              )
+            })()}
+          </div>
+
           {status.dataEndYmd && status.dataEndYmd < today && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 text-[13.5px] text-amber-800 leading-relaxed">
+            <div className="bg-warn-tint border border-[#F5D9A8] rounded-[14px] px-5 py-3 text-[13.5px] text-warn-ink leading-relaxed">
               데이터 기준일이 <b className="tabular-nums">{status.dataEndYmd}</b> 입니다 — 그 이후 날짜는 결측이
               아니라 <b>새 덤프 반입 전</b>이라 판정하지 않습니다. 새 덤프를 받으면 빌드 스크립트 재실행만으로
               갱신됩니다(앱 재시작 불필요).
             </div>
           )}
 
-          {/* 종류별 커버리지 스트립 — 최근 30일(데이터 기준일 종료) */}
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="px-6 py-3.5 border-b border-border bg-muted/30 flex items-baseline gap-2 flex-wrap">
-              <span className="text-[15.5px] font-bold text-foreground">기록 커버리지 — 최근 {coverage?.days ?? 30}일</span>
-              <span className="text-[12.5px] text-muted-foreground">
-                ■ 기록 있음 · <span className="text-red-700">□ 평일 공백(결측 후보)</span> · 회색 = 주말 공백 · 행 클릭 = 상세
-              </span>
-            </div>
+          {/* 메인 카드 — 종류별 커버리지 스트립(최근 30일, 데이터 기준일 종료) */}
+          <CardShell
+            title={`기록 커버리지 — 최근 ${coverage?.days ?? 30}일`}
+            cap="■ 기록 있음 · □ 평일 공백(결측 후보) · 회색 = 주말 공백 · 행 클릭 = 상세"
+            status={coverage ? 'ready' : 'loading'}
+          >
             {!coverage ? (
               <div className="flex items-center justify-center gap-2 py-12 text-[14px] text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" /> 집계 중...
               </div>
             ) : (
-              coverage.strips.map((s) => {
+              <div className="mt-2">
+              {coverage.strips.map((s) => {
                 const typeStat = status.types.find((t) => t.key === s.key)
                 const emptyWeekdays = s.cells.filter((c) => c.items === 0 && !isWeekend(c.ymd)).length
                 return (
@@ -125,7 +172,7 @@ export function MesRecordsView(): JSX.Element {
                       <span className="block text-[12px] text-muted-foreground tabular-nums">
                         누적 {nf(typeStat?.totalItems ?? 0)}건
                         {emptyWeekdays > 0 && (
-                          <b className="text-red-700"> · 평일 공백 {emptyWeekdays}일</b>
+                          <b className="text-bad-ink"> · 평일 공백 {emptyWeekdays}일</b>
                         )}
                       </span>
                     </span>
@@ -138,7 +185,7 @@ export function MesRecordsView(): JSX.Element {
                             title={`${c.ymd} — ${c.items > 0 ? `${nf(c.items)}건 · ${c.parts}개 ${s.key === 'MAC' ? '설비' : '품번'}` : wknd ? '주말 · 기록 없음' : '기록 없음(결측 후보)'}`}
                             className={cn(
                               'w-[13px] h-7 rounded-[3px] shrink-0',
-                              c.items > 0 ? 'bg-primary/75' : wknd ? 'bg-muted' : 'bg-red-100 border border-red-300'
+                              c.items > 0 ? 'bg-primary/75' : wknd ? 'bg-muted' : 'bg-bad-tint border border-bad-ink/30'
                             )}
                           />
                         )
@@ -146,9 +193,10 @@ export function MesRecordsView(): JSX.Element {
                     </span>
                   </button>
                 )
-              })
+              })}
+              </div>
             )}
-          </div>
+          </CardShell>
 
           {/* 상세 — 품번/설비별 최근 기록 (미기록 경과 순) + 일자별 */}
           {loadingDetail && (
@@ -157,17 +205,12 @@ export function MesRecordsView(): JSX.Element {
             </div>
           )}
           {!loadingDetail && detail && (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-border bg-muted/30">
-                  <span className="text-[15px] font-bold text-foreground">
-                    {detail.label} — {detail.key === 'MAC' ? '설비별' : '품번별'} 최근 기록
-                  </span>
-                  <span className="block text-[12px] text-muted-foreground">
-                    미기록 경과일 큰 순(데이터 기준일 대비) — 기록이 끊긴 {detail.key === 'MAC' ? '설비' : '품번'}이 위로
-                  </span>
-                </div>
-                <div className="max-h-[420px] overflow-y-auto">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+              <CardShell
+                title={`${detail.label} — ${detail.key === 'MAC' ? '설비별' : '품번별'} 최근 기록`}
+                cap={`미기록 경과일 큰 순 — 기록이 끊긴 ${detail.key === 'MAC' ? '설비' : '품번'}이 위로`}
+              >
+                <div className="max-h-[420px] overflow-y-auto mt-2">
                   <table className="w-full text-[13px]">
                     <thead className="sticky top-0 bg-card">
                       <tr className="text-left text-muted-foreground border-b border-border">
@@ -186,7 +229,7 @@ export function MesRecordsView(): JSX.Element {
                             {r.name && <span className="block text-[11.5px] text-muted-foreground truncate max-w-[220px]">{r.name}</span>}
                           </td>
                           <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{r.lastYmd ?? '—'}</td>
-                          <td className={cn('px-2 py-2 text-right tabular-nums font-bold', r.staleDays > 30 ? 'text-red-700' : r.staleDays > 7 ? 'text-amber-700' : 'text-foreground')}>
+                          <td className={cn('px-2 py-2 text-right tabular-nums font-bold', r.staleDays > 30 ? 'text-bad-ink' : r.staleDays > 7 ? 'text-warn-ink' : 'text-foreground')}>
                             {r.staleDays}일
                           </td>
                           <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{nf(r.activeDays)}</td>
@@ -196,16 +239,13 @@ export function MesRecordsView(): JSX.Element {
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </CardShell>
 
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-border bg-muted/30">
-                  <span className="text-[15px] font-bold text-foreground">{detail.label} — 일자별 (최근 30일)</span>
-                  <span className="block text-[12px] text-muted-foreground">
-                    기록 있는 날만 표시{detail.key === 'MAC' && ' · 확인율 = 확인자(CONFIRMOR) 기입 비율(관리자 확인 증거)'}
-                  </span>
-                </div>
-                <div className="max-h-[420px] overflow-y-auto">
+              <CardShell
+                title={`${detail.label} — 일자별 (최근 30일)`}
+                cap={`기록 있는 날만 표시${detail.key === 'MAC' ? ' · 확인율 = 확인자(CONFIRMOR) 기입 비율' : ''}`}
+              >
+                <div className="max-h-[420px] overflow-y-auto mt-2">
                   <table className="w-full text-[13px]">
                     <thead className="sticky top-0 bg-card">
                       <tr className="text-left text-muted-foreground border-b border-border">
@@ -227,7 +267,7 @@ export function MesRecordsView(): JSX.Element {
                           <td className="px-2 py-2 text-right tabular-nums">{nf(r.parts)}</td>
                           <td className="px-2 py-2 text-right tabular-nums">{nf(r.inspectors)}</td>
                           {detail.key === 'MAC' && (
-                            <td className={cn('px-5 py-2 text-right tabular-nums font-bold', (r.confirmedPct ?? 100) < 80 ? 'text-red-700' : 'text-foreground')}>
+                            <td className={cn('px-5 py-2 text-right tabular-nums font-bold', (r.confirmedPct ?? 100) < 80 ? 'text-bad-ink' : 'text-foreground')}>
                               {r.confirmedPct != null ? `${r.confirmedPct}%` : '—'}
                             </td>
                           )}
@@ -236,7 +276,7 @@ export function MesRecordsView(): JSX.Element {
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </CardShell>
             </div>
           )}
 
