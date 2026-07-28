@@ -85,6 +85,25 @@ const forms = db
 // 신규 설계본(코워크 A-2 조건⑴): 회사 원본 부재로 리포 템플릿이 정본인 양식 — 심사 대체 이력 표시
 const isNewDesign = (tp) => !!tp && String(tp).includes('sq_gap_forms')
 
+// 1배치 채택 소스 기록(코워크 지시 7/28 밤4차: L2100 변형 시트 = AM 실사용 기준 실측 확정
+// + audit 에 채택 시트명 기록). 실측 = 2026-07-28 사무실, 상세 = 조사서 §0.6 추기.
+const ADOPTED_SHEETS = {
+  'L2100-01':
+    "AM 실사용 'MES 수입검사 엑셀양식(240313-07870)' 양식 시트 → templates/am_forms/L2100-01_수입검사표준_AM.xlsx (마스터 '수입검사표준 (L2100-01-인)' = 5행 스텁이라 기각)",
+  'L2100-04':
+    "마스터 '초품검사 및 불량폐기내역(L2100-04-조6)' (AM 자체 변형 없음 실측 — 조관공정 전용 정본 유지)",
+  'L2100-05':
+    "AM 실사용 'MES 공정패트롤 엑셀양식(240313-07870)' 양식 시트 → templates/am_forms/L2100-05_공정순회_패트롤_AM.xlsx (마스터 '조관공정 순회검사일지(L2100-05-조)' = 조관 전용이라 기각)",
+  'L2100-11':
+    "AM 실물 '조도측정 일지.xlsx'(표면 거칠기 조도) → templates/am_forms/L2100-11_조도측정_기록일지_AM.xlsx (구 신규설계본 = 조명 조도(lux) 도메인 오인 — 실물 출현 시 교정 조건 발동)",
+  'L1100-25': "신규 설계본 Rev.1 '양식' 시트(일자-행 전개 재설계) — 05_금형_점검체크시트",
+  'L1200-01': "마스터 '치공구 관리대장(L1200-01)'",
+  'L1200-04': "마스터 '지그 이력카드(L1200-04)'",
+  'L1200-12': "신규 설계본 Rev.1 '양식' 시트(일자-행 전개 재설계) — 04_지그치공구_점검체크시트",
+  'L3100-01': "마스터 '계측기 관리대장 (L3100-01)'",
+  'M3100-05': "신규 설계본 '02_완성품_출하검사_성적서' 양식 시트"
+}
+
 const rows = []
 for (const f of forms) {
   if (f.deprecated) continue
@@ -115,7 +134,8 @@ for (const f of forms) {
     processes: procs.get(f.code) || [],
     sqItems: [...sqItems],
     sqPoints: sqPts,
-    sqMissingCp: sqMissing
+    sqMissingCp: sqMissing,
+    ...(ADOPTED_SHEETS[f.code] ? { adoptedSheet: ADOPTED_SHEETS[f.code] } : {})
   })
 }
 
