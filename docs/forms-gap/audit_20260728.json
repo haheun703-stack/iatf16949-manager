@@ -1,16 +1,16 @@
 {
  "summary": {
   "dbPath": "C:/Users/ASUS/AppData/Local/Temp/claude/d--IATF16949-SQ-------/71c011e4-db3c-4ae0-a73e-c5f09f557709/scratchpad/e2e-batch1-data/iatf16949.db",
-  "ranAt": "2026-07-28T12:59:36.640Z",
+  "ranAt": "2026-07-28T13:17:19.069Z",
   "total": 301,
-  "writable_fields": 186,
-  "gapA_noFields": 114,
+  "writable_fields": 190,
+  "gapA_noFields": 110,
   "gapB_fieldsButNoCellmap": 0,
-  "gapC_noTemplate": 283,
+  "gapC_noTemplate": 279,
   "linkedObligation": 32,
   "linkedProcess": 283,
   "linkedSq": 237,
-  "newDesign": 14,
+  "newDesign": 18,
   "viewOnly": [
    "M1100-05"
   ]
@@ -644,87 +644,6 @@
    "sqPoints": 50,
    "sqMissingCp": 5,
    "prio": 120
-  },
-  {
-   "code": "A5100-04",
-   "name": "내부심사(품질,환경,안전) 체크리스트 ()",
-   "regCode": "A-5100",
-   "respDept": "품질보증팀",
-   "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [
-    "#15 내부심사 — QMS"
-   ],
-   "coreDuty": true,
-   "processes": [
-    "MP-01"
-   ],
-   "sqItems": [
-    "6_4"
-   ],
-   "sqPoints": 10,
-   "sqMissingCp": 1,
-   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=사업부별 실평점 매트릭스 시드",
-   "prio": 118
-  },
-  {
-   "code": "A5200-03",
-   "name": "내부심사(제조) 체크리스트",
-   "regCode": "A-5200",
-   "respDept": "품질보증팀",
-   "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [
-    "#16 내부심사 — 제조공정"
-   ],
-   "coreDuty": true,
-   "processes": [
-    "MP-01"
-   ],
-   "sqItems": [
-    "6_4"
-   ],
-   "sqPoints": 10,
-   "sqMissingCp": 1,
-   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터+사진 24장·인발 서식",
-   "prio": 118
-  },
-  {
-   "code": "A5200-04",
-   "name": "내부심사(제품) 체크리스트",
-   "regCode": "A-5200",
-   "respDept": "품질보증팀",
-   "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [
-    "#17 내부심사 — 제품"
-   ],
-   "coreDuty": true,
-   "processes": [
-    "MP-01"
-   ],
-   "sqItems": [
-    "6_4"
-   ],
-   "sqPoints": 10,
-   "sqMissingCp": 1,
-   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터(쌍용산업)·인발 서식",
-   "prio": 118
   },
   {
    "code": "M2100-10",
@@ -1852,31 +1771,6 @@
    "prio": 34
   },
   {
-   "code": "A5100-03",
-   "name": "내부심사(갑지) 보고서 ()",
-   "regCode": "A-5100",
-   "respDept": "품질보증팀",
-   "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "MP-01"
-   ],
-   "sqItems": [
-    "6_4"
-   ],
-   "sqPoints": 10,
-   "sqMissingCp": 1,
-   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(문항 구조 마스터 재사용·기록값 클리어, 9월 초 전) — 원본=과거 심사 실데이터 시드(TPC24-0723)",
-   "prio": 28
-  },
-  {
    "code": "A8100-01",
    "name": "RISK 분석표()",
    "regCode": "A-8100",
@@ -2955,7 +2849,7 @@
    "gridCols": 3,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [
     "#18 경영검토 회의"
    ],
@@ -3265,12 +3159,12 @@
    "regCode": "A-5100",
    "respDept": "품질보증팀",
    "clause": "9",
-   "fields": 0,
-   "cells": 0,
+   "fields": 9,
+   "cells": 9,
    "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
+   "template": 1,
+   "newDesign": true,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3281,7 +3175,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(문항 구조 마스터 재사용·기록값 클리어, 9월 초 전) — 원본=과거 심사 실데이터 시드(TPC24-0723)"
+   "adoptedSheet": "ⓑ 이행 완료(0109): AM용 빈 틀 17_내부심사_갑을_보고서 — 구조=정본 재사용·기록값 45셀 클리어(원본=실데이터 시드 TPC24-0723)"
   },
   {
    "code": "A5100-04",
@@ -3289,12 +3183,12 @@
    "regCode": "A-5100",
    "respDept": "품질보증팀",
    "clause": "9",
-   "fields": 0,
-   "cells": 0,
+   "fields": 8,
+   "cells": 8,
    "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
+   "template": 1,
+   "newDesign": true,
+   "submissions": 1,
    "obligations": [
     "#15 내부심사 — QMS"
    ],
@@ -3307,7 +3201,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=사업부별 실평점 매트릭스 시드"
+   "adoptedSheet": "ⓑ 이행 완료(0109): AM용 빈 틀 18_내부심사_시스템_체크리스트 — 문항 구조 재사용·기록값 61셀 클리어(원본=실평점 매트릭스 시드)"
   },
   {
    "code": "A5200-03",
@@ -3315,12 +3209,12 @@
    "regCode": "A-5200",
    "respDept": "품질보증팀",
    "clause": "9",
-   "fields": 0,
-   "cells": 0,
+   "fields": 11,
+   "cells": 11,
    "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
+   "template": 1,
+   "newDesign": true,
+   "submissions": 1,
    "obligations": [
     "#16 내부심사 — 제조공정"
    ],
@@ -3333,7 +3227,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터+사진 24장·인발 서식"
+   "adoptedSheet": "ⓑ 이행 완료(0109): AM용 빈 틀 19_내부심사_제조_체크리스트 — 공정 항목 구조 재사용·기록값 216셀+심사 사진 24장 클리어"
   },
   {
    "code": "A5200-04",
@@ -3341,12 +3235,12 @@
    "regCode": "A-5200",
    "respDept": "품질보증팀",
    "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
+   "fields": 9,
+   "cells": 8,
+   "gridCols": 5,
+   "template": 1,
+   "newDesign": true,
+   "submissions": 1,
    "obligations": [
     "#17 내부심사 — 제품"
    ],
@@ -3359,7 +3253,7 @@
    ],
    "sqPoints": 10,
    "sqMissingCp": 1,
-   "adoptedSheet": "[ⓑ 승인 7/28] AM용 빈 틀 신규 설계 예정(동일 조건) — 원본=실데이터(쌍용산업)·인발 서식"
+   "adoptedSheet": "ⓑ 이행 완료(0109): AM용 빈 틀 20_내부심사_제품_체크리스트 — 문항·배점 구조 재사용·기록값 348셀+심사 사진 24장 클리어"
   },
   {
    "code": "A5200-04-01",
@@ -3372,7 +3266,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4977,7 +4871,7 @@
    "gridCols": 20,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [
     "#23 교육훈련 계획 수립·효과성"
    ],
@@ -5438,7 +5332,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7317,7 +7211,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7536,7 +7430,7 @@
    "gridCols": 9,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7944,7 +7838,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -9180,7 +9074,7 @@
    "gridCols": 9,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -9204,7 +9098,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
