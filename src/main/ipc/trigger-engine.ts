@@ -15,6 +15,8 @@ import type Database from 'better-sqlite3'
  *
  * 평가 시점: 관제탑 보드 조회 시(lazy·결정론·멱등). 별도 엔진/스케줄러 없음 — 15번 §1-3.
  * 1차 트리거(코워크 7/25 승인): 심사 갭(의무 장기연체) · 증거 공백(MES 일일 기록 미수신).
+ * T3(7/29 코워크 정정 지시): 문서화 갭 — 규정 원문 미적재(규정형 forms 에 본문 없음) → 총무팀
+ *   할 일 1행(집계 자동소멸형: 전량 적재 시 해소표시, ✓는 사람). "사람 액션도 시스템 할 일로" 선례.
  * insp_due·mold_count·nonconform 은 기록 데이터 축적 후(M1 이후) 활성화.
  */
 
@@ -44,6 +46,23 @@ export function ensureBuiltinTriggers(db: Database.Database): void {
   if (!has.get('mes-feed')) {
     ins.run('증거 공백 — MES 일일 기록 미수신', 'mes-feed', '{}', '생산팀')
   }
+  if (!has.get('reg-body')) {
+    // 회신 기한 = 관리팀 발신 공문(관리팀발신_규정원문15종_요청_260729.md)의 제안 기한
+    ins.run('문서화 갭 — 규정 원문 미확보(본문 미적재)', 'reg-body', JSON.stringify({ dueYmd: '2026-08-07' }), '총무팀')
+  }
+}
+
+/** 규정형 문서(코드 X-####)로 forms 에 등록됐으나 본문(regulation_sections) 미적재 건수 */
+export function countMissingRegBodies(db: Database.Database): number {
+  return (
+    db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM forms f
+         WHERE f.deprecated = 0 AND f.code GLOB '[A-Z]-[0-9][0-9][0-9][0-9]'
+           AND f.code NOT IN (SELECT DISTINCT reg_code FROM regulation_sections)`
+      )
+      .get() as { c: number }
+  ).c
 }
 
 function ymdAddDays(ymd: string, days: number): string {
@@ -131,6 +150,20 @@ export function evaluateDataTriggers(
       }
       for (const it of openIssues.all(t.id) as Array<{ id: number; due_bucket: string }>) {
         if (ctx.mesDataEndYmd >= it.due_bucket) markResolved.run(it.id)
+      }
+    } else if (t.entity_kind === 'reg-body') {
+      // ── T3: 규정 원문 미적재 = 문서화 갭 (집계 1건 자동소멸형 — 전량 적재 시 해소표시) ──
+      let dueYmd = ctx.today
+      try {
+        const c = JSON.parse(t.config_json ?? '{}') as { dueYmd?: string }
+        if (c.dueYmd) dueYmd = c.dueYmd
+      } catch {
+        /* 설정 파손 시 오늘 */
+      }
+      const missing = countMissingRegBodies(db)
+      if (missing > 0) issue.run(t.id, 'reg-body', dueYmd)
+      for (const it of openIssues.all(t.id) as Array<{ id: number }>) {
+        if (missing === 0) markResolved.run(it.id) // 전량 적재 — 표시만, ✓는 사람
       }
     }
   }

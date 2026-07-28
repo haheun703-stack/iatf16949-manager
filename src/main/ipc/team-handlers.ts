@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { computeSqReadiness } from './sq-handlers'
-import { evaluateDataTriggers, listBoardIssues } from './trigger-engine'
+import { evaluateDataTriggers, listBoardIssues, countMissingRegBodies } from './trigger-engine'
 import { getMesDataEndYmd } from './mes-records-handlers'
 import { TEAMS, normalizeTeam, normalizeOwnerTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import type {
@@ -379,18 +379,23 @@ export function registerTeamHandlers(): void {
             gapAgg.set(key, cur)
             continue
           }
-          // T2 [증거 공백] — 원 의무와 중복 아님 → 개별 행 유지(완료는 사람 ✓)
+          // T2 [증거 공백]·T3 [문서화 갭] — 원 의무와 중복 아님 → 개별 행 유지(완료는 사람 ✓)
           const team = normalizeTeam(it.teamHint) ?? normalizeOwnerTeam(it.teamHint ?? '')
           const done = it.status === '완료'
           const daysLeft = Math.round(
             (new Date(`${it.bucket}T00:00:00`).getTime() - t0.getTime()) / 86400000
           )
+          // T3(reg-body): 기한(회신 기한)이 미래면 due(해야 함), 지나면 overdue. T2 는 버킷이 항상 과거.
+          const title =
+            it.entityKind === 'reg-body'
+              ? `[문서화 갭] 규정 원문 ${countMissingRegBodies(db)}종 확보·제출 — 관리팀 공문(기한 ${it.bucket})`
+              : `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`
           const task: TodayTaskDto = {
             id: -it.issueId, // 의무 id 와 키 충돌 방지(프론트 completing/key 용도뿐)
-            title: `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`,
+            title,
             cadence: '데이터',
             assignee: null, // §3-4 팀 단위 발행 — 개인 자동 지정 금지
-            status: done ? 'done' : 'overdue',
+            status: done ? 'done' : daysLeft > 0 ? 'due' : 'overdue',
             dueDate: it.bucket,
             daysLeft: done ? null : daysLeft,
             doneAt: done ? ((it.completedAt ?? '').slice(0, 10) || today) : null,
@@ -406,12 +411,13 @@ export function registerTeamHandlers(): void {
             totals.done++
             if (bucket) bucket.done++
           } else {
-            totals.overdue++
-            totals.open++
-            if (bucket) {
-              bucket.overdue++
-              bucket.open++
+            // T3 는 기한 전 'due' 가능 — overdue 는 실제 기한 경과에만(집계 정직)
+            if (task.status === 'overdue') {
+              totals.overdue++
+              if (bucket) bucket.overdue++
             }
+            totals.open++
+            if (bucket) bucket.open++
           }
           if (bucket) bucket.tasks.push(task)
           else unassigned.push(task)
