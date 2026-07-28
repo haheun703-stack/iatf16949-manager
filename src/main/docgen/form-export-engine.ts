@@ -198,10 +198,30 @@ export function resolveMasterFile(reg: string, mastersDir: string): string {
   return join(mastersDir, hit)
 }
 
-export function resolveSheet(wb: ExcelJS.Workbook, formCode: string): ExcelJS.Worksheet {
+// 신규 설계본 폴백(양식 완성전 1배치, 2026-07-28): 회사 규정집(마스터)에 시트가 없는 양식은
+// forms.template_path(리포 resources/ 기준 상대경로 — 0065 갭양식 선례 sq_gap_forms/)가 정본.
+// resolveMastersDir 의 3단 폴백(env→DB→번들)과 같은 결 — 새 엔진이 아니라 소스 해소 한 단계.
+export function resolveTemplateFile(templatePath: string): string | null {
+  const base = app.isPackaged
+    ? join(process.resourcesPath, templatePath)
+    : join(__dirname, '../../resources', templatePath)
+  return existsSync(base) ? base : null
+}
+
+export function resolveSheet(
+  wb: ExcelJS.Workbook,
+  formCode: string,
+  opts?: { allowFirstSheetFallback?: boolean }
+): ExcelJS.Worksheet {
   const ws = wb.worksheets.find((w) => w.name.includes(formCode))
-  if (!ws) throw new Error(`시트 없음: ${formCode}`)
-  return ws
+  if (ws) return ws
+  // 신규 설계본 템플릿(단일 양식 파일)만 첫 시트 폴백 허용 — 시트명이 '양식'(0065 문법).
+  // 마스터 규정집(다중 시트)에서는 오주입 방지를 위해 폴백 금지.
+  if (opts?.allowFirstSheetFallback) {
+    const first = wb.worksheets.find((w) => w.name === '양식') ?? wb.worksheets[0]
+    if (first) return first
+  }
+  throw new Error(`시트 없음: ${formCode}`)
 }
 
 // 앱 슬롯값 → (cell,type,value) 해소
@@ -305,14 +325,32 @@ export async function exportSubmissionXlsx(opts: {
   const cellMap = db
     .prepare('SELECT field_key, label, cell, type FROM form_cell_map WHERE form_code = ? ORDER BY sort_order')
     .all(formCode) as CellMapRow[]
-  if (!cellMap.length) throw new Error(`form_cell_map 비어있음: ${formCode} (폼형 셀맵 미적재 양식)`)
+  // 대장형(grid) 양식은 cell_map 없이 grid 좌표만으로 성립(7/28 게이트 완화 — L1100-15·B2100류)
+  const hasGrid = formFields.some((f) => f.type === 'grid')
+  if (!cellMap.length && !hasGrid) throw new Error(`form_cell_map 비어있음: ${formCode} (폼형 셀맵 미적재 양식)`)
 
-  const src = resolveMasterFile(regCode, resolveMastersDir(db))
+  // 소스 해소: ①forms.template_path(신규 설계본 — 리포/번들 templates) ②마스터 규정집(reg 파일)
+  let src: string | null = null
+  let fromTemplate = false
+  try {
+    const tp = (
+      db.prepare('SELECT template_path FROM forms WHERE code = ?').get(formCode) as
+        | { template_path: string | null }
+        | undefined
+    )?.template_path
+    if (tp) {
+      src = resolveTemplateFile(tp)
+      fromTemplate = src != null
+    }
+  } catch {
+    /* forms.template_path 컬럼 미존재(구버전) → 마스터 경로 */
+  }
+  if (!src) src = resolveMasterFile(regCode, resolveMastersDir(db))
   const { resolved, unmapped } = bridge(cellMap, formFields, appValues)
 
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(src)
-  const ws = resolveSheet(wb, formCode)
+  const ws = resolveSheet(wb, formCode, { allowFirstSheetFallback: fromTemplate })
 
   const mediaBefore = mediaCount(wb)
   let mergesBefore = 0
@@ -362,7 +400,7 @@ export async function exportSubmissionXlsx(opts: {
   // 재검증: 다시 열어 값·보존 확인
   const v2 = new ExcelJS.Workbook()
   await v2.xlsx.readFile(outPath)
-  const ws2 = resolveSheet(v2, formCode)
+  const ws2 = resolveSheet(v2, formCode, { allowFirstSheetFallback: fromTemplate })
   let okVals = 0
   for (const r of resolved) {
     const got = cellText(ws2.getCell(r.cell).value).trim()

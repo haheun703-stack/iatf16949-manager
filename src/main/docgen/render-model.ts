@@ -15,6 +15,7 @@ import type { FormRenderModelDto, RenderCellDto, RenderEditCellDto } from '@shar
 import {
   resolveMastersDir,
   resolveMasterFile,
+  resolveTemplateFile,
   resolveSheet,
   cellText,
   norm,
@@ -101,15 +102,17 @@ export async function buildRenderModel(
   const hit = cache.get(formCode)
   if (hit) return hit
 
-  const form = db.prepare('SELECT reg_code FROM forms WHERE code = ?').get(formCode) as
-    | { reg_code: string }
+  const form = db.prepare('SELECT reg_code, template_path FROM forms WHERE code = ?').get(formCode) as
+    | { reg_code: string; template_path: string | null }
     | undefined
   if (!form) return { ...empty(formCode), error: `양식 없음: ${formCode}` }
 
-  const src = resolveMasterFile(form.reg_code, resolveMastersDir(db))
+  // 소스 해소 = export 엔진과 동일 순서(7/28): ①template_path(신규 설계본) ②마스터 규정집
+  const tpl = form.template_path ? resolveTemplateFile(form.template_path) : null
+  const src = tpl ?? resolveMasterFile(form.reg_code, resolveMastersDir(db))
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(src)
-  const ws = resolveSheet(wb, formCode)
+  const ws = resolveSheet(wb, formCode, { allowFirstSheetFallback: tpl != null })
 
   const rowCount = Math.min(ws.rowCount || 1, MAX_ROWS)
   const colCount = Math.min(ws.columnCount || 1, MAX_COLS)
