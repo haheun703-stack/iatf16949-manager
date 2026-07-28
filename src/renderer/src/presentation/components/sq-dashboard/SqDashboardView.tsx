@@ -6,6 +6,7 @@ import { cn } from '../../../lib/utils'
 import { useUIStore } from '../../stores/uiStore'
 import { useSqTrackStore } from '../../stores/sqTrackStore'
 import { PageHeader } from '../shared/PageHeader'
+import { CardShell } from '../shared/dash/DashKit'
 
 /**
  * SQ 대시보드 (코워크 09 목업 실구현, 7/16 사장님 지시).
@@ -90,7 +91,7 @@ export function SqDashboardView(): JSX.Element {
   const toG = Math.max(0, data.gradeRule.G - mainScore)
 
   return (
-    <div className="space-y-6 break-keep">
+    <div className="space-y-4 break-keep">
       <PageHeader
         title="SQ 대시보드 — 이번 심사, 붙습니까?"
         sub={`한 장 요약 · 가이드 ${data.guideVersion} · 제안 기준(증빙 체크리스트 자동 산출) — 확정 점수는 자체평가에서`}
@@ -106,9 +107,9 @@ export function SqDashboardView(): JSX.Element {
         }
       />
 
-      {/* ── 1행: 히어로 점수 + 준비도 + 남은 거리 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl px-7 py-7">
+      {/* ── 1행: 히어로 점수 + 준비도 + 남은 거리 (템플릿 A 스탯 행 — 토큰 규격) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-2 bg-card border border-border rounded-[14px] shadow-card px-7 py-7">
           <div className="text-[17px] font-bold text-foreground">
             {data.confirmed
               ? `SQ 확정 점수 — 자체평가 ${data.confirmed.id} (${data.confirmed.assessedAt})`
@@ -125,9 +126,9 @@ export function SqDashboardView(): JSX.Element {
                 <span
                   className={cn(
                     'text-[15px] font-bold px-3 py-1 rounded-md ml-1',
-                    g === 'S' && 'bg-emerald-100 text-emerald-800',
+                    g === 'S' && 'bg-ok-tint text-ok-ink',
                     g === 'G' && 'bg-secondary text-secondary-foreground',
-                    g === '불합격' && 'bg-[#fcebeb] text-[#a32d2d]'
+                    g === '불합격' && 'bg-bad-tint text-bad-ink'
                   )}
                 >
                   {g === '불합격' ? '불합격권' : `${g} 등급`}
@@ -169,9 +170,9 @@ export function SqDashboardView(): JSX.Element {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl px-7 py-7">
-          <div className="text-[17px] font-bold text-foreground">증빙 준비도 (체크포인트)</div>
-          <div className="text-[40px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1.5">
+        <div className="bg-card border border-border rounded-[14px] shadow-card px-7 py-7">
+          <div className="text-[15px] font-extrabold tracking-[-0.01em] text-foreground">증빙 준비도 (체크포인트)</div>
+          <div className="text-[40px] font-extrabold tabular-nums tracking-[-0.03em] leading-tight mt-1.5">
             {readyPct}%
           </div>
           <div className="text-[14px] text-muted-foreground mt-2 leading-relaxed">
@@ -181,36 +182,33 @@ export function SqDashboardView(): JSX.Element {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl px-7 py-7">
-          <div className="text-[17px] font-bold text-foreground">남은 점수 (전체 손실)</div>
-          <div className="text-[40px] font-extrabold tabular-nums tracking-[-0.02em] leading-tight mt-1.5 text-[#a32d2d]">
+        <div className="bg-card border border-border rounded-[14px] shadow-card px-7 py-7">
+          <div className="text-[15px] font-extrabold tracking-[-0.01em] text-foreground">남은 점수 (전체 손실)</div>
+          <div className="text-[40px] font-extrabold tabular-nums tracking-[-0.03em] leading-tight mt-1.5 text-bad-ink">
             −{1000 - data.naScore - data.totalRaw}
           </div>
           <div className="text-[14px] text-muted-foreground mt-2">전부 '양호' 이상이 되면 0 — 팀별 목록에서 회수</div>
         </div>
       </div>
 
-      {/* ── 2행: 남은 점수 Top5 + 영역별 미터 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-card border border-border rounded-xl px-7 py-8">
-          <div className="text-[19px] font-extrabold text-foreground mb-1">남은 점수 Top 5 — 등급으로 가는 최단 경로</div>
-          <div className="text-[13.5px] text-muted-foreground mb-4">행을 누르면 담당 팀 상세로 이동합니다</div>
-          <div>
+      {/* ── 2행: 남은 점수 Top5 + 영역별 미터 (CardShell 규격) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <CardShell title="남은 점수 Top 5 — 등급으로 가는 최단 경로" cap="행 클릭 = 담당 팀 상세">
+          <div className="px-[18px] pb-4 pt-1">
             {data.topLosses.map((it) => (
               <ItemRow key={it.code} item={it} onOpenTeam={openTeam} />
             ))}
           </div>
-        </div>
+        </CardShell>
 
-        <div className="bg-card border border-border rounded-xl px-7 py-8">
-          <div className="text-[19px] font-extrabold text-foreground mb-6">영역별 취득 현황</div>
-          <div className="space-y-5">
+        <CardShell title="영역별 취득 현황" cap="막대 = 제안 기준 취득점수 / 트랙 = 배점">
+          <div className="px-[18px] pb-[18px] pt-3 space-y-5">
             {data.areas.map((a) => {
               const pct = a.naAll ? 0 : a.score > 0 ? Math.round((a.earned / a.score) * 100) : 0
               return (
                 <div key={a.area} className={cn('flex items-center gap-3', a.naAll && 'opacity-50')}>
                   <span className="w-[150px] text-[15px] font-semibold break-keep">{a.area}</span>
-                  <span className="flex-1 h-4 rounded-full bg-[#e7f1fc] overflow-hidden">
+                  <span className="flex-1 h-4 rounded-full bg-secondary overflow-hidden">
                     {!a.naAll && <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />}
                   </span>
                   <span className="w-[136px] text-right text-[14.5px] tabular-nums text-muted-foreground">
@@ -224,10 +222,7 @@ export function SqDashboardView(): JSX.Element {
               )
             })}
           </div>
-          <div className="text-[13px] text-muted-foreground mt-6">
-            막대 = 제안 기준 취득점수 / 트랙 = 배점
-          </div>
-        </div>
+        </CardShell>
       </div>
 
       {/* ── 3행: 팀별로 해야 할 것 (드릴다운) ── */}
@@ -238,7 +233,7 @@ export function SqDashboardView(): JSX.Element {
             팀 카드를 누르면 팀 상세(항목 펼침 → 증빙 체크 → 작성)로 갑니다
           </span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {data.teams.map((t) => {
             const theme = teamTheme(t.teamId)
             return (
@@ -246,14 +241,14 @@ export function SqDashboardView(): JSX.Element {
                 key={t.teamId}
                 type="button"
                 onClick={() => openTeam(t.teamId)}
-                className="text-left bg-card border border-border rounded-xl overflow-hidden flex flex-col hover:shadow-md transition-shadow"
+                className="text-left bg-card border border-border rounded-[14px] shadow-card overflow-hidden flex flex-col hover:shadow-md transition-shadow"
               >
                 <div
                   className="px-5 py-4 text-[17.5px] font-extrabold flex items-center"
                   style={{ backgroundColor: theme.tintBg, color: theme.darkText }}
                 >
                   <span className="flex-1 break-keep">{theme.label}</span>
-                  <span className="text-[15px] font-bold tabular-nums shrink-0" style={{ color: '#a32d2d' }}>
+                  <span className="text-[15px] font-bold tabular-nums shrink-0 text-bad-ink">
                     −{t.loss}점
                   </span>
                 </div>
@@ -265,7 +260,7 @@ export function SqDashboardView(): JSX.Element {
                         {it.title}
                       </span>
                       <StatePill state={it.suggestedState} />
-                      <span className="text-[14.5px] font-bold tabular-nums text-[#a32d2d] shrink-0">−{it.loss}</span>
+                      <span className="text-[14.5px] font-bold tabular-nums text-bad-ink shrink-0">−{it.loss}</span>
                     </div>
                   ))}
                   {t.items.length > 4 && (
@@ -337,7 +332,7 @@ function ItemRow({
           {item.teams.length > 1 && ` +${item.teams.length - 1}`}
         </span>
       )}
-      <span className="text-[17px] font-extrabold tabular-nums text-[#a32d2d] shrink-0 w-16 text-right">
+      <span className="text-[17px] font-extrabold tabular-nums text-bad-ink shrink-0 w-16 text-right">
         −{item.loss}
         <small className="text-[12.5px] font-semibold text-muted-foreground">/{item.score}</small>
       </span>

@@ -25,10 +25,11 @@ const ICONS: Record<string, typeof Gauge> = {
   coverage: FileCheck2
 }
 
+// 틴트 토큰(17번 §1) — 화면별 하드코딩 금지, app.css 상태 칩 문법으로 통일 (7/28 A군)
 const ICON_TONE: Record<KpiTileSpec['tone'], string> = {
-  accent: 'bg-sky-100 text-sky-700',
-  hot: 'bg-red-100 text-red-600',
-  warm: 'bg-amber-100 text-amber-700'
+  accent: 'bg-secondary text-primary',
+  hot: 'bg-bad-tint text-bad-ink',
+  warm: 'bg-warn-tint text-warn-ink'
 }
 
 /** KPI 6타일 — 아이콘형. ✦각주 = AI(시크릿)를 카드가 아니라 데이터 옆에 심는 자리 */
@@ -46,7 +47,7 @@ export function KpiTiles({ tiles }: { tiles: KpiTileSpec[] }): JSX.Element {
             type={clickable ? 'button' : undefined}
             onClick={clickable ? () => setPage(t.page!) : undefined}
             className={cn(
-              'bg-card border border-border rounded-xl shadow-sm px-5 py-4 flex items-center gap-4 text-left',
+              'bg-card border border-border rounded-[14px] shadow-card px-5 py-4 flex items-center gap-4 text-left',
               clickable && 'hover:shadow-md hover:border-primary/30 transition-all cursor-pointer'
             )}
           >

@@ -190,7 +190,8 @@ export function Dashboard(): JSX.Element {
   }
 
   return (
-    <div className="space-y-3 max-w-[2200px] mx-auto">
+    // 템플릿 A — 폭은 AppShell 공통 칼럼(1400px)이 정본. 내부 max-w 는 죽은 제약이라 제거(7/28 A군).
+    <div className="space-y-3">
       <HeaderBand
         auditDateStr={auditDateStr}
         dday={dday}
