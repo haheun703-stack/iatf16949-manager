@@ -1,19 +1,20 @@
 {
  "summary": {
-  "dbPath": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\claude\\d--IATF16949-SQ-------\\e5152ea6-dd31-49db-afe7-8a8a6fe03251\\scratchpad\\e2e-data2\\iatf16949.db",
-  "ranAt": "2026-07-29T05:30:14.251Z",
+  "dbPath": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\claude\\d--IATF16949-SQ-------\\e5152ea6-dd31-49db-afe7-8a8a6fe03251\\scratchpad\\e2e-data3\\iatf16949.db",
+  "ranAt": "2026-07-29T07:36:25.003Z",
   "total": 301,
-  "writable_fields": 216,
-  "gapA_noFields": 74,
+  "writable_fields": 227,
+  "gapA_noFields": 62,
   "gapB_fieldsButNoCellmap": 0,
-  "gapC_noTemplate": 276,
+  "gapC_noTemplate": 268,
   "linkedObligation": 32,
   "linkedProcess": 283,
   "linkedSq": 237,
-  "newDesign": 18,
+  "newDesign": 20,
   "viewOnly": [
    "B1100-07",
    "B1100-08",
+   "B2300-01",
    "K2100-07",
    "L1200-08",
    "L1200-09",
@@ -200,201 +201,9 @@
    "prio": 60
   },
   {
-   "code": "B2300-01",
-   "name": "정성품질 CFT 업무 분장()",
-   "regCode": "B-2300",
-   "respDept": "품질보증팀",
-   "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-03"
-   ],
-   "sqItems": [
-    "6_12"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 60
-  },
-  {
-   "code": "B2300-02",
-   "name": "정성품질 취합 대장()",
-   "regCode": "B-2300",
-   "respDept": "품질보증팀",
-   "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-03"
-   ],
-   "sqItems": [
-    "6_12"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 60
-  },
-  {
-   "code": "B2300-03",
-   "name": "정성품질 점검 체크시트()",
-   "regCode": "B-2300",
-   "respDept": "품질보증팀",
-   "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-03"
-   ],
-   "sqItems": [
-    "6_12"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 60
-  },
-  {
-   "code": "B2300-04",
-   "name": "문제점 및 개선 제안서()",
-   "regCode": "B-2300",
-   "respDept": "품질보증팀",
-   "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-03"
-   ],
-   "sqItems": [
-    "6_12"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 60
-  },
-  {
-   "code": "B2300-05",
-   "name": "정성품질 개선 타당성 검토()",
-   "regCode": "B-2300",
-   "respDept": "품질보증팀",
-   "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-03"
-   ],
-   "sqItems": [
-    "6_12"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 60
-  },
-  {
-   "code": "B2300-06",
-   "name": "유효성 평가 보고서()",
-   "regCode": "B-2300",
-   "respDept": "품질보증팀",
-   "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-03"
-   ],
-   "sqItems": [
-    "6_12"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 60
-  },
-  {
-   "code": "B2300-07",
-   "name": "인라인 공정불량 사례 시트()",
-   "regCode": "B-2300",
-   "respDept": "품질보증팀",
-   "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-03"
-   ],
-   "sqItems": [
-    "6_12"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 60
-  },
-  {
    "code": "L-4100",
    "name": "통계적 기법적용 규정",
    "regCode": "L-4100",
-   "respDept": "품질보증팀",
-   "clause": "9",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-03"
-   ],
-   "sqItems": [
-    "6_7"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 60
-  },
-  {
-   "code": "L4101-01",
-   "name": "Xbar-R 관리도 ()",
-   "regCode": "L-4101",
    "respDept": "품질보증팀",
    "clause": "9",
    "fields": 0,
@@ -439,96 +248,6 @@
    "sqPoints": 20,
    "sqMissingCp": 3,
    "prio": 59
-  },
-  {
-   "code": "F1101-03",
-   "name": "신규입사자 온보딩 체크리스트(오퍼레이터)",
-   "regCode": "F-1101",
-   "respDept": "관리팀",
-   "clause": "7.2",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [],
-   "sqItems": [
-    "6_5"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 6,
-   "prio": 58
-  },
-  {
-   "code": "F1101-04",
-   "name": "신규입사자 온보딩 체크리스트(관리자)",
-   "regCode": "F-1101",
-   "respDept": "관리팀",
-   "clause": "7.2",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [],
-   "sqItems": [
-    "6_5"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 6,
-   "prio": 58
-  },
-  {
-   "code": "L2300-04",
-   "name": "OK_NG MASTER 관리대장()",
-   "regCode": "L-2300",
-   "respDept": "품질보증팀",
-   "clause": "8",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [
-    "SP-02"
-   ],
-   "sqItems": [
-    "2_3"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 4,
-   "prio": 57
-  },
-  {
-   "code": "B2200-05",
-   "name": "품질실적 월보",
-   "regCode": "B-2200",
-   "respDept": "품질보증팀",
-   "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 1,
-   "newDesign": true,
-   "submissions": 0,
-   "obligations": [],
-   "coreDuty": false,
-   "processes": [],
-   "sqItems": [
-    "6_7"
-   ],
-   "sqPoints": 20,
-   "sqMissingCp": 5,
-   "prio": 55
   },
   {
    "code": "A-4101",
@@ -2987,7 +2706,7 @@
    "gridCols": 17,
    "template": 1,
    "newDesign": true,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -3011,7 +2730,7 @@
    "gridCols": 16,
    "template": 1,
    "newDesign": true,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -3102,7 +2821,7 @@
    "gridCols": 13,
    "template": 1,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3126,7 +2845,7 @@
    "gridCols": 14,
    "template": 1,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3306,12 +3025,12 @@
    "regCode": "B-2200",
    "respDept": "품질보증팀",
    "clause": "10",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 9,
    "template": 1,
    "newDesign": true,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -3319,7 +3038,8 @@
     "6_7"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "신규 설계본 '11_품질실적_월보' 양식 시트(예시행 클리어·(제안) 정정 — PPM 수식 보존)"
   },
   {
    "code": "B2300-01",
@@ -3342,7 +3062,8 @@
     "6_12"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "[열람형 전환 7/29 5배치] CFT 업무 분장 — 사업부×역할 실명 조직표 기정의, 작성 양식 아님"
   },
   {
    "code": "B2300-02",
@@ -3350,12 +3071,12 @@
    "regCode": "B-2300",
    "respDept": "품질보증팀",
    "clause": "10",
-   "fields": 0,
+   "fields": 1,
    "cells": 0,
-   "gridCols": 0,
-   "template": 0,
+   "gridCols": 5,
+   "template": 1,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3365,7 +3086,8 @@
     "6_12"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '정성품질 취합 대장(B2300-2)' → templates/batch5/B2300-02_취합대장.xlsx (시트명 한 자리 코드 = resolveSheet 매칭 불가 실측 — 2자리 정정 추출, 마스터 무변경)"
   },
   {
    "code": "B2300-03",
@@ -3373,12 +3095,12 @@
    "regCode": "B-2300",
    "respDept": "품질보증팀",
    "clause": "10",
-   "fields": 0,
-   "cells": 0,
+   "fields": 7,
+   "cells": 7,
    "gridCols": 0,
-   "template": 0,
+   "template": 1,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3388,7 +3110,8 @@
     "6_12"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '정성품질 점검 체크시트(B2300-3)' → templates/batch5/B2300-03_점검체크시트.xlsx (동일. ⚠️마스터에 '정성품질 순회 점검 시트(B2300-3)' 코드 중복 별개 양식 실측 — forms 미등록, 처리 보류)"
   },
   {
    "code": "B2300-04",
@@ -3396,12 +3119,12 @@
    "regCode": "B-2300",
    "respDept": "품질보증팀",
    "clause": "10",
-   "fields": 0,
-   "cells": 0,
+   "fields": 5,
+   "cells": 5,
    "gridCols": 0,
-   "template": 0,
+   "template": 1,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3411,7 +3134,8 @@
     "6_12"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '문제점 및 개선 제안서(B2300-4)' → templates/batch5/B2300-04_개선제안서.xlsx (동일)"
   },
   {
    "code": "B2300-05",
@@ -3419,12 +3143,12 @@
    "regCode": "B-2300",
    "respDept": "품질보증팀",
    "clause": "10",
-   "fields": 0,
-   "cells": 0,
+   "fields": 7,
+   "cells": 7,
    "gridCols": 0,
-   "template": 0,
+   "template": 1,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3434,7 +3158,8 @@
     "6_12"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '정성품질 개선 타당성 검토(B2300-5)' → templates/batch5/B2300-05_타당성검토.xlsx (동일 — 검토 YES/NO 체크는 시트 수기)"
   },
   {
    "code": "B2300-06",
@@ -3442,12 +3167,12 @@
    "regCode": "B-2300",
    "respDept": "품질보증팀",
    "clause": "10",
-   "fields": 0,
-   "cells": 0,
+   "fields": 10,
+   "cells": 10,
    "gridCols": 0,
-   "template": 0,
+   "template": 1,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3457,7 +3182,8 @@
     "6_12"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '유효성 평가 보고서(B2300-6)' → templates/batch5/B2300-06_유효성평가.xlsx (동일 — 추이도·사진 시트 몫)"
   },
   {
    "code": "B2300-07",
@@ -3465,12 +3191,12 @@
    "regCode": "B-2300",
    "respDept": "품질보증팀",
    "clause": "10",
-   "fields": 0,
-   "cells": 0,
+   "fields": 5,
+   "cells": 5,
    "gridCols": 0,
-   "template": 0,
+   "template": 1,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -3480,7 +3206,8 @@
     "6_12"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '인라인 공정불량 사례 시트(B2300-7)' → templates/batch5/B2300-07_공정불량사례.xlsx (동일 — 병합 블록 1건 서술형 실측)"
   },
   {
    "code": "D-1100",
@@ -4020,7 +3747,7 @@
    "gridCols": 11,
    "template": 1,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4131,12 +3858,12 @@
    "regCode": "F-1101",
    "respDept": "관리팀",
    "clause": "7.2",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 6,
+   "template": 1,
+   "newDesign": true,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -4144,7 +3871,8 @@
     "6_5"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 6
+   "sqMissingCp": 6,
+   "adoptedSheet": "신규 설계본 '21_온보딩체크_오퍼레이터' — 원본 부재 실측(F-1101 은 01/02 뿐). 항목 콘텐츠 = 관리팀 몫(창작 0)"
   },
   {
    "code": "F1101-04",
@@ -4152,12 +3880,12 @@
    "regCode": "F-1101",
    "respDept": "관리팀",
    "clause": "7.2",
-   "fields": 0,
-   "cells": 0,
-   "gridCols": 0,
-   "template": 0,
-   "newDesign": false,
-   "submissions": 0,
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 6,
+   "template": 1,
+   "newDesign": true,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [],
@@ -4165,7 +3893,8 @@
     "6_5"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 6
+   "sqMissingCp": 6,
+   "adoptedSheet": "신규 설계본 '22_온보딩체크_관리자' — 동일"
   },
   {
    "code": "F2100-01",
@@ -4293,7 +4022,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4317,7 +4046,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -4889,7 +4618,7 @@
    "gridCols": 25,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -5446,7 +5175,7 @@
    "gridCols": 5,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -5472,7 +5201,7 @@
    "gridCols": 6,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -5971,7 +5700,7 @@
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7186,7 +6915,7 @@
    "gridCols": 6,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7276,7 +7005,7 @@
    "gridCols": 21,
    "template": 0,
    "newDesign": false,
-   "submissions": 1,
+   "submissions": 0,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7691,12 +7420,12 @@
    "regCode": "L-2300",
    "respDept": "품질보증팀",
    "clause": "8",
-   "fields": 0,
+   "fields": 1,
    "cells": 0,
-   "gridCols": 0,
+   "gridCols": 11,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7706,7 +7435,8 @@
     "2_3"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 4
+   "sqMissingCp": 4,
+   "adoptedSheet": "마스터 'OK_NG MASTER 관리대장(L2300-04)' — 대장형(사진 열 시트 수기)"
   },
   {
    "code": "L2300-05",
@@ -7972,12 +7702,12 @@
    "regCode": "L-4101",
    "respDept": "품질보증팀",
    "clause": "9",
-   "fields": 0,
-   "cells": 0,
+   "fields": 9,
+   "cells": 9,
    "gridCols": 0,
    "template": 0,
    "newDesign": false,
-   "submissions": 0,
+   "submissions": 1,
    "obligations": [],
    "coreDuty": false,
    "processes": [
@@ -7987,7 +7717,8 @@
     "6_7"
    ],
    "sqPoints": 20,
-   "sqMissingCp": 5
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 'Xbar-R 관리도 (L4101-01)' — 계산기형 최소 매핑 9(L4102-02 선례, 수식·측정 매트릭스 시트 몫). ⚠️L-4101-01 'SPC 평가표'는 독립 .xls 별개 실체 실측 — 이중 등록 아님(4배치 §2-⑤ 의심 해소)"
   },
   {
    "code": "L4102-01",
