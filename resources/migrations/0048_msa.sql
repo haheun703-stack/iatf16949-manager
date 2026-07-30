@@ -29,7 +29,11 @@ CREATE INDEX IF NOT EXISTS idx_msa_result ON msa_studies(result, sort_order);
 
 -- ── 데모 게이지 4건 (빈 화면 방지, clause/team FK 검증값) ──
 INSERT INTO msa_studies (gage_name, gage_no, characteristic, method, grr_percent, ndc, result, clause_id, team_id, study_date, sort_order)
-SELECT s.column1, s.column2, s.column3, s.column4, s.column5, s.column6, s.column7, '7.1.5.1.1', 'team-qc', s.column8, s.column9
+-- ⚠️FK 안전(2026-07-30 검수 C-6, 0046 과 동일 사유): 부모 행이 없는 신규 DB 에선 NULL.
+SELECT s.column1, s.column2, s.column3, s.column4, s.column5, s.column6, s.column7,
+       (SELECT c.id FROM clauses c WHERE c.id = '7.1.5.1.1'),
+       (SELECT t.id FROM teams t WHERE t.id = 'team-qc'),
+       s.column8, s.column9
 FROM (VALUES
   ('버니어 캘리퍼스', 'GAGE-001', '외경 Ø',     'gage_rr', 8.5,  6, 'acceptable',   '2026-05-10', 10),
   ('마이크로미터',     'GAGE-002', '두께',        'gage_rr', 18.2, 4, 'marginal',     '2026-05-12', 20),

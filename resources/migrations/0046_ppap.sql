@@ -46,8 +46,16 @@ WHERE NOT EXISTS (SELECT 1 FROM ppap_submissions);
 -- ── 18 표준 요구사항 (명세 §4.1, clause/team FK 검증됨) ──
 -- 데모 진척: 1~6 완료, 7~10 진행, 11~18 미착수 (진척률 표시용)
 -- VALUES 기본 컬럼명(column1..column6) 사용 + 데모 제출과 크로스조인.
+-- ⚠️FK 안전(2026-07-30 검수 C-6): clauses/teams 는 seedDatabase() 가 채우고 그 호출은
+-- runMigrations() **이후**다. 완전 신규 DB(빈 userData)에서는 이 시점에 부모 행이 없어
+-- FK 위반으로 체인이 중단되고 앱이 창 없이 죽었다(FK ON 드라이런 실측).
+-- → 존재하는 참조만 값으로 쓰고 없으면 NULL(두 컬럼 모두 nullable). 시드된 DB에서는 종전과
+--    완전 동일한 값이 들어가므로 라이브 무영향.
 INSERT INTO ppap_elements (submission_id, seq, name, name_en, clause_id, team_id, status, sort_order)
-SELECT s.id, x.column1, x.column2, x.column3, x.column4, x.column5, x.column6, x.column1 * 10
+SELECT s.id, x.column1, x.column2, x.column3,
+       (SELECT c.id FROM clauses c WHERE c.id = x.column4),
+       (SELECT t.id FROM teams t WHERE t.id = x.column5),
+       x.column6, x.column1 * 10
 FROM (SELECT id FROM ppap_submissions WHERE part_no='DEMO-001') s,
 (VALUES
   (1,  '설계기록',           'Design Records',                      '8.3.5',     'team-de', 'completed'),

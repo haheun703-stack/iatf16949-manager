@@ -57,7 +57,11 @@ WHERE NOT EXISTS (SELECT 1 FROM apqp_phases WHERE id='phase-5');
 
 -- ── 43 산출물 (전량 멱등: 테이블이 비어있을 때만) ──
 INSERT INTO apqp_elements (id, phase_id, seq, name, name_en, io, core_tool, clause_id, team_id, sort_order)
-SELECT x.column1, x.column2, x.column3, x.column4, x.column5, x.column6, x.column7, x.column8, x.column9, x.column10
+-- ⚠️FK 안전(2026-07-30 검수 C-6, 0046 과 동일 사유): 부모 행이 없는 신규 DB 에선 NULL.
+SELECT x.column1, x.column2, x.column3, x.column4, x.column5, x.column6, x.column7,
+       (SELECT c.id FROM clauses c WHERE c.id = x.column8),
+       (SELECT t.id FROM teams t WHERE t.id = x.column9),
+       x.column10
 FROM (VALUES
   ('apqp-1-01','phase-1',1,'고객의 소리(VOC) 수집','Voice of the Customer','input',NULL,'8.2.1','team-mg',1),
   ('apqp-1-02','phase-1',2,'설계 목표','Design Goals','output',NULL,'8.3.3','team-de',2),
