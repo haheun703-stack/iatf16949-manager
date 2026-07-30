@@ -2675,7 +2675,23 @@ export interface FormExportResult {
   grids?: Array<{ gridKey: string; written: number; dropped: number }>
   /** 옵션별 분리셀형 라디오/체크박스 마킹 결과(필드별 마킹 셀 수) */
   optCells?: Array<{ fieldKey: string; marked: number }>
-  verify?: { values: string; mediaOk: boolean; mergesOk: boolean }
+  verify?: {
+    values: string
+    valuesOk?: boolean
+    mediaOk: boolean
+    mergesOk: boolean
+    /** 격자 주입분 재검증(0730 검수 M-3 — 종전 사각지대) */
+    grid?: string
+    gridOk?: boolean
+    /** 수식 셀을 건드리지 않았는가(false = 셀맵이 수식 셀을 가리켜 주입을 차단함) */
+    formulaSafe?: boolean
+  }
+  /** 셀 가드 신호(0730 검수 C-7·C-8): 수식 차단·병합 앵커 리다이렉트·기존 텍스트 덮어씀 */
+  guard?: {
+    skippedFormula: Array<{ cell: string; kind: string; ctx: string; detail: string }>
+    mergeRedirects: Array<{ cell: string; kind: string; ctx: string; detail: string }>
+    overwrites: Array<{ cell: string; kind: string; ctx: string; detail: string }>
+  }
 }
 
 /** 개정 이력 목록 항목(값 제외 경량) */

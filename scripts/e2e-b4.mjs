@@ -12,7 +12,7 @@ import { dirname, join } from 'path'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(root, 'captures')
 mkdirSync(OUT, { recursive: true })
-const BASE = 'http://127.0.0.1:8080'
+const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8080' // 검수 M: 라이브(8080) 오염 방지 — 검증은 E2E_BASE=…:8081
 const LOGIN = process.argv[2]
 const PW = process.argv[3] || 'qms1234'
 if (!LOGIN) { console.error('사용법: node scripts/e2e-b4.mjs <이름> [비번]'); process.exit(1) }

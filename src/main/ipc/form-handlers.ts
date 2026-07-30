@@ -552,11 +552,19 @@ export function registerFormHandlers(): void {
           unmapped: result.unmapped,
           grids: result.grids,
           optCells: result.optCells,
+          // 검수 M-3(0730): valuesOk·격자·수식 신호가 종전엔 전달조차 안 돼 화면·하네스가
+          // 파손을 볼 수 없었다 → 판정에 필요한 필드를 전량 전달한다.
           verify: {
             values: result.verify.values,
+            valuesOk: result.verify.valuesOk,
             mediaOk: result.verify.mediaOk,
-            mergesOk: result.verify.mergesOk
-          }
+            mergesOk: result.verify.mergesOk,
+            grid: result.verify.grid,
+            gridOk: result.verify.gridOk,
+            formulaSafe: result.verify.formulaSafe
+          },
+          // 셀 가드 신호(C-7 수식 차단 = 셀맵 결함 / C-8 병합 리다이렉트·덮어씀 = 트리아지)
+          guard: result.guard
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)

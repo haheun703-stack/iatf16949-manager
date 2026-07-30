@@ -90,7 +90,18 @@ for (const c of CASES) {
     }
     totalOk += ok; totalChecks += c.expect.length
     if (bad.length === 0) passForms++
-    const verify = exp.verify ? ` engine=${exp.verify.values} media:${exp.verify.mediaOk ? 'OK' : 'NG'} merges:${exp.verify.mergesOk ? 'OK' : 'NG'}` : ''
+    const v = exp.verify || {}
+    const verify = exp.verify
+      ? ` engine=${v.values}${v.grid ? ` grid=${v.grid}` : ''} media:${v.mediaOk ? 'OK' : 'NG'} merges:${v.mergesOk ? 'OK' : 'NG'}` +
+        ` 수식:${v.formulaSafe === false ? '차단됨' : 'OK'}`
+      : ''
+    // 엔진 가드 신호(0730 C-7·C-8): 수식 차단은 셀맵 결함, 병합 리다이렉트·덮어씀은 트리아지 자료
+    const g = exp.guard
+    if (g) {
+      for (const h of g.skippedFormula) console.log(`   ⚠️수식 차단 ${h.cell} [${h.ctx}] ${h.detail}`)
+      if (g.mergeRedirects.length) console.log(`   · 병합 앵커 리다이렉트 ${g.mergeRedirects.length}건`)
+      if (g.overwrites.length) console.log(`   · 기존 텍스트 덮어씀 ${g.overwrites.length}건`)
+    }
     console.log(`${bad.length === 0 ? '✓' : '✗'} ${c.code} [시트 "${ws.name}"] 셀 ${ok}/${c.expect.length}${verify} → ${outFile}`)
     if (exp.unmapped && exp.unmapped.length) console.log(`   unmapped: ${exp.unmapped.join(', ')}`)
     for (const b of bad) console.log(`   ✗ ${b}`)

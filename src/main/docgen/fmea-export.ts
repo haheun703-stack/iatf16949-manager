@@ -59,6 +59,8 @@ export interface FmeaExportResult {
   success: boolean
   filePath?: string
   rows?: number
+  dropped?: number // 템플릿 행 수(R10~R21) 초과로 기입하지 않은 행 — 검수 M-8
+  guardSkips?: string[] // 수식 보존을 위해 주입하지 않은 셀 — 검수 C-7
   error?: string
 }
 
@@ -91,9 +93,22 @@ export async function exportFmeaXlsx(
     || wb.getWorksheet(SHEET_NAME)
   if (!ws) return { success: false, error: `시트 없음: ${SHEET_NAME}` }
 
-  // 헤더 주입 (라벨 다음 값셀)
+  // 헤더 주입 (라벨 다음 값셀).
+  // 검수 C-7·C-8(2026-07-30): 폼 엔진과 같은 가드 — 병합 비앵커는 앵커로, 수식 셀은 주입 금지.
+  const isFormula = (v: unknown): boolean =>
+    !!v && typeof v === 'object' && !!((v as { formula?: unknown }).formula || (v as { sharedFormula?: unknown }).sharedFormula)
+  const guardSkips: string[] = []
+  const writeCell = (addr: string, v: string | number | null): void => {
+    let cell = ws.getCell(addr)
+    if (cell.isMerged && cell.master && cell.master.address !== cell.address) cell = cell.master
+    if (isFormula(cell.value)) {
+      guardSkips.push(cell.address)
+      return
+    }
+    cell.value = v
+  }
   const put = (addr: string, v: unknown): void => {
-    if (v != null && String(v).trim()) ws.getCell(addr).value = String(v)
+    if (v != null && String(v).trim()) writeCell(addr, String(v))
   }
   put('L3', doc.fmea_no)
   put('G3', doc.part_name)
@@ -112,8 +127,13 @@ export async function exportFmeaXlsx(
     /* 무시 */
   }
 
-  // 데이터 그리드 주입
-  rows.forEach((r, i) => {
+  // 데이터 그리드 주입.
+  // 검수 M-8: 종전엔 행 상한이 없어 12행(R10~R21) 초과분이 템플릿 밖 무서식 영역에 기입됐다
+  // → LAST_TEMPLATE_ROW 까지만 쓰고 초과분은 dropped 로 정직 보고.
+  const capacity = Math.max(0, LAST_TEMPLATE_ROW - DATA_START_ROW + 1)
+  const writable = rows.slice(0, capacity)
+  const dropped = rows.length - writable.length
+  writable.forEach((r, i) => {
     const row = DATA_START_ROW + i
     const ap = computeActionPriority(
       r.severity as number | null,
@@ -130,16 +150,15 @@ export async function exportFmeaXlsx(
       if (key === '__ap') val = ap
       else if (key === '__re_ap') val = reAp
       else val = r[key]
-      const cell = ws.getCell(`${col}${row}`)
-      cell.value = val == null || val === '' ? null : (val as string | number)
+      writeCell(`${col}${row}`, val == null || val === '' ? null : (val as string | number))
     }
   })
 
   // 남은 템플릿 가이던스 행 정리 (데이터보다 아래 행의 B~AD 비움)
-  for (let row = DATA_START_ROW + rows.length; row <= LAST_TEMPLATE_ROW; row++) {
-    for (const [col] of GRID) ws.getCell(`${col}${row}`).value = null
+  for (let row = DATA_START_ROW + writable.length; row <= LAST_TEMPLATE_ROW; row++) {
+    for (const [col] of GRID) writeCell(`${col}${row}`, null)
   }
 
   await wb.xlsx.writeFile(outPath)
-  return { success: true, filePath: outPath, rows: rows.length }
+  return { success: true, filePath: outPath, rows: writable.length, dropped, guardSkips }
 }

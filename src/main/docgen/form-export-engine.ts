@@ -58,6 +58,20 @@ export interface ExportDiag {
   type: string
   value: string
 }
+
+// 셀 가드 신호(2026-07-30 검수 C-7·C-8 대응). 지금까지 이 3종은 전부 무음이었고
+// 재검증(verify)까지 통과시켰다 — 수식 파괴는 차단하고, 나머지는 보고해 사람이 판단한다.
+//  · formula      = 수식 셀을 가리키는 셀맵 → 주입 차단(수식 보존). 셀맵 교정 대상.
+//  · mergeRedirect = 병합 비앵커 좌표 → 앵커로 리다이렉트(ExcelJS 가 이미 앵커로 전파하므로
+//                    동작은 종전과 동일하나, 여러 행이 한 앵커로 수렴하는 행 손실을 가시화).
+//  · overwrite    = 기존 텍스트가 있던 칸에 평문 주입(양식 라벨 덮어씀 후보).
+export interface CellGuardHit {
+  cell: string
+  kind: 'formula' | 'mergeRedirect' | 'overwrite'
+  ctx: string
+  detail: string
+}
+
 export interface ExportResult {
   formCode: string
   src: string
@@ -67,7 +81,22 @@ export interface ExportResult {
   unmapped: string[] // 값은 있으나 셀맵에 매칭 안 된 라벨
   grids?: Array<{ gridKey: string; written: number; dropped: number }> // 격자/대장 행반복 결과
   optCells?: Array<{ fieldKey: string; marked: number }> // 옵션별 분리셀(H3200-02형) 마킹 결과
-  verify: { values: string; valuesOk: boolean; media: string; mediaOk: boolean; merges: string; mergesOk: boolean }
+  guard?: {
+    skippedFormula: CellGuardHit[] // 수식 보존을 위해 주입하지 않은 셀(= 셀맵 결함 신호)
+    mergeRedirects: CellGuardHit[] // 병합 앵커로 옮겨 쓴 셀
+    overwrites: CellGuardHit[] // 기존 텍스트를 덮어쓴 셀
+  }
+  verify: {
+    values: string
+    valuesOk: boolean
+    media: string
+    mediaOk: boolean
+    merges: string
+    mergesOk: boolean
+    grid?: string // 격자 주입분 재검증(종전 사각지대)
+    gridOk?: boolean
+    formulaSafe?: boolean // 수식 셀을 건드리지 않았는가(차단 0건)
+  }
   pdf?: string | null
 }
 
@@ -144,17 +173,60 @@ function markNumberedOption(base: string, selected: string[]): string {
   return out
 }
 
+// ── 셀 가드 (검수 C-7·C-8, 2026-07-30) ───────────────────────────────────────
+const A1_RE = /^[A-Z]{1,3}[1-9][0-9]*$/ // A0·ZZZ 류 불량 주소 사전 차단(ExcelJS 는 A0 를 조용히 허용)
+const isFormulaValue = (v: unknown): boolean =>
+  !!v && typeof v === 'object' && !!((v as { formula?: unknown }).formula || (v as { sharedFormula?: unknown }).sharedFormula)
+
+/**
+ * 쓰기 대상 셀 확보 — 병합 비앵커는 앵커로 옮기고, 수식 셀은 거부한다(null).
+ * ExcelJS 실측(2026-07-30): 슬레이브 쓰기는 앵커로 전파되고 슬레이브 읽기는 앵커값을 돌려준다
+ * → 종전 동작은 "앵커에 쓰고 앵커를 읽어 통과"였으므로 리다이렉트는 회귀 없이 가시화만 한다.
+ */
+function acquireCell(
+  ws: ExcelJS.Worksheet,
+  cellAddr: string,
+  diag: CellGuardHit[],
+  ctx: string
+): ExcelJS.Cell | null {
+  if (!A1_RE.test(cellAddr)) throw new Error(`셀 주소 불량: "${cellAddr}" (${ctx})`)
+  let target: ExcelJS.Cell
+  try {
+    target = ws.getCell(cellAddr)
+  } catch (e) {
+    throw new Error(`셀 주소 해소 실패: "${cellAddr}" (${ctx}) — ${(e as Error).message}`)
+  }
+  if (target.isMerged && target.master && target.master.address !== target.address) {
+    diag.push({ cell: cellAddr, kind: 'mergeRedirect', ctx, detail: `병합 앵커 ${target.master.address} 로 주입` })
+    target = target.master
+  }
+  if (isFormulaValue(target.value)) {
+    const f = target.value as { formula?: string; sharedFormula?: string }
+    diag.push({
+      cell: target.address,
+      kind: 'formula',
+      ctx,
+      detail: `수식 보존(주입 차단): ${String(f.formula || f.sharedFormula).slice(0, 60)}`
+    })
+    return null
+  }
+  return target
+}
+
 // 옵션별 분리셀형(H3200-02): 선택 옵션의 셀을 【】로 표시
 function markOptionCells(
   ws: ExcelJS.Worksheet,
   optionCells: Array<{ option: string; cell: string }>,
-  selected: string[]
+  selected: string[],
+  diag: CellGuardHit[],
+  fieldKey: string
 ): number {
   const sel = new Set(selected.map((s) => s.replace(/\s+/g, '')))
   let marked = 0
   for (const oc of optionCells) {
     if (!sel.has(oc.option.replace(/\s+/g, ''))) continue
-    const cell = ws.getCell(oc.cell)
+    const cell = acquireCell(ws, oc.cell, diag, `${fieldKey}(옵션 ${oc.option})`)
+    if (!cell) continue // 수식 셀 = 마킹 차단
     const t = cellText(cell.value).trim()
     if (!t.includes('【')) cell.value = `【${t}】`
     marked++
@@ -162,8 +234,18 @@ function markOptionCells(
   return marked
 }
 
-function injectCell(ws: ExcelJS.Worksheet, cellAddr: string, type: string, value: string): void {
-  const cell = ws.getCell(cellAddr)
+/** 셀 주입. 수식 셀이면 주입하지 않고 false 를 돌려준다(가드 기록은 diag). */
+function injectCell(
+  ws: ExcelJS.Worksheet,
+  cellAddr: string,
+  type: string,
+  value: string,
+  diag: CellGuardHit[],
+  ctx: string
+): boolean {
+  const cell = acquireCell(ws, cellAddr, diag, ctx)
+  if (!cell) return false
+  const before = cellText(cell.value).trim()
   switch (type) {
     case 'checkbox':
     case 'radio': {
@@ -187,6 +269,11 @@ function injectCell(ws: ExcelJS.Worksheet, cellAddr: string, type: string, value
       // text/date/number/select/auto → 문자열 그대로(원본 셀 표시형식 유지)
       cell.value = value
   }
+  // 옵션형(□/번호매김)은 기존 텍스트를 쓰는 게 정상 — 평문 주입만 덮어씀 후보로 본다.
+  if (before && type !== 'checkbox' && type !== 'radio') {
+    diag.push({ cell: cell.address, kind: 'overwrite', ctx, detail: `기존 텍스트 "${before.slice(0, 30)}" 덮어씀` })
+  }
+  return true
 }
 
 // 마스터 .xlsx 찾기: 파일명이 reg(예 "B-2100")로 시작
@@ -244,7 +331,9 @@ function bridge(
     if (display.trim() === '') continue // 값 없는 필드는 건너뜀
     const key = norm(f.label)
     const aliased = ALIASES[key] ? norm(ALIASES[key]) : key
-    const row = lut.get(aliased) || lut.get(key)
+    // field_key 폴백 = 캔버스(render-model)와 동일 3단. 종전 export 만 2단이라 라벨이 다르고
+    // field_key 만 일치하는 필드는 화면에서 입력받고도 출력에서 조용히 탈락했다(검수 M-5).
+    const row = lut.get(aliased) || lut.get(key) || lut.get(norm(f.fieldKey))
     if (!row) {
       unmapped.push(f.label)
       continue
@@ -295,20 +384,30 @@ function loadGridSpec(db: Database.Database, formCode: string, gridKey: string):
 function injectGrid(
   ws: ExcelJS.Worksheet,
   spec: GridSpec,
-  records: Array<Record<string, unknown>>
-): { written: number; dropped: number } {
+  records: Array<Record<string, unknown>>,
+  diag: CellGuardHit[],
+  gridKey: string
+): { written: number; dropped: number; cells: Array<{ cell: string; value: string }> } {
+  // 스펙 무결성(검수 Minor): stride 0 = 전 레코드가 같은 행을 덮어씀, max_rows NULL = 전량 탈락.
+  const stride = Number(spec.stride) > 0 ? Number(spec.stride) : 1
+  const maxRows = Number(spec.max_rows) > 0 ? Number(spec.max_rows) : records.length
   let written = 0
+  const cells: Array<{ cell: string; value: string }> = []
   for (let i = 0; i < records.length; i++) {
-    if (i >= spec.max_rows) break
-    const r = spec.data_start_row + i * spec.stride
+    if (i >= maxRows) break
+    const r = spec.data_start_row + i * stride
     for (const c of spec.columns) {
       const v = records[i]?.[c.col_key]
       if (v == null || v === '') continue
-      injectCell(ws, `${c.sheet_col}${r}`, c.type, toDisplay(v))
+      const addr = `${c.sheet_col}${r}`
+      const value = toDisplay(v)
+      if (injectCell(ws, addr, c.type, value, diag, `${gridKey}.${c.col_key}[${i + 1}]`)) {
+        cells.push({ cell: addr, value })
+      }
     }
     written++
   }
-  return { written, dropped: Math.max(0, records.length - spec.max_rows) }
+  return { written, dropped: Math.max(0, records.length - maxRows), cells }
 }
 
 export async function exportSubmissionXlsx(opts: {
@@ -356,17 +455,23 @@ export async function exportSubmissionXlsx(opts: {
   let mergesBefore = 0
   wb.eachSheet((s) => (mergesBefore += (s.model?.merges || []).length))
 
-  for (const r of resolved) injectCell(ws, r.cell, r.type, r.value)
+  const guardHits: CellGuardHit[] = []
+  const injected: Array<{ field: FormFieldLite; cell: string; type: string; value: string }> = []
+  for (const r of resolved) {
+    if (injectCell(ws, r.cell, r.type, r.value, guardHits, `${r.field.fieldKey}/${r.field.label}`)) injected.push(r)
+  }
 
   // 격자/대장형 필드(type='grid') 행반복 주입
   const grids: Array<{ gridKey: string; written: number; dropped: number }> = []
+  const gridCells: Array<{ cell: string; value: string }> = []
   for (const f of formFields) {
     if (f.type !== 'grid') continue
     const spec = loadGridSpec(db, formCode, f.fieldKey)
     const raw = appValues[f.fieldKey]
     if (!spec || !Array.isArray(raw) || raw.length === 0) continue
-    const rep = injectGrid(ws, spec, raw as Array<Record<string, unknown>>)
-    grids.push({ gridKey: f.fieldKey, ...rep })
+    const rep = injectGrid(ws, spec, raw as Array<Record<string, unknown>>, guardHits, f.fieldKey)
+    gridCells.push(...rep.cells)
+    grids.push({ gridKey: f.fieldKey, written: rep.written, dropped: rep.dropped })
   }
 
   // 옵션별 분리셀형 라디오/체크박스(H3200-02형) 마킹
@@ -389,7 +494,7 @@ export async function exportSubmissionXlsx(opts: {
         ? []
         : [String(raw)]
     if (selected.length) {
-      const marked = markOptionCells(ws, optCells, selected)
+      const marked = markOptionCells(ws, optCells, selected, guardHits, f.fieldKey)
       if (marked > 0) optCellMarks.push({ fieldKey: f.fieldKey, marked })
     }
   }
@@ -397,36 +502,52 @@ export async function exportSubmissionXlsx(opts: {
   mkdirSync(dirname(outPath), { recursive: true })
   await wb.xlsx.writeFile(outPath)
 
-  // 재검증: 다시 열어 값·보존 확인
+  // 재검증: 다시 열어 값·보존 확인. 주입 성공분(injected)만 대조하고, 차단분(수식)은 별도 신호.
   const v2 = new ExcelJS.Workbook()
   await v2.xlsx.readFile(outPath)
   const ws2 = resolveSheet(v2, formCode, { allowFirstSheetFallback: fromTemplate })
   let okVals = 0
-  for (const r of resolved) {
+  for (const r of injected) {
     const got = cellText(ws2.getCell(r.cell).value).trim()
-    const ok = r.type === 'checkbox' || r.type === 'radio' ? got.includes('■') || got === r.value : got === r.value.trim()
+    // 옵션형: □→■ 뿐 아니라 번호매김 ①~⑳ 마킹도 성공(종전엔 성공을 실패로 셌다 — 검수 M-4)
+    const ok =
+      r.type === 'checkbox' || r.type === 'radio' ? /[■①-⑳]/.test(got) || got === r.value : got === r.value.trim()
     if (ok) okVals++
+  }
+  // 격자 주입분 재검증(종전 사각지대 — 대장형은 resolved 가 비어 0/0 무조건 통과였다)
+  let okGrid = 0
+  for (const g of gridCells) {
+    if (cellText(ws2.getCell(g.cell).value).trim() === g.value.trim()) okGrid++
   }
   const mediaAfter = mediaCount(v2)
   let mergesAfter = 0
   v2.eachSheet((s) => (mergesAfter += (s.model?.merges || []).length))
+
+  const skippedFormula = guardHits.filter((h) => h.kind === 'formula')
+  const mergeRedirects = guardHits.filter((h) => h.kind === 'mergeRedirect')
+  const overwrites = guardHits.filter((h) => h.kind === 'overwrite')
 
   const result: ExportResult = {
     formCode,
     src,
     out: outPath,
     sheet: ws.name,
-    applied: resolved.map((r) => ({ fieldKey: r.field.fieldKey, label: r.field.label, cell: r.cell, type: r.type, value: r.value })),
+    applied: injected.map((r) => ({ fieldKey: r.field.fieldKey, label: r.field.label, cell: r.cell, type: r.type, value: r.value })),
     unmapped,
     grids,
     optCells: optCellMarks,
+    guard: { skippedFormula, mergeRedirects, overwrites },
     verify: {
-      values: `${okVals}/${resolved.length}`,
-      valuesOk: okVals === resolved.length,
+      values: `${okVals}/${injected.length}`,
+      // 수식 차단이 하나라도 있으면 초록으로 내보내지 않는다(C-7: 파괴를 verify 가 통과시키던 구조 차단)
+      valuesOk: okVals === injected.length && skippedFormula.length === 0,
       media: `${mediaBefore}→${mediaAfter}`,
       mediaOk: mediaBefore === mediaAfter,
       merges: `${mergesBefore}→${mergesAfter}`,
-      mergesOk: mergesBefore === mergesAfter
+      mergesOk: mergesBefore === mergesAfter,
+      grid: `${okGrid}/${gridCells.length}`,
+      gridOk: okGrid === gridCells.length,
+      formulaSafe: skippedFormula.length === 0
     }
   }
 
