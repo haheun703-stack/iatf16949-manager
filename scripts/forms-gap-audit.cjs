@@ -77,13 +77,18 @@ for (const r of db
 // ── 양식 전수 행 구성 ─────────────────────────────────────
 const forms = db
   .prepare(
-    `SELECT code, name, reg_code, resp_dept, iatf_clause, sq_item_ids, template_path, scope, deprecated
+    `SELECT code, name, reg_code, resp_dept, iatf_clause, sq_item_ids, template_path, scope, deprecated, description
      FROM forms ORDER BY code`
   )
   .all()
 
 // 신규 설계본(코워크 A-2 조건⑴): 회사 원본 부재로 리포 템플릿이 정본인 양식 — 심사 대체 이력 표시
 const isNewDesign = (tp) => !!tp && String(tp).includes('sq_gap_forms')
+
+// 레거시 자동추출 잔재(0019) — 7차 트랙 진척 축(legacy_cellmap_sweep_260730 §2 기준 공식화):
+// fields 보유인데 설명이 "자동 추출됨" 잔재이거나 공란 = 배치 마이그가 한 번도 안 닿은 양식.
+const isLegacy = (desc, fieldCnt) =>
+  fieldCnt > 0 && (!desc || String(desc).includes('자동 추출'))
 
 // 1배치 채택 소스 기록(코워크 지시 7/28 밤4차: L2100 변형 시트 = AM 실사용 기준 실측 확정
 // + audit 에 채택 시트명 기록). 실측 = 2026-07-28 사무실, 상세 = 조사서 §0.6 추기.
@@ -223,6 +228,7 @@ for (const f of forms) {
     gridCols: gridCnt.get(f.code) || 0,
     template: f.template_path ? 1 : 0,
     newDesign: isNewDesign(f.template_path),
+    legacy: isLegacy(f.description, fieldsCnt.get(f.code) || 0),
     submissions: subCnt.get(f.code) || 0,
     obligations: o.map((x) => `#${x.id} ${x.title}${x.active ? '' : '(비활성)'}`),
     coreDuty,
@@ -249,6 +255,7 @@ const sum = {
   gapA_noFields: noFields.length,
   gapB_fieldsButNoCellmap: fieldsNoCells.length,
   gapC_noTemplate: noTemplate.length,
+  legacy_cellmap: rows.filter((r) => r.legacy).length,
   linkedObligation: rows.filter((r) => r.obligations.length > 0).length,
   linkedProcess: rows.filter((r) => r.processes.length > 0).length,
   linkedSq: rows.filter((r) => r.sqItems.length > 0).length,
