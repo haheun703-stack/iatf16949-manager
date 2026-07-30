@@ -1,9 +1,13 @@
 ' start-qms-web.vbs - QMS local web launcher (no console window).
 ' Server already up -> open chrome only. Else start server hidden (logs to file), wait, open chrome.
+' NOTE: ASCII only. wscript reads .vbs as ANSI - this file is saved UTF-8, so a hardcoded
+' Korean path turns into garbage under wscript (launcher-dead bug found 260730).
+' Root is now derived from this script's own location (scripts\..) - no non-ASCII needed.
 Option Explicit
-Dim root, sh, i
-root = "d:\IATF16949,SQ 자동작성 봇\iatf16949-manager"
+Dim root, sh, fso, i
 Set sh = CreateObject("WScript.Shell")
+Set fso = CreateObject("Scripting.FileSystemObject")
+root = fso.GetParentFolderName(fso.GetParentFolderName(WScript.ScriptFullName))
 
 Function ServerAlive()
   Dim ok, h
