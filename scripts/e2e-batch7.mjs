@@ -30,6 +30,15 @@ async function api(channel, body) {
   return json
 }
 
+// F1100-01: 24행(정정 후 상한) — 첫 행과 말행(30행)만 채워 경계 검증
+const f1100Rows = Array.from({ length: 24 }, () => ({}))
+f1100Rows[0] = { 구분: '사내', 과정명: 'IATF16949 내부심사원 양성', 내용: '심사 기법·체크리스트', 시간: '8', 대상: '품질팀', 기관: '사내', 월7: '○', 비용: '0', 비고: '-' }
+f1100Rows[23] = { 구분: '사외', 과정명: 'SQ 인증 대비 실무', 비용: '300000' }
+// L2100-07: 30행(정정 후 상한) — 첫 행(5행)과 말행(34행)
+const l2107Rows = Array.from({ length: 30 }, () => ({}))
+l2107Rows[0] = { no: '1', 품명: 'STKM11A 코일', 품번규격: 'Φ60.5×2.3', 입고lot: 'L260731-01', 입고수량: '5,000', 공급사: '현대제철', 출하성적서접수: 'A-1023', 성적서lot일치: 'Y', 검사성적서no: 'IQC-0731', 판정: '합격', 합격식별: '녹색 라벨', 검사자: LOGIN, 비고: '-' }
+l2107Rows[29] = { no: '30', 품명: '말행 검증' }
+
 const CASES = [
   {
     // 0115 교정(260730): 기준 grid(3행 병합 2블록) + 도식화 textarea + 작성자 AN2
@@ -44,6 +53,76 @@ const CASES = [
     },
     expect: [['A16', '1'], ['C16', '입고 시'], ['I16', '자재 창고'], ['O16', '선입고분'], ['AQ16', '구매팀'],
       ['A19', '2'], ['C19', '출고 시'], ['O19', '불출'], ['C22', '전열부터'], ['AN2', LOGIN]]
+  },
+  {
+    // 0116 ①: dims 6→4 — 4행(28/30/32/34 앵커) 기입 + 합계 수식(AD36) 보존
+    code: 'A5200-04',
+    values: {
+      거래처: '삼보모터스', 평가대상: '조관-절단', 고객사명: '삼보', 제품규격: 'Φ60.5', 품명: '토크로드 파이프',
+      생산일자: '2026-07-31', 납품수량: '1200', 포장수량: '600',
+      dims: [
+        { 설비명: '조관기 #1', 고객사: '삼보', 규격: 'Φ60.5×2.3', 특이사항: '없음', 평가점수: '55' },
+        { 설비명: '절단기 #1', 고객사: '삼보', 규격: 'L=1,250', 특이사항: '-', 평가점수: '56' },
+        { 설비명: '포밍기 #2', 고객사: '삼보', 규격: 'R12', 특이사항: '-', 평가점수: '57' },
+        { 설비명: '검사대 #1', 고객사: '삼보', 규격: '전수', 특이사항: '말행 검증', 평가점수: '58' }
+      ]
+    },
+    expect: [['G4', '삼보모터스'], ['W4', '조관'], ['M6', '삼보'], ['G28', '조관기'], ['AD28', '55'],
+      ['G34', '검사대'], ['T34', '말행 검증'], ['AD34', '58']],
+    expectFormula: [['AD36', 'SUM(AD14:AH35)']]
+  },
+  {
+    // 0116 ②: rows 25→24 — 말행(30행) 기입 + 합계 수식(S31) 보존
+    code: 'F1100-01',
+    values: { 작성일자: '2026-07-31', 작성자: LOGIN, rows: f1100Rows },
+    expect: [['E3', LOGIN], ['A7', '사내'], ['B7', 'IATF16949'], ['M7', '○'], ['S7', '0'],
+      ['A30', '사외'], ['B30', 'SQ 인증'], ['S30', '300000']],
+    expectFormula: [['S31', 'SUM(S7:S30)']]
+  },
+  {
+    // 0116 ③: start 4→5·max 34→30 — 예시행(4행) 보존 + 월말대사 수식(36행) 보존
+    code: 'L2100-07',
+    values: { rows: l2107Rows },
+    expect: [['A5', '1'], ['C5', 'STKM11A'], ['G5', '현대제철'], ['L5', '합격'], ['N5', LOGIN],
+      ['A34', '30'], ['C34', '말행']],
+    expectEmpty: ['A4', 'C4', 'G4'],
+    expectFormula: [['B36', 'COUNTA(B5:B34)'], ['E36', 'COUNTA(J5:J34)'], ['H36', 'B36-E36']]
+  },
+  {
+    // 0117: A5100-02 재설계 — 갑지 헤더 6매핑 + 점수표 grid 2종(sys 9~19·proc 20~26),
+    // 소계(BB)·배점(BI)·을지 미러(E33) 수식 보존
+    code: 'A5100-02',
+    values: {
+      a1: 'TPC-Q-260731', a2: '정기', a3: ['품질 시스템', '제조공정', '제품'],
+      a4: '전 부서', a5: '박주돈 상무', a6: '2026-07-22 ~ 07-23',
+      a7: '리스크·KPI 달성도·프로세스 중대성·CSR 종합 점수 기반 우선순위 설정(E2E 검증)',
+      sys: [
+        { 세부항목: '영업관리P', 리스크: '중', 성과경향: '달성', 중대성: '중', 우선순위: '6', csr: '有', 심사등급: 'C' },
+        {}, {}, {}, {}, {}, {}, {}, {}, {},
+        { 세부항목: '환경', 리스크: '중', 성과경향: '달성', 중대성: '중', 우선순위: '7', csr: '無', 심사등급: 'C' }
+      ],
+      proc: [
+        { 공정: '인발', 리스크: '상', 성과경향: '달성', 중대성: '상', 우선순위: '1', csr: '없음', 심사등급: 'A' },
+        {}, {}, {}, {}, {},
+        { 공정: '용접(3공장)', 리스크: '상', 성과경향: '달성', 중대성: '상', 우선순위: '1', csr: '없음', 심사등급: 'A' }
+      ]
+    },
+    expect: [['E4', 'TPC-Q-260731'], ['Y4', '정기'], ['E5', '품질'], ['E7', '전 부서'], ['X7', '박주돈'],
+      ['E6', 'E2E 검증'], ['E9', '영업관리P'], ['AA9', 'C'], ['E19', '환경'], ['U19', '7'],
+      ['E20', '인발'], ['AA20', 'A'], ['E26', '용접(3공장)'], ['AA26', 'A']],
+    expectFormula: [['BB11', 'BB10'], ['BB9', 'SUM(AJ9:BA9)'], ['BI12', 'BI11'], ['E33', 'E4']]
+  },
+  {
+    // 0116 ④: 미러 수식 6셀 → 원 입력 셀(B13~B18·C17) 재매핑 + 미러·파생 수식 보존
+    code: 'L1100-24',
+    values: {
+      업체명: '(주)태평양', model: 'TPC-2026', 공정명: '조관', 품명: '토크로드 파이프',
+      usl: '7.5', lsl: '7.3', 측정자: '김검사', 측정일: '2026-07-31', 단위: 'mm', 계측기: '버니어캘리퍼스'
+    },
+    expect: [['B7', '태평양'], ['B8', 'TPC-2026'], ['B9', '조관'], ['B10', '토크로드'],
+      ['B13', '7.5'], ['B14', '7.3'], ['B15', '김검사'], ['C17', 'mm'], ['B18', '버니어']],
+    expectFormula: [['J8', 'ISBLANK($B13)'], ['J9', 'ISBLANK(B14)'], ['J10', 'ABS'], ['J11', '(J8+J9)/2'],
+      ['M8', '$B15'], ['M10', '$B17'], ['M11', '$B18'], ['N10', '$C17']]
   }
 ]
 
@@ -83,12 +162,29 @@ for (const c of CASES) {
     const ws = wb.worksheets.find((w) => w.name.includes(c.code)) ?? wb.worksheets.find((w) => w.name === '양식') ?? wb.worksheets[0]
     let ok = 0
     const bad = []
-    for (const [addr, want] of c.expect) {
-      const got = cellText(ws.getCell(addr).value)
-      if (got.includes(want)) ok++
-      else bad.push(`${addr}: 기대 "${want}" ↔ 실제 "${got.slice(0, 30)}"`)
+    // 검사 3종: cell(값 포함) · formula(수식 보존) · empty(비어 있음 — 예시행 보존)
+    const checks = [
+      ...c.expect.map(([a, w]) => ['cell', a, w]),
+      ...(c.expectFormula || []).map(([a, w]) => ['formula', a, w]),
+      ...(c.expectEmpty || []).map((a) => ['empty', a, ''])
+    ]
+    for (const [kind, addr, want] of checks) {
+      const v = ws.getCell(addr).value
+      if (kind === 'formula') {
+        const f = v && typeof v === 'object' ? String(v.formula || v.sharedFormula || '') : ''
+        if (f.includes(want)) ok++
+        else bad.push(`${addr}: 수식 기대 "${want}" ↔ 실제 "${(f || cellText(v)).slice(0, 40)}"`)
+      } else if (kind === 'empty') {
+        const got = cellText(v)
+        if (got.trim() === '') ok++
+        else bad.push(`${addr}: 빈 셀 기대 ↔ 실제 "${got.slice(0, 30)}"`)
+      } else {
+        const got = cellText(v)
+        if (got.includes(want)) ok++
+        else bad.push(`${addr}: 기대 "${want}" ↔ 실제 "${got.slice(0, 30)}"`)
+      }
     }
-    totalOk += ok; totalChecks += c.expect.length
+    totalOk += ok; totalChecks += checks.length
     if (bad.length === 0) passForms++
     const v = exp.verify || {}
     const verify = exp.verify
@@ -102,7 +198,7 @@ for (const c of CASES) {
       if (g.mergeRedirects.length) console.log(`   · 병합 앵커 리다이렉트 ${g.mergeRedirects.length}건`)
       if (g.overwrites.length) console.log(`   · 기존 텍스트 덮어씀 ${g.overwrites.length}건`)
     }
-    console.log(`${bad.length === 0 ? '✓' : '✗'} ${c.code} [시트 "${ws.name}"] 셀 ${ok}/${c.expect.length}${verify} → ${outFile}`)
+    console.log(`${bad.length === 0 ? '✓' : '✗'} ${c.code} [시트 "${ws.name}"] 셀 ${ok}/${checks.length}${verify} → ${outFile}`)
     if (exp.unmapped && exp.unmapped.length) console.log(`   unmapped: ${exp.unmapped.join(', ')}`)
     for (const b of bad) console.log(`   ✗ ${b}`)
   } catch (e) {
