@@ -1,0 +1,2307 @@
+{
+ "ranAt": "2026-07-30T07:29:40.022Z",
+ "dbPath": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\claude\\d--IATF16949-SQ-------\\817f3cb6-3c5e-4cc8-aff7-efdd298407b1\\scratchpad\\e2e-data8\\iatf16949.db",
+ "scanned": 244,
+ "totalForms": 244,
+ "conflicts": [
+  {
+   "code": "A2200-01",
+   "name": "회의록 ()",
+   "team": "총무팀",
+   "sheet": "회의록 (A2200-01)",
+   "key": "회의안건",
+   "cell": "H37",
+   "src": "cell_map",
+   "formula": "H12"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "5",
+   "cell": "BB11",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "5",
+   "cell": "BB12",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "4",
+   "cell": "BI12",
+   "src": "cell_map",
+   "formula": "BI11"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "0",
+   "cell": "BB13",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "5",
+   "cell": "BI13",
+   "src": "cell_map",
+   "formula": "BI11"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "0",
+   "cell": "BB14",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "6",
+   "cell": "BI14",
+   "src": "cell_map",
+   "formula": "BI11"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "7",
+   "cell": "BI15",
+   "src": "cell_map",
+   "formula": "BI11"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "5",
+   "cell": "BB16",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "5",
+   "cell": "BB15",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "0",
+   "cell": "BB17",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "0",
+   "cell": "BB18",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "team": "품질보증팀",
+   "sheet": "내부심사(품질,환경,안전) 실시 계획서(A5100-02)",
+   "key": "0",
+   "cell": "BB19",
+   "src": "cell_map",
+   "formula": "BB10"
+  },
+  {
+   "code": "A5200-04",
+   "name": "내부심사(제품) 체크리스트",
+   "team": "품질보증팀",
+   "sheet": "내부심사(제품) 체크리스트 A5200-04",
+   "key": "dims.평가점수[5]",
+   "cell": "AD36",
+   "src": "grid",
+   "formula": "SUM(AD14:AH35)"
+  },
+  {
+   "code": "F1100-01",
+   "name": "년 사내외 교육훈련 계획서 ()",
+   "team": "총무팀",
+   "sheet": "년 사내외 교육훈련 계획서 (F1100-01)",
+   "key": "rows.비용[25]",
+   "cell": "S31",
+   "src": "grid",
+   "formula": "SUM(S7:S30)"
+  },
+  {
+   "code": "F2100-11",
+   "name": "자격 인증 교육 및 평가서 ()",
+   "team": "총무팀",
+   "sheet": "자격 인증 교육 및 평가서 (F2100-11)",
+   "key": "소계",
+   "cell": "Y36",
+   "src": "cell_map",
+   "formula": "Y26+Y31"
+  },
+  {
+   "code": "F2100-13",
+   "name": "공정면허 자격인증 평가서(종합) ()",
+   "team": "총무팀",
+   "sheet": "공정면허 자격인증 평가서(종합) (F2100-13)",
+   "key": "합계",
+   "cell": "AG6",
+   "src": "cell_map",
+   "formula": "SUM(M6:AF6)"
+  },
+  {
+   "code": "H3100-01",
+   "name": "년 고객만족도 모니터링 ()",
+   "team": "영업팀",
+   "sheet": "년 고객만족도 모니터링 (H3100-01)",
+   "key": "6월",
+   "cell": "S6",
+   "src": "cell_map",
+   "formula": "AVERAGE(G6:R6)"
+  },
+  {
+   "code": "K1200-03",
+   "name": "③협력업체 사후 평가 계획서 ()",
+   "team": "구매팀",
+   "sheet": "③협력업체 사후 평가 계획서 (K1200-03)",
+   "key": "평가기간",
+   "cell": "H5",
+   "src": "cell_map",
+   "formula": "G5+1"
+  },
+  {
+   "code": "K1200-03",
+   "name": "③협력업체 사후 평가 계획서 ()",
+   "team": "구매팀",
+   "sheet": "③협력업체 사후 평가 계획서 (K1200-03)",
+   "key": "평가기간",
+   "cell": "H5",
+   "src": "cell_map",
+   "formula": "G5+1"
+  },
+  {
+   "code": "K2100-05",
+   "name": "장기 재고 점검대장 ()",
+   "team": "구매팀",
+   "sheet": "장기 재고 점검대장 (K2100-05)",
+   "key": "평가결과",
+   "cell": "N28",
+   "src": "cell_map",
+   "formula": "SUM(N8:R27)"
+  },
+  {
+   "code": "K2100-08",
+   "name": "소모품 월소요량 및 안전재고 ()",
+   "team": "구매팀",
+   "sheet": "소모품 월소요량 및 안전재고 (K2100-08)",
+   "key": "소계",
+   "cell": "I55",
+   "src": "cell_map",
+   "formula": "SUM(I7:M54)"
+  },
+  {
+   "code": "L1100-05",
+   "name": "납품 및 시운전(검수) 확인서 ()",
+   "team": "생산기술팀",
+   "sheet": "납품 및 시운전(검수) 확인서 (L1100-05)",
+   "key": "계VAT미포함",
+   "cell": "H17",
+   "src": "cell_map",
+   "formula": "H15+H13"
+  },
+  {
+   "code": "L1100-14",
+   "name": "중요설비 체크리스트 ()",
+   "team": "생산기술팀",
+   "sheet": "중요설비 체크리스트 (L1100-14)",
+   "key": "30",
+   "cell": "AB25",
+   "src": "cell_map",
+   "formula": "AB24"
+  },
+  {
+   "code": "L1100-14",
+   "name": "중요설비 체크리스트 ()",
+   "team": "생산기술팀",
+   "sheet": "중요설비 체크리스트 (L1100-14)",
+   "key": "31",
+   "cell": "AB21",
+   "src": "cell_map",
+   "formula": "AB20"
+  },
+  {
+   "code": "L1100-24",
+   "name": "설비능력 지수표 ()",
+   "team": "생산기술팀",
+   "sheet": "설비능력 지수표 (L1100-24)",
+   "key": "usl",
+   "cell": "J8",
+   "src": "cell_map",
+   "formula": "IF(ISBLANK($B13),\" \",$B13)"
+  },
+  {
+   "code": "L1100-24",
+   "name": "설비능력 지수표 ()",
+   "team": "생산기술팀",
+   "sheet": "설비능력 지수표 (L1100-24)",
+   "key": "lsl",
+   "cell": "J9",
+   "src": "cell_map",
+   "formula": "IF(ISBLANK(B14),\" \",B14)"
+  },
+  {
+   "code": "L1100-24",
+   "name": "설비능력 지수표 ()",
+   "team": "생산기술팀",
+   "sheet": "설비능력 지수표 (L1100-24)",
+   "key": "측정자",
+   "cell": "M8",
+   "src": "cell_map",
+   "formula": "IF(ISBLANK($B15),\" \",$B15)"
+  },
+  {
+   "code": "L1100-24",
+   "name": "설비능력 지수표 ()",
+   "team": "생산기술팀",
+   "sheet": "설비능력 지수표 (L1100-24)",
+   "key": "측정일",
+   "cell": "M9",
+   "src": "cell_map",
+   "formula": "IF(ISBLANK($B16),\" \",$B16)"
+  },
+  {
+   "code": "L1100-24",
+   "name": "설비능력 지수표 ()",
+   "team": "생산기술팀",
+   "sheet": "설비능력 지수표 (L1100-24)",
+   "key": "단위",
+   "cell": "M10",
+   "src": "cell_map",
+   "formula": "IF(ISBLANK($B17),\" \",$B17)"
+  },
+  {
+   "code": "L1100-24",
+   "name": "설비능력 지수표 ()",
+   "team": "생산기술팀",
+   "sheet": "설비능력 지수표 (L1100-24)",
+   "key": "계측기",
+   "cell": "M11",
+   "src": "cell_map",
+   "formula": "IF(ISBLANK($B18),\" \",$B18)"
+  },
+  {
+   "code": "L2100-07",
+   "name": "수입검사 관리대장",
+   "team": "품질보증팀",
+   "sheet": "양식",
+   "key": "rows.입고일[33]",
+   "cell": "B36",
+   "src": "grid",
+   "formula": "COUNTA(B5:B34)"
+  },
+  {
+   "code": "L2100-07",
+   "name": "수입검사 관리대장",
+   "team": "품질보증팀",
+   "sheet": "양식",
+   "key": "rows.입고lot[33]",
+   "cell": "E36",
+   "src": "grid",
+   "formula": "COUNTA(J5:J34)"
+  },
+  {
+   "code": "L2100-07",
+   "name": "수입검사 관리대장",
+   "team": "품질보증팀",
+   "sheet": "양식",
+   "key": "rows.출하성적서접수[33]",
+   "cell": "H36",
+   "src": "grid",
+   "formula": "B36-E36"
+  },
+  {
+   "code": "L2300-05",
+   "name": "치구 자체 검교정 계획 및 실적()",
+   "team": "품질보증팀",
+   "sheet": "치구 자체 검교정 계획 및 실적(L2300-05)",
+   "key": "15",
+   "cell": "B35",
+   "src": "cell_map",
+   "formula": "[5]JIG관리대장!E14"
+  },
+  {
+   "code": "L3100-02",
+   "name": "계측기 이력카드 ()",
+   "team": "품질보증팀",
+   "sheet": "계측기 이력카드 (L3100-02)",
+   "key": "교정주기",
+   "cell": "F5",
+   "src": "cell_map",
+   "formula": "IF($I$2=\"\",\"\",VLOOKUP($I$2,#REF!,10,0))"
+  },
+  {
+   "code": "L3100-02",
+   "name": "계측기 이력카드 ()",
+   "team": "품질보증팀",
+   "sheet": "계측기 이력카드 (L3100-02)",
+   "key": "계측기명",
+   "cell": "F4",
+   "src": "cell_map",
+   "formula": "IF($I$2=\"\",\"\",VLOOKUP($I$2,#REF!,3,0))"
+  },
+  {
+   "code": "L3100-02",
+   "name": "계측기 이력카드 ()",
+   "team": "품질보증팀",
+   "sheet": "계측기 이력카드 (L3100-02)",
+   "key": "취득일자",
+   "cell": "F6",
+   "src": "cell_map",
+   "formula": "IF($I$2=\"\",\"\",VLOOKUP($I$2,#REF!,6,0))"
+  },
+  {
+   "code": "L3100-02",
+   "name": "계측기 이력카드 ()",
+   "team": "품질보증팀",
+   "sheet": "계측기 이력카드 (L3100-02)",
+   "key": "구입금액",
+   "cell": "F7",
+   "src": "cell_map",
+   "formula": "IF($I$2=\"\",\"\",VLOOKUP($I$2,#REF!,7,0))"
+  }
+ ],
+ "nonAnchor": [
+  {
+   "code": "A5100-04",
+   "key": "지원부서지적1",
+   "cell": "I30",
+   "src": "cell_map"
+  },
+  {
+   "code": "A5100-04",
+   "key": "지원부서지적2",
+   "cell": "U30",
+   "src": "cell_map"
+  },
+  {
+   "code": "A5200-03",
+   "key": "지적1",
+   "cell": "AA15",
+   "src": "cell_map"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.설비명[5]",
+   "cell": "G36",
+   "src": "grid"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.고객사[5]",
+   "cell": "K36",
+   "src": "grid"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.규격[5]",
+   "cell": "N36",
+   "src": "grid"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.특이사항[5]",
+   "cell": "T36",
+   "src": "grid"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.설비명[6]",
+   "cell": "G38",
+   "src": "grid"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.고객사[6]",
+   "cell": "K38",
+   "src": "grid"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.규격[6]",
+   "cell": "N38",
+   "src": "grid"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.특이사항[6]",
+   "cell": "T38",
+   "src": "grid"
+  },
+  {
+   "code": "A5200-04",
+   "key": "dims.평가점수[6]",
+   "cell": "AD38",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-12",
+   "key": "rows.재검사자[29]",
+   "cell": "M32",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-12",
+   "key": "rows.폐기수량[29]",
+   "cell": "O32",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-12",
+   "key": "rows.비고[29]",
+   "cell": "Q32",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-12",
+   "key": "rows.재검사자[30]",
+   "cell": "M33",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-12",
+   "key": "rows.폐기수량[30]",
+   "cell": "O33",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-12",
+   "key": "rows.비고[30]",
+   "cell": "Q33",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.복귀수량[28]",
+   "cell": "M31",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.처리완료일[28]",
+   "cell": "O31",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.비고[28]",
+   "cell": "Q31",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.복귀수량[29]",
+   "cell": "M32",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.처리완료일[29]",
+   "cell": "O32",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.비고[29]",
+   "cell": "Q32",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.리워크수량[30]",
+   "cell": "L33",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.복귀수량[30]",
+   "cell": "M33",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.처리완료일[30]",
+   "cell": "O33",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.담당[30]",
+   "cell": "P33",
+   "src": "grid"
+  },
+  {
+   "code": "B1100-13",
+   "key": "rows.비고[30]",
+   "cell": "Q33",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.과정명[25]",
+   "cell": "B31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.내용[25]",
+   "cell": "C31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.시간[25]",
+   "cell": "D31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.대상[25]",
+   "cell": "E31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.기관[25]",
+   "cell": "F31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월1[25]",
+   "cell": "G31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월2[25]",
+   "cell": "H31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월3[25]",
+   "cell": "I31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월4[25]",
+   "cell": "J31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월5[25]",
+   "cell": "K31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월6[25]",
+   "cell": "L31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월7[25]",
+   "cell": "M31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월8[25]",
+   "cell": "N31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월10[25]",
+   "cell": "P31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월11[25]",
+   "cell": "Q31",
+   "src": "grid"
+  },
+  {
+   "code": "F1100-01",
+   "key": "rows.월12[25]",
+   "cell": "R31",
+   "src": "grid"
+  },
+  {
+   "code": "H3100-01",
+   "key": "작성",
+   "cell": "X2",
+   "src": "cell_map"
+  },
+  {
+   "code": "H3100-01",
+   "key": "실적",
+   "cell": "I15",
+   "src": "cell_map"
+  },
+  {
+   "code": "H3100-01",
+   "key": "작성",
+   "cell": "U2",
+   "src": "cell_map"
+  },
+  {
+   "code": "H3100-03",
+   "key": "구분업체명",
+   "cell": "A8",
+   "src": "cell_map"
+  },
+  {
+   "code": "H3100-03",
+   "key": "작성",
+   "cell": "O2",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1100-09",
+   "key": "",
+   "cell": "D20",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1102-01",
+   "key": "업체명",
+   "cell": "C2",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "000작업조건",
+   "cell": "Y19",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "3",
+   "cell": "AA28",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "승인",
+   "cell": "AT26",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "2",
+   "cell": "AA27",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "1",
+   "cell": "AA26",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "개정사유",
+   "cell": "AE26",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "작성",
+   "cell": "AN26",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "검토",
+   "cell": "AQ26",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "000작업조건",
+   "cell": "A19",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "조건확인위치",
+   "cell": "M7",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "차종",
+   "cell": "D3",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "공정번호",
+   "cell": "AB4",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "부자재",
+   "cell": "AJ4",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "설비명",
+   "cell": "AR4",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "품명",
+   "cell": "D4",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "설비NO",
+   "cell": "L4",
+   "src": "cell_map"
+  },
+  {
+   "code": "J1103-01",
+   "key": "공정명",
+   "cell": "T4",
+   "src": "cell_map"
+  },
+  {
+   "code": "J3100-03",
+   "key": "변경내용",
+   "cell": "AC6",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-03",
+   "key": "평가업체",
+   "cell": "C5",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-03",
+   "key": "부서명",
+   "cell": "C6",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-03",
+   "key": "평가업체",
+   "cell": "C5",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-03",
+   "key": "부서명",
+   "cell": "C6",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "총평점",
+   "cell": "K22",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "120점까지평가자",
+   "cell": "K18",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "합격율10",
+   "cell": "K10",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "발생빈도10",
+   "cell": "K12",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "회신율10",
+   "cell": "K13",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "발생빈도10",
+   "cell": "K11",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "납기준수율20",
+   "cell": "K8",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "수량착오율20",
+   "cell": "K9",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "대상기간",
+   "cell": "G5",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "평가자",
+   "cell": "G6",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "작성",
+   "cell": "G2",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "검토",
+   "cell": "I2",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "승인",
+   "cell": "K2",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "평가자임의평가",
+   "cell": "K16",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "작성",
+   "cell": "G2",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "검토",
+   "cell": "I2",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "승인",
+   "cell": "K2",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "대상기간",
+   "cell": "G5",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "평가자",
+   "cell": "G6",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "납기준수율20",
+   "cell": "K8",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "수량착오율20",
+   "cell": "K9",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "합격율10",
+   "cell": "K10",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "발생빈도10",
+   "cell": "K11",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "발생빈도10",
+   "cell": "K12",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "총무부서월평가결과",
+   "cell": "K14",
+   "src": "cell_map"
+  },
+  {
+   "code": "K1200-04",
+   "key": "총평점",
+   "cell": "K20",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "1월",
+   "cell": "U8",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "2월",
+   "cell": "W8",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "3월",
+   "cell": "Y8",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "4월",
+   "cell": "AA8",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "7월",
+   "cell": "AG8",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "외관에녹발생은없는가",
+   "cell": "U9",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "6월",
+   "cell": "AE8",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "3",
+   "cell": "A11",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "방청관리상태는양호한가",
+   "cell": "U11",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "적재방식은기준에부합하는가",
+   "cell": "U13",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "장기재고점검대상품목",
+   "cell": "E17",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "팀장확인",
+   "cell": "U16",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "점검자확인",
+   "cell": "U15",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "외관에녹발생은없는가",
+   "cell": "U33",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "1월",
+   "cell": "U32",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "2월",
+   "cell": "W32",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "3월",
+   "cell": "Y32",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "4월",
+   "cell": "AA32",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "5월",
+   "cell": "AC32",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "6월",
+   "cell": "AE32",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "7월",
+   "cell": "AG32",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "3",
+   "cell": "A35",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "방청관리상태는양호한가",
+   "cell": "U35",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "적재방식은기준에부합하는가",
+   "cell": "U37",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "장기재고점검대상품목",
+   "cell": "E41",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "팀장확인",
+   "cell": "U40",
+   "src": "cell_map"
+  },
+  {
+   "code": "K2100-05",
+   "key": "점검자확인",
+   "cell": "U39",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "설비번호",
+   "cell": "G3",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "설비유형",
+   "cell": "V3",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "설비명",
+   "cell": "G4",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "제작구입일자",
+   "cell": "V4",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "제조회사및형식",
+   "cell": "G5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "구입가격",
+   "cell": "V5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "생산제품규격",
+   "cell": "G6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "생산속도",
+   "cell": "G7",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "주모터용량",
+   "cell": "G8",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "총전기용량",
+   "cell": "G9",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "총중량",
+   "cell": "G10",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-10",
+   "key": "기술자료",
+   "cell": "V12",
+   "src": "cell_map"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[2]",
+   "cell": "A30",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[2]",
+   "cell": "B30",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[2]",
+   "cell": "C30",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[2]",
+   "cell": "D30",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[2]",
+   "cell": "J30",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[2]",
+   "cell": "L30",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[2]",
+   "cell": "M30",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[4]",
+   "cell": "A32",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[4]",
+   "cell": "B32",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[4]",
+   "cell": "C32",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[4]",
+   "cell": "D32",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[4]",
+   "cell": "J32",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[4]",
+   "cell": "L32",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[4]",
+   "cell": "M32",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[6]",
+   "cell": "A34",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[6]",
+   "cell": "B34",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[6]",
+   "cell": "C34",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[6]",
+   "cell": "D34",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[6]",
+   "cell": "J34",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[6]",
+   "cell": "L34",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[6]",
+   "cell": "M34",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[8]",
+   "cell": "A36",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[8]",
+   "cell": "B36",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[8]",
+   "cell": "C36",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[8]",
+   "cell": "D36",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[8]",
+   "cell": "J36",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[8]",
+   "cell": "L36",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[8]",
+   "cell": "M36",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[10]",
+   "cell": "A38",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[10]",
+   "cell": "B38",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[10]",
+   "cell": "C38",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[10]",
+   "cell": "D38",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[10]",
+   "cell": "J38",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[10]",
+   "cell": "L38",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[10]",
+   "cell": "M38",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[12]",
+   "cell": "A40",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[12]",
+   "cell": "B40",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[12]",
+   "cell": "C40",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[12]",
+   "cell": "D40",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[12]",
+   "cell": "J40",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[12]",
+   "cell": "L40",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[12]",
+   "cell": "M40",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[14]",
+   "cell": "A42",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[14]",
+   "cell": "B42",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[14]",
+   "cell": "C42",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[14]",
+   "cell": "D42",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[14]",
+   "cell": "J42",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[14]",
+   "cell": "L42",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[14]",
+   "cell": "M42",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[16]",
+   "cell": "A44",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[16]",
+   "cell": "B44",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[16]",
+   "cell": "C44",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[16]",
+   "cell": "D44",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[16]",
+   "cell": "J44",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[16]",
+   "cell": "L44",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[16]",
+   "cell": "M44",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[18]",
+   "cell": "A46",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[18]",
+   "cell": "B46",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[18]",
+   "cell": "C46",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[18]",
+   "cell": "D46",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[18]",
+   "cell": "J46",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[18]",
+   "cell": "L46",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[18]",
+   "cell": "M46",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.발생처[20]",
+   "cell": "A48",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비명[20]",
+   "cell": "B48",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.설비번호[20]",
+   "cell": "C48",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.활동내용[20]",
+   "cell": "D48",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.소요자재[20]",
+   "cell": "J48",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.구분[20]",
+   "cell": "L48",
+   "src": "grid"
+  },
+  {
+   "code": "L1100-15",
+   "key": "rows.비고[20]",
+   "cell": "M48",
+   "src": "grid"
+  },
+  {
+   "code": "L2100-03",
+   "key": "품명",
+   "cell": "F4",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "규격",
+   "cell": "U4",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "공급자",
+   "cell": "F5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "작성",
+   "cell": "C2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "검토",
+   "cell": "F2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "승인",
+   "cell": "I2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "작성",
+   "cell": "V2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "검토",
+   "cell": "Y2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "승인",
+   "cell": "AB2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "합격수량",
+   "cell": "P10",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "불량수량",
+   "cell": "W10",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "코일NO",
+   "cell": "F6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "유해한흠및버없을것",
+   "cell": "L14",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "X2",
+   "cell": "O14",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "X3",
+   "cell": "R14",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "X4",
+   "cell": "U14",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "외경015",
+   "cell": "L15",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "두께008",
+   "cell": "L16",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "X5",
+   "cell": "X14",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "판정",
+   "cell": "AA14",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "X4",
+   "cell": "U19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "X5",
+   "cell": "X19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "판정",
+   "cell": "AA19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "외경015",
+   "cell": "L20",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "유해한흠및버없을것",
+   "cell": "L19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "X2",
+   "cell": "O19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "X3",
+   "cell": "R19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-03",
+   "key": "두께008",
+   "cell": "L21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "공정명",
+   "cell": "J6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "관리감독자확인",
+   "cell": "N27",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "작업자",
+   "cell": "K5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "설비명",
+   "cell": "P5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "제품명",
+   "cell": "N8",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "6일",
+   "cell": "Q25",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "22일",
+   "cell": "Q32",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "공정명",
+   "cell": "J6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "공정명",
+   "cell": "N5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "관리감독자확인",
+   "cell": "N36",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "공정명",
+   "cell": "J6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "관리감독자확인",
+   "cell": "N15",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "공정명",
+   "cell": "J6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "관리감독자확인",
+   "cell": "N11",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "SEC",
+   "cell": "O8",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "kpa",
+   "cell": "O5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "OX",
+   "cell": "O11",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "kpa",
+   "cell": "O17",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "SEC",
+   "cell": "O20",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "차종",
+   "cell": "B2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "품질등급",
+   "cell": "D2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "공정명",
+   "cell": "B5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "",
+   "cell": "M6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "파이프터짐",
+   "cell": "G21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "터짐없을것",
+   "cell": "I21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "차종",
+   "cell": "B2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "품질등급",
+   "cell": "D2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "공정명",
+   "cell": "B5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "",
+   "cell": "M6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "조반장",
+   "cell": "M21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "차종",
+   "cell": "B2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "품질등급",
+   "cell": "D2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "부번",
+   "cell": "B5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "",
+   "cell": "L6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "차종",
+   "cell": "B2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "품질등급",
+   "cell": "D2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "품번",
+   "cell": "B5",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "",
+   "cell": "L6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "공정책임자",
+   "cell": "L19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "기준핀외경",
+   "cell": "K17",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "점검항목상세도",
+   "cell": "Q8",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "X축핀간거리",
+   "cell": "K18",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "2일",
+   "cell": "I26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "3일",
+   "cell": "K26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "4일",
+   "cell": "M26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "5일",
+   "cell": "O26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "Y축핀간거리",
+   "cell": "K19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "6일",
+   "cell": "Q26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "21일",
+   "cell": "Q30",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "6일",
+   "cell": "Q36",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "X축거리",
+   "cell": "G37",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "Tip교환주기",
+   "cell": "F19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "원점드레싱주기",
+   "cell": "F20",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "2일",
+   "cell": "I26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "3일",
+   "cell": "K26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "4일",
+   "cell": "M26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "5일",
+   "cell": "O26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "6일",
+   "cell": "Q26",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "21일",
+   "cell": "Q35",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "유량",
+   "cell": "G37",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "문제점및조치사항",
+   "cell": "J19",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "검토",
+   "cell": "AA2",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "투입시간",
+   "cell": "O21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "1",
+   "cell": "C21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "투입량kg",
+   "cell": "F21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "LOTNO",
+   "cell": "I21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "점도초",
+   "cell": "K21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "비중kg",
+   "cell": "M21",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "비중kg",
+   "cell": "K10",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "PH",
+   "cell": "M10",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "투입시간",
+   "cell": "O10",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "투입량kg",
+   "cell": "Q10",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "223오후",
+   "cell": "M11",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "223오전",
+   "cell": "M10",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "223오후",
+   "cell": "M7",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "223오전",
+   "cell": "M6",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "20110201",
+   "cell": "A25",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "마스터샘플5회일점검",
+   "cell": "D25",
+   "src": "cell_map"
+  },
+  {
+   "code": "L2100-04",
+   "key": "작업자확인",
+   "cell": "G19",
+   "src": "cell_map"
+  }
+ ],
+ "integrity": []
+}
