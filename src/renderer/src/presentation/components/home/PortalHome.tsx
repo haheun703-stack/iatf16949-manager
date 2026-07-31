@@ -17,6 +17,7 @@ import type {
 } from '@shared/ipc-types'
 import { PipelineBand } from './PipelineBand'
 import { ProcessLiveMatrix } from './ProcessLiveMatrix'
+import { PartProcessMatrix } from './PartProcessMatrix'
 import { CardShell, KpiTile as StatTile, TeamDonut, MatrixBoard, MatrixLegend, SegTabs } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
 import { traceDeepLink } from '../../../lib/deeplink'
@@ -282,6 +283,9 @@ export function PortalHome(): JSX.Element {
 
       {/* ── P1 ⓑ 공정 실황 행렬 (동아式 커버리지 — 25번 §3) ── */}
       <ProcessLiveMatrix />
+
+      {/* ── P1 ⓒ 품번×공정 매트릭스 (월 수불량 SO 정렬 — R1 확정) ── */}
+      <PartProcessMatrix />
 
       {/* ── KPI 스탯 타일 5 (17번 §3-1) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">

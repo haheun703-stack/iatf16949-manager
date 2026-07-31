@@ -1162,6 +1162,34 @@ export interface MesProcessLiveDto {
   columns: MesProcessLiveCol[]
 }
 
+// ===== P1 ⓒ 품번×공정 매트릭스 (월 수불량 SO 정렬 — R1 확정 260730) =====
+
+export interface MesPartProcessCell {
+  /** 기준일 MES 검사 항목 수(sqc items 합) */
+  today: number
+  /** 이 품번×공정 마지막 기록일 */
+  lastYmd: string | null
+}
+
+export interface MesPartProcessRow {
+  pno: string
+  pname: string | null
+  /** 정렬 기준월 SO(출하) 수량 합 */
+  monthQty: number
+  /** procKey → 셀 (기록 없던 공정은 키 없음) */
+  cells: Record<string, MesPartProcessCell>
+}
+
+export interface MesPartProcessDto {
+  ymd: string
+  dataEndYmd: string | null
+  /** 정렬에 쓴 수불 기준월(YYYY-MM) — 데이터 있는 최신 월 */
+  subulMonth: string | null
+  available: boolean
+  columns: Array<{ key: string; label: string }>
+  rows: MesPartProcessRow[]
+}
+
 // ===== SQ 심사 아이템 트랙 (0068/0069 — 품번 4종 × 4단계 체크리스트) =====
 
 export type SqTrackStatus = 'open' | 'in_progress' | 'done' | 'na'
@@ -2242,6 +2270,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.MES_RECORDS_PROCESS_LIVE]: {
     request: { ymd?: string }
     response: MesProcessLiveDto
+  }
+  [IPC_CHANNELS.MES_RECORDS_PART_PROCESS]: {
+    request: { ymd?: string; limit?: number }
+    response: MesPartProcessDto
   }
   [IPC_CHANNELS.SQ_ASSESS_RUN]: {
     request: void

@@ -132,6 +132,45 @@ def main():
     mac_rows = n
     log(f"MAC_DESC 완료: {n}행 → daily {len(mac_daily)}키, lines {len(mac_lines)}대, {time.time() - t1:.1f}초")
 
+    # ── Pass 3: POP_JEPUM_SUBUL (제품 수불 원장 — P1 ⓒ 월 수불량 정렬, R1 확정 260730) ──
+    # 제품 수불만 집계(자재 POP_JAJE_SUBUL 335만행은 R1 §2-3 범위 밖 유지 — 필요 시 동일 방식).
+    t2 = time.time()
+    subul_rows = 0
+    future_subul = 0
+    subul = {}  # (month, pno, iogbn) -> [qty, rows, last_ymd]
+    if "POP_JEPUM_SUBUL" in meta_tables:
+        i = idx("POP_JEPUM_SUBUL")
+        n = 0
+        for r in iter_rows(dmp, meta_tables["POP_JEPUM_SUBUL"]["insert_offset"]):
+            n += 1
+            if n % 200000 == 0:
+                log(f"POP_JEPUM_SUBUL {n}...")
+            ymd = norm_ymd(r[i["YMD"]])
+            pno = str(r[i["PNO"]] or "").strip()
+            gbn = str(r[i["IOGBN"]] or "").strip()
+            if not ymd or not pno or not gbn:
+                continue
+            if ymd > today:
+                future_subul += 1
+                continue
+            try:
+                qty = float(r[i["QTY"]] or 0)
+            except (TypeError, ValueError):
+                qty = 0.0
+            k = (ymd[:7], pno, gbn)
+            s = subul.get(k)
+            if s is None:
+                subul[k] = [qty, 1, ymd]
+            else:
+                s[0] += qty
+                s[1] += 1
+                if ymd > s[2]:
+                    s[2] = ymd
+        subul_rows = n
+        log(f"POP_JEPUM_SUBUL 완료: {n}행 → monthly {len(subul)}키, {time.time() - t2:.1f}초")
+    else:
+        log("POP_JEPUM_SUBUL 오프셋 없음 — subul_monthly 생략(구 tables.json)")
+
     # ── 사이드카 기록 ──
     tmp = out + ".tmp"
     if os.path.exists(tmp):
@@ -152,6 +191,9 @@ def main():
     db.execute("""CREATE TABLE mac_lines (
         line_no TEXT NOT NULL, first_ymd TEXT, last_ymd TEXT,
         total_items INTEGER NOT NULL, active_days INTEGER NOT NULL)""")
+    db.execute("""CREATE TABLE subul_monthly (
+        month TEXT NOT NULL, pno TEXT NOT NULL, iogbn TEXT NOT NULL,
+        qty REAL NOT NULL, rows INTEGER NOT NULL, last_ymd TEXT)""")
     db.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
 
     db.executemany(
@@ -170,10 +212,16 @@ def main():
         "INSERT INTO mac_lines VALUES (?,?,?,?,?)",
         [(k, v[0], v[1], v[2], len(v[3])) for k, v in mac_lines.items()]
     )
+    db.executemany(
+        "INSERT INTO subul_monthly VALUES (?,?,?,?,?,?)",
+        [(k[0], k[1], k[2], v[0], v[1], v[2]) for k, v in subul.items()]
+    )
     db.execute("CREATE INDEX ix_sqc_daily_ymd ON sqc_daily(ymd)")
     db.execute("CREATE INDEX ix_sqc_daily_gbn ON sqc_daily(qcgubun, ymd)")
     db.execute("CREATE INDEX ix_sqc_parts_gbn ON sqc_parts(qcgubun, last_ymd)")
     db.execute("CREATE INDEX ix_mac_daily_ymd ON mac_daily(ymd)")
+    db.execute("CREATE INDEX ix_subul_month ON subul_monthly(iogbn, month)")
+    db.execute("CREATE INDEX ix_subul_pno ON subul_monthly(pno)")
 
     # 구분별 총계·기간 (STATUS 용)
     gbn_stats = defaultdict(lambda: [0, None, None])
@@ -191,7 +239,14 @@ def main():
         "mac_rows": str(mac_rows),
         "gbn_stats": json.dumps({g: {"items": s[0], "first": s[1], "last": s[2]} for g, s in gbn_stats.items()}, ensure_ascii=False),
         "mac_stats": json.dumps({"items": mac_rows - future_mac, "first": mac_first, "last": mac_last, "lines": len(mac_lines)}, ensure_ascii=False),
-        "future_rows": json.dumps({"sqc": future_sqc, "mac": future_mac}),
+        "future_rows": json.dumps({"sqc": future_sqc, "mac": future_mac, "subul": future_subul}),
+        "subul_stats": json.dumps({
+            "rows": subul_rows,
+            "months": len({k[0] for k in subul}),
+            "parts": len({k[1] for k in subul}),
+            "first": min((k[0] for k in subul), default=None),
+            "last": max((k[0] for k in subul), default=None)
+        }, ensure_ascii=False),
     }.items():
         db.execute("INSERT INTO meta VALUES (?,?)", (k, v))
     db.commit()
@@ -207,9 +262,9 @@ def main():
         sys.exit(2)
     print(json.dumps({
         "out": out, "MB": round(os.path.getsize(out) / (1024 * 1024), 1),
-        "sqc행": sqc_rows, "mac행": mac_rows,
+        "sqc행": sqc_rows, "mac행": mac_rows, "subul행": subul_rows,
         "sqc_daily": len(daily), "sqc_parts": len(parts),
-        "mac_daily": len(mac_daily), "설비": len(mac_lines),
+        "mac_daily": len(mac_daily), "설비": len(mac_lines), "subul_monthly": len(subul),
         "구분": {g: s[0] for g, s in gbn_stats.items()},
         "총소요초": round(time.time() - t0, 1)
     }, ensure_ascii=False))

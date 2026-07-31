@@ -57,6 +57,15 @@ check('2단 todayRecords 반영', inc1.todayRecords === (inc0?.todayRecords ?? 0
 check('2단 상태 = active(● 기록중)', inc1.status === 'active', `status=${inc1.status}`)
 check('2단 원천에 앱 작성 포함', inc1.source.includes('앱 작성'), `source=${inc1.source}`)
 
+// 2.5단(P1 ⓒ): partProcess 응답 계약 — 열 7·사이드카 없는 환경 available=false 정직
+const pp = await api('mesRecords:partProcess', { limit: 5 })
+check('2.5단 partProcess 열 7', pp.columns.length === 7, `columns=${pp.columns.length}`)
+check(
+  '2.5단 사이드카 부재 시 정직(available=false·rows 0)',
+  pp.available === false ? pp.rows.length === 0 : Array.isArray(pp.rows),
+  `available=${pp.available} · rows=${pp.rows.length}`
+)
+
 // 3단: 공백 트리거 — 보드 lazy 평가로 데이터 트리거 이슈([데이터] 배지) 발행 확인
 const board = await api('team:todayBoard', {})
 const allTasks = [

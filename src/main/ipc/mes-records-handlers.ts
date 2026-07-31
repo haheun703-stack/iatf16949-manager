@@ -5,6 +5,8 @@ import { join } from 'path'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import type {
+  MesPartProcessDto,
+  MesPartProcessRow,
   MesProcessLiveCol,
   MesProcessLiveDto,
   MesProcessStatus,
@@ -262,6 +264,72 @@ export function registerMesRecordsHandlers(): void {
     })
     return { ymd, dataEndYmd, available: !!db, columns }
   })
+
+  // P1 ⓒ 품번×공정 매트릭스 — 행 정렬 = 월 수불량 SO(subul_monthly, R1 확정 260730)
+  ipcMain.handle(
+    IPC_CHANNELS.MES_RECORDS_PART_PROCESS,
+    (_e, req: { ymd?: string; limit?: number }): MesPartProcessDto => {
+      const ymd = req?.ymd || new Date().toISOString().slice(0, 10)
+      const limit = Math.min(Math.max(req?.limit ?? 8, 3), 30)
+      const db = openSide()
+      const columns = PROC_COLUMNS.map((c) => ({ key: c.key, label: c.label }))
+      if (!db) return { ymd, dataEndYmd: null, subulMonth: null, available: false, columns, rows: [] }
+      const { dataEndYmd } = typeStats(db)
+
+      // 구 사이드카(subul_monthly 없는 빌드) 호환 — 정직하게 빈 정렬로
+      let subulMonth: string | null = null
+      let tops: Array<{ pno: string; qty: number }> = []
+      try {
+        subulMonth =
+          (db.prepare("SELECT month FROM subul_monthly WHERE iogbn = 'SO' ORDER BY month DESC LIMIT 1").get() as
+            | { month: string }
+            | undefined)?.month ?? null
+        if (subulMonth) {
+          tops = db
+            .prepare(
+              "SELECT pno, SUM(qty) qty FROM subul_monthly WHERE iogbn = 'SO' AND month = ? GROUP BY pno ORDER BY qty DESC LIMIT ?"
+            )
+            .all(subulMonth, limit) as Array<{ pno: string; qty: number }>
+        }
+      } catch {
+        subulMonth = null
+      }
+      if (tops.length === 0) return { ymd, dataEndYmd, subulMonth, available: true, columns, rows: [] }
+
+      const ph = tops.map(() => '?').join(',')
+      const pnames = new Map(
+        (
+          db.prepare(`SELECT pno, MAX(pname) pname FROM sqc_parts WHERE pno IN (${ph}) GROUP BY pno`).all(
+            ...tops.map((t) => t.pno)
+          ) as Array<{ pno: string; pname: string | null }>
+        ).map((r) => [r.pno, r.pname])
+      )
+      const recs = db
+        .prepare(`SELECT pno, ymd, qcgubun, line_no, items FROM sqc_daily WHERE pno IN (${ph})`)
+        .all(...tops.map((t) => t.pno)) as Array<{
+        pno: string
+        ymd: string
+        qcgubun: string
+        line_no: string | null
+        items: number
+      }>
+
+      const byPart = new Map<string, MesPartProcessRow>()
+      for (const t of tops) {
+        byPart.set(t.pno, { pno: t.pno, pname: pnames.get(t.pno) ?? null, monthQty: Math.round(t.qty), cells: {} })
+      }
+      for (const r of recs) {
+        const proc = r.qcgubun === 'I' ? 'incoming' : procOf(r.line_no)
+        if (!proc) continue
+        const row = byPart.get(r.pno)
+        if (!row) continue
+        const cell = row.cells[proc] ?? (row.cells[proc] = { today: 0, lastYmd: null })
+        if (r.ymd === ymd) cell.today += r.items
+        if (!cell.lastYmd || r.ymd > cell.lastYmd) cell.lastYmd = r.ymd
+      }
+      return { ymd, dataEndYmd, subulMonth, available: true, columns, rows: tops.map((t) => byPart.get(t.pno)!) }
+    }
+  )
   ipcMain.handle(IPC_CHANNELS.MES_RECORDS_STATUS, (): MesRecordsStatusDto => {
     const p = resolvePath()
     const db = openSide()
