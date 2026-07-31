@@ -1,0 +1,8402 @@
+{
+ "summary": {
+  "dbPath": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\claude\\d--IATF16949-SQ-------\\cbac58c5-02c5-4754-9c7f-a5738411f708\\scratchpad\\work-db\\iatf16949.db",
+  "ranAt": "2026-07-31T01:23:34.372Z",
+  "total": 302,
+  "writable_fields": 242,
+  "gapA_noFields": 36,
+  "gapB_fieldsButNoCellmap": 0,
+  "gapC_noTemplate": 263,
+  "legacy_cellmap": 126,
+  "linkedObligation": 32,
+  "linkedProcess": 284,
+  "linkedSq": 238,
+  "newDesign": 20,
+  "viewOnly": [
+   "A7100-01",
+   "A8101-01",
+   "B1100-07",
+   "B1100-08",
+   "B2300-01",
+   "J3100-04",
+   "K1100-07",
+   "K1100-08",
+   "K1100-09",
+   "K2100-07",
+   "L1200-08",
+   "L1200-09",
+   "L2100-06",
+   "L2100-10",
+   "L3100-05",
+   "L3100-06",
+   "M1100-05",
+   "M1100-06",
+   "M1200-05",
+   "M1200-07",
+   "M2100-02",
+   "M2100-03-01",
+   "M2100-03-02",
+   "M4100-05"
+  ]
+ },
+ "gapA": [
+  {
+   "code": "M-1200",
+   "name": "공정관리 규정",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12,
+   "prio": 221
+  },
+  {
+   "code": "M-2100",
+   "name": "식별 및 추적성 관리 규정",
+   "regCode": "M-2100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_3"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 5,
+   "prio": 120
+  },
+  {
+   "code": "M-3100",
+   "name": "완성품 관리 규정",
+   "regCode": "M-3100",
+   "respDept": "영업팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "2_8"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 1,
+   "prio": 108
+  },
+  {
+   "code": "D-1100",
+   "name": "제품 특성 안전관리 규정",
+   "regCode": "D-1100",
+   "respDept": "개발팀",
+   "clause": "4,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_1"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 6,
+   "prio": 83
+  },
+  {
+   "code": "A-6300",
+   "name": "품질문제 신고포상 규정",
+   "regCode": "A-6300",
+   "respDept": "품질보증팀",
+   "clause": null,
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "prio": 60
+  },
+  {
+   "code": "B-2200",
+   "name": "지속적 개선업무 규정",
+   "regCode": "B-2200",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "prio": 60
+  },
+  {
+   "code": "L-4100",
+   "name": "통계적 기법적용 규정",
+   "regCode": "L-4100",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "prio": 60
+  },
+  {
+   "code": "J-2100",
+   "name": "양산부품 승인업무 규정",
+   "regCode": "J-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02",
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "prio": 59
+  },
+  {
+   "code": "A-4101",
+   "name": "관리표준 작성 지침",
+   "regCode": "A-4101",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "prio": 54
+  },
+  {
+   "code": "J-1100",
+   "name": "개발업무 규정",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "prio": 54
+  },
+  {
+   "code": "J-1101",
+   "name": "공정FMEA 작성 및 관리 지침",
+   "regCode": "J-1101",
+   "respDept": "개발팀",
+   "clause": "6,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "prio": 54
+  },
+  {
+   "code": "J-3100",
+   "name": "4M 변경관리 규정",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "prio": 54
+  },
+  {
+   "code": "M-1100",
+   "name": "생산관리 규정",
+   "regCode": "M-1100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "prio": 54
+  },
+  {
+   "code": "J-4100",
+   "name": "도면관리 규정",
+   "regCode": "J-4100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 1,
+   "prio": 48
+  },
+  {
+   "code": "M-4200",
+   "name": "조도(Lux) 관리 지침",
+   "regCode": "M-4200",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_8"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 3,
+   "prio": 34
+  },
+  {
+   "code": "M-4100",
+   "name": "3정 5S활동 규정",
+   "regCode": "M-4100",
+   "respDept": "생산팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_9"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1,
+   "prio": 28
+  },
+  {
+   "code": "A-2100",
+   "name": "사업계획 운영 규정",
+   "regCode": "A-2100",
+   "respDept": "총무팀",
+   "clause": "6",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "A-3100",
+   "name": "회의운영 규정",
+   "regCode": "A-3100",
+   "respDept": "총무팀",
+   "clause": "5",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "A-8101",
+   "name": "비상상태 대비 및 대응 규정",
+   "regCode": "A-8101",
+   "respDept": "총무팀",
+   "clause": "6,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "D-2100",
+   "name": "안전보건관리규정",
+   "regCode": "D-2100",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "D-2101",
+   "name": "작업장 안전관리 지침",
+   "regCode": "D-2101",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-1100",
+   "name": "환경 리스크 평가 규정",
+   "regCode": "E-1100",
+   "respDept": "총무팀",
+   "clause": "6",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-1101",
+   "name": "환경측면 파악 및 리스크 평가표 작성지침",
+   "regCode": "E-1101",
+   "respDept": "총무팀",
+   "clause": "6",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-2100",
+   "name": "안전보건,환경 법규관리 규정",
+   "regCode": "E-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3100",
+   "name": "환경운영관리 규정",
+   "regCode": "E-3100",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3101",
+   "name": "작업환경관리 지침",
+   "regCode": "E-3101",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3102",
+   "name": "소음진동 관리 지침",
+   "regCode": "E-3102",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3103",
+   "name": "폐기물 관리 지침",
+   "regCode": "E-3103",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3104",
+   "name": "유해화학물질 관리 지침",
+   "regCode": "E-3104",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3105",
+   "name": "대기관리 지침",
+   "regCode": "E-3105",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3106",
+   "name": "수질관리 지침",
+   "regCode": "E-3106",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3107",
+   "name": "소방시설 관리 지침",
+   "regCode": "E-3107",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-3108",
+   "name": "에너지 관리 지침",
+   "regCode": "E-3108",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "E-5100",
+   "name": "감시 및 측정관리 규정",
+   "regCode": "E-5100",
+   "respDept": "총무팀",
+   "clause": "9",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "H-1100",
+   "name": "계약검토 규정",
+   "regCode": "H-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  },
+  {
+   "code": "J-4200",
+   "name": "도면 부품 일치성 점검 지침",
+   "regCode": "J-4200",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "prio": 5
+  }
+ ],
+ "gapB": [],
+ "rows": [
+  {
+   "code": "A-2100",
+   "name": "사업계획 운영 규정",
+   "regCode": "A-2100",
+   "respDept": "총무팀",
+   "clause": "6",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A-3100",
+   "name": "회의운영 규정",
+   "regCode": "A-3100",
+   "respDept": "총무팀",
+   "clause": "5",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A-4101",
+   "name": "관리표준 작성 지침",
+   "regCode": "A-4101",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "A-6300",
+   "name": "품질문제 신고포상 규정",
+   "regCode": "A-6300",
+   "respDept": "품질보증팀",
+   "clause": null,
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "A-8101",
+   "name": "비상상태 대비 및 대응 규정",
+   "regCode": "A-8101",
+   "respDept": "총무팀",
+   "clause": "6,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A1100-01",
+   "name": "(   )사업부 개인별 업무 분장표 ()",
+   "regCode": "A-1100",
+   "respDept": "총무팀",
+   "clause": "5",
+   "fields": 27,
+   "cells": 27,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A1100-02",
+   "name": "업무분장 변경 신청서 ()",
+   "regCode": "A-1100",
+   "respDept": "총무팀",
+   "clause": "5",
+   "fields": 2,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A2200-01",
+   "name": "회의록 ()",
+   "regCode": "A-2200",
+   "respDept": "총무팀",
+   "clause": "9",
+   "fields": 8,
+   "cells": 7,
+   "gridCols": 6,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 4,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A2200-02",
+   "name": "(    )년 경영검토 계획서 ()",
+   "regCode": "A-2200",
+   "respDept": "총무팀",
+   "clause": "9",
+   "fields": 7,
+   "cells": 18,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A2200-03",
+   "name": "(    )년 경영검토 보고서 ()",
+   "regCode": "A-2200",
+   "respDept": "총무팀",
+   "clause": "9",
+   "fields": 8,
+   "cells": 7,
+   "gridCols": 3,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#18 경영검토 회의"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0,
+   "adoptedSheet": "마스터 '(    )년 경영검토 보고서 (A2200-03)' — 빈 틀 실측(시드 없음), 검토항목 14블록(3행 병합)"
+  },
+  {
+   "code": "A3200-01",
+   "name": "이해관계자 불만 조치대장()",
+   "regCode": "A-3200",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 8,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A3200-02",
+   "name": "이해관계자 불만 조치일지()",
+   "regCode": "A-3200",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 9,
+   "cells": 9,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A4100-01",
+   "name": "회사표준관리대장()",
+   "regCode": "A-4100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 9,
+   "cells": 31,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "A4100-02",
+   "name": "표준 제개정 신청서()",
+   "regCode": "A-4100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 10,
+   "cells": 36,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "A4100-03",
+   "name": "기술표준관리대장()",
+   "regCode": "A-4100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 9,
+   "cells": 31,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "A4100-04",
+   "name": "자료관리대장()",
+   "regCode": "A-4100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 9,
+   "cells": 31,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "A4100-05",
+   "name": "양식 제개정 신청서()",
+   "regCode": "A-4100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 10,
+   "cells": 36,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "A4100-06",
+   "name": "양식등록대장()",
+   "regCode": "A-4100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 9,
+   "cells": 31,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "A4200-01",
+   "name": "보존기록목록표 ()",
+   "regCode": "A-4200",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 15,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A4200-02",
+   "name": "기록분류표 ()",
+   "regCode": "A-4200",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 17,
+   "cells": 17,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A4200-03",
+   "name": "폐기기록 목록표()",
+   "regCode": "A-4200",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 15,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A5100-01",
+   "name": "내부심사 년간 계획 및 실적 ()",
+   "regCode": "A-5100",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 4,
+   "cells": 70,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#72 연간 내부심사 계획 수립"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "6_4"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "A5100-02",
+   "name": "내부심사 실시 계획서",
+   "regCode": "A-5100",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 9,
+   "cells": 6,
+   "gridCols": 14,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 7,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "6_4"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "A5100-03",
+   "name": "내부심사(갑지) 보고서 ()",
+   "regCode": "A-5100",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 9,
+   "cells": 9,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "6_4"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1,
+   "adoptedSheet": "ⓑ 이행 완료(0109): AM용 빈 틀 17_내부심사_갑을_보고서 — 구조=정본 재사용·기록값 45셀 클리어(원본=실데이터 시드 TPC24-0723)"
+  },
+  {
+   "code": "A5100-04",
+   "name": "내부심사(품질,환경,안전) 체크리스트 ()",
+   "regCode": "A-5100",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 8,
+   "cells": 8,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#15 내부심사 — QMS"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "6_4"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1,
+   "adoptedSheet": "ⓑ 이행 완료(0109): AM용 빈 틀 18_내부심사_시스템_체크리스트 — 문항 구조 재사용·기록값 61셀 클리어(원본=실평점 매트릭스 시드)"
+  },
+  {
+   "code": "A5200-03",
+   "name": "내부심사(제조) 체크리스트",
+   "regCode": "A-5200",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 11,
+   "cells": 11,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#16 내부심사 — 제조공정"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "6_4"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1,
+   "adoptedSheet": "ⓑ 이행 완료(0109): AM용 빈 틀 19_내부심사_제조_체크리스트 — 공정 항목 구조 재사용·기록값 216셀+심사 사진 24장 클리어"
+  },
+  {
+   "code": "A5200-04",
+   "name": "내부심사(제품) 체크리스트",
+   "regCode": "A-5200",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 9,
+   "cells": 8,
+   "gridCols": 5,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 7,
+   "obligations": [
+    "#17 내부심사 — 제품"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "6_4"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1,
+   "adoptedSheet": "ⓑ 이행 완료(0109): AM용 빈 틀 20_내부심사_제품_체크리스트 — 문항·배점 구조 재사용·기록값 348셀+심사 사진 24장 클리어"
+  },
+  {
+   "code": "A5200-04-01",
+   "name": "내부심사 성적서 A5200-04-01",
+   "regCode": "A-5200",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 4,
+   "cells": 4,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [
+    "6_4"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1,
+   "adoptedSheet": "마스터 '내부심사(제품) 성적서 A5200-04-01' — 판정2 재분류(7/28): ⓑ 제외, L2100-04 동일 유형 정본 완결(평가 블록 4 매핑, 빈 틀 확인)"
+  },
+  {
+   "code": "A6100-01",
+   "name": "나의 제안()",
+   "regCode": "A-6100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 16,
+   "cells": 27,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A6100-02",
+   "name": "제안관리대장()",
+   "regCode": "A-6100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 5,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A6100-03",
+   "name": "제안종합현황()",
+   "regCode": "A-6100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 12,
+   "cells": 12,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A6200-01",
+   "name": "분임조 등록카드()",
+   "regCode": "A-6200",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 12,
+   "cells": 16,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A6200-02",
+   "name": "분임조 활동계획서()",
+   "regCode": "A-6200",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 9,
+   "cells": 9,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A6200-03",
+   "name": "분임조 활동 회의록()",
+   "regCode": "A-6200",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 7,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A6200-04",
+   "name": "분임조 결과보고서()",
+   "regCode": "A-6200",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 5,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A6300-01",
+   "name": "품질문제 신고서 ()",
+   "regCode": "A-6300",
+   "respDept": "품질보증팀",
+   "clause": null,
+   "fields": 10,
+   "cells": 11,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "A7100-01",
+   "name": "윤리경영행동지침()",
+   "regCode": "A-7100",
+   "respDept": "총무팀",
+   "clause": "5",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A7100-02",
+   "name": "클린신고서()",
+   "regCode": "A-7100",
+   "respDept": "총무팀",
+   "clause": "5",
+   "fields": 1,
+   "cells": 1,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A8100-01",
+   "name": "RISK 분석표()",
+   "regCode": "A-8100",
+   "respDept": "품질보증팀",
+   "clause": "6",
+   "fields": 4,
+   "cells": 3,
+   "gridCols": 15,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [
+    "6_4"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "A8101-01",
+   "name": "비상사태 발생시 대응 방안()",
+   "regCode": "A-8101",
+   "respDept": "총무팀",
+   "clause": "6,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A8101-02",
+   "name": "비상사태 대비 훈련결과 보고서()",
+   "regCode": "A-8101",
+   "respDept": "총무팀",
+   "clause": "6,8",
+   "fields": 3,
+   "cells": 4,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#71 비상대응 모의훈련"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A8101-03",
+   "name": "비상사태 대비 훈련 평가표()",
+   "regCode": "A-8101",
+   "respDept": "총무팀",
+   "clause": "6,8",
+   "fields": 1,
+   "cells": 1,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "A8101-04",
+   "name": "비상사태 검토 보고서()",
+   "regCode": "A-8101",
+   "respDept": "총무팀",
+   "clause": "6,8",
+   "fields": 11,
+   "cells": 16,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#13 비상대응계획 점검"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "B-2200",
+   "name": "지속적 개선업무 규정",
+   "regCode": "B-2200",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-01",
+   "name": "부적합품 발생 통보서",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 16,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#46 부적합 식별·격리·NCR 등록"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-02",
+   "name": "부적합품 발생 통보서 관리대장 ()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 10,
+   "cells": 29,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-03",
+   "name": "특채 의뢰서",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 10,
+   "cells": 32,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-04",
+   "name": "수리 작업 일지 ()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 5,
+   "cells": 5,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-05",
+   "name": "불량유출 봉쇄 작업표 ()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 15,
+   "cells": 26,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-06",
+   "name": "폐기보고서()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 10,
+   "cells": 14,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-07",
+   "name": "품질문제 발생 신속 대응 계통도 ()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "[열람형 전환 7/29 4배치] 신속 대응 계통도 이미지 3+실명 연락망 기정의 — 작성 양식 아님"
+  },
+  {
+   "code": "B1100-08",
+   "name": "부적합품 처리 기준_가로 ()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "[열람형 전환 7/29 4배치] 부적합품 처리 기준 전면 이미지 도해(가로/세로 2시트) — 작성 양식 아님(기록은 B1100-13)"
+  },
+  {
+   "code": "B1100-09",
+   "name": "특채 관리대장 ()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 7,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-10",
+   "name": "폐기보고 관리대장()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 12,
+   "cells": 12,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-11",
+   "name": "부적합 보관장 관리 대장()",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 15,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B1100-12",
+   "name": "리크·리워크 이력대장",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 17,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "2_9",
+    "6_10",
+    "6_6"
+   ],
+   "sqPoints": 80,
+   "sqMissingCp": 11,
+   "adoptedSheet": "신규 설계본 '03_리크리워크_이력대장' 양식 시트(예시행 클리어·내부 양식번호 B1100-10→12 정정)"
+  },
+  {
+   "code": "B1100-13",
+   "name": "부적합품 처리대장",
+   "regCode": "B-1100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 16,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "6_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "신규 설계본 '10_부적합품_처리대장' 양식 시트(예시행 클리어·양식번호 B1100-11→13 정정 — N열 수량대사 수식 보존)"
+  },
+  {
+   "code": "B2100-01",
+   "name": "시정/예방조치 요구서",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 10,
+   "cells": 19,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-02",
+   "name": "시정 및 예방조치 등록대장()",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 10,
+   "cells": 29,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-03",
+   "name": "개선 대책서 ()",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 21,
+   "cells": 18,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-04",
+   "name": "장기테마 ()_품질",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 13,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 장기테마 시트(19년~ 실기록 보유) → templates/batch4/B2100-04_장기테마_추출.xlsx (헤더+빈 블록 10개 추출·기록 클리어 — 1배치 AM 추출 선례)"
+  },
+  {
+   "code": "B2100-05",
+   "name": "즉실천항목 ()_품질",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 14,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 즉실천항목 시트(실기록 4,443행 보유) → templates/batch4/B2100-05_즉실천항목_추출.xlsx (동일 추출)"
+  },
+  {
+   "code": "B2100-06",
+   "name": "금형 진행사항 점검 ()_생산",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 12,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-07",
+   "name": "설비점검 진행사항 ()_생산기술",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 14,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-08",
+   "name": "4M변경 내역 및 적용일자 관리 ()_품질",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 13,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-09",
+   "name": "공정개선 T O 진행사항 점검 ()_생산",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 12,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-10",
+   "name": "용접 개선 T O 진행사항 점검 ()_생기",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 13,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-11",
+   "name": "고객사 불량 유효성 검증 관리대장 ()",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 24,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2100-12",
+   "name": "유효성 점검 체크시트 ()",
+   "regCode": "B-2100",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 2,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "B2200-05",
+   "name": "품질실적 월보",
+   "regCode": "B-2200",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 9,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "신규 설계본 '11_품질실적_월보' 양식 시트(예시행 클리어·(제안) 정정 — PPM 수식 보존)"
+  },
+  {
+   "code": "B2300-01",
+   "name": "정성품질 CFT 업무 분장()",
+   "regCode": "B-2300",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "[열람형 전환 7/29 5배치] CFT 업무 분장 — 사업부×역할 실명 조직표 기정의, 작성 양식 아님"
+  },
+  {
+   "code": "B2300-02",
+   "name": "정성품질 취합 대장()",
+   "regCode": "B-2300",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 5,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '정성품질 취합 대장(B2300-2)' → templates/batch5/B2300-02_취합대장.xlsx (시트명 한 자리 코드 = resolveSheet 매칭 불가 실측 — 2자리 정정 추출, 마스터 무변경)"
+  },
+  {
+   "code": "B2300-03",
+   "name": "정성품질 점검 체크시트()",
+   "regCode": "B-2300",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 7,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '정성품질 점검 체크시트(B2300-3)' → templates/batch5/B2300-03_점검체크시트.xlsx (동일. ⚠️마스터에 '정성품질 순회 점검 시트(B2300-3)' 코드 중복 별개 양식 실측 — forms 미등록, 처리 보류)"
+  },
+  {
+   "code": "B2300-04",
+   "name": "문제점 및 개선 제안서()",
+   "regCode": "B-2300",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 5,
+   "cells": 5,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '문제점 및 개선 제안서(B2300-4)' → templates/batch5/B2300-04_개선제안서.xlsx (동일)"
+  },
+  {
+   "code": "B2300-05",
+   "name": "정성품질 개선 타당성 검토()",
+   "regCode": "B-2300",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 7,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '정성품질 개선 타당성 검토(B2300-5)' → templates/batch5/B2300-05_타당성검토.xlsx (동일 — 검토 YES/NO 체크는 시트 수기)"
+  },
+  {
+   "code": "B2300-06",
+   "name": "유효성 평가 보고서()",
+   "regCode": "B-2300",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 10,
+   "cells": 10,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '유효성 평가 보고서(B2300-6)' → templates/batch5/B2300-06_유효성평가.xlsx (동일 — 추이도·사진 시트 몫)"
+  },
+  {
+   "code": "B2300-07",
+   "name": "인라인 공정불량 사례 시트()",
+   "regCode": "B-2300",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 5,
+   "cells": 5,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '인라인 공정불량 사례 시트(B2300-7)' → templates/batch5/B2300-07_공정불량사례.xlsx (동일 — 병합 블록 1건 서술형 실측)"
+  },
+  {
+   "code": "B2300-08",
+   "name": "정성품질 순회 점검 시트",
+   "regCode": "B-2300",
+   "respDept": "품질보증팀",
+   "clause": "10",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 4,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_12"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "D-1100",
+   "name": "제품 특성 안전관리 규정",
+   "regCode": "D-1100",
+   "respDept": "개발팀",
+   "clause": "4,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_1"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "D-2100",
+   "name": "안전보건관리규정",
+   "regCode": "D-2100",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "D-2101",
+   "name": "작업장 안전관리 지침",
+   "regCode": "D-2101",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "D1100-01",
+   "name": "안전 사고 발생보고서()",
+   "regCode": "D-1100",
+   "respDept": "개발팀",
+   "clause": "4,8",
+   "fields": 14,
+   "cells": 14,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_1"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "D1100-02",
+   "name": "연간 제품안전교육 계획서()",
+   "regCode": "D-1100",
+   "respDept": "개발팀",
+   "clause": "4,8",
+   "fields": 3,
+   "cells": 14,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_1"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "D1100-03",
+   "name": "제품 안전교육 보고서()",
+   "regCode": "D-1100",
+   "respDept": "개발팀",
+   "clause": "4,8",
+   "fields": 9,
+   "cells": 9,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#22 제품안전 교육·인식"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_1"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "D1100-04",
+   "name": "공정 안전점검 연간 계획_실적()",
+   "regCode": "D-1100",
+   "respDept": "개발팀",
+   "clause": "4,8",
+   "fields": 5,
+   "cells": 17,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_1"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "D1100-05",
+   "name": "공정 안전점검 체크시트()",
+   "regCode": "D-1100",
+   "respDept": "개발팀",
+   "clause": "4,8",
+   "fields": 17,
+   "cells": 17,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_1"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "D1100-06",
+   "name": "공정 안전점검 개선대책()",
+   "regCode": "D-1100",
+   "respDept": "개발팀",
+   "clause": "4,8",
+   "fields": 3,
+   "cells": 6,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_1"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "E-1100",
+   "name": "환경 리스크 평가 규정",
+   "regCode": "E-1100",
+   "respDept": "총무팀",
+   "clause": "6",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-1101",
+   "name": "환경측면 파악 및 리스크 평가표 작성지침",
+   "regCode": "E-1101",
+   "respDept": "총무팀",
+   "clause": "6",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-2100",
+   "name": "안전보건,환경 법규관리 규정",
+   "regCode": "E-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3100",
+   "name": "환경운영관리 규정",
+   "regCode": "E-3100",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3101",
+   "name": "작업환경관리 지침",
+   "regCode": "E-3101",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3102",
+   "name": "소음진동 관리 지침",
+   "regCode": "E-3102",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3103",
+   "name": "폐기물 관리 지침",
+   "regCode": "E-3103",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3104",
+   "name": "유해화학물질 관리 지침",
+   "regCode": "E-3104",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3105",
+   "name": "대기관리 지침",
+   "regCode": "E-3105",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3106",
+   "name": "수질관리 지침",
+   "regCode": "E-3106",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3107",
+   "name": "소방시설 관리 지침",
+   "regCode": "E-3107",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-3108",
+   "name": "에너지 관리 지침",
+   "regCode": "E-3108",
+   "respDept": "총무팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "E-5100",
+   "name": "감시 및 측정관리 규정",
+   "regCode": "E-5100",
+   "respDept": "총무팀",
+   "clause": "9",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "F1100-01",
+   "name": "년 사내외 교육훈련 계획서 ()",
+   "regCode": "F-1100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 20,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 7,
+   "obligations": [
+    "#23 교육훈련 계획 수립·효과성"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6,
+   "adoptedSheet": "마스터 '년 사내외 교육훈련 계획서 (F1100-01)' — 대장형(월별 12열)"
+  },
+  {
+   "code": "F1100-02",
+   "name": "교육 이수 보고서 ()",
+   "regCode": "F-1100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 15,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F1100-04",
+   "name": "지식 관리표 ()",
+   "regCode": "F-1100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 11,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6,
+   "adoptedSheet": "마스터 지식 관리표 시트(기록 144행 보유) → templates/batch4/F1100-04_지식관리표_추출.xlsx (동일 추출 — 연번 수식 클리어·수기 한계)"
+  },
+  {
+   "code": "F1100-05",
+   "name": "사내교육 관리대장()",
+   "regCode": "F-1100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 6,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F1100-06",
+   "name": "사내 교육 보고서()",
+   "regCode": "F-1100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 11,
+   "cells": 19,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F1101-01",
+   "name": "신임 교육 계획서 ()",
+   "regCode": "F-1101",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 15,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F1101-02",
+   "name": "신임 교육 일지 ()",
+   "regCode": "F-1101",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 7,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F1101-03",
+   "name": "신규입사자 온보딩 체크리스트(오퍼레이터)",
+   "regCode": "F-1101",
+   "respDept": "관리팀",
+   "clause": "7.2",
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 6,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6,
+   "adoptedSheet": "신규 설계본 '21_온보딩체크_오퍼레이터' — 원본 부재 실측(F-1101 은 01/02 뿐). 항목 콘텐츠 = 관리팀 몫(창작 0)"
+  },
+  {
+   "code": "F1101-04",
+   "name": "신규입사자 온보딩 체크리스트(관리자)",
+   "regCode": "F-1101",
+   "respDept": "관리팀",
+   "clause": "7.2",
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 6,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6,
+   "adoptedSheet": "신규 설계본 '22_온보딩체크_관리자' — 동일"
+  },
+  {
+   "code": "F2100-01",
+   "name": "사내 자격 관리대장 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 22,
+   "cells": 22,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-02",
+   "name": "사내 자격 인증 카드 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 14,
+   "cells": 21,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-03",
+   "name": "사내 자격 인증서 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 10,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-04",
+   "name": "자격인증 변경 요청서 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 13,
+   "cells": 16,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-05",
+   "name": "공정면허 이론평가서 1안 (-01)",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-05-01",
+   "name": "공정면허 이론평가서 1안",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 5,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6,
+   "adoptedSheet": "마스터 '공정면허 이론평가서 1안 (F2100-05-01)' — 최소 매핑 5(문항 10·답안은 시트 몫)"
+  },
+  {
+   "code": "F2100-05-02",
+   "name": "공정면허 이론평가서 2안",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 3,
+   "cells": 3,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6,
+   "adoptedSheet": "마스터 '공정면허 이론평가서 2안 (F2100-05-02)' — 최소 매핑 3(문항·정답열은 시트 몫)"
+  },
+  {
+   "code": "F2100-06",
+   "name": "공정면허 실기평가서 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 3,
+   "cells": 19,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-07",
+   "name": "숙련도_다기능 평가 계획 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 1,
+   "cells": 18,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#65 교육 실시·Skill Matrix 갱신"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-08",
+   "name": "숙련도 평가표 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 1,
+   "cells": 1,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-09",
+   "name": "작업자 현장 직무 현황 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 1,
+   "cells": 1,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-10",
+   "name": "작업자 숙련도 CHECK SHEET ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 5,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6,
+   "adoptedSheet": "마스터 '작업자 숙련도 CHECK SHEET (F2100-10)' — 매트릭스 채점형: 최소 매핑(점수·소계=시트 수식 보존)"
+  },
+  {
+   "code": "F2100-11",
+   "name": "자격 인증 교육 및 평가서 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 16,
+   "cells": 14,
+   "gridCols": 5,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 3,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-12",
+   "name": "공정별 전담자 및 대체자 관리기준 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-13",
+   "name": "공정면허 자격인증 평가서(종합) ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 9,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 3,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-14",
+   "name": "공정면허 자격인증평가(갑지) ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 8,
+   "cells": 12,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "F2100-15",
+   "name": "공정 자격인증카드_공정 게시용 ()",
+   "regCode": "F-2100",
+   "respDept": "총무팀",
+   "clause": "7",
+   "fields": 3,
+   "cells": 6,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "MP-03"
+   ],
+   "sqItems": [
+    "6_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 6
+  },
+  {
+   "code": "H-1100",
+   "name": "계약검토 규정",
+   "regCode": "H-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H1100-01",
+   "name": "제조타당서 검토서 ()",
+   "regCode": "H-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 11,
+   "cells": 12,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H1100-02",
+   "name": "개발의뢰 접수대장 ()",
+   "regCode": "H-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 10,
+   "cells": 10,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H1100-03",
+   "name": "원가계산서 ()",
+   "regCode": "H-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 30,
+   "cells": 47,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H1100-04",
+   "name": "원단위 원가분석 ()",
+   "regCode": "H-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 1,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H2100-01",
+   "name": "일일 출고 계획서(-필라)",
+   "regCode": "H-2100",
+   "respDept": "영업팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 13,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H2100-02",
+   "name": "월 납품량 분석 보고서()",
+   "regCode": "H-2100",
+   "respDept": "영업팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H2100-03",
+   "name": "일일 납품 실적 보고서(",
+   "regCode": "H-2100",
+   "respDept": "영업팀",
+   "clause": "8",
+   "fields": 11,
+   "cells": 14,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H3100-01",
+   "name": "년 고객만족도 모니터링 ()",
+   "regCode": "H-3100",
+   "respDept": "영업팀",
+   "clause": "9",
+   "fields": 6,
+   "cells": 5,
+   "gridCols": 18,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 3,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H3100-02",
+   "name": "고객만족도 조사 시행 계획서 ()",
+   "regCode": "H-3100",
+   "respDept": "영업팀",
+   "clause": "9",
+   "fields": 2,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H3100-03",
+   "name": "고객만족도 평가서(설문지) ()",
+   "regCode": "H-3100",
+   "respDept": "영업팀",
+   "clause": "9",
+   "fields": 3,
+   "cells": 3,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H3100-04",
+   "name": "종업원 만족도 조사 설문지 ()",
+   "regCode": "H-3100",
+   "respDept": "영업팀",
+   "clause": "9",
+   "fields": 1,
+   "cells": 1,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H3100-05",
+   "name": "종업원 만족도 조사결과 보고서 \"1\" ()",
+   "regCode": "H-3100",
+   "respDept": "영업팀",
+   "clause": "9",
+   "fields": 8,
+   "cells": 8,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H3100-06",
+   "name": "종업원 동기부여 계획서 ()",
+   "regCode": "H-3100",
+   "respDept": "영업팀",
+   "clause": "9",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 3,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H3100-07",
+   "name": "종업원 동기부여 실적평가서 ()",
+   "regCode": "H-3100",
+   "respDept": "영업팀",
+   "clause": "9",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 3,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "H3200-01",
+   "name": "고객불만 접수 대응 현황 보고서 ()",
+   "regCode": "H-3200",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 2,
+   "cells": 0,
+   "gridCols": 25,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01",
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 '고객불만 접수 대응 현황 보고서 (H3200-01)' — 2행 병합 grid(수식 8열 보존 미매핑)"
+  },
+  {
+   "code": "H3200-02",
+   "name": "고객불만 대응 조치 결과 보고서 ()",
+   "regCode": "H-3200",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 23,
+   "cells": 20,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-01",
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "J-1100",
+   "name": "개발업무 규정",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J-1101",
+   "name": "공정FMEA 작성 및 관리 지침",
+   "regCode": "J-1101",
+   "respDept": "개발팀",
+   "clause": "6,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J-2100",
+   "name": "양산부품 승인업무 규정",
+   "regCode": "J-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02",
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J-3100",
+   "name": "4M 변경관리 규정",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J-4100",
+   "name": "도면관리 규정",
+   "regCode": "J-4100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "J-4200",
+   "name": "도면 부품 일치성 점검 지침",
+   "regCode": "J-4200",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "J1100-01",
+   "name": "개발일정 계획서 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 39,
+   "cells": 44,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-02",
+   "name": "공정흐름도 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 7,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-03",
+   "name": "특별특성 목록표 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 13,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-04",
+   "name": "부품개발 요청서 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 7,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-05",
+   "name": "제품 품질계획요약 및 완료확인서 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 15,
+   "cells": 21,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-06",
+   "name": "개발품 TRY-OUT 일정 계획서 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 24,
+   "cells": 31,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-07",
+   "name": "개발품 TRY-OUT 완료 보고서 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 18,
+   "cells": 24,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-08",
+   "name": "납입용기 설정서 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 9,
+   "cells": 9,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-09",
+   "name": "제조타당성 확인서 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 13,
+   "cells": 17,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-10",
+   "name": "제품 법_규제 요구사항 목록표 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 12,
+   "cells": 13,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-11",
+   "name": "PM 및 MDT 선정기준 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 13,
+   "cells": 17,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-12",
+   "name": "에스켈레이션 기준 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 6,
+   "cells": 6,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-13",
+   "name": "양산이관기준 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 18,
+   "cells": 18,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1100-14",
+   "name": "고객 접수 도면 검토서 ()",
+   "regCode": "J-1100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 13,
+   "cells": 13,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1101-01",
+   "name": "공정 FMEA 4판 SHEET ()",
+   "regCode": "J-1101",
+   "respDept": "개발팀",
+   "clause": "6,8",
+   "fields": 21,
+   "cells": 24,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02",
+    "MP-02"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J1102-01",
+   "name": "관리계획서 1판 표지 ( 갑)",
+   "regCode": "J-1102",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 14,
+   "cells": 16,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02",
+    "SP-03"
+   ],
+   "sqItems": [
+    "1_1",
+    "6_3"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 4
+  },
+  {
+   "code": "J1102-02",
+   "name": "관리계획서 특별특성 ()",
+   "regCode": "J-1102",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 5,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02",
+    "SP-03"
+   ],
+   "sqItems": [
+    "1_1",
+    "6_3"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 4,
+   "adoptedSheet": "마스터 '관리계획서 특별특성 (J1102-02)' — 빈 틀 실측, 특성 목록 grid(승인 블록은 병합 구조 부재로 시트 수기)"
+  },
+  {
+   "code": "J1102-03",
+   "name": "관리계획서 체크리스트 ()",
+   "regCode": "J-1102",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 6,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02",
+    "SP-03"
+   ],
+   "sqItems": [
+    "1_1",
+    "6_3"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 4,
+   "adoptedSheet": "마스터 '관리계획서 체크리스트 (J1102-03)' — AIAG 21문항(예/아니오/N.A grid)"
+  },
+  {
+   "code": "J1103-01",
+   "name": "작업표준서 (-필라넥)",
+   "regCode": "J-1103",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 40,
+   "cells": 91,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "1_1",
+    "1_3"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 7
+  },
+  {
+   "code": "J3100-01",
+   "name": "4M 변경 의뢰서   ()",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 18,
+   "cells": 37,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J3100-02",
+   "name": "사양변경접수대장 ()",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 10,
+   "cells": 10,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J3100-03",
+   "name": "4M 변경 관리대장 ()_신양식",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 1,
+   "cells": 19,
+   "gridCols": 11,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#44 4M 변경 기록·승인 확인"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J3100-04",
+   "name": "4M변경 판단기준()",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J3100-05",
+   "name": "변경점 관리 계획 대비 실적()",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 5,
+   "cells": 12,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J3100-06",
+   "name": "변경점 점검 조직도()",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 2,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J3100-07",
+   "name": "4M 변경점 관리 점검 C SHEET()",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 25,
+   "cells": 29,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J3100-08",
+   "name": "4M 변경 마스터리스트",
+   "regCode": "J-3100",
+   "respDept": "개발팀",
+   "clause": "7,8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 13,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "6_2"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "J4100-01",
+   "name": "도면관리대장 ()",
+   "regCode": "J-4100",
+   "respDept": "개발팀",
+   "clause": "8",
+   "fields": 17,
+   "cells": 46,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02"
+   ],
+   "sqItems": [
+    "6_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "J4200-01",
+   "name": "도면 일치성 점검 체크시트()",
+   "regCode": "J-4200",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 3,
+   "cells": 14,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-02",
+    "SP-03"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "K1100-01",
+   "name": "원자재 입고 요청서()",
+   "regCode": "K-1100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 7,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "K1100-02",
+   "name": "원소재 생산 의뢰서()",
+   "regCode": "K-1100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "K1100-07",
+   "name": "기본공급 계약서 ()",
+   "regCode": "K-1100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "K1100-08",
+   "name": "클레임 보상협정서 ()",
+   "regCode": "K-1100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "K1100-09",
+   "name": "품질 보증 협정서 ()",
+   "regCode": "K-1100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "K1100-10",
+   "name": "원재료 법_규제 요구사항 목록표 ()",
+   "regCode": "K-1100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 10,
+   "cells": 10,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [],
+   "sqPoints": 0,
+   "sqMissingCp": 0
+  },
+  {
+   "code": "K1200-01",
+   "name": "①협력업체 등록대장 ()",
+   "regCode": "K-1200",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 4,
+   "cells": 10,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "2_1"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "K1200-02",
+   "name": "②승인 자재 목록 (AVL. AML) ()",
+   "regCode": "K-1200",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 12,
+   "cells": 19,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "2_1"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "K1200-03",
+   "name": "③협력업체 사후 평가 계획서 ()",
+   "regCode": "K-1200",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 4,
+   "cells": 2,
+   "gridCols": 28,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 3,
+   "obligations": [
+    "#12 공급업체 성과 평가"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "2_1"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "K1200-04",
+   "name": "④업체 실태 조사서 ()",
+   "regCode": "K-1200",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 32,
+   "cells": 55,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "2_1"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "K1200-04-01",
+   "name": "타사업부 실적,체제 평가 계획서",
+   "regCode": "K-1200",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 17,
+   "cells": 17,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "2_1"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 3,
+   "adoptedSheet": "마스터 '타사업부 실적,체제 평가 계획서 (K1200-04-01)' — 평가 블록(평점 9+총평점, A5200-04-01 유형)"
+  },
+  {
+   "code": "K1200-05",
+   "name": "⑤협력업체 체제 평가표 ()",
+   "regCode": "K-1200",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 11,
+   "cells": 30,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#27 2자(공급업체) 심사 계획·실시"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "2_1"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "K1200-06",
+   "name": "협력사 월별 모니터링 ()",
+   "regCode": "K-1200",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 4,
+   "cells": 4,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#9 공급업체 납입·품질 모니터링"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "2_1"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 3,
+   "adoptedSheet": "마스터 '협력사 월별 모니터링 (K1200-06)' — 매트릭스 최소 매핑(F2100-10 선례: 연도·업체명 3, 지표×월 실적값·수식은 시트 몫)"
+  },
+  {
+   "code": "K1200-07",
+   "name": "외주 ISIR·검사협정 접수대장",
+   "regCode": "K-1200",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 9,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#34 외주 ISIR·검사협정 접수대장 갱신"
+   ],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "2_1"
+   ],
+   "sqPoints": 40,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "K2100-01",
+   "name": "장기재고관리 현황 ()",
+   "regCode": "K-2100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 9,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#67 재고자산 결산(장기재고 보고)"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_2",
+    "5_3"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 9,
+   "adoptedSheet": "마스터 '장기재고관리 현황 (K2100-01)' — 대장형 grid(중량 G열 = 시트 수식 보존, L4102-02 선례)"
+  },
+  {
+   "code": "K2100-04",
+   "name": "재고조사표 ()",
+   "regCode": "K-2100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#56 순환 재고실사·외주 진행 점검"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_2",
+    "5_3"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "K2100-05",
+   "name": "장기 재고 점검대장 ()",
+   "regCode": "K-2100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 22,
+   "cells": 19,
+   "gridCols": 8,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 4,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_2",
+    "5_3"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "K2100-06",
+   "name": "선입선출 관리 기준서 ()",
+   "regCode": "K-2100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 5,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 8,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_2",
+    "5_3"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "K2100-07",
+   "name": "장기 재고 관리 기준서 ()",
+   "regCode": "K-2100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_2",
+    "5_3"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 9,
+   "adoptedSheet": "[열람형 전환 7/29] 장기 재고 관리 기준 본문+기준표 — 작성 양식 아님(현황 기록은 K2100-01)"
+  },
+  {
+   "code": "K2100-08",
+   "name": "소모품 월소요량 및 안전재고 ()",
+   "regCode": "K-2100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 4,
+   "cells": 0,
+   "gridCols": 7,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 3,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_2",
+    "5_3"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "K2100-09",
+   "name": "소모품 사양 및 공급처 지정 현황 ()",
+   "regCode": "K-2100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 6,
+   "cells": 6,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-01"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_2",
+    "5_3"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "K2100-10",
+   "name": "자재 보관장 점검표·Lay-Out",
+   "regCode": "K-2100",
+   "respDept": "구매팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 11,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "5_2",
+    "5_1",
+    "5_3"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 9,
+   "adoptedSheet": "신규 설계본 '07_자재보관장_점검표' 월간점검 시트(예시행 클리어 — Lay-Out 등록표 시트는 시트 몫)"
+  },
+  {
+   "code": "L-4100",
+   "name": "통계적 기법적용 규정",
+   "regCode": "L-4100",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "L-4101-01",
+   "name": "SPC 평가표",
+   "regCode": "L-4101",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 16,
+   "cells": 16,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#61 SPC·Cpk 월간 검토(특별특성)"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "L1100-01",
+   "name": "설비제작 사양서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 3,
+   "cells": 3,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10,
+   "adoptedSheet": "마스터 '설비제작 사양서 (L1100-01)' — 문서형 대작(226행): 식별 헤더 3만 매핑"
+  },
+  {
+   "code": "L1100-02",
+   "name": "설비제작 진행 체크리스트 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 8,
+   "cells": 8,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-03",
+   "name": "입회검수 체크시트 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 4,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-04",
+   "name": "설비 TRY-OUT 결과 보고서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 7,
+   "cells": 6,
+   "gridCols": 4,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-05",
+   "name": "납품 및 시운전(검수) 확인서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 6,
+   "cells": 5,
+   "gridCols": 5,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 3,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-06",
+   "name": "설비고장 조치 보고서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 26,
+   "cells": 26,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-07",
+   "name": "설비 일상 점검표 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 4,
+   "cells": 3,
+   "gridCols": 2,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 2,
+   "obligations": [
+    "#3 설비 일상점검(TPM)"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-08",
+   "name": "설비 리스트 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 9,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-09",
+   "name": "설비 이력카드 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 9,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10,
+   "adoptedSheet": "마스터 '설비 이력카드 (L1100-09)' — 카드+이력 대장"
+  },
+  {
+   "code": "L1100-10",
+   "name": "제조설비 관리대장 ()_갑지",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 9,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-11",
+   "name": "년간 예방보전 계획서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 4,
+   "cells": 2,
+   "gridCols": 28,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-12",
+   "name": "월간설비 정기 점검 계획서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 5,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [
+    "#60 설비 PM(예방보전)"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-13",
+   "name": "테마별 설비점기점검 계획서 () 갑지",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 2,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-14",
+   "name": "중요설비 체크리스트 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 14,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 3,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-15",
+   "name": "업무 일지 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 4,
+   "cells": 1,
+   "gridCols": 14,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-16",
+   "name": "스페어파트 관리대장 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 11,
+   "cells": 13,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-17",
+   "name": "고정자산 폐기 품의서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 8,
+   "cells": 9,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-18",
+   "name": "풀프로프 설비 점검 일지 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 10,
+   "cells": 11,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-19",
+   "name": "설비 이관 교육결과 보고서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 11,
+   "cells": 16,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-20",
+   "name": "F_P 이상발생 점검 체크시트 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 7,
+   "cells": 18,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-21",
+   "name": "설비 데이터 빽업 기준서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 4,
+   "cells": 7,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-22",
+   "name": "설비 데이터 빽업 관리대장 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 3,
+   "cells": 32,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-23",
+   "name": "설비관리 기준서 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 15,
+   "cells": 28,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10
+  },
+  {
+   "code": "L1100-24",
+   "name": "설비능력 지수표 ()",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 10,
+   "cells": 10,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 7,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 10,
+   "adoptedSheet": "마스터 '설비능력 지수표 (L1100-24)' — 계산기형(Cmk): 비수식 헤더 10만 매핑(L4102-02 선례)"
+  },
+  {
+   "code": "L1100-25",
+   "name": "금형 점검 체크시트(일상/정기/보관)",
+   "regCode": "L-1100",
+   "respDept": "생산기술팀",
+   "clause": "7,8",
+   "fields": 4,
+   "cells": 3,
+   "gridCols": 10,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#73 금형 점검(일상/정기/보관)"
+   ],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5",
+    "3_1",
+    "3_2",
+    "3_4",
+    "3_5",
+    "3_6"
+   ],
+   "sqPoints": 240,
+   "sqMissingCp": 18,
+   "adoptedSheet": "신규 설계본 Rev.1 '양식' 시트(일자-행 전개 재설계) — 05_금형_점검체크시트"
+  },
+  {
+   "code": "L1200-01",
+   "name": "치공구 관리대장()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 4,
+   "cells": 3,
+   "gridCols": 11,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '치공구 관리대장(L1200-01)'"
+  },
+  {
+   "code": "L1200-02",
+   "name": "치공구 이력카드()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 9,
+   "cells": 7,
+   "gridCols": 6,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12
+  },
+  {
+   "code": "L1200-03",
+   "name": "지그 관리대장()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 5,
+   "cells": 3,
+   "gridCols": 16,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12
+  },
+  {
+   "code": "L1200-04",
+   "name": "지그 이력카드()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 17,
+   "cells": 16,
+   "gridCols": 2,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '지그 이력카드(L1200-04)'"
+  },
+  {
+   "code": "L1200-05",
+   "name": "지그 및 치공구 검사 성적서()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 11,
+   "cells": 10,
+   "gridCols": 4,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12
+  },
+  {
+   "code": "L1200-06",
+   "name": "CF 점검기준서()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 4,
+   "cells": 2,
+   "gridCols": 9,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12
+  },
+  {
+   "code": "L1200-07",
+   "name": "CF 점검 시트()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 0,
+   "gridCols": 6,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 'CF 점검 시트(L1200-07)' — 분기 점검(본행+특이사항행 stride 2×4)"
+  },
+  {
+   "code": "L1200-08",
+   "name": "지그계약서()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12,
+   "adoptedSheet": "[열람형 전환 7/29 4배치] 검사구·물품납입 계약서 조문 전문 — 작성 양식 아님(체결=서면·인감 동선)"
+  },
+  {
+   "code": "L1200-09",
+   "name": "지그 사용대차 계약서()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12,
+   "adoptedSheet": "[열람형 전환 7/29 4배치] 지그 사용대차 계약서 조문 전문 — 작성 양식 아님(대여 기록은 L1200-10)"
+  },
+  {
+   "code": "L1200-10",
+   "name": "대여자산 관리대장()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 21,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '대여자산 관리대장(L1200-10)' — 대장형(21열)"
+  },
+  {
+   "code": "L1200-11",
+   "name": "지그 및 금형 보관 위치 식별표()",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 19,
+   "cells": 19,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 1,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12
+  },
+  {
+   "code": "L1200-12",
+   "name": "지그·치공구 점검 체크시트",
+   "regCode": "L-1200",
+   "respDept": "생산기술팀",
+   "clause": "8",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 10,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "3_3",
+    "3_7",
+    "4_1",
+    "4_2",
+    "4_3",
+    "4_4",
+    "4_5"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 12,
+   "adoptedSheet": "신규 설계본 Rev.1 '양식' 시트(일자-행 전개 재설계) — 04_지그치공구_점검체크시트"
+  },
+  {
+   "code": "L2100-01",
+   "name": "수입검사표준(-AM)",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 12,
+   "cells": 10,
+   "gridCols": 6,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_1",
+    "2_7",
+    "2_8",
+    "2_2"
+   ],
+   "sqPoints": 170,
+   "sqMissingCp": 9,
+   "adoptedSheet": "AM 실사용 'MES 수입검사 엑셀양식(240313-07870)' 양식 시트 → templates/am_forms/L2100-01_수입검사표준_AM.xlsx (마스터 '수입검사표준 (L2100-01-인)' = 5행 스텁이라 기각)"
+  },
+  {
+   "code": "L2100-02",
+   "name": "코일인수 검사일지(-조)",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 15,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 5,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_1",
+    "2_7",
+    "2_8",
+    "2_2"
+   ],
+   "sqPoints": 170,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "L2100-03",
+   "name": "인수검사성적서(-조)",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 23,
+   "cells": 22,
+   "gridCols": 5,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 5,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_1",
+    "2_7",
+    "2_8",
+    "2_2"
+   ],
+   "sqPoints": 170,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "L2100-04",
+   "name": "초품검사 및 불량폐기내역(-조6)",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 6,
+   "cells": 395,
+   "gridCols": 20,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_1",
+    "2_7",
+    "2_8",
+    "2_2"
+   ],
+   "sqPoints": 170,
+   "sqMissingCp": 9,
+   "adoptedSheet": "마스터 '초품검사 및 불량폐기내역(L2100-04-조6)' (AM 자체 변형 없음 실측 — 조관공정 전용 정본 유지)"
+  },
+  {
+   "code": "L2100-05",
+   "name": "공정 순회검사(패트롤) 시트(-AM)",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 12,
+   "cells": 10,
+   "gridCols": 6,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#45 공정 순회검사·LOT 라벨 상태 확인"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_1",
+    "2_7",
+    "2_8",
+    "2_2"
+   ],
+   "sqPoints": 170,
+   "sqMissingCp": 9,
+   "adoptedSheet": "AM 실사용 'MES 공정패트롤 엑셀양식(240313-07870)' 양식 시트 → templates/am_forms/L2100-05_공정순회_패트롤_AM.xlsx (마스터 '조관공정 순회검사일지(L2100-05-조)' = 조관 전용이라 기각)"
+  },
+  {
+   "code": "L2100-06",
+   "name": "출하 검사 절차서(-쇼바19)",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_1",
+    "2_7",
+    "2_8",
+    "2_2"
+   ],
+   "sqPoints": 170,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "L2100-07",
+   "name": "수입검사 관리대장",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 15,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 8,
+   "obligations": [
+    "#29 수입검사 이력카드 당일 입고분 기입 확인"
+   ],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "2_2",
+    "2_1",
+    "2_7",
+    "2_8"
+   ],
+   "sqPoints": 170,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "L2100-10",
+   "name": "수입검사 기준서(-쇼바04)",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_1",
+    "2_7",
+    "2_8",
+    "2_2"
+   ],
+   "sqPoints": 170,
+   "sqMissingCp": 9
+  },
+  {
+   "code": "L2100-11",
+   "name": "조도관리 측정기록",
+   "regCode": "L-2100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 10,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "6_8",
+    "2_1",
+    "2_7",
+    "2_8",
+    "2_2"
+   ],
+   "sqPoints": 180,
+   "sqMissingCp": 12,
+   "adoptedSheet": "AM 실물 '조도측정 일지.xlsx'(표면 거칠기 조도) → templates/am_forms/L2100-11_조도측정_기록일지_AM.xlsx (구 신규설계본 = 조명 조도(lux) 도메인 오인 — 실물 출현 시 교정 조건 발동)"
+  },
+  {
+   "code": "L2200-01",
+   "name": "년 신뢰성 시험 계획서()",
+   "regCode": "L-2200",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 5,
+   "cells": 5,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_4"
+   ],
+   "sqPoints": 30,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "L2300-01",
+   "name": "한도견본 관리대장()",
+   "regCode": "L-2300",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 10,
+   "cells": 54,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#32 한도견본·검사구(C/F)·마스터 시편 상태 점검"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 4
+  },
+  {
+   "code": "L2300-02",
+   "name": "한도 견본표()",
+   "regCode": "L-2300",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 10,
+   "cells": 10,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 4
+  },
+  {
+   "code": "L2300-03",
+   "name": "한도 견본 기준서()",
+   "regCode": "L-2300",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 6,
+   "cells": 6,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 4
+  },
+  {
+   "code": "L2300-04",
+   "name": "OK_NG MASTER 관리대장()",
+   "regCode": "L-2300",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 11,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 4,
+   "adoptedSheet": "마스터 'OK_NG MASTER 관리대장(L2300-04)' — 대장형(사진 열 시트 수기)"
+  },
+  {
+   "code": "L2300-05",
+   "name": "치구 자체 검교정 계획 및 실적()",
+   "regCode": "L-2300",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 4,
+   "cells": 2,
+   "gridCols": 28,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 3,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 4
+  },
+  {
+   "code": "L2300-06",
+   "name": "치구 관리대장()",
+   "regCode": "L-2300",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 2,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 4
+  },
+  {
+   "code": "L2300-07",
+   "name": "치구 이력카드()",
+   "regCode": "L-2300",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 12,
+   "cells": 14,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_3"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 4
+  },
+  {
+   "code": "L3100-01",
+   "name": "계측기 관리대장 ()",
+   "regCode": "L-3100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 17,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 2,
+   "adoptedSheet": "마스터 '계측기 관리대장 (L3100-01)'"
+  },
+  {
+   "code": "L3100-02",
+   "name": "계측기 이력카드 ()",
+   "regCode": "L-3100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 4,
+   "cells": 0,
+   "gridCols": 11,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 4,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 2
+  },
+  {
+   "code": "L3100-03",
+   "name": "계측기 검교정 계획서 ()",
+   "regCode": "L-3100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 3,
+   "cells": 3,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#8 교정 도래(Due) 점검"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 2
+  },
+  {
+   "code": "L3100-04",
+   "name": "계측기 일상점검표 ()",
+   "regCode": "L-3100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 10,
+   "cells": 15,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 2
+  },
+  {
+   "code": "L3100-05",
+   "name": "계측기 관리번호 부여 기준 ()",
+   "regCode": "L-3100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 2
+  },
+  {
+   "code": "L3100-06",
+   "name": "검교정 합부판정 기준 ()",
+   "regCode": "L-3100",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_5"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 2
+  },
+  {
+   "code": "L3101-01",
+   "name": "측정시스템 분석 계획서()",
+   "regCode": "L-3101",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 11,
+   "cells": 12,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [
+    "#19 MSA 측정시스템 분석 재평가"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "L3101-02",
+   "name": "계량형R&R ()_전산",
+   "regCode": "L-3101",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 19,
+   "cells": 25,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-02"
+   ],
+   "sqItems": [
+    "2_6"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "L4101-01",
+   "name": "Xbar-R 관리도 ()",
+   "regCode": "L-4101",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 9,
+   "cells": 9,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 'Xbar-R 관리도 (L4101-01)' — 계산기형 최소 매핑 9(L4102-02 선례, 수식·측정 매트릭스 시트 몫). ⚠️L-4101-01 'SPC 평가표'는 독립 .xls 별개 실체 실측 — 이중 등록 아님(4배치 §2-⑤ 의심 해소)"
+  },
+  {
+   "code": "L4102-01",
+   "name": "공정능력 평가표 ()",
+   "regCode": "L-4102",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 1,
+   "cells": 1,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": true,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "L4102-02",
+   "name": "양산단계 공정능력 산출 _L4102-02",
+   "regCode": "L-4102",
+   "respDept": "품질보증팀",
+   "clause": "9",
+   "fields": 8,
+   "cells": 6,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#20 공정능력 재검증(CP/CPK)"
+   ],
+   "coreDuty": true,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_7"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "M-1100",
+   "name": "생산관리 규정",
+   "regCode": "M-1100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "M-1200",
+   "name": "공정관리 규정",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12
+  },
+  {
+   "code": "M-2100",
+   "name": "식별 및 추적성 관리 규정",
+   "regCode": "M-2100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_3"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 5
+  },
+  {
+   "code": "M-3100",
+   "name": "완성품 관리 규정",
+   "regCode": "M-3100",
+   "respDept": "영업팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "2_8"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "M-4100",
+   "name": "3정 5S활동 규정",
+   "regCode": "M-4100",
+   "respDept": "생산팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_9"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "M-4200",
+   "name": "조도(Lux) 관리 지침",
+   "regCode": "M-4200",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_8"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "M1100-02",
+   "name": "설비 비가동시간 관리 대장",
+   "regCode": "M-1100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 9,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "adoptedSheet": "마스터 '설비 비가동시간 관리 대장 (M1100-02)' — 3행 병합 블록 grid 6건"
+  },
+  {
+   "code": "M1100-03",
+   "name": "설비 비가동시간 이력관리 대장",
+   "regCode": "M-1100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 11,
+   "cells": 11,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "adoptedSheet": "마스터 '설비 비가동시간 이력관리 대장 (M1100-03)' — 비가동 1건 카드형"
+  },
+  {
+   "code": "M1100-05",
+   "name": "설비 비가동 주요 코드",
+   "regCode": "M-1100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3,
+   "adoptedSheet": "[열람형 전환 승인 7/28] 고정 코드 정의표 — 작성 양식 아님(fields 미정의 유지, form_change_log 기록)"
+  },
+  {
+   "code": "M1100-06",
+   "name": "우발사고 및 이상발생 처리 절차서",
+   "regCode": "M-1100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_1"
+   ],
+   "sqPoints": 20,
+   "sqMissingCp": 3
+  },
+  {
+   "code": "M1200-01",
+   "name": "작업지시서",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 11,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '작업지시서(M1200-01-인)' — 인발사업부 전용(AM 실물 부재 실측: AM 작업지시 = MES 소관). A5200-04-01 유형 정본 완결(호기 프리셋 유지·전 열 grid)"
+  },
+  {
+   "code": "M1200-02",
+   "name": "열처리작업일보",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 11,
+   "cells": 11,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '열처리작업일보(M1200-02-인)' — 인발사업부 전용(AM 열처리 공정 없음 — AM 은 브레이징 M1200-11). 정본 완결: 순서 블록1(5행)만 최소 매핑"
+  },
+  {
+   "code": "M1200-03",
+   "name": "주,야 인수인계 일지",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 19,
+   "cells": 19,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '주,야 인수인계 일지(M1200-03)' — 주/야 대칭 이슈 5구분 문서형"
+  },
+  {
+   "code": "M1200-04",
+   "name": "공정,납입용기 관리기준 및 수리이력",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 6,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '공정,납입용기 관리기준 및 수리이력(M1200-04)' — 하단 수리이력 grid(stride 4 × 6블록). 상단 관리기준표(사진 4)는 고정 기준 미매핑"
+  },
+  {
+   "code": "M1200-05",
+   "name": "낙하품 처리 절차서",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12,
+   "adoptedSheet": "[열람형 전환 7/29 — M1100-05 선례 재적용] 낙하품 처리 절차 본문+PROCESS FLOW 도해 — 작성 양식 아님(기록은 M1200-06)"
+  },
+  {
+   "code": "M1200-06",
+   "name": "낙하품 처리 관리대장",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 0,
+   "gridCols": 11,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12,
+   "adoptedSheet": "마스터 '낙하품 처리 관리대장 (M1200-06)' — 2행 병합 grid(본행 stride 2 + 조치상세행 별도 grid)"
+  },
+  {
+   "code": "M1200-07",
+   "name": "셋업품 처리 절차서",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12,
+   "adoptedSheet": "[열람형 전환 7/29] 셋업품 처리 절차 본문+현장 사진 4 — 작성 양식 아님"
+  },
+  {
+   "code": "M1200-08",
+   "name": "용접장 기준 팁 교환 주기 평가서",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 7,
+   "cells": 25,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#30 스포트 팁 카운터↔교체대장 정합 확인"
+   ],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 90,
+   "sqMissingCp": 12
+  },
+  {
+   "code": "M1200-09",
+   "name": "공정이동 전표·부자재 대사표",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 7,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "6_11",
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 100,
+   "sqMissingCp": 13,
+   "adoptedSheet": "신규 설계본 '13_공정이동전표_부자재대사' 공정이동 전표 시트(예시행 클리어·내부 양식번호 M1200-05→M1200-09 정정 — 부자재 대사 시트는 시트 몫)"
+  },
+  {
+   "code": "M1200-10",
+   "name": "공정 자주검사 CHECK SHEET",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 12,
+   "cells": 10,
+   "gridCols": 6,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#1 초·중·종물 검사(초/중/종)"
+   ],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "2_7",
+    "1_2",
+    "1_5",
+    "5_4"
+   ],
+   "sqPoints": 140,
+   "sqMissingCp": 14,
+   "adoptedSheet": "AM 실사용 'MES 자주검사체크시트 엑셀양식(240313-07870)' 양식 시트 → templates/am_forms/M1200-10_공정자주검사_AM.xlsx (실물 출현 교체 — 코워크 승인 7/28 오후, 구 신규설계본 15_공정자주검사 = 참고 보관)"
+  },
+  {
+   "code": "M1200-11",
+   "name": "브레이징 조건관리 CHECK SHEET",
+   "regCode": "M-1200",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 6,
+   "cells": 5,
+   "gridCols": 6,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#28 브레이징 조건 기록(3회/일) 확인"
+   ],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "1_5",
+    "3_5",
+    "1_2",
+    "5_4"
+   ],
+   "sqPoints": 110,
+   "sqMissingCp": 13
+  },
+  {
+   "code": "M2100-01",
+   "name": "LOT관리 기준서",
+   "regCode": "M-2100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 3,
+   "cells": 2,
+   "gridCols": 4,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_3"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 5,
+   "adoptedSheet": "마스터 'LOT관리 기준서(M2100-01)' — 규칙표 작성형(시기·장소·기록방법·담당 10행 grid). 반-MES lot_registry 접점"
+  },
+  {
+   "code": "M2100-02",
+   "name": "원소재및완제품 선입선출 관리기준서",
+   "regCode": "M-2100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_3"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 5,
+   "adoptedSheet": "[열람형 전환 7/29] 선입선출(FIFO) 규칙 완성문(순서도·식별표 해석 포함) — 작성 양식 아님(점검은 K2100-10)"
+  },
+  {
+   "code": "M2100-03-01",
+   "name": "LOT 추적성 관리 기준_필라넥",
+   "regCode": "M-2100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_3"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 5,
+   "adoptedSheet": "[열람형 전환 7/29] 필라네크 전용 LOT 추적성 이미지 문서(도해 19장) — 작성 양식 아님+타사업부 전용"
+  },
+  {
+   "code": "M2100-03-02",
+   "name": "LOT 추적성 관리 기준_쇼바용접",
+   "regCode": "M-2100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "5_1",
+    "5_3"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 5,
+   "adoptedSheet": "[열람형 전환 7/29] 쇼바용접 전용 LOT 추적성 이미지 문서(도해 15장) — 작성 양식 아님+타사업부 전용"
+  },
+  {
+   "code": "M2100-10",
+   "name": "LOT 추적성 대장",
+   "regCode": "M-2100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 15,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "5_1",
+    "5_3"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 5,
+   "adoptedSheet": "신규 설계본 '06_LOT추적성_대장' 양식 시트(예시행 클리어 260729)"
+  },
+  {
+   "code": "M3100-01",
+   "name": "출하관리대장",
+   "regCode": "M-3100",
+   "respDept": "영업팀",
+   "clause": "8",
+   "fields": 2,
+   "cells": 1,
+   "gridCols": 13,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "2_8"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 1,
+   "adoptedSheet": "마스터 '출하관리대장 (M3100-01)' — 대장형 grid(출하 점검 4항목 ○/×)"
+  },
+  {
+   "code": "M3100-05",
+   "name": "완성품·출하검사 성적서",
+   "regCode": "M-3100",
+   "respDept": "품질보증팀",
+   "clause": "8",
+   "fields": 8,
+   "cells": 7,
+   "gridCols": 12,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [
+    "#47 출하검사·성적서 발행(생산 LOT 기재)"
+   ],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "2_8"
+   ],
+   "sqPoints": 50,
+   "sqMissingCp": 1,
+   "adoptedSheet": "신규 설계본 '02_완성품_출하검사_성적서' 양식 시트"
+  },
+  {
+   "code": "M3100-06",
+   "name": "용기·적재 표준화 기준표",
+   "regCode": "M-3100",
+   "respDept": "생산팀",
+   "clause": "8",
+   "fields": 1,
+   "cells": 0,
+   "gridCols": 12,
+   "template": 1,
+   "newDesign": true,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [],
+   "sqItems": [
+    "5_4",
+    "2_8"
+   ],
+   "sqPoints": 70,
+   "sqMissingCp": 6,
+   "adoptedSheet": "신규 설계본 '08_용기적재_표준화기준표' 양식 시트(예시행 클리어 260729)"
+  },
+  {
+   "code": "M4100-01",
+   "name": "사무용 3정 5S 진단 SHEET",
+   "regCode": "M-4100",
+   "respDept": "생산팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 2,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_9"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "M4100-02",
+   "name": "현장용 3정 5S 진단 SHEET",
+   "regCode": "M-4100",
+   "respDept": "생산팀",
+   "clause": "7",
+   "fields": 5,
+   "cells": 4,
+   "gridCols": 2,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_9"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "M4100-03",
+   "name": "3정 5S 평가 보고서",
+   "regCode": "M-4100",
+   "respDept": "생산팀",
+   "clause": "7",
+   "fields": 17,
+   "cells": 17,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_9"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "M4100-04",
+   "name": "3정 5S 평가지적 및 시정대책서",
+   "regCode": "M-4100",
+   "respDept": "생산팀",
+   "clause": "7",
+   "fields": 13,
+   "cells": 13,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_9"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "M4100-05",
+   "name": "3정5S 관리 구역도",
+   "regCode": "M-4100",
+   "respDept": "생산팀",
+   "clause": "7",
+   "fields": 0,
+   "cells": 0,
+   "gridCols": 0,
+   "template": 0,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "CP-03"
+   ],
+   "sqItems": [
+    "6_9"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 1
+  },
+  {
+   "code": "M4200-01",
+   "name": "조도측정 체크시트",
+   "regCode": "M-4200",
+   "respDept": "품질보증팀",
+   "clause": "7",
+   "fields": 107,
+   "cells": 107,
+   "gridCols": 0,
+   "template": 1,
+   "newDesign": false,
+   "legacy": false,
+   "submissions": 0,
+   "obligations": [],
+   "coreDuty": false,
+   "processes": [
+    "SP-03"
+   ],
+   "sqItems": [
+    "6_8"
+   ],
+   "sqPoints": 10,
+   "sqMissingCp": 3,
+   "adoptedSheet": "마스터 'AM_조도측정 체크시트(M4200-01)' 시트(변형 8종 중 AM) → templates/batch6/M4200-01_AM조도측정체크시트.xlsx (0113 정밀인발(인발) 첫 매치 매핑 = 검수회신_6배치 판정3 반전으로 교체, 0114 — AM 변형 우선 탐색 재발 2번째)"
+  }
+ ]
+}
