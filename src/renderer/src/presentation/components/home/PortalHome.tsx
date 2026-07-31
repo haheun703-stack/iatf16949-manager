@@ -16,6 +16,7 @@ import type {
   ObligationMatrixDto
 } from '@shared/ipc-types'
 import { PipelineBand } from './PipelineBand'
+import { ProcessLiveMatrix } from './ProcessLiveMatrix'
 import { CardShell, KpiTile as StatTile, TeamDonut, MatrixBoard, MatrixLegend, SegTabs } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
 import { traceDeepLink } from '../../../lib/deeplink'
@@ -278,6 +279,9 @@ export function PortalHome(): JSX.Element {
           document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' })
         }}
       />
+
+      {/* ── P1 ⓑ 공정 실황 행렬 (동아式 커버리지 — 25번 §3) ── */}
+      <ProcessLiveMatrix />
 
       {/* ── KPI 스탯 타일 5 (17번 §3-1) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">

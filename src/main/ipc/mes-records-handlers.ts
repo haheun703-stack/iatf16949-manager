@@ -5,6 +5,9 @@ import { join } from 'path'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import type {
+  MesProcessLiveCol,
+  MesProcessLiveDto,
+  MesProcessStatus,
   MesRecordsCoverageDto,
   MesRecordsDayCell,
   MesRecordsDetailDto,
@@ -124,7 +127,141 @@ function daysBetween(a: string, b: string): number {
   return Math.round((new Date(`${b}T00:00:00`).getTime() - new Date(`${a}T00:00:00`).getTime()) / 86400000)
 }
 
+// ===== P1 ⓑ 공정 실황(커버리지) — WRKCTR↔공정 상수 매핑 (25번 §3, "별도 엔진 금지") =====
+// 열 = 실측 7공정(목업 각주 "공정은 실측" 이행 — WRKCTR 전수 판독 260731 기준).
+// 포장·출하는 MES 원천 없음(수불·출하대장 = ⓒ·P3 영역) — 원천 생기면 열 추가(가짜 숫자 금지).
+const PROC_COLUMNS: Array<{ key: string; label: string }> = [
+  { key: 'incoming', label: '수입검사' },
+  { key: 'cutform', label: '절단·성형' },
+  { key: 'bending', label: '밴딩' },
+  { key: 'welding', label: '용접·가접' },
+  { key: 'brazing', label: '브레이징' },
+  { key: 'assembly', label: '조립·압입' },
+  { key: 'leak', label: '리크검사' }
+]
+
+/** W계열(공정 코드) 정확 일치 매핑 — WRKCTR 실측(W1~W18) */
+const W_MAP: Record<string, string> = {
+  W1: 'cutform', W2: 'cutform', W3: 'bending', W4: 'bending', W5: 'incoming',
+  W6: 'cutform', W7: 'welding', W8: 'assembly', W10: 'leak', W11: 'assembly',
+  W12: 'cutform', W13: 'cutform', W14: 'cutform', W15: 'brazing', W16: 'welding',
+  W17: 'welding', W18: 'welding'
+}
+
+/** 설비 프리픽스 매핑 — 긴 프리픽스 우선(RSP 가 RB 보다 먼저) */
+const PREFIX_MAP: Array<[string, string]> = [
+  ['RSP', 'welding'], ['RBB', 'brazing'], ['RB', 'brazing'], ['RO', 'brazing'],
+  ['LK', 'leak'], ['BPM', 'bending'], ['PB', 'bending'], ['SB', 'bending'],
+  ['UTO', 'welding'], ['TOB', 'welding'], ['TO', 'welding'], ['SP', 'welding'],
+  ['GA', 'welding'], ['SZ', 'welding'], ['J', 'assembly'], ['OB', 'assembly'],
+  ['MT', 'assembly'], ['KO', 'assembly'], ['FO', 'cutform'], ['CG', 'cutform'],
+  ['EB', 'cutform'], ['PI', 'cutform'], ['CT', 'cutform'], ['AS', 'cutform']
+]
+
+function procOf(lineNo: string | null): string | null {
+  if (!lineNo) return null
+  const code = lineNo.trim().toUpperCase()
+  if (!code || code.startsWith('$') || code.startsWith('ZZ') || code.startsWith('TEST')) return null
+  if (W_MAP[code]) return W_MAP[code]
+  for (const [pre, proc] of PREFIX_MAP) if (code.startsWith(pre)) return proc
+  return null
+}
+
+/** 앱 작성 기록 → 공정 매핑(대표 양식 코드 프리픽스 — 최소 상수, 확장은 후속) */
+const FORM_PROC: Array<[string, string]> = [
+  ['L2100-07', 'incoming'], // 수입검사 관리대장
+  ['L2100-01', 'incoming'] // 수입검사표준(-AM)
+]
+
+/** 공백 판정 임계 — 마지막 기록이 데이터 끝 대비 2일 이상 뒤처지면 '공백' */
+const GAP_THRESHOLD = 2
+
 export function registerMesRecordsHandlers(): void {
+  // P1 ⓑ 공정 실황(커버리지 모드) — 사이드카(sqc/mac) + 앱 작성 기록 결합, 신규 테이블 0
+  ipcMain.handle(IPC_CHANNELS.MES_RECORDS_PROCESS_LIVE, (_e, req: { ymd?: string }): MesProcessLiveDto => {
+    const ymd = req?.ymd || new Date().toISOString().slice(0, 10)
+    const db = openSide()
+    const dataEndYmd = db ? typeStats(db).dataEndYmd : null
+
+    type Agg = { todayRecords: number; todayItems: number; todayForms: number; lastYmd: string | null; sources: Set<string> }
+    const agg = new Map<string, Agg>()
+    for (const c of PROC_COLUMNS) {
+      agg.set(c.key, { todayRecords: 0, todayItems: 0, todayForms: 0, lastYmd: null, sources: new Set() })
+    }
+    const bump = (proc: string | null, ymd0: string, items: number, src: string, isToday: boolean): void => {
+      if (!proc) return
+      const a = agg.get(proc)
+      if (!a) return
+      if (isToday) {
+        a.todayRecords += 1
+        a.todayItems += items
+      }
+      a.sources.add(src) // 원천 = 전체 이력 기준(이 공정으로 들어오는 데이터 채널 조합)
+      if (!a.lastYmd || ymd0 > a.lastYmd) a.lastYmd = ymd0
+    }
+
+    if (db) {
+      // 수입검사(I) = line 무관 열 귀속 · 자주(W)/패트롤(P) = line_no(WRKCTR)로 공정 귀속
+      const sqc = db
+        .prepare('SELECT ymd, qcgubun, line_no, items FROM sqc_daily')
+        .all() as Array<{ ymd: string; qcgubun: string; line_no: string | null; items: number }>
+      for (const r of sqc) {
+        const proc = r.qcgubun === 'I' ? 'incoming' : procOf(r.line_no)
+        bump(proc, r.ymd, r.items, `MES ${gbnLabel(r.qcgubun)}`, r.ymd === ymd)
+      }
+      const mac = db
+        .prepare('SELECT ymd, line_no, items FROM mac_daily')
+        .all() as Array<{ ymd: string; line_no: string | null; items: number }>
+      for (const r of mac) {
+        bump(procOf(r.line_no), r.ymd, r.items, 'MES 설비점검', r.ymd === ymd)
+      }
+    }
+
+    // 앱 작성 기록(요청일) — 공정 매핑 양식만(최소 상수), 실시간 원천
+    try {
+      const rows = getSqlite()
+        .prepare(
+          `SELECT form_code, COUNT(*) n FROM form_submissions
+           WHERE substr(created_at, 1, 10) = ? GROUP BY form_code`
+        )
+        .all(ymd) as Array<{ form_code: string; n: number }>
+      for (const r of rows) {
+        const hit = FORM_PROC.find(([pre]) => r.form_code.startsWith(pre))
+        if (!hit) continue
+        const a = agg.get(hit[1])
+        if (!a) continue
+        a.todayForms += r.n
+        a.todayRecords += r.n
+        a.sources.add('앱 작성')
+        if (!a.lastYmd || ymd > a.lastYmd) a.lastYmd = ymd
+      }
+    } catch {
+      /* form_submissions 조회 실패 시 MES 원천만 표시(정직 축소) */
+    }
+
+    const columns: MesProcessLiveCol[] = PROC_COLUMNS.map((c) => {
+      const a = agg.get(c.key)!
+      const gapDays = a.lastYmd && dataEndYmd ? daysBetween(a.lastYmd, dataEndYmd) : null
+      let status: MesProcessStatus
+      if (a.todayRecords > 0) status = 'active'
+      else if (!db || a.lastYmd == null) status = 'nosource'
+      else if (dataEndYmd && ymd > dataEndYmd) status = 'stale' // 덤프 미반입 구간 — 회색 정직
+      else if (gapDays != null && gapDays >= GAP_THRESHOLD) status = 'gap'
+      else status = 'stale'
+      return {
+        key: c.key,
+        label: c.label,
+        todayRecords: a.todayRecords,
+        todayItems: a.todayItems,
+        todayForms: a.todayForms,
+        lastYmd: a.lastYmd,
+        gapDays,
+        status,
+        source: a.sources.size > 0 ? [...a.sources].join('+') : '—'
+      }
+    })
+    return { ymd, dataEndYmd, available: !!db, columns }
+  })
   ipcMain.handle(IPC_CHANNELS.MES_RECORDS_STATUS, (): MesRecordsStatusDto => {
     const p = resolvePath()
     const db = openSide()

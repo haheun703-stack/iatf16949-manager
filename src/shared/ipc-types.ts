@@ -1131,6 +1131,37 @@ export interface MesRecordsDetailDto {
   recent: Array<{ ymd: string; items: number; parts: number; inspectors: number; confirmedPct: number | null }>
 }
 
+// ===== P1 ⓑ 공정 실황 행렬 (커버리지 모드 — 25번 §3, 0125 트랙) =====
+
+export type MesProcessStatus = 'active' | 'gap' | 'stale' | 'nosource'
+
+export interface MesProcessLiveCol {
+  key: string
+  label: string
+  /** 요청일 기록 건수 = MES(sqc 품번×구분 행 + mac 설비 행) + 앱 작성 제출 */
+  todayRecords: number
+  /** 요청일 MES 측정 항목 수(sqc items 합 — 생산수량 EA 아님, 정직 명칭) */
+  todayItems: number
+  /** 요청일 앱 작성 기록 수(공정 매핑 양식의 form_submissions) */
+  todayForms: number
+  /** 이 공정의 마지막 MES 기록일(전체 이력 기준) */
+  lastYmd: string | null
+  /** 덤프 데이터 끝(dataEndYmd) 대비 마지막 기록 공백일 */
+  gapDays: number | null
+  status: MesProcessStatus
+  /** 원천 조합 라벨('MES 자주+설비점검' 등) — 없으면 '—' */
+  source: string
+}
+
+export interface MesProcessLiveDto {
+  /** 판정 기준일(기본 = 오늘) */
+  ymd: string
+  /** 덤프 데이터 끝 — ymd 가 이보다 뒤면 MES 원천은 미반입(stale) 구간 */
+  dataEndYmd: string | null
+  available: boolean
+  columns: MesProcessLiveCol[]
+}
+
 // ===== SQ 심사 아이템 트랙 (0068/0069 — 품번 4종 × 4단계 체크리스트) =====
 
 export type SqTrackStatus = 'open' | 'in_progress' | 'done' | 'na'
@@ -2207,6 +2238,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.MES_RECORDS_DETAIL]: {
     request: { key: string }
     response: MesRecordsDetailDto | null
+  }
+  [IPC_CHANNELS.MES_RECORDS_PROCESS_LIVE]: {
+    request: { ymd?: string }
+    response: MesProcessLiveDto
   }
   [IPC_CHANNELS.SQ_ASSESS_RUN]: {
     request: void

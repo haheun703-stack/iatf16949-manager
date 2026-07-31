@@ -197,6 +197,7 @@ export const IPC_CHANNELS = {
   MES_RECORDS_STATUS: 'mesRecords:status',
   MES_RECORDS_COVERAGE: 'mesRecords:coverage',
   MES_RECORDS_DETAIL: 'mesRecords:detail',
+  MES_RECORDS_PROCESS_LIVE: 'mesRecords:processLive',
 
   // 반(半)-MES 코어 (15번 M0 — 마스터 6종·BOM 트리·라우팅. 0101 스키마)
   SEMIMES_SUMMARY: 'semimes:summary',
