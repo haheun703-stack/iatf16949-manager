@@ -142,7 +142,11 @@ const PROC_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'leak', label: '리크검사' }
 ]
 
-/** W계열(공정 코드) 정확 일치 매핑 — WRKCTR 실측(W1~W18) */
+/**
+ * W계열(공정 코드) 정확 일치 매핑 — WRKCTR 코드표상 W1~W18.
+ * ⚠️ 실데이터 사용 0건(260731 실측: sqc_daily·mac_daily 모두 정확일치 0) — line_no 에는
+ * 공정 코드가 아니라 설비 코드(WM*·RSP*·J* 등)가 들어온다. 표가 바뀔 때를 대비해 남겨둠.
+ */
 const W_MAP: Record<string, string> = {
   W1: 'cutform', W2: 'cutform', W3: 'bending', W4: 'bending', W5: 'incoming',
   W6: 'cutform', W7: 'welding', W8: 'assembly', W10: 'leak', W11: 'assembly',
@@ -152,6 +156,9 @@ const W_MAP: Record<string, string> = {
 
 /** 설비 프리픽스 매핑 — 긴 프리픽스 우선(RSP 가 RB 보다 먼저) */
 const PREFIX_MAP: Array<[string, string]> = [
+  // WM* = 스폿/자동스폿/로봇스폿 용접기 11종(mes_codes WRKCTR 대조 확인, 260731).
+  // 누락 시 용접·가접 열이 검사 4,388키(78,466항목)·설비점검 2,263키만큼 축소 집계된다.
+  ['WM', 'welding'],
   ['RSP', 'welding'], ['RBB', 'brazing'], ['RB', 'brazing'], ['RO', 'brazing'],
   ['LK', 'leak'], ['BPM', 'bending'], ['PB', 'bending'], ['SB', 'bending'],
   ['UTO', 'welding'], ['TOB', 'welding'], ['TO', 'welding'], ['SP', 'welding'],

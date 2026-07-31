@@ -311,7 +311,16 @@ export function PortalHome(): JSX.Element {
                       데이터
                     </span>
                     <span className="min-w-0 flex-1 text-[13px] font-semibold truncate">{e.task.title}</span>
-                    {e.task.daysLeft != null && e.task.daysLeft < 0 ? (
+                    {/* 원천이 이미 해소한 건은 연체로 몰지 않는다 — 남은 일은 사람 ✓ 뿐(§3-2 자동완료 금지).
+                        팀 보드 행(TaskRow)과 같은 문법으로 통일. */}
+                    {e.task.triggerResolved ? (
+                      <span
+                        className="shrink-0 text-[12px] font-bold text-emerald-700"
+                        title="원천 데이터가 조건을 해소했습니다 — 확인 후 ✓ 처리하면 사라집니다"
+                      >
+                        해소됨 — 확인 대기
+                      </span>
+                    ) : e.task.daysLeft != null && e.task.daysLeft < 0 ? (
                       <span className="shrink-0 text-[12px] font-bold text-bad-ink">연체 {-e.task.daysLeft}일</span>
                     ) : null}
                     <button
