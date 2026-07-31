@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   Check, X, AlertCircle, Clock, Loader2, FileEdit, Users, User, Network,
-  Database, Download, UserCircle2, Lock, ClipboardList
+  UserCircle2, Lock, ClipboardList
 } from 'lucide-react'
 import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import type {
@@ -11,9 +11,11 @@ import type {
   TodayTaskDto,
   KpiIndicatorDto,
   MesRecordsStatusDto,
+  SemimesSummaryDto,
   AppUserDto,
   ObligationMatrixDto
 } from '@shared/ipc-types'
+import { PipelineBand } from './PipelineBand'
 import { CardShell, KpiTile as StatTile, TeamDonut, MatrixBoard, MatrixLegend, SegTabs } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
 import { traceDeepLink } from '../../../lib/deeplink'
@@ -21,15 +23,6 @@ import { useUIStore, type PageId } from '../../stores/uiStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { KpiBatchEntryModal } from './KpiBatchEntryModal'
 
-/** 'YYYY-MM-DD' 두 날짜 사이 일수(b-a). */
-function daysBetweenYmd(a: string, b: string): number {
-  return Math.round((new Date(`${b}T00:00:00`).getTime() - new Date(`${a}T00:00:00`).getTime()) / 86400000)
-}
-/** 'YYYY-MM-DD' → 'M/D' */
-function shortYmd(ymd: string): string {
-  const [, m, d] = ymd.split('-')
-  return `${Number(m)}/${Number(d)}`
-}
 type Entry = { task: TodayTaskDto; teamId: TeamId | null }
 const PROMPT_SEEN_KEY = 'user_prompt_seen'
 
@@ -50,6 +43,7 @@ export function PortalHome(): JSX.Element {
   const [boardView, setBoardView] = useState<'team' | 'person'>('team')
   const [completing, setCompleting] = useState<number | null>(null)
   const [mesStatus, setMesStatus] = useState<MesRecordsStatusDto | null>(null)
+  const [semimes, setSemimes] = useState<SemimesSummaryDto | null>(null)
   const [matrix, setMatrix] = useState<ObligationMatrixDto | null>(null)
   const [matrixStatus, setMatrixStatus] = useState<'ready' | 'loading' | 'error'>('loading')
   const [matrixView, setMatrixView] = useState<'team' | 'person'>('team')
@@ -113,6 +107,15 @@ export function PortalHome(): JSX.Element {
         setMesStatus(s)
       } catch {
         setMesStatus(null)
+      }
+    })()
+    // P1 ⓐ 기준정보 4종(품목·간선·라우팅·공정) — M0 실적재 수치(채널 재사용)
+    void (async () => {
+      try {
+        const s = (await window.api.invoke(window.api.channels.SEMIMES_SUMMARY)) as SemimesSummaryDto
+        setSemimes(s)
+      } catch {
+        setSemimes(null)
       }
     })()
   }, [load, loadKpis])
@@ -239,9 +242,6 @@ export function PortalHome(): JSX.Element {
     done: t.done,
     denom: t.done + t.open
   }))
-  const mesBehind =
-    mesStatus?.available && mesStatus.dataEndYmd ? daysBetweenYmd(mesStatus.dataEndYmd, board.date) : null
-
   return (
     <div className="space-y-4 break-keep">
       {/* ── 템플릿 A 헤더 밴드 (19번 규칙②) — 제목+캡션+우측 상태 칩 ── */}
@@ -251,25 +251,6 @@ export function PortalHome(): JSX.Element {
           {profile?.companyName || '데일리Q'} · {dateLabel}
         </span>
         <span className="flex-1" />
-        {mesBehind != null && mesBehind >= 7 ? (
-          <button
-            type="button"
-            onClick={() => setPage('mes-records')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-bold bg-warn-tint text-warn-ink border border-[#F5D9A8]"
-            title="MES 일일 기록이 오래됐습니다 — 현황 보기"
-          >
-            <Download className="w-3.5 h-3.5" /> MES {mesBehind}일 지남 — 다운로드 필요
-          </button>
-        ) : mesStatus?.available && mesStatus.dataEndYmd ? (
-          <button
-            type="button"
-            onClick={() => setPage('mes-records')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-semibold bg-muted text-muted-foreground"
-            title="MES 기록 현황 보기"
-          >
-            <Database className="w-3.5 h-3.5" /> MES 기준 {shortYmd(mesStatus.dataEndYmd)}
-          </button>
-        ) : null}
         <button
           type="button"
           onClick={() => setShowPrompt(true)}
@@ -282,6 +263,21 @@ export function PortalHome(): JSX.Element {
           {currentUser ? `${currentUser.name} · ${currentUser.teamDept ?? ''}` : '사용자 선택'}
         </button>
       </div>
+
+      {/* ── P1 ⓐ 데이터 파이프라인 밴드 (25번 §3 — 수신상태·기준정보 4종·오늘 수신·데이터 할 일) ──
+          (구)헤더 MES 칩은 밴드 [MES 수신] 클러스터로 이동 — 정보 손실 0, 신호등·계열별 수신일 보강 */}
+      <PipelineBand
+        mes={mesStatus}
+        semimes={semimes}
+        dataTodo={dataCount}
+        boardDate={board.date}
+        onOpenMes={() => setPage('mes-records')}
+        onOpenTree={() => setPage('item-tree')}
+        onOpenBoard={() => {
+          setOnlyOpen(true)
+          document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' })
+        }}
+      />
 
       {/* ── KPI 스탯 타일 5 (17번 §3-1) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
@@ -468,7 +464,7 @@ export function PortalHome(): JSX.Element {
       )}
 
       {/* 메인: 오늘 할 일 보드 — 팀별 ⇄ 개인별 (전체 보드, 삭제 없이 유지) */}
-      <div>
+      <div id="today-board">
         <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
           <span className="text-[19px] font-extrabold tracking-[-0.01em]">
             오늘 할 일 — 했는지 · 안 했는지
