@@ -195,6 +195,16 @@ async function main() {
       await sleep(shot.clickWaitMs ?? 900)
     }
 
+    // 본문 스크롤(P1 게이트 260731) — 앱은 <main> 내부 스크롤이라 captureBeyondViewport 로
+    // 하단 존이 안 잡힘 → scrollY 지정 시 main 을 해당 위치로 내리고 찍는다.
+    if (shot.scrollY != null) {
+      await cdp.send('Runtime.evaluate', {
+        expression: `document.querySelector('main')?.scrollTo({ top: ${Number(shot.scrollY)}, behavior: 'instant' })`,
+        returnByValue: true
+      })
+      await sleep(400)
+    }
+
     // 캡처 — DPI 무관. full 이면 뷰포트 밖까지.
     const params = { format: 'png', captureBeyondViewport: !!shot.full }
     const { data } = await cdp.send('Page.captureScreenshot', params)
