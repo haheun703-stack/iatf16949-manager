@@ -51,6 +51,8 @@ export function PortalHome(): JSX.Element {
   const [matrixView, setMatrixView] = useState<'team' | 'person'>('team')
   const [showPrompt, setShowPrompt] = useState(false)
   const [kpiBatchOpen, setKpiBatchOpen] = useState(false)
+  // P1 ⓔ — 사람 의무 존 하단 탭(오늘 할 일 보드 ⇄ 이행 매트릭스, 정보 손실 0)
+  const [homeTab, setHomeTab] = useState<'board' | 'matrix'>('board')
   const setPage = useUIStore((s) => s.setPage)
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const setSelectedTeam = useUIStore((s) => s.setSelectedTeam)
@@ -276,8 +278,9 @@ export function PortalHome(): JSX.Element {
         onOpenMes={() => setPage('mes-records')}
         onOpenTree={() => setPage('item-tree')}
         onOpenBoard={() => {
+          setHomeTab('board')
           setOnlyOpen(true)
-          document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' })
+          setTimeout(() => document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' }), 50)
         }}
       />
 
@@ -286,6 +289,47 @@ export function PortalHome(): JSX.Element {
 
       {/* ── P1 ⓒ 품번×공정 매트릭스 (월 수불량 SO 정렬 — R1 확정) ── */}
       <PartProcessMatrix />
+
+      {/* ── P1 ⓓ 데이터 트리거 보드 승격 (M3 — 시스템 발행, ✓는 사람 몫) ── */}
+      {(() => {
+        const triggerTasks = allEntries.filter((e) => e.task.triggerIssueId && e.task.status !== 'done')
+        return (
+          <CardShell
+            title="데이터 할 일 — 시스템 발행"
+            cap="행렬 공백·심사 갭에서 자동 발행 — 국내 SME MES에 없는 계층 · ✓ 처리는 사람"
+          >
+            {triggerTasks.length === 0 ? (
+              <div className="px-[18px] pb-4 text-[13px] text-muted-foreground">공백 신호 없음 👍</div>
+            ) : (
+              <div className="px-[18px] pb-3 space-y-1.5">
+                {triggerTasks.map((e) => (
+                  <div
+                    key={e.task.id}
+                    className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2"
+                  >
+                    <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[11px] font-extrabold">
+                      데이터
+                    </span>
+                    <span className="min-w-0 flex-1 text-[13px] font-semibold truncate">{e.task.title}</span>
+                    {e.task.daysLeft != null && e.task.daysLeft < 0 ? (
+                      <span className="shrink-0 text-[12px] font-bold text-bad-ink">연체 {-e.task.daysLeft}일</span>
+                    ) : null}
+                    <button
+                      type="button"
+                      disabled={completing === e.task.id}
+                      onClick={() => void complete(e.task)}
+                      className="shrink-0 h-7 px-3 rounded-md text-[12px] font-bold bg-primary text-primary-foreground disabled:opacity-50"
+                      title="해소 확인 — 사람이 ✓(M3 규율)"
+                    >
+                      {completing === e.task.id ? '처리 중…' : '✓ 처리'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardShell>
+        )
+      })()}
 
       {/* ── KPI 스탯 타일 5 (17번 §3-1) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
@@ -316,79 +360,7 @@ export function PortalHome(): JSX.Element {
         />
       </div>
 
-      {/* ── 메인 그리드: 이행 매트릭스 | 우측 레일 (16번 목업) ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4 items-start">
-        <CardShell
-          title="이행 매트릭스"
-          cap={`사람 × 최근 ${matrix ? matrix.days.length : 7}일 — 했는지 · 안 했는지`}
-          status={matrixStatus}
-          onRetry={() => void load()}
-          actions={
-            <SegTabs
-              value={matrixView}
-              options={[
-                { key: 'team', label: '팀별' },
-                { key: 'person', label: '개인별' }
-              ]}
-              onChange={setMatrixView}
-            />
-          }
-        >
-          {matrix && matrix.teams.length > 0 ? (
-            <>
-              <MatrixBoard matrix={matrix} personView={matrixView === 'person'} />
-              <MatrixLegend />
-            </>
-          ) : (
-            <div className="px-[18px] py-10 text-[13px] text-muted-foreground">
-              표시할 의무가 없습니다 — 정기 의무에서 등록하세요.
-            </div>
-          )}
-        </CardShell>
-
-        <div className="grid gap-4">
-          <CardShell title="전사 이행률" cap="오늘">
-            <TeamDonut
-              segments={donutSegs}
-              centerPct={ratePct}
-              centerCap="오늘"
-              onPickTeam={(id) => {
-                setSelectedTeam(id)
-                setPage('team-detail')
-              }}
-            />
-            <div className="px-[18px] pb-4">
-              <div className="text-[12px] font-semibold text-muted-foreground mb-1.5">주간 완료 추이</div>
-              <TrendBars trend={board.trend} />
-            </div>
-          </CardShell>
-
-          <CardShell
-            title="내 할 일"
-            cap={currentUser ? `${currentUser.name} · 오늘` : '사용자 미선택'}
-            actions={
-              <button
-                type="button"
-                onClick={() => setBoardView('person')}
-                className="text-[12px] font-bold text-primary"
-                title="아래 보드를 개인별 보기로 전환"
-              >
-                전체 보기 ›
-              </button>
-            }
-          >
-            <RailTasks
-              user={currentUser}
-              entries={heroToday}
-              mode={heroMode}
-              completing={completing}
-              onComplete={(t, source) => void complete(t, source)}
-              onOpenForm={openForm}
-              onSelectUser={() => setShowPrompt(true)}
-            />
-          </CardShell>
-        </div>
-      </div>
+      {/* (P1 ⓔ) 이행 매트릭스+우측 레일 그리드 = 하단 탭으로 이동(정보 손실 0) — 아래 homeTab 'matrix' 분기 */}
 
       {/* (구)회사밴드·경영지표 위젯 = 헤더 밴드·KPI 타일·도넛·스파크로 흡수(정보손실 0 확인표).
           미이행만 보기·정기 의무 관리 버튼은 아래 '오늘 할 일 보드' 헤더로 이동. */}
@@ -471,6 +443,96 @@ export function PortalHome(): JSX.Element {
         />
       )}
 
+      {/* ── P1 ⓔ 사람 의무 존 — 하단 탭(오늘 할 일 보드 ⇄ 이행 매트릭스, 정보 손실 0) ── */}
+      <div className="flex items-center gap-2.5 pt-1">
+        <SegTabs
+          value={homeTab}
+          options={[
+            { key: 'board', label: '오늘 할 일 보드' },
+            { key: 'matrix', label: '이행 매트릭스' }
+          ]}
+          onChange={setHomeTab}
+        />
+        <span className="text-[12.5px] text-muted-foreground">사람 의무 존 — 반-MES 실황 아래 상시(탭 전환·삭제 없음)</span>
+      </div>
+
+      {homeTab === 'matrix' && (
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4 items-start">
+          <CardShell
+            title="이행 매트릭스"
+            cap={`사람 × 최근 ${matrix ? matrix.days.length : 7}일 — 했는지 · 안 했는지`}
+            status={matrixStatus}
+            onRetry={() => void load()}
+            actions={
+              <SegTabs
+                value={matrixView}
+                options={[
+                  { key: 'team', label: '팀별' },
+                  { key: 'person', label: '개인별' }
+                ]}
+                onChange={setMatrixView}
+              />
+            }
+          >
+            {matrix && matrix.teams.length > 0 ? (
+              <>
+                <MatrixBoard matrix={matrix} personView={matrixView === 'person'} />
+                <MatrixLegend />
+              </>
+            ) : (
+              <div className="px-[18px] py-10 text-[13px] text-muted-foreground">
+                표시할 의무가 없습니다 — 정기 의무에서 등록하세요.
+              </div>
+            )}
+          </CardShell>
+
+          <div className="grid gap-4">
+            <CardShell title="전사 이행률" cap="오늘">
+              <TeamDonut
+                segments={donutSegs}
+                centerPct={ratePct}
+                centerCap="오늘"
+                onPickTeam={(id) => {
+                  setSelectedTeam(id)
+                  setPage('team-detail')
+                }}
+              />
+              <div className="px-[18px] pb-4">
+                <div className="text-[12px] font-semibold text-muted-foreground mb-1.5">주간 완료 추이</div>
+                <TrendBars trend={board.trend} />
+              </div>
+            </CardShell>
+
+            <CardShell
+              title="내 할 일"
+              cap={currentUser ? `${currentUser.name} · 오늘` : '사용자 미선택'}
+              actions={
+                <button
+                  type="button"
+                  onClick={() => setBoardView('person')}
+                  className="text-[12px] font-bold text-primary"
+                  title="보드를 개인별 보기로 전환"
+                >
+                  전체 보기 ›
+                </button>
+              }
+            >
+              <RailTasks
+                user={currentUser}
+                entries={heroToday}
+                mode={heroMode}
+                completing={completing}
+                onComplete={(t, source) => void complete(t, source)}
+                onOpenForm={openForm}
+                onSelectUser={() => setShowPrompt(true)}
+              />
+            </CardShell>
+          </div>
+        </div>
+      )}
+
+      {homeTab === 'board' && (
+      <>
       {/* 메인: 오늘 할 일 보드 — 팀별 ⇄ 개인별 (전체 보드, 삭제 없이 유지) */}
       <div id="today-board">
         <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
@@ -616,6 +678,8 @@ export function PortalHome(): JSX.Element {
           담당 팀이 지정되지 않은 오늘 업무 <b>{board.unassigned.length}건</b> — 정기 의무에서 담당을
           지정하면 보드에 나타납니다 ›
         </button>
+      )}
+      </>
       )}
 
       {/* §4 — 첫 실행 시 사용자 선택 모달 1회(건너뛰기 허용) */}
