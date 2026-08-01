@@ -76,6 +76,48 @@ export interface NavSnapshot {
 
 const NAV_HISTORY_MAX = 20
 
+/**
+ * 최근 연 양식(P12). 양식 간 이동은 페이지가 'form-builder' 그대로라 nav 히스토리에 안 쌓인다
+ * — 302종 목록에서 오가면 매번 다시 찾아 들어가야 했다. 방문 순서를 따로 남겨 상단 줄에
+ * 칩으로 띄우고, 클릭하면 그 양식으로 바로 복귀한다. 재방문은 맨 앞으로 끌어올린다(LRU).
+ */
+export interface RecentForm {
+  code: string
+  name: string
+}
+const RECENT_FORMS_MAX = 12
+const RECENT_FORMS_KEY = 'ui.recentForms'
+
+function readRecentForms(): RecentForm[] {
+  try {
+    const raw = localStorage.getItem(RECENT_FORMS_KEY)
+    const arr = raw ? (JSON.parse(raw) as unknown) : null
+    if (!Array.isArray(arr)) return []
+    return arr
+      .filter(
+        (x): x is RecentForm =>
+          !!x && typeof (x as RecentForm).code === 'string' && typeof (x as RecentForm).name === 'string'
+      )
+      .slice(0, RECENT_FORMS_MAX)
+  } catch {
+    return []
+  }
+}
+
+/**
+ * [뒤로]로 되돌아가는 중임을 pushRecentForm 에 알리는 1회성 플래그.
+ * 스토어 상태로 두면 이 값 변경이 구독자 리렌더를 유발하므로 모듈 지역에 둔다.
+ */
+const popGuard = { active: false }
+
+function saveRecentForms(list: RecentForm[]): void {
+  try {
+    localStorage.setItem(RECENT_FORMS_KEY, JSON.stringify(list))
+  } catch {
+    /* 저장 실패는 무시 — 기능은 메모리 상태로 계속 동작 */
+  }
+}
+
 interface UIState {
   currentPage: PageId
   setPage: (page: PageId) => void
@@ -91,6 +133,21 @@ interface UIState {
 
   selectedFormCode: string | null
   setSelectedFormCode: (code: string | null) => void
+
+  /** 최근 연 양식(P12) — 상단 칩 줄. 최신이 앞, 상한 12, localStorage 영속. */
+  recentForms: RecentForm[]
+  pushRecentForm: (form: RecentForm) => void
+  removeRecentForm: (code: string) => void
+  clearRecentForms: () => void
+
+  /**
+   * 양식 단위 뒤로 스택(P12). 페이지 히스토리는 form-builder 안에서의 양식 이동을 못 잡아
+   * "양식 A→B 로 옮기면 A 로 돌아갈 방법이 없다"는 문제가 있었다. 방문 순서를 따로 쌓아
+   * [뒤로]가 직전 양식으로 먼저 가고, 더 없을 때만 페이지 뒤로로 넘어가게 한다.
+   */
+  formHistory: string[]
+  /** 직전 양식 코드를 꺼낸다(없으면 null). 꺼낸 뒤의 재진입은 스택에 다시 쌓지 않는다. */
+  popFormHistory: () => string | null
 
   // form-builder 진입 시 열어야 할 기존 작성본 id (분배된 양식 [열기]용). 1회 소비 후 null.
   pendingSubmissionId: number | null
@@ -184,6 +241,49 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   selectedFormCode: null,
   setSelectedFormCode: (code) => set({ selectedFormCode: code }),
+
+  recentForms: readRecentForms(),
+  pushRecentForm: (form) =>
+    set((s) => {
+      if (!form.code) return {}
+      const head = s.recentForms[0]
+      if (head && head.code === form.code && head.name === form.name) return {} // 같은 양식 재렌더 — 무변경
+      const next = [form, ...s.recentForms.filter((f) => f.code !== form.code)].slice(
+        0,
+        RECENT_FORMS_MAX
+      )
+      saveRecentForms(next)
+      // 떠나는 양식을 뒤로 스택에 쌓는다. 단 [뒤로]로 되돌아온 경우는 제외 —
+      // 안 그러면 A↔B 를 오갈 때 스택이 무한히 자라 뒤로가 제자리를 맴돈다.
+      const skip = popGuard.active
+      popGuard.active = false
+      const hist =
+        !skip && head && head.code !== form.code
+          ? [...s.formHistory, head.code].slice(-NAV_HISTORY_MAX)
+          : s.formHistory
+      return { recentForms: next, formHistory: hist }
+    }),
+  removeRecentForm: (code) =>
+    set((s) => {
+      const next = s.recentForms.filter((f) => f.code !== code)
+      saveRecentForms(next)
+      return { recentForms: next }
+    }),
+  clearRecentForms: () =>
+    set(() => {
+      saveRecentForms([])
+      return { recentForms: [], formHistory: [] }
+    }),
+
+  formHistory: [],
+  popFormHistory: () => {
+    const s = get()
+    const code = s.formHistory[s.formHistory.length - 1]
+    if (!code) return null
+    popGuard.active = true // 이어질 pushRecentForm 이 스택에 되쌓지 않도록
+    set({ formHistory: s.formHistory.slice(0, -1) })
+    return code
+  },
 
   pendingSubmissionId: null,
   setPendingSubmissionId: (id) => set({ pendingSubmissionId: id }),

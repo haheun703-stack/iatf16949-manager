@@ -38,6 +38,13 @@ export function FormCanvas({
   const setSelectedFormCode = useUIStore((s) => s.setSelectedFormCode)
   const setPage = useUIStore((s) => s.setPage)
   const hasHistory = useUIStore((s) => s.history.length > 0)
+  // P12 — 양식 단위 뒤로. 직전 양식 코드가 있으면 [뒤로]가 페이지가 아니라 그 양식으로 간다.
+  const prevFormCode = useUIStore((s) => s.formHistory[s.formHistory.length - 1] ?? null)
+  const popFormHistory = useUIStore((s) => s.popFormHistory)
+  const recentForms = useUIStore((s) => s.recentForms)
+  const prevFormName = prevFormCode
+    ? (recentForms.find((f) => f.code === prevFormCode)?.name ?? prevFormCode)
+    : null
   // 기록 주체 = 활성 사용자(§4). [저장하고 완료] 시 createdBy 로 전달
   const currentName = useActiveUserStore((s) => {
     const u = s.users.find((x) => x.id === s.activeUserId)
@@ -184,6 +191,27 @@ export function FormCanvas({
     }
   }
 
+  /**
+   * [뒤로] — 양식 단위를 페이지 단위보다 먼저 본다(P12).
+   * 양식 A→B 로 옮기면 페이지는 계속 'form-builder' 라 페이지 히스토리에 안 쌓인다.
+   * 그래서 예전엔 A 로 돌아갈 방법이 아예 없었다. 직전 양식이 있으면 그리로,
+   * 없을 때만 화면(페이지) 뒤로로 넘어간다.
+   */
+  const handleBack = async (): Promise<void> => {
+    const prev = popFormHistory()
+    if (!prev) {
+      goBackWithGuard()
+      return
+    }
+    try {
+      await saveDraft() // [이어서 작성]과 같은 규율 — 작성 중 값 보존
+    } catch (err) {
+      console.error('[form] 이전 양식으로 이동 전 자동 저장 실패', err)
+    }
+    setSelectedFormCode(prev)
+    void loadFormDefinition(prev)
+  }
+
   const handleGoToNext = async (): Promise<void> => {
     if (!currentForm?.nextFormCode) return
     const next = currentForm.nextFormCode
@@ -221,15 +249,15 @@ export function FormCanvas({
       <header className="px-6 py-5 border-b border-border">
         <div className="flex items-start justify-between gap-3 mb-2.5">
           <div className="flex items-center gap-2 pt-1">
-            {hasHistory && (
+            {(prevFormCode || hasHistory) && (
               <button
                 type="button"
-                onClick={goBackWithGuard}
-                title="뒤로 (Alt+←)"
-                className="flex items-center gap-1 -ml-1 pr-2 py-1 rounded-md text-[12px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                onClick={() => void handleBack()}
+                title={prevFormName ? `이전 양식으로 — ${prevFormName}` : '뒤로 (Alt+←)'}
+                className="flex items-center gap-1 -ml-1 pr-2 py-1 rounded-md text-[12px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors max-w-[220px]"
               >
-                <ArrowLeft className="w-4 h-4" />
-                뒤로
+                <ArrowLeft className="w-4 h-4 shrink-0" />
+                <span className="truncate">{prevFormName ?? '뒤로'}</span>
               </button>
             )}
             <span className="text-[11px] font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded tracking-tight">
