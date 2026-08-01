@@ -42,6 +42,10 @@ from openpyxl import load_workbook
 PAGE_RE = re.compile(r"^\s*(\d+)\s*/\s*(\d+)\s*$")
 # 최상위 표제: "1." "12." — "6.1" 같은 하위번호는 제외(뒤에 숫자가 오면 불일치)
 HEAD_RE = re.compile(r"^\s*(\d{1,2})\s*\.(?!\d)\s*(.*)$")
+# 2단계 표제: "8.1 운용 기획 및 관리" — "8.1.1"(3단계)은 제외.
+# 품질환경매뉴얼처럼 한 장(章)이 3만자를 넘는 문서는 장 단위로만 쪼개면 KB 검색이
+# 조각 하나를 통째로 반환해 어디를 볼지 못 짚어준다 → --sublevel 로 절(節)까지 분할.
+SUB_HEAD_RE = re.compile(r"^\s*(\d{1,2})\.(\d{1,2})(?!\.?\d)\s*(.*)$")
 HDR_LABELS = ("문서번호", "재,개정일자", "개정번호", "페이지", "품질경영시스템", "환경경영시스템")
 PAGE_COL_HINT = 47
 LABEL_COL_HINT = 41
@@ -177,12 +181,29 @@ def annex_sections(wb):
     return [(f"[부표] {t}", b) for t, b, _i in sorted(kept, key=lambda x: x[2])]
 
 
-def extract(path):
+def head_key(p, sublevel):
+    """표제면 (대번호, 소번호, 제목) 반환, 아니면 None. sublevel 이면 'N.M'도 표제로."""
+    if not p or LEADER_RE.search(p):
+        return None
+    if sublevel:
+        m = SUB_HEAD_RE.match(p)
+        if m:
+            return int(m.group(1)), int(m.group(2)), m.group(3)
+    m = HEAD_RE.match(p)
+    return (int(m.group(1)), 0, m.group(2)) if m else None
+
+
+def extract(path, sheet=None, sublevel=False):
+    """sheet 지정 시 그 시트를 본문으로 삼는다(품질환경매뉴얼처럼 장(章)이 시트로 나뉜 문서)."""
     wb = load_workbook(path, data_only=True)
-    ws = wb.worksheets[0]
+    ws = wb[sheet] if sheet else wb.worksheets[0]
     cells = read_cells(ws)
     pages = find_pages(cells)
-    split = detect_split(cells, pages) if pages else 30
+    # 페이지 머리글 템플릿이 없는 시트(예: 품질환경매뉴얼의 ZF CSR 매트릭스)는 경계가 안 잡혀
+    # 본문 범위가 0이 된다 → 시트 전체를 1페이지로 보고 읽는다(실측: 378셀 35,352자가 통째로 누락됐음).
+    if not pages:
+        pages = [(1, 10 ** 6)]
+    split = detect_split(cells, pages)
 
     # ── 메타 ── 머리글 라벨(열 41+) 오른쪽 값
     meta = {"sheet": ws.title, "pages": len(pages), "split_col": split,
@@ -268,8 +289,7 @@ def extract(path):
     # ── 첫 표제 위치 = (서두)/본문 경계 ──
     first_head = len(stream)
     for i, item in enumerate(stream):
-        p = prose_of(item)
-        if p and HEAD_RE.match(p):
+        if head_key(prose_of(item), sublevel):
             first_head = i
             break
 
@@ -294,7 +314,7 @@ def extract(path):
     # 문맥 접두어로 붙여 구분한다. 원문 번호는 그대로 두고 접두어만 추가(원문 훼손 없음).
     sections = []
     cur_title, cur_body, cur_tbl = None, [], []
-    last_num, ctx, ctx_n = 0, "", 0
+    last_key, ctx, ctx_n = (0, 0), "", 0
     annex_label = None
 
     def flush():
@@ -312,21 +332,22 @@ def extract(path):
         p, tbl = split_row(item)
         if p and ANNEX_RE.match(p):
             annex_label = re.sub(r"\s+", " ", p)[:24]
-        m = HEAD_RE.match(p) if p and not LEADER_RE.search(p) else None
-        if m and len(p) <= 40:
-            num = int(m.group(1))
-            if num < last_num:  # 번호 재시작 = 부표/별첨 진입
+        hk = head_key(p, sublevel)
+        if hk and len(p) <= 40:
+            key = (hk[0], hk[1])
+            if key < last_key:  # 번호 재시작 = 부표/별첨 진입
                 ctx_n += 1
                 ctx = f"[{annex_label}] " if annex_label else f"[별첨{ctx_n}] "
                 annex_label = None
-            last_num = num
+            last_key = key
             flush()
             cur_title, cur_body, cur_tbl = ctx + p, [], []
-        elif m:
+        elif hk:
             # 표제 + 본문이 한 셀에 붙은 경우 — 앞부분을 제목으로 절단
             flush()
-            cut = re.split(r"(?<=[가-힣])\s(?=[(0-9가-힣])", m.group(2), 1)
-            cur_title = f"{m.group(1)}. {cut[0]}"[:40]
+            num = f"{hk[0]}.{hk[1]}" if hk[1] else f"{hk[0]}."
+            cut = re.split(r"(?<=[가-힣])\s(?=[(0-9가-힣])", hk[2], 1)
+            cur_title = f"{num} {cut[0]}"[:40]
             cur_body, cur_tbl = [p], []
         elif p:
             cur_body.append(p)
@@ -334,12 +355,10 @@ def extract(path):
             cur_tbl.append(tbl)
     flush()
 
-    # 목차(TOC) 행 제거 — 점선 리더가 붙은 표제("1. - - - - - - 적용범위")가 본문 없는
-    # 섹션으로 잡힌다(실측 A-4101: 실제 1·2항과 제목이 중복돼 열람 시 같은 항목이 두 번 보임).
-    # 본문이 완전히 빈 섹션은 내용이 없으므로 버려도 손실이 없다(커버리지 검증으로 확인).
-    dropped = [t for t, b in sections if not b.strip()]
-    sections = [(t, b) for t, b in sections if b.strip()]
-    meta["dropped_toc"] = dropped
+    # 본문이 빈 섹션도 남긴다. 목차 점선 리더는 LEADER_RE 가 이미 표제에서 배제하므로,
+    # 여기 남는 빈 섹션은 '장 표제'처럼 제목만 있는 실제 표제다(실측: --sublevel 사용 시
+    # "8. 운용"이 8.1 직전에 빈 섹션이 되는데, 버리면 장 제목 텍스트가 통째로 사라진다).
+    meta["empty_sections"] = [t for t, b in sections if not b.strip()]
 
     sections.extend(annex_sections(wb))
     meta["annex_sheets"] = [t for t, _b in sections if t.startswith("[부표]")]
@@ -367,7 +386,15 @@ def main():
     ap.add_argument("--dir")
     ap.add_argument("--out")
     ap.add_argument("--text", action="store_true")
+    ap.add_argument("--sheet")
+    ap.add_argument("--sheets", action="store_true", help="시트 목록만 출력")
+    ap.add_argument("--sublevel", action="store_true", help="'8.1' 절 단위까지 분할")
     a = ap.parse_args()
+
+    if a.sheets:
+        for i, n in enumerate(load_workbook(a.xlsx, data_only=True).sheetnames):
+            print(f"  [{i}] {n}")
+        return
 
     if a.dir:
         docs = []
@@ -388,7 +415,7 @@ def main():
                 print(f"  ⚠ {d['file']}: {d['error']}")
         return
 
-    doc = extract(a.xlsx)
+    doc = extract(a.xlsx, a.sheet, a.sublevel)
     print(to_text(doc) if a.text else json.dumps(doc, ensure_ascii=False, indent=1))
 
 
