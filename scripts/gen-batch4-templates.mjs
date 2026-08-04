@@ -21,7 +21,7 @@ import { mkdirSync } from 'fs'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const MASTER =
   process.env.IATF_MASTERS_DIR ||
-  'D:/IATF16949,SQ 자동작성 봇/IATF 전체 자료모음_김권표이사_260501/3.IATF16949 규정&지침 _230501'
+  join(root, '..', 'IATF 전체 자료모음_김권표이사_260501', '3.IATF16949 규정&지침 _230501')
 const OUT_B4 = join(root, 'resources', 'templates', 'batch4')
 const OUT_SQ = join(root, 'resources', 'templates', 'sq_gap_forms')
 mkdirSync(OUT_B4, { recursive: true })

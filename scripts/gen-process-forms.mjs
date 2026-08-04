@@ -2,9 +2,14 @@
 // 실행: node scripts/gen-process-forms.mjs  → _demo_output/0026_remap_process_forms.sql + 변경요약
 import fs from 'node:fs'
 
-const CSV06 = 'D:\\IATF16949,SQ 자동작성 봇\\iatf16949-manager\\_demo_output\\매트릭스_0.6프로세스 매트릭스_부서_.csv'
-const SQL   = 'D:\\IATF16949,SQ 자동작성 봇\\iatf16949-manager\\resources\\migrations\\0014_seed_all_forms.sql'
-const OUT   = 'D:\\IATF16949,SQ 자동작성 봇\\iatf16949-manager\\_demo_output\\0026_remap_process_forms.sql'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// 프로젝트 루트 = scripts/ 의 두 단계 위 — 드라이브 문자(D/E/H) 무관
+const PROJECT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
+const CSV06 = path.join(PROJECT, 'iatf16949-manager', '_demo_output', '매트릭스_0.6프로세스 매트릭스_부서_.csv')
+const SQL   = path.join(PROJECT, 'iatf16949-manager', 'resources', 'migrations', '0014_seed_all_forms.sql')
+const OUT   = path.join(PROJECT, 'iatf16949-manager', '_demo_output', '0026_remap_process_forms.sql')
 
 function parseCSV(text){
   const rows=[]; let row=[]; let cur=''; let q=false

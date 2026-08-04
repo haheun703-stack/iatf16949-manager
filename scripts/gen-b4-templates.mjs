@@ -19,7 +19,7 @@ import { dirname, join } from 'path'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(root, 'resources', 'templates', 'sq_gap_forms')
-const MASTER = 'D:/IATF16949,SQ 자동작성 봇/IATF 전체 자료모음_김권표이사_260501/3.IATF16949 규정&지침 _230501/'
+const MASTER = join(root, '..', 'IATF 전체 자료모음_김권표이사_260501', '3.IATF16949 규정&지침 _230501') + '/'
 
 const F_A5100 = 'A-5100 내부심사 규정 (24년5월27일_REV.6)_품질경영.xlsx'
 const F_A5200 = 'A-5200 공정 및 제품심사 규정 (23년5월1일_REV.5)_품질경영.xlsx'

@@ -5,8 +5,12 @@ import ExcelJS from 'exceljs'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const ROOT = 'D:\\IATF16949,SQ 자동작성 봇\\IATF 전체 자료모음_김권표이사_260501'
-const OUT  = 'D:\\IATF16949,SQ 자동작성 봇\\iatf16949-manager\\_demo_output\\전체_폼형_셀맵.csv'
+import { fileURLToPath } from 'node:url'
+
+// 프로젝트 루트 = scripts/ 의 두 단계 위 — 드라이브 문자(D/E/H) 무관
+const PROJECT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
+const ROOT = path.join(PROJECT, 'IATF 전체 자료모음_김권표이사_260501')
+const OUT  = path.join(PROJECT, 'iatf16949-manager', '_demo_output', '전체_폼형_셀맵.csv')
 
 function walk(dir){ let r=[]; for(const e of fs.readdirSync(dir,{withFileTypes:true})){ const p=path.join(dir,e.name)
   if(e.isDirectory()) r=r.concat(walk(p)); else if(e.name.endsWith('.xlsx') && !e.name.startsWith('~$')) r.push(p) } return r }

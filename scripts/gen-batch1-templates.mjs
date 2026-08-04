@@ -28,12 +28,12 @@ const GAP = join(root, 'resources', 'templates', 'sq_gap_forms')
 mkdirSync(AM_OUT, { recursive: true })
 
 const SRC_MES = join(
-  'D:/IATF16949,SQ 자동작성 봇',
+  root, '..',
   '8. 자주검사 체크시트 및 설비일상점검 사내 자료',
   '12. 25450-07870 자주,수입검사,패트롤 MES엑셀자료 모음-240313'
 )
 const SRC_JODO = join(
-  'D:/IATF16949,SQ 자동작성 봇',
+  root, '..',
   'TPC AM사업부 품질폴더',
   '5. 수입검수',
   '조도측정 일지.xlsx'

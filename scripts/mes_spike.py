@@ -2,7 +2,7 @@
 """MES 일일 기록 샘플 구조 분석기 (7/20 샘플 수령 시 1순위 실행).
 
 사용법:
-    python scripts/mes_spike.py "D:\\IATF16949,SQ 자동작성 봇\\MES다운로드\\2026-07-20"
+    python scripts/mes_spike.py "..\\MES다운로드\\2026-07-20"   # 프로젝트 루트 기준 — 드라이브 문자 무관
     python scripts/mes_spike.py <파일.xlsx>            # 단일 파일도 가능
 
 출력: 파일별 시트 목록, 시트별 크기, 상단 데이터 미리보기, 병합영역·이미지 개수.

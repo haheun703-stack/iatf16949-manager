@@ -22,8 +22,9 @@ from collections import defaultdict
 import xlrd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC2021 = r"d:\IATF16949,SQ 자동작성 봇\1-1 MES 작성자료\※2021 삼성전자 대중소 MES 자료 모음\0. MES 최신 트리,라우팅-김민수 자료_200715"
-DUMPOUT = r"d:\IATF16949,SQ 자동작성 봇\8. 자주검사 체크시트 및 설비일상점검 사내 자료\TPC AM사업부 하위코드들 모음_260718\추출결과"
+_PROJECT = os.path.dirname(ROOT)  # 프로젝트 루트 — 드라이브 문자 무관
+SRC2021 = os.path.join(_PROJECT, "1-1 MES 작성자료", "※2021 삼성전자 대중소 MES 자료 모음", "0. MES 최신 트리,라우팅-김민수 자료_200715")
+DUMPOUT = os.path.join(_PROJECT, "8. 자주검사 체크시트 및 설비일상점검 사내 자료", "TPC AM사업부 하위코드들 모음_260718", "추출결과")
 OUT = os.path.join(ROOT, "docs", "mes-foundation", "p0a")
 os.makedirs(OUT, exist_ok=True)
 

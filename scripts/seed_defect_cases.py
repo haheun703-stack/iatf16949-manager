@@ -7,7 +7,8 @@
 import sqlite3, os, re, sys, glob, zipfile
 sys.stdout.reconfigure(encoding='utf-8')
 
-ROOT = r'D:/IATF16949,SQ 자동작성 봇/TPC AM사업부 품질폴더/3. 품질불량/01 불량개선대책서'
+_PROJECT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 프로젝트 루트 — 드라이브 문자 무관
+ROOT = os.path.join(_PROJECT, 'TPC AM사업부 품질폴더', '3. 품질불량', '01 불량개선대책서')
 DB = os.path.expandvars(r'%APPDATA%/iatf16949-manager/iatf16949.db')
 
 PART_RE = re.compile(r'(\d{4,5}-[0-9A-Z]{3,6}(?:-\d)?)')

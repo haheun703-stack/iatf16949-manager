@@ -13,7 +13,8 @@ seed_defect_cases.py 의 PPTX 텍스트 추출만 떼어내, 라벨-경계 정�
 import os, re, sys, glob, zipfile, json, tempfile
 sys.stdout.reconfigure(encoding='utf-8')
 
-ROOT = r'D:/IATF16949,SQ 자동작성 봇/TPC AM사업부 품질폴더/3. 품질불량/01 불량개선대책서'
+_PROJECT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 프로젝트 루트 — 드라이브 문자 무관
+ROOT = os.path.join(_PROJECT, 'TPC AM사업부 품질폴더', '3. 품질불량', '01 불량개선대책서')
 
 # 출력 경로(이식 가능: OS temp 기본). 환경변수 DEFECT_TEXTS_OUT 로 덮어쓰기 가능.
 SCRATCH = os.environ.get('DEFECT_TEXTS_OUT') or \

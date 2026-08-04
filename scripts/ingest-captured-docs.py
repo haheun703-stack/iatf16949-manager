@@ -7,8 +7,9 @@ import sys, io, os, re, glob
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
 import pypdf
 
-SRC = r'd:\IATF16949,SQ 자동작성 봇\IATF16949 캡쳐본 모음'
-OUT_SQL = r'd:\IATF16949,SQ 자동작성 봇\iatf16949-manager\resources\migrations\0044_seed_captured_docs.sql'
+_PROJECT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 프로젝트 루트 — 드라이브 문자 무관
+SRC = os.path.join(_PROJECT, 'IATF16949 캡쳐본 모음')
+OUT_SQL = os.path.join(_PROJECT, 'iatf16949-manager', 'resources', 'migrations', '0044_seed_captured_docs.sql')
 
 def sq(s):
     """SQL 문자열 리터럴 이스케이프 (None→NULL)."""

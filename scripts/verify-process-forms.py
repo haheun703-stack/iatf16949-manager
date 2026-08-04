@@ -5,7 +5,7 @@ import sqlite3, os, sys, io, re
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
 
 db = os.path.expandvars(r'%APPDATA%\iatf16949-manager\iatf16949.db')
-OUT = r'd:\IATF16949,SQ 자동작성 봇\iatf16949-manager\docs\관련양식_정합성_검증_2026-06-30.md'
+OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs', '관련양식_정합성_검증_2026-06-30.md')
 con = sqlite3.connect(f'file:{db}?mode=ro', uri=True); c = con.cursor()
 
 names = dict(c.execute('SELECT code, name FROM processes').fetchall())

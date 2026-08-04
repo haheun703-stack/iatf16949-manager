@@ -23,7 +23,7 @@ const ExcelJS = require('exceljs')
 const root = path.join(__dirname, '..')
 const MASTERS =
   process.env.IATF_MASTERS_DIR ||
-  'D:/IATF16949,SQ 자동작성 봇/IATF 전체 자료모음_김권표이사_260501/3.IATF16949 규정&지침 _230501'
+  path.join(root, '..', 'IATF 전체 자료모음_김권표이사_260501', '3.IATF16949 규정&지침 _230501')
 
 const dbPath = process.argv[2]
 const outArg = process.argv.indexOf('--out')

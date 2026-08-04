@@ -7,7 +7,7 @@
 // 2단계 사용:
 //   1) 대장 생성:  ELECTRON_RUN_AS_NODE=1 electron.exe scripts/setup-passwords.cjs --init --db <iatf16949.db>
 //      → 활성 사용자 전원의 제안 대장 CSV 를 만든다(고정 3명 + 나머지 순번 자동).
-//      기본 출력: "d:\IATF16949,SQ 자동작성 봇\관리팀_비밀번호대장.csv" (repo 밖 — git 미포함)
+//      기본 출력: <프로젝트 루트>\관리팀_비밀번호대장.csv (repo 밖 — git 미포함, 드라이브 문자 무관)
 //      관리팀이 파일을 열어 원하는 비번으로 수정·보관한다.
 //   2) 적용:      ... setup-passwords.cjs --apply --db <iatf16949.db> [--ledger <csv>]
 //      → 대장의 (이름,비번) 을 bcrypt 해시로 적용 + must_change_pw=0. 멱등(재실행 = 동일 결과).
@@ -26,7 +26,7 @@ const arg = (n, d) => {
 }
 const MODE = args.includes('--init') ? 'init' : args.includes('--apply') ? 'apply' : null
 const DB_PATH = arg('--db', null)
-const LEDGER = arg('--ledger', 'd:\\IATF16949,SQ 자동작성 봇\\관리팀_비밀번호대장.csv')
+const LEDGER = arg('--ledger', path.join(__dirname, '..', '..', '관리팀_비밀번호대장.csv'))
 if (!MODE || !DB_PATH) {
   console.error('usage: setup-passwords.cjs (--init|--apply) --db <iatf16949.db> [--ledger <csv>]')
   process.exit(1)

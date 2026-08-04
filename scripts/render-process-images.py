@@ -6,7 +6,8 @@ import sys, io, os, glob, sqlite3
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
 import fitz  # PyMuPDF
 
-SRC = r'd:\IATF16949,SQ 자동작성 봇\IATF16949 캡쳐본 모음'
+_PROJECT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 프로젝트 루트 — 드라이브 문자 무관
+SRC = os.path.join(_PROJECT, 'IATF16949 캡쳐본 모음')
 DB = os.path.expandvars(r'%APPDATA%\iatf16949-manager\iatf16949.db')
 IMG_DIR = os.path.expandvars(r'%APPDATA%\iatf16949-manager\process-images')
 

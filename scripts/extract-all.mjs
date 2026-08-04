@@ -3,8 +3,13 @@
 import ExcelJS from 'exceljs'
 import fs from 'node:fs'
 
-const SRC = 'D:\\IATF16949,SQ 자동작성 봇\\IATF 전체 자료모음_김권표이사_260501\\3.IATF16949 규정&지침 _230501\\B-2100 시정조치 규정 (25년8월18일_REV.6)_품질보증.xlsx'
-const OUT = 'D:\\IATF16949,SQ 자동작성 봇\\iatf16949-manager\\_demo_output\\B2100_전체_셀맵.csv'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// 프로젝트 루트 = scripts/ 의 두 단계 위 — 드라이브 문자(D/E/H) 무관
+const PROJECT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
+const SRC = path.join(PROJECT, 'IATF 전체 자료모음_김권표이사_260501', '3.IATF16949 규정&지침 _230501', 'B-2100 시정조치 규정 (25년8월18일_REV.6)_품질보증.xlsx')
+const OUT = path.join(PROJECT, 'iatf16949-manager', '_demo_output', 'B2100_전체_셀맵.csv')
 
 function colNum(s){ let n=0; for(const c of s) n=n*26+(c.charCodeAt(0)-64); return n }
 function parseAddr(a){ const m=a.match(/^([A-Z]+)(\d+)$/); return m?{col:colNum(m[1]),row:+m[2]}:null }
