@@ -90,18 +90,26 @@ export function registerFormHandlers(): void {
 
   // ──── Form list ────
   ipcMain.handle(IPC_CHANNELS.FORM_LIST, (): FormListItemDto[] => {
-    const rows = db.prepare(`
+    // in_sq_pack 는 pack_forms(0132) 의존 — 구버전 DB/마이그 실패 생존 시 폴백(검수 8/4 M-2):
+    // 목록 전체가 죽는 대신 팩 표시만 포기한다(코드베이스 관례 = 신규 테이블은 try/catch).
+    const listSql = (withPack: boolean): string => `
       SELECT f.code, f.name, f.reg_code, f.approvals_json, f.resp_dept, f.deprecated,
              (SELECT COUNT(*) FROM form_fields ff WHERE ff.form_code = f.code) AS fields_count,
              (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code) AS submissions_count,
              (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code AND fs.status = 'draft') AS draft_count,
              EXISTS(SELECT 1 FROM form_examples e WHERE e.form_code = f.code) AS has_example,
              EXISTS(SELECT 1 FROM recurring_obligations o WHERE o.form_code = f.code AND o.active = 1) AS obligation_linked,
-             EXISTS(SELECT 1 FROM pack_forms p WHERE p.pack_code = 'sq-minimal' AND p.form_code = f.code) AS in_sq_pack,
+             ${withPack ? `EXISTS(SELECT 1 FROM pack_forms p WHERE p.pack_code = 'sq-minimal' AND p.form_code = f.code)` : '0'} AS in_sq_pack,
              (SELECT MAX(COALESCE(fs.updated_at, fs.created_at)) FROM form_submissions fs WHERE fs.form_code = f.code) AS last_written_at
       FROM forms f
       ORDER BY f.code
-    `).all() as Array<Record<string, unknown>>
+    `
+    let rows: Array<Record<string, unknown>>
+    try {
+      rows = db.prepare(listSql(true)).all() as Array<Record<string, unknown>>
+    } catch {
+      rows = db.prepare(listSql(false)).all() as Array<Record<string, unknown>> // pack_forms 미존재
+    }
 
     return rows.map((r) => {
       const approvals = parseJsonSafe<string[]>(r.approvals_json as string, [])
@@ -281,7 +289,15 @@ export function registerFormHandlers(): void {
         if (taken) {
           const m = serial.match(/^(.+)-(\d{4})-\d+$/)
           if (!m) throw new Error(`발행번호 '${serial}' 는 이미 사용 중입니다.`)
+          const oldSerial = serial
           serial = nextFormSerial(db, data.formCode, m[1], Number(m[2]))
+          // 검수 8/4 C-1: 문서 본문(values)의 자동 발행번호도 동기 재채번 —
+          // 초안 기본값이 values[auto필드]에 같은 번호를 주입하므로, 옛 번호와 완전일치하는
+          // 값만 새 번호로 치환한다(엑셀 출력은 values_json을 읽음 — DB만 바꾸면 문서가 중복 번호).
+          const vals = (data.values || {}) as Record<string, unknown>
+          for (const k of Object.keys(vals)) {
+            if (vals[k] === oldSerial) vals[k] = serial
+          }
         }
       }
       const now = new Date().toISOString()

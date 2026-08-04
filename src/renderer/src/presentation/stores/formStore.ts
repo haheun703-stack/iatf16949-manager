@@ -262,10 +262,21 @@ export const useFormStore = create<FormState>((set, get) => ({
       serialNo: serialPreview ?? undefined,
       createdBy: createdBy ?? undefined
     })) as { id: number; serialNo?: string | null }
-    set({
-      currentSubmissionId: res.id,
-      dirty: false,
-      ...(res.serialNo && res.serialNo !== serialPreview ? { serialPreview: res.serialNo } : {})
+    // 서버가 충돌로 재채번했으면(검수 8/4 C-1) 화면 값의 옛 번호도 새 번호로 치환 —
+    // 서버는 저장본(values_json)을 이미 동기했고, 여기는 표시 중인 로컬 상태를 맞춘다.
+    const reissued = res.serialNo && serialPreview && res.serialNo !== serialPreview
+    set((s) => {
+      if (!reissued) return { currentSubmissionId: res.id, dirty: false }
+      const patched: Record<string, unknown> = { ...s.values }
+      for (const k of Object.keys(patched)) {
+        if (patched[k] === serialPreview) patched[k] = res.serialNo
+      }
+      return {
+        currentSubmissionId: res.id,
+        dirty: false,
+        serialPreview: res.serialNo ?? s.serialPreview,
+        values: patched
+      }
     })
     return res.id
   },

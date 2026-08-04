@@ -42,6 +42,19 @@ export function FormListPanel({
     loadFormList()
   }, [loadFormList])
 
+  // 팩 소속 양식 수 — 0이면(미시드 DB·구 서버 bridge) 토글을 자동 해제해 "전부 사라짐" 함정 방지(검수 8/4 M-4)
+  const packCount = useMemo(() => formList.filter((f) => f.inSqPack).length, [formList])
+  useEffect(() => {
+    if (sqPackOnly && formList.length > 0 && packCount === 0) {
+      setSqPackOnly(false)
+      try {
+        localStorage.setItem('forms_sq_pack_only', '0')
+      } catch {
+        /* 무시 */
+      }
+    }
+  }, [sqPackOnly, packCount, formList.length])
+
   // 코드·이름 동시 검색(대소문자/공백 무시) + SQ 팩 필터. 양식이 200개+라 목록에서 바로 거른다.
   const filtered = useMemo(() => {
     const base = sqPackOnly ? formList.filter((f) => f.inSqPack) : formList
