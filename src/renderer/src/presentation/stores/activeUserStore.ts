@@ -39,6 +39,32 @@ export const useActiveUserStore = create<ActiveUserState>((set, get) => ({
   loadUsers: async () => {
     try {
       const users = (await window.api.invoke(window.api.channels.APP_USER_LIST)) as AppUserDto[]
+
+      // 웹 모드: 기록 주체는 세션이 정본 — 활성 사용자를 세션 사용자로 강제 동기화(검수 7/30
+      // M-작성자: values_json 작성자 칸이 localStorage 사용자로 채워져 DB created_by 와 불일치).
+      // Electron(세션 없음)에서는 이 fetch 가 실패/401 → 무시하고 로컬 선택을 유지한다.
+      // 알려진 한계: 웹에서 로드 후 수동 전환하면 다시 어긋날 수 있다 — 서버 STAMP 가 created_by
+      // 를 세션으로 강제하므로 DB 주체는 항상 옳고, 다음 로드 때 재동기화된다.
+      let sessionId: number | null = null
+      try {
+        const r = await fetch('/api/auth:me')
+        if (r.ok) {
+          const me = (await r.json()) as { id?: number }
+          if (typeof me.id === 'number') sessionId = me.id
+        }
+      } catch {
+        /* Electron·오프라인 — 세션 없음 */
+      }
+      if (sessionId != null && users.some((u) => u.id === sessionId && u.active)) {
+        try {
+          localStorage.setItem(ACTIVE_KEY, String(sessionId))
+        } catch {
+          /* 무시 */
+        }
+        set({ users, loaded: true, activeUserId: sessionId })
+        return
+      }
+
       const cur = get().activeUserId
       // 저장된 활성 id가 목록에 없거나 비활성이면 선택 해제(공용 PC에서 삭제된 사용자 잔존 방지)
       const stillValid = cur != null && users.some((u) => u.id === cur && u.active)

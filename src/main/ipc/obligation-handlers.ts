@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
+import { todayKST } from '@shared/date-kst'
 import { getSqlite } from '../database/connection'
 import { TEAMS, normalizeTeam, normalizeOwnerTeam, teamTheme, type TeamId } from '@shared/team-theme'
 import { evaluateDataTriggers, listBoardIssues } from './trigger-engine'
@@ -67,13 +68,9 @@ function advanceDate(baseYmd: string, cadence: ObligationCadence): string {
   return `${y}-${m}-${day}`
 }
 
-/** 로컬 오늘 날짜 YYYY-MM-DD */
+/** 로컬 오늘 날짜 YYYY-MM-DD — 공용 유틸 위임(중복 4벌 통합, 검수 7/30). */
 function todayYmd(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return todayKST()
 }
 
 export function registerObligationHandlers(): void {

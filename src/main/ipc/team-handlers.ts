@@ -290,7 +290,7 @@ export function registerTeamHandlers(): void {
         const rows = db
           .prepare(
             `SELECT DISTINCT form_code FROM form_submissions
-             WHERE date(COALESCE(updated_at, created_at)) = date('now', 'localtime')`
+             WHERE date(COALESCE(updated_at, created_at), 'localtime') = date('now', 'localtime')`
           )
           .all() as Array<{ form_code: string }>
         for (const r of rows) formDoneToday.add(r.form_code)

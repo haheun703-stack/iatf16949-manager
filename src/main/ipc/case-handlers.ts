@@ -2,6 +2,8 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import { nextFormSerial, nextCaseNo } from '../database/serial'
+import { detectExampleCopy } from './submission-guards'
+import { todayKST } from '@shared/date-kst'
 import type {
   CaseIntakeInput,
   CaseListItem,
@@ -130,9 +132,9 @@ const DISTRIBUTION: Array<{
   }
 ]
 
-/** 오늘 날짜 YYYY-MM-DD (양식 작성일자/발행일자 자동값). */
+/** 오늘 날짜 YYYY-MM-DD (양식 작성일자/발행일자 자동값) — KST. UTC 절단이면 아침 작성분이 전날로 찍힌다. */
 function today(): string {
-  return new Date().toISOString().slice(0, 10)
+  return todayKST()
 }
 
 /** null/빈값 제거 후 문자열화(form 렌더가 String(v) 사용). */
@@ -519,6 +521,14 @@ export function registerCaseHandlers(): void {
         if (!form) continue
 
         const values = cleanValues(d.build(c, facts))
+        // H1 조작차단 — 분배 INSERT/UPDATE 도 본 저장 경로와 같은 가드를 통과(검수 7/30 M-조작차단).
+        // 케이스 접수값이 예시값 그대로면 여기서 전체 분배가 롤백된다(트랜잭션 내 throw).
+        const copied = detectExampleCopy(db, d.formCode, values)
+        if (copied) {
+          throw new Error(
+            `[${d.formCode}] 예시값 그대로는 분배할 수 없습니다: '${copied}' — 케이스 입력값을 실제 값으로 수정하세요.`
+          )
+        }
         const existing = db
           .prepare('SELECT id, serial_no, values_json FROM form_submissions WHERE case_id = ? AND form_code = ?')
           .get(id, d.formCode) as { id: number; serial_no: string; values_json: string } | undefined

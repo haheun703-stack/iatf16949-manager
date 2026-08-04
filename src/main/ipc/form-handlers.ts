@@ -1,7 +1,11 @@
 import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { FORM_SCOPES } from '@shared/ipc-types'
-import { isExampleCopyBlocked } from '@shared/form-validation'
+import { todayKST } from '@shared/date-kst'
+import {
+  detectExampleCopy as guardExampleCopy,
+  detectEmptyFact as guardEmptyFact
+} from './submission-guards'
 import { getSqlite } from '../database/connection'
 import { nextFormSerial } from '../database/serial'
 import { generate as aiGenerate } from '../ai'
@@ -65,29 +69,10 @@ function rowToField(row: Record<string, unknown>): FormFieldDto {
 export function registerFormHandlers(): void {
   const db = getSqlite()
 
-  // H1: 예시값 완전일치(기록 조작) 차단 — 데이터 계층. 모든 저장 경로(초안·완료·이어서·출력)가 통과.
-  // form_examples 있는 양식만 검사(정답 따라쓰기 대상). 위반 필드 label 반환(없으면 null).
-  const detectExampleCopy = (formCode: string, values: Record<string, unknown>): string | null => {
-    let rows: Array<{ fk: string; ev: string | null; fc: string | null; ty: string | null; lb: string | null }>
-    try {
-      rows = db
-        .prepare(
-          `SELECT e.field_key AS fk, e.example_value AS ev, f.field_class AS fc, f.type AS ty, f.label AS lb
-           FROM form_examples e LEFT JOIN form_fields f ON f.form_code = e.form_code AND f.field_key = e.field_key
-           WHERE e.form_code = ?`
-        )
-        .all(formCode) as typeof rows
-    } catch {
-      return null // form_examples 미존재(구버전 DB) — 검증 스킵
-    }
-    for (const r of rows) {
-      const actual = values[r.fk]
-      if (isExampleCopyBlocked(r.fc, r.ty ?? 'text', r.ev ?? '', actual == null ? '' : String(actual), r.lb)) {
-        return r.lb ?? r.fk
-      }
-    }
-    return null
-  }
+  // H1: 예시값 완전일치(기록 조작) 차단 — 공용 가드 위임(submission-guards.ts).
+  // ai/drafts·케이스 분배 등 직접 INSERT 경로와 같은 구현을 공유한다(검수 7/30 M-조작차단).
+  const detectExampleCopy = (formCode: string, values: Record<string, unknown>): string | null =>
+    guardExampleCopy(db, formCode, values)
 
   // W2 2착(1순위): fact 공란검사 **서버 이식** — 그동안 FormCanvas.validateFactValues(클라)에만
   // 있던 최종 관문을 데이터 계층으로 내린다. 웹(HTTP)이 열리면 클라 검증은 우회 가능하므로
@@ -100,24 +85,8 @@ export function registerFormHandlers(): void {
   // ⚠️ 알려진 한계: createdBy 를 빼고 호출하면 이 검사를 우회할 수 있다. 다만 그렇게 저장된 기록은
   //   created_by 가 비어 "작성자 불명"으로 남아 증거 가치가 없다. W3(로그인)에서 created_by 를
   //   세션 사용자로 강제하면 이 구멍은 닫힌다.
-  const detectEmptyFact = (formCode: string, values: Record<string, unknown>): string | null => {
-    let rows: Array<{ fk: string; lb: string | null }>
-    try {
-      rows = db
-        .prepare(
-          `SELECT field_key AS fk, label AS lb FROM form_fields
-           WHERE form_code = ? AND field_class = 'fact' AND type <> 'auto'`
-        )
-        .all(formCode) as typeof rows
-    } catch {
-      return null // form_fields 미존재(구버전 DB) — 검증 스킵
-    }
-    for (const r of rows) {
-      const v = values[r.fk]
-      if (v == null || String(v).trim() === '') return r.lb ?? r.fk
-    }
-    return null
-  }
+  const detectEmptyFact = (formCode: string, values: Record<string, unknown>): string | null =>
+    guardEmptyFact(db, formCode, values)
 
   // ──── Form list ────
   ipcMain.handle(IPC_CHANNELS.FORM_LIST, (): FormListItemDto[] => {
@@ -288,7 +257,7 @@ export function registerFormHandlers(): void {
         serialNo?: string
         createdBy?: string
       }
-    ): { id: number } => {
+    ): { id: number; serialNo: string | null } => {
       const copied = detectExampleCopy(data.formCode, data.values || {})
       if (copied) {
         throw new Error(`예시값을 그대로 저장할 수 없습니다: '${copied}' — 실제 값을 입력하세요(기록 조작 방지).`)
@@ -300,6 +269,19 @@ export function registerFormHandlers(): void {
           throw new Error(`'${empty}' 칸(오늘의 사실)이 비어 있습니다 — 실제 값을 입력하세요.`)
         }
       }
+      // 발행번호 유일 보장(검수 7/30 M-발행번호): 클라 미리보기 번호가 이미 쓰였으면(동시 사용자)
+      // 서버가 재채번한다. 최종 백스톱 = 마이그 0131 UNIQUE 인덱스.
+      let serial = data.serialNo || null
+      if (serial) {
+        const taken = db
+          .prepare('SELECT 1 FROM form_submissions WHERE form_code = ? AND serial_no = ?')
+          .get(data.formCode, serial)
+        if (taken) {
+          const m = serial.match(/^(.+)-(\d{4})-\d+$/)
+          if (!m) throw new Error(`발행번호 '${serial}' 는 이미 사용 중입니다.`)
+          serial = nextFormSerial(db, data.formCode, m[1], Number(m[2]))
+        }
+      }
       const now = new Date().toISOString()
       const result = db
         .prepare(
@@ -308,13 +290,13 @@ export function registerFormHandlers(): void {
         )
         .run(
           data.formCode,
-          data.serialNo || null,
+          serial,
           JSON.stringify(data.values || {}),
           data.createdBy || null,
           now,
           now
         )
-      return { id: Number(result.lastInsertRowid) }
+      return { id: Number(result.lastInsertRowid), serialNo: serial }
     }
   )
 
@@ -330,10 +312,25 @@ export function registerFormHandlers(): void {
         createdBy?: string
       }
     ): { success: boolean } => {
-      const sub = db.prepare('SELECT form_code FROM form_submissions WHERE id = ?').get(data.id) as
-        | { form_code: string }
-        | undefined
-      if (sub) {
+      const sub = db
+        .prepare('SELECT form_code, status FROM form_submissions WHERE id = ?')
+        .get(data.id) as { form_code: string; status: string } | undefined
+      if (!sub) throw new Error('수정할 작성본이 없습니다(삭제되었거나 잘못된 id).')
+      // 상태전이 게이트(검수 7/30 M-상태전이): approved 는 불변, 전이는 순방향 화이트리스트만.
+      // (누가 승인할 수 있는지의 role 검증은 W4 PROTECTED 몫 — 여기는 상태기계 적법성만.)
+      if (sub.status === 'approved') {
+        throw new Error('승인 완료된 기록은 수정할 수 없습니다(불변 — 기록 조작 방지).')
+      }
+      if (data.status) {
+        const LEGAL: Record<string, string[]> = {
+          draft: ['draft', 'submitted'],
+          submitted: ['submitted', 'approved', 'draft'] // draft 복귀 = 반려
+        }
+        if (!(LEGAL[sub.status] ?? []).includes(data.status)) {
+          throw new Error(`허용되지 않는 상태 전이입니다: ${sub.status} → ${data.status}`)
+        }
+      }
+      {
         const copied = detectExampleCopy(sub.form_code, data.values || {})
         if (copied) {
           throw new Error(`예시값을 그대로 저장할 수 없습니다: '${copied}' — 실제 값을 입력하세요(기록 조작 방지).`)
@@ -458,7 +455,7 @@ export function registerFormHandlers(): void {
         placeholder: string | null
       }>
 
-      const today = new Date().toISOString().split('T')[0]
+      const today = todayKST()
       const year = new Date().getFullYear()
 
       const values: Record<string, string> = {}
@@ -518,7 +515,7 @@ export function registerFormHandlers(): void {
         }))
 
         const win = BrowserWindow.getFocusedWindow()
-        const stamp = new Date().toISOString().split('T')[0].replace(/-/g, '')
+        const stamp = todayKST().replace(/-/g, '')
         const serial = (sub.serial_no as string) || stamp
         const defaultName = `${formCode}_${serial}.xlsx`
         const saveRes = await dialog.showSaveDialog(win ?? undefined!, {

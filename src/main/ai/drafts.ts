@@ -10,6 +10,7 @@
 //  나머지(assignment/schedule/sq_self)는 후속 단계에서 추가.
 // ─────────────────────────────────────────────────────────────────────────────
 import { getSqlite } from '../database/connection'
+import { detectExampleCopy } from '../ipc/submission-guards'
 import type Database from 'better-sqlite3'
 import type { DraftTargetKind, DraftStatus, DraftSourceRef, AiDraftDto, DraftStats } from '@shared/ipc-types'
 
@@ -161,6 +162,11 @@ function applyByKind(
       const formCode = String(payload.formCode ?? payload.form_key ?? '')
       if (!formCode) throw new Error('form_entry payload 에 formCode 가 없습니다.')
       const values = payload.values ?? {}
+      // H1 조작차단 — 직접 INSERT 경로도 본 저장 경로와 같은 가드를 통과(검수 7/30 M-조작차단)
+      const copied = detectExampleCopy(db, formCode, values as Record<string, unknown>)
+      if (copied) {
+        throw new Error(`예시값 그대로는 반영할 수 없습니다: '${copied}' — 실제 값으로 수정 후 승인하세요.`)
+      }
       const serialNo = (payload.serialNo as string) ?? null
       const info = db
         .prepare(

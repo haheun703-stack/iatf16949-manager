@@ -18,7 +18,7 @@ const fs = require('fs')
 const Database = require('better-sqlite3')
 const ExcelJS = require('exceljs')
 
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8080' // 검수 M: 라이브(8080) 오염 방지 — 검증은 E2E_BASE=…:8081
+const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081' // 기본=검증(8081). 라이브(8080)는 명시 지정 시에만 — 오염 방지(검수 7/31 M-8)
 const LOGIN = process.argv[2]
 const PW = process.argv[3] || 'qms1234'
 const codes = process.argv.slice(4)

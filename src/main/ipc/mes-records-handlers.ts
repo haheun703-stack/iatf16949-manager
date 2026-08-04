@@ -3,6 +3,7 @@ import { app, ipcMain } from 'electron'
 import { existsSync, statSync } from 'fs'
 import { join } from 'path'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
+import { todayKST } from '@shared/date-kst'
 import { getSqlite } from '../database/connection'
 import type {
   MesPartProcessDto,
@@ -188,7 +189,7 @@ const GAP_THRESHOLD = 2
 export function registerMesRecordsHandlers(): void {
   // P1 ⓑ 공정 실황(커버리지 모드) — 사이드카(sqc/mac) + 앱 작성 기록 결합, 신규 테이블 0
   ipcMain.handle(IPC_CHANNELS.MES_RECORDS_PROCESS_LIVE, (_e, req: { ymd?: string }): MesProcessLiveDto => {
-    const ymd = req?.ymd || new Date().toISOString().slice(0, 10)
+    const ymd = req?.ymd || todayKST()
     const db = openSide()
     const dataEndYmd = db ? typeStats(db).dataEndYmd : null
 
@@ -276,7 +277,7 @@ export function registerMesRecordsHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.MES_RECORDS_PART_PROCESS,
     (_e, req: { ymd?: string; limit?: number }): MesPartProcessDto => {
-      const ymd = req?.ymd || new Date().toISOString().slice(0, 10)
+      const ymd = req?.ymd || todayKST()
       const limit = Math.min(Math.max(req?.limit ?? 8, 3), 30)
       const db = openSide()
       const columns = PROC_COLUMNS.map((c) => ({ key: c.key, label: c.label }))
@@ -364,7 +365,7 @@ export function registerMesRecordsHandlers(): void {
       if (!db) return { days: 0, dataEndYmd: null, strips: [] }
       const { types, dataEndYmd } = typeStats(db)
       const days = Math.min(Math.max(req?.days ?? 30, 7), 90)
-      const end = dataEndYmd ?? ymdAdd(new Date().toISOString().slice(0, 10), 0)
+      const end = dataEndYmd ?? ymdAdd(todayKST(), 0)
       const start = ymdAdd(end, -(days - 1))
 
       const sqcRows = db

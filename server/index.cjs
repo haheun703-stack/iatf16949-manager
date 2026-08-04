@@ -205,7 +205,8 @@ const PROTECTED = {
 const STAMP_FIELDS = {
   'form:submissionCreate': ['createdBy'],
   'form:submissionUpdate': ['createdBy'],
-  'obligation:complete': ['doneBy']
+  'obligation:complete': ['doneBy'],
+  'obligation:triggerComplete': ['doneBy']
 }
 
 // ── POST /api/{channel} 디스패처 ──

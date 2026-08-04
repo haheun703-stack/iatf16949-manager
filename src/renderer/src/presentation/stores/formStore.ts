@@ -255,14 +255,19 @@ export const useFormStore = create<FormState>((set, get) => ({
     }
 
     // 최초 저장 시 발행번호를 serial_no로 확정(다음 양식 넘버링이 이어지도록)
-    const { id } = (await window.api.invoke(ch('FORM_SUBMISSION_CREATE'), {
+    // 서버가 충돌 시 재채번할 수 있으므로(0131 유일성) 응답의 확정 번호를 미리보기에 반영한다.
+    const res = (await window.api.invoke(ch('FORM_SUBMISSION_CREATE'), {
       formCode: currentForm.code,
       values,
       serialNo: serialPreview ?? undefined,
       createdBy: createdBy ?? undefined
-    })) as { id: number }
-    set({ currentSubmissionId: id, dirty: false })
-    return id
+    })) as { id: number; serialNo?: string | null }
+    set({
+      currentSubmissionId: res.id,
+      dirty: false,
+      ...(res.serialNo && res.serialNo !== serialPreview ? { serialPreview: res.serialNo } : {})
+    })
+    return res.id
   },
 
   exportingXlsx: false,

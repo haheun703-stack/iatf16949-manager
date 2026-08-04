@@ -9,7 +9,7 @@
 // 정직 확인(앱 작성 원천만 반영 — 프로덕션 사이드카 표출은 dev CDP 캡처로 실증).
 // 실행: E2E_BASE=http://127.0.0.1:8081 node scripts/e2e-p1b.mjs <로그인이름> [비번]
 // ============================================================
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8080'
+const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081' // 기본=검증(8081). 라이브(8080)는 명시 지정 시에만 — 오염 방지(검수 7/31 M-8)
 const LOGIN = process.argv[2]
 const PW = process.argv[3] || 'qms1234'
 if (!LOGIN) { console.error('사용법: node scripts/e2e-p1b.mjs <로그인이름> [비번]'); process.exit(1) }

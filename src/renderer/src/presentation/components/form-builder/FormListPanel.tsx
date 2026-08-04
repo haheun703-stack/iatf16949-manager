@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FileEdit, ChevronRight, Search, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
@@ -34,19 +34,34 @@ export function FormListPanel({
   }, [formList, query])
 
   // 외부 진입 시 자동 로드: 분배된 작성본 [열기]면 그 작성본을, 아니면 새 양식 정의를.
+  // ⚠️ pending 소비(null 세팅)가 이펙트를 한 번 더 돌리므로, 그 재실행이 방금 연 초안을
+  //    빈 양식으로 덮지 않도록 ref 로 1회 스킵한다(검수 7/30 렌더러 C — 초안 경합 파괴).
+  const consumedPendingRef = useRef(false)
   useEffect(() => {
     if (pendingSubmissionId != null) {
+      consumedPendingRef.current = true
       void loadSubmission(pendingSubmissionId)
       setPendingSubmissionId(null)
     } else if (selectedFormCode) {
+      if (consumedPendingRef.current) {
+        consumedPendingRef.current = false // pending 소비 직후의 재실행 — 초안 유지
+        return
+      }
       void loadFormDefinition(selectedFormCode)
+    } else {
+      consumedPendingRef.current = false // 선택 양식 없음 — 스킵 플래그 잔존 방지
     }
   }, [selectedFormCode, pendingSubmissionId, loadFormDefinition, loadSubmission, setPendingSubmissionId])
 
   // 목록에서 직접 클릭 = 새 작성(빈 양식). 혹시 남은 pending 작성본은 비운다.
   const handleClick = (code: string): void => {
     setPendingSubmissionId(null)
-    setSelectedFormCode(code)
+    consumedPendingRef.current = false
+    if (code === selectedFormCode) {
+      void loadFormDefinition(code) // 같은 양식 재클릭 = 새 작성(상태 불변이라 이펙트가 안 돌므로 직접 로드)
+    } else {
+      setSelectedFormCode(code)
+    }
   }
 
   // P8 — 접힘: 얇은 레일만. 엑셀·문서 뷰 자동 접힘(canToggle=false) 중엔 펼치기 버튼을 감춘다.

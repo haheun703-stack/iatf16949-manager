@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
+import { todayKST } from '@shared/date-kst'
 import { getSqlite } from '../database/connection'
 import { suggestState } from './sq-guide-handlers'
 import { exportSqReport } from '../docgen/sq-report-exporter'
@@ -23,8 +24,7 @@ import type {
 const FINAL_STATES: SqSuggestedState[] = ['우수', '양호', '보완', '일부미흡', '다수미흡', '미관리', '미해당']
 
 function todayYmd(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return todayKST() // 공용 유틸 위임(중복 4벌 통합, 검수 7/30)
 }
 
 export function registerSqAssessHandlers(): void {

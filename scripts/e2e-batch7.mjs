@@ -2,7 +2,7 @@
 // scripts/e2e-batch7.mjs — 7차 트랙(레거시 셀맵 교정) E2E (2026-07-30 사무실)
 //
 // 방식 = e2e-batch6.mjs 와 동일(웹서버·복사본 DB). 라이브 서버(:8080)와 병행을 위해
-// BASE 를 env E2E_BASE 로 가변화(기본 8080 — 검증 복사본 서버는 8081 권장).
+// BASE 를 env E2E_BASE 로 가변화(기본 8081=검증 복사본 — 라이브 8080 은 명시 지정 시에만).
 // 실행: E2E_BASE=http://127.0.0.1:8081 node scripts/e2e-batch7.mjs <로그인이름> [비번]
 // 케이스는 교정 진행분만큼 누적한다. 1호 = K2100-06(0115).
 // ============================================================
@@ -15,7 +15,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(root, 'captures')
 mkdirSync(OUT, { recursive: true })
 
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8080'
+const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081' // 기본=검증(8081). 라이브(8080)는 명시 지정 시에만 — 오염 방지(검수 7/31 M-8)
 const LOGIN = process.argv[2]
 const PW = process.argv[3] || 'qms1234'
 if (!LOGIN) { console.error('사용법: node scripts/e2e-batch7.mjs <로그인이름> [비번]'); process.exit(1) }
@@ -597,3 +597,5 @@ for (const c of CASES) {
   }
 }
 console.log(`\n합계: 셀검증 ${totalOk}/${totalChecks} · 폼 ${passForms}/${CASES.length} 통과`)
+// 실패 전파(검수 7/31 C-1): 케이스 예외로 분모가 준 경우도 passForms 미달로 잡힌다.
+process.exit(passForms === CASES.length && totalOk === totalChecks ? 0 : 1)

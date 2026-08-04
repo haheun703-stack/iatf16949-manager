@@ -6,6 +6,7 @@
 import { getSqlite } from '../database/connection'
 import { aiCall } from './gateway'
 import type Database from 'better-sqlite3'
+import { todayKST } from '@shared/date-kst'
 import type { BriefingItem, BriefingFacts } from '@shared/ipc-types'
 
 // 심사일 최종 폴백 — audits 테이블 → company_profile.auditDate(Sidebar 설정) → 이 상수 순.
@@ -20,7 +21,7 @@ function daysBetween(fromIso: string, toIso: string): number {
 
 /** 결정론적 사실 수집(무API). */
 export function computeBriefingFacts(db: Database.Database = getSqlite()): BriefingFacts {
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayKST()
   const overdue: BriefingItem[] = []
   const dueSoon: BriefingItem[] = []
 
