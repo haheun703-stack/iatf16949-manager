@@ -97,6 +97,7 @@ export function registerFormHandlers(): void {
              (SELECT COUNT(*) FROM form_submissions fs WHERE fs.form_code = f.code AND fs.status = 'draft') AS draft_count,
              EXISTS(SELECT 1 FROM form_examples e WHERE e.form_code = f.code) AS has_example,
              EXISTS(SELECT 1 FROM recurring_obligations o WHERE o.form_code = f.code AND o.active = 1) AS obligation_linked,
+             EXISTS(SELECT 1 FROM pack_forms p WHERE p.pack_code = 'sq-minimal' AND p.form_code = f.code) AS in_sq_pack,
              (SELECT MAX(COALESCE(fs.updated_at, fs.created_at)) FROM form_submissions fs WHERE fs.form_code = f.code) AS last_written_at
       FROM forms f
       ORDER BY f.code
@@ -115,6 +116,7 @@ export function registerFormHandlers(): void {
         respDept: (r.resp_dept as string) || null,
         hasExample: !!(r.has_example as number),
         obligationLinked: !!(r.obligation_linked as number),
+        inSqPack: !!(r.in_sq_pack as number),
         lastWrittenAt: (r.last_written_at as string) || null,
         deprecated: !!(r.deprecated as number)
       }

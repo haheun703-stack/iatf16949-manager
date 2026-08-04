@@ -19,19 +19,38 @@ export function FormListPanel({
   const { selectedFormCode, setSelectedFormCode, pendingSubmissionId, setPendingSubmissionId } =
     useUIStore()
   const [query, setQuery] = useState('')
+  // SQ 미니멀 팩 필터(29번 §5 — "오늘 이 N개만"). 선택은 로컬 보존(공용 PC 사용자별 아님 — 화면 상태).
+  const [sqPackOnly, setSqPackOnly] = useState(() => {
+    try {
+      return localStorage.getItem('forms_sq_pack_only') === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggleSqPack = (): void => {
+    setSqPackOnly((v) => {
+      try {
+        localStorage.setItem('forms_sq_pack_only', v ? '0' : '1')
+      } catch {
+        /* 무시 */
+      }
+      return !v
+    })
+  }
 
   useEffect(() => {
     loadFormList()
   }, [loadFormList])
 
-  // 코드·이름 동시 검색(대소문자/공백 무시). 양식이 200개+라 목록에서 바로 거른다.
+  // 코드·이름 동시 검색(대소문자/공백 무시) + SQ 팩 필터. 양식이 200개+라 목록에서 바로 거른다.
   const filtered = useMemo(() => {
+    const base = sqPackOnly ? formList.filter((f) => f.inSqPack) : formList
     const q = query.trim().toLowerCase()
-    if (!q) return formList
-    return formList.filter(
+    if (!q) return base
+    return base.filter(
       (f) => f.code.toLowerCase().includes(q) || f.name.toLowerCase().includes(q)
     )
-  }, [formList, query])
+  }, [formList, query, sqPackOnly])
 
   // 외부 진입 시 자동 로드: 분배된 작성본 [열기]면 그 작성본을, 아니면 새 양식 정의를.
   // ⚠️ pending 소비(null 세팅)가 이펙트를 한 번 더 돌리므로, 그 재실행이 방금 연 초안을
@@ -127,9 +146,27 @@ export function FormListPanel({
             </button>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          {query ? `${filtered.length} / ${formList.length}개` : `총 ${formList.length}개`} · 클릭하여 작성
-        </p>
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <p className="text-xs text-muted-foreground">
+            {query || sqPackOnly
+              ? `${filtered.length} / ${formList.length}개`
+              : `총 ${formList.length}개`}{' '}
+            · 클릭하여 작성
+          </p>
+          <button
+            type="button"
+            onClick={toggleSqPack}
+            title="SQ 심사 필수 양식만 표시 (미니멀 팩 — 전체는 다시 눌러 해제)"
+            className={cn(
+              'shrink-0 text-[11px] px-2 py-0.5 rounded-full border transition-colors',
+              sqPackOnly
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-fillable text-muted-foreground border-border hover:text-foreground'
+            )}
+          >
+            SQ 필수만
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-2.5">
