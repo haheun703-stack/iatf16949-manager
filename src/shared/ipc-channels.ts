@@ -204,6 +204,12 @@ export const IPC_CHANNELS = {
   SEMIMES_SUMMARY: 'semimes:summary',
   SEMIMES_TREE: 'semimes:tree',
   SEMIMES_ITEM: 'semimes:item',
+  // G1 수집함 (29번 §8-⑥ · M1 견적 — 입고·출하 전표 사진 1:N 태깅, 마이그 0136)
+  SEMIMES_CAPTURE_LIST: 'semimes:captureList',
+  SEMIMES_CAPTURE_CREATE: 'semimes:captureCreate',
+  SEMIMES_CAPTURE_IMAGE: 'semimes:captureImage',
+  SEMIMES_CAPTURE_TAG: 'semimes:captureTag',
+  SEMIMES_ITEM_SEARCH: 'semimes:itemSearch',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',

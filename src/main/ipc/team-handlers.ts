@@ -386,16 +386,20 @@ export function registerTeamHandlers(): void {
             (new Date(`${it.bucket}T00:00:00`).getTime() - t0.getTime()) / 86400000
           )
           // T3(reg-body): 기한(회신 기한)이 미래면 due(해야 함), 지나면 overdue. T2 는 버킷이 항상 과거.
+          // T4(receipt-insp, G1): 버킷 = 입고일 — 당일(0일)은 due(오늘 기입), 지나면 overdue.
           const title =
             it.entityKind === 'reg-body'
               ? `[문서화 갭] 규정 원문 ${countMissingRegBodies(db)}종 확보·제출 — 관리팀 공문(기한 ${it.bucket})`
-              : `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`
+              : it.entityKind === 'receipt-insp'
+                ? `[수입검사 도래] ${it.bucket} 입고분 — 수입검사 이력카드 당일 기입(SQ 2_2)`
+                : `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`
+          const dueToday = it.entityKind === 'receipt-insp' && daysLeft === 0
           const task: TodayTaskDto = {
             id: -it.issueId, // 의무 id 와 키 충돌 방지(프론트 completing/key 용도뿐)
             title,
             cadence: '데이터',
             assignee: null, // §3-4 팀 단위 발행 — 개인 자동 지정 금지
-            status: done ? 'done' : daysLeft > 0 ? 'due' : 'overdue',
+            status: done ? 'done' : daysLeft > 0 || dueToday ? 'due' : 'overdue',
             dueDate: it.bucket,
             daysLeft: done ? null : daysLeft,
             doneAt: done ? ((it.completedAt ?? '').slice(0, 10) || today) : null,

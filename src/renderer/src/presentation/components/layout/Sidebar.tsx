@@ -58,7 +58,7 @@ const SECTIONS: { key: string; label: string; items: NavItem[] }[] = [
       { id: 'process-flow', label: '공정 흐름 맵', icon: Workflow, desc: '품번별 공정 흐름 — 공정 흐름도 출력' },
       { id: 'mes-trace', label: 'LOT 계보 조회', icon: Network, desc: '자재↔생산 LOT 정·역추적' },
       { id: 'mes-records', label: 'MES 기록 현황', icon: Activity, desc: '자주·수입·패트롤·설비점검 커버리지' },
-      { id: 'home', label: '입고 사진함', icon: Camera, desc: 'M1 파일럿 후 활성(원버튼 사진함)', disabled: true }
+      { id: 'receipt-inbox', label: '수집함 (전표 사진)', icon: Camera, desc: '입고·출하 전표 사진 → 태깅 → 수불 기록 (G1)' }
     ]
   },
   {
@@ -94,7 +94,7 @@ const SECTIONS: { key: string; label: string; items: NavItem[] }[] = [
 ]
 
 /** 앱 코어스키마 리비전 — 마이그 추가 시 갱신(사이드바 풋터 표기용) */
-const SCHEMA_REV = '0101'
+const SCHEMA_REV = '0136'
 
 export function Sidebar(): JSX.Element {
   const { currentPage, setPage } = useUIStore()

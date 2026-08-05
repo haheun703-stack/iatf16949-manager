@@ -2148,6 +2148,26 @@ export interface IpcChannelMap {
     request: { itemCode: string }
     response: SemimesItemDetailDto | null
   }
+  [IPC_CHANNELS.SEMIMES_CAPTURE_LIST]: {
+    request: void
+    response: SemimesCaptureListDto
+  }
+  [IPC_CHANNELS.SEMIMES_CAPTURE_CREATE]: {
+    request: { kind: SemimesCaptureKind; imageBase64: string; fileName?: string; createdBy?: string }
+    response: { success: boolean; id?: number; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_CAPTURE_IMAGE]: {
+    request: { id: number }
+    response: { dataUrl: string | null }
+  }
+  [IPC_CHANNELS.SEMIMES_CAPTURE_TAG]: {
+    request: SemimesCaptureTagInput
+    response: { success: boolean; receiptIds?: number[]; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_ITEM_SEARCH]: {
+    request: { query: string; limit?: number }
+    response: SemimesItemSearchRowDto[]
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -2898,6 +2918,69 @@ export interface SemimesItemDetailDto {
   routing: SemimesRoutingStepDto[]
   children: { code: string; qty: number; active: number }[]
   usedBy: { code: string; qty: number; active: number }[]
+}
+
+// ── G1 수집함 (29번 §8-⑥ · M1 견적 — 전표 사진 1:N 태깅, 마이그 0136) ──
+
+/** 수집함 유형 태그 — 방 1개 + 유형(M1 §0 외주 왕복 실측이 근거). */
+export type SemimesCaptureKind = 'receipt_in' | 'receipt_out'
+
+/** raw_captures.content JSON 명세 v1 (M1 §2.5 — 자유 JSON 금지, M4 AI 판독 계약) */
+export interface SemimesCaptureContentV1 {
+  v: 1
+  docDate: string
+  partnerCode: string
+  items: { itemCode: string; qty: number; vendorLot: string | null }[]
+  /** 입고만: '원자재' | '외주재입고' */
+  receiptClass?: string
+  note: string
+}
+
+export interface SemimesCaptureRowDto {
+  id: number
+  kind: SemimesCaptureKind
+  status: '미분류' | '태깅완료'
+  createdBy: string | null
+  createdAt: string
+  hasImage: boolean
+  /** 태깅완료 시 content JSON 요약(미분류 = null) */
+  docDate: string | null
+  partnerCode: string | null
+  partnerName: string | null
+  itemCount: number
+  receiptClass: string | null
+  /** 연결된 mat_receipt 행 수(1:N 실증) */
+  receiptRows: number
+}
+
+export interface SemimesCaptureListDto {
+  rows: SemimesCaptureRowDto[]
+  untagged: number
+  todayIn: number
+  todayOut: number
+  /** 태깅 폼 거래처 선택지(active만 — partner_type 으로 receipt_class 초안 유도) */
+  partners: { code: string; name: string; type: string }[]
+}
+
+export interface SemimesCaptureTagInput {
+  captureId: number
+  /** 태깅 시 유형 정정 가능(M1 §3 2차) */
+  kind: SemimesCaptureKind
+  docDate: string
+  partnerCode: string
+  /** 입고만(원자재|외주재입고) — 미지정 시 partner_type 초안 */
+  receiptClass?: string
+  /** 다품목 1:N — 입고는 mat_receipt N행 생성, 출하는 content 구조화만(15번 경계) */
+  items: { itemCode: string; qty: number; vendorLot?: string | null }[]
+  note?: string
+  /** 서버 세션 강제(STAMP) — 클라 값 무시 */
+  createdBy?: string
+}
+
+export interface SemimesItemSearchRowDto {
+  itemCode: string
+  itemName: string | null
+  itemType: string
 }
 
 // ── 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력) ──

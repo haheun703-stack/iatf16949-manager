@@ -187,7 +187,11 @@ const REQUIRED_FIELDS = {
   'obligation:complete': ['id'],
   'obligation:delete': ['id'],
   'obligation:triggerComplete': ['issueId'],
-  'schedule:delete': ['id']
+  'schedule:delete': ['id'],
+  // G1 수집함 (마이그 0136 — 쓰기 2채널)
+  'semimes:captureCreate': ['kind', 'imageBase64'],
+  'semimes:captureTag': ['captureId', 'kind', 'docDate', 'partnerCode'],
+  'semimes:captureImage': ['id']
 }
 
 // 권한 가드(W3-4): 채널 → 허용 role. 없는 채널은 "로그인만"(미들웨어가 이미 보장).
@@ -206,7 +210,10 @@ const STAMP_FIELDS = {
   'form:submissionCreate': ['createdBy'],
   'form:submissionUpdate': ['createdBy'],
   'obligation:complete': ['doneBy'],
-  'obligation:triggerComplete': ['doneBy']
+  'obligation:triggerComplete': ['doneBy'],
+  // G1 수집함 — 촬영자·태깅자 = 세션 사용자(29번 §2 STAMP 실명 기록)
+  'semimes:captureCreate': ['createdBy'],
+  'semimes:captureTag': ['createdBy']
 }
 
 // ── POST /api/{channel} 디스패처 ──

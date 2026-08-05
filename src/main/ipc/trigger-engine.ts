@@ -31,24 +31,28 @@ interface TriggerRow {
   team: string | null
 }
 
-/** 내장 트리거 2종 보장 — 코어 기능(팩 시드 아님)이라 코드가 정본. 멱등. */
+/** 내장 트리거 보장 — 코어 기능(팩 시드 아님)이라 코드가 정본. 멱등. */
 export function ensureBuiltinTriggers(db: Database.Database): void {
   const has = db.prepare(
-    `SELECT id FROM obligation_triggers WHERE trigger_kind = 'audit_gap' AND entity_kind = ?`
+    `SELECT id FROM obligation_triggers WHERE trigger_kind = ? AND entity_kind = ?`
   )
   const ins = db.prepare(
     `INSERT INTO obligation_triggers (trigger_kind, title, entity_kind, entity_key, config_json, team)
-     VALUES ('audit_gap', ?, ?, NULL, ?, ?)`
+     VALUES (?, ?, ?, NULL, ?, ?)`
   )
-  if (!has.get('obligation')) {
-    ins.run('심사 갭 — 의무 장기 연체', 'obligation', JSON.stringify({ overdueDays: DEFAULT_OVERDUE_DAYS }), null)
+  if (!has.get('audit_gap', 'obligation')) {
+    ins.run('audit_gap', '심사 갭 — 의무 장기 연체', 'obligation', JSON.stringify({ overdueDays: DEFAULT_OVERDUE_DAYS }), null)
   }
-  if (!has.get('mes-feed')) {
-    ins.run('증거 공백 — MES 일일 기록 미수신', 'mes-feed', '{}', '생산팀')
+  if (!has.get('audit_gap', 'mes-feed')) {
+    ins.run('audit_gap', '증거 공백 — MES 일일 기록 미수신', 'mes-feed', '{}', '생산팀')
   }
-  if (!has.get('reg-body')) {
+  if (!has.get('audit_gap', 'reg-body')) {
     // 회신 기한 = 관리팀 발신 공문(관리팀발신_규정원문15종_요청_260729.md)의 제안 기한
-    ins.run('문서화 갭 — 규정 원문 미확보(본문 미적재)', 'reg-body', JSON.stringify({ dueYmd: '2026-08-07' }), '총무팀')
+    ins.run('audit_gap', '문서화 갭 — 규정 원문 미확보(본문 미적재)', 'reg-body', JSON.stringify({ dueYmd: '2026-08-07' }), '총무팀')
+  }
+  if (!has.get('insp_due', 'receipt-insp')) {
+    // T4(G1 수집함, M1 §4): 입고 태깅 완료 → "수입검사 이력카드 당일 기입"(SQ 2_2)
+    ins.run('insp_due', '수입검사 도래 — 입고분 이력카드 당일 기입', 'receipt-insp', '{}', '품질팀')
   }
 }
 
@@ -103,7 +107,44 @@ export function evaluateDataTriggers(
   )
 
   for (const t of triggers) {
-    if (t.trigger_kind !== 'audit_gap') continue // insp_due·mold_count·nonconform = M1 이후
+    if (t.trigger_kind === 'insp_due' && t.entity_kind === 'receipt-insp') {
+      // ── T4(G1): 입고 태깅 → 수입검사 당일 기입 (M1 §4 — SQ 2_2. 마이그 0136) ──
+      // 발행 버킷 = 입고일(중복 방지 = UNIQUE + OR IGNORE → 1일 1건). lazy 창 14일 —
+      // 설치 첫날 과거 소급 폭탄 방지(T3 "규정 265종 미적재" 선례와 같은 결).
+      const windowStart = ymdAddDays(ctx.today, -14)
+      const hasInsp = db.prepare(`SELECT 1 FROM insp_record WHERE insp_kind = '수입' AND insp_date = ? LIMIT 1`)
+      const hasCard = db.prepare(
+        `SELECT 1 FROM form_submissions WHERE form_code = 'L2100-07' AND date(created_at, 'localtime') = ? LIMIT 1`
+      )
+      const hasReceipt = db.prepare(
+        `SELECT 1 FROM mat_receipt WHERE capture_id IS NOT NULL AND receipt_date = ? LIMIT 1`
+      )
+      const inspected = (ymd: string): boolean => !!hasInsp.get(ymd) || !!hasCard.get(ymd)
+
+      let dates: Array<{ d: string }> = []
+      try {
+        dates = db
+          .prepare(
+            `SELECT DISTINCT receipt_date AS d FROM mat_receipt
+             WHERE capture_id IS NOT NULL AND receipt_date >= ? AND receipt_date <= ?`
+          )
+          .all(windowStart, ctx.today) as Array<{ d: string }>
+      } catch {
+        continue // 0136 미적용 DB(capture_id 부재) — 평가 불가(발행도 취소도 안 함)
+      }
+      for (const { d } of dates) {
+        if (!inspected(d)) issue.run(t.id, 'receipt-insp', d)
+      }
+      for (const it of openIssues.all(t.id) as Array<{ id: number; due_bucket: string }>) {
+        if (inspected(it.due_bucket)) {
+          markResolved.run(it.id) // 검사기록 감지 — 표시만, ✓는 사람(M3 규칙 그대로)
+        } else if (!hasReceipt.get(it.due_bucket)) {
+          cancel.run('입고 기록 정정(태깅 수불 부재)', it.id)
+        }
+      }
+      continue
+    }
+    if (t.trigger_kind !== 'audit_gap') continue // mold_count·nonconform = PC 단계 이후
 
     if (t.entity_kind === 'obligation') {
       // ── T1: 의무 장기 연체 = 심사 갭 ──
