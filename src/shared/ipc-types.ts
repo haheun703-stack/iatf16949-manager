@@ -2272,6 +2272,10 @@ export interface IpcChannelMap {
     request: KpiBatchSaveInput
     response: { success: boolean; saved: number }
   }
+  [IPC_CHANNELS.KPI_EXPORT_XLSX]: {
+    request: { year: string }
+    response: { success: boolean; filePath?: string; canceled?: boolean; error?: string }
+  }
   [IPC_CHANNELS.APP_USER_LIST]: {
     request: void
     response: AppUserDto[]

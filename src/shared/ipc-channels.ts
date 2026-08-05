@@ -22,6 +22,8 @@ export const IPC_CHANNELS = {
   KPI_SAVE: 'kpi:save',
   KPI_MONTH: 'kpi:month',
   KPI_SAVE_BATCH: 'kpi:save-batch',
+  // PB2 ⓔ-2 — KPI 연간 그리드 엑셀 내보내기(4차 노트 §3 "기록을 밖으로")
+  KPI_EXPORT_XLSX: 'kpi:exportXlsx',
   // P2 — 공용 PC 사용자 전환 (app_users 명단 CRUD, 0085). 활성 사용자는 로컬 상태(회사 DB 미혼입).
   APP_USER_LIST: 'appUser:list',
   APP_USER_UPSERT: 'appUser:upsert',

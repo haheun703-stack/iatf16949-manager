@@ -29,6 +29,7 @@ import { MesRecordsView } from '../mesrecords/MesRecordsView'
 import { ItemTreeView } from '../semimes/ItemTreeView'
 import { ReceiptInboxView } from '../semimes/ReceiptInboxView'
 import { SqAuditView } from '../sq-audit/SqAuditView'
+import { KpiGridView } from '../kpi-grid/KpiGridView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
@@ -92,6 +93,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'item-tree' && <ItemTreeView />}
             {currentPage === 'receipt-inbox' && <ReceiptInboxView />}
             {currentPage === 'sq-audit' && <SqAuditView />}
+            {currentPage === 'kpi-grid' && <KpiGridView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

@@ -180,7 +180,9 @@ const SAVE_DIALOG_CHANNELS = {
   'fmea:export': 'xlsx',
   'report:export': 'xlsx',
   'sqReport:export': 'xlsx',
-  'docgen:saveDialog': 'xlsx'
+  'docgen:saveDialog': 'xlsx',
+  // PB2 ⓔ-2 — KPI 그리드 엑셀 다운로드
+  'kpi:exportXlsx': 'xlsx'
 }
 function mkdirSafe(d) {
   try {
@@ -243,7 +245,10 @@ const STAMP_FIELDS = {
   'obligation:triggerComplete': ['doneBy'],
   // G1 수집함 — 촬영자·태깅자 = 세션 사용자(29번 §2 STAMP 실명 기록)
   'semimes:captureCreate': ['createdBy'],
-  'semimes:captureTag': ['createdBy']
+  'semimes:captureTag': ['createdBy'],
+  // PB2 ⓔ-2 — KPI 실적 기입 주체 세션 강제(그리드 신설 편승 — 기존 화면도 동일 혜택)
+  'kpi:save': ['enteredBy'],
+  'kpi:save-batch': ['enteredBy']
 }
 
 // ── POST /api/{channel} 디스패처 ──

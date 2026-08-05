@@ -90,6 +90,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     key: 'mgmt',
     label: '경영정보',
     items: [
+      { label: 'KPI 실적 그리드 (엑셀형)', page: 'kpi-grid' },
       { label: '대시보드 (심사 준비 현황)', page: 'dashboard' },
       { label: 'SQ 대시보드', page: 'sq-dashboard' },
       { label: 'IATF 대시보드', page: 'iatf-dashboard' },

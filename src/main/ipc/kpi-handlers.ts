@@ -1,4 +1,5 @@
-import { ipcMain } from 'electron'
+import { BrowserWindow, dialog, ipcMain } from 'electron'
+import ExcelJS from 'exceljs'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import type {
@@ -112,4 +113,80 @@ export function registerKpiHandlers(): void {
       }
     }
   )
+
+  // ── PB2 ⓔ-2 — KPI 연간 그리드 엑셀 내보내기(4차 노트 §3 "기록을 밖으로") ──
+  // 부호 착색 동봉: 목표 대비 불리 = 빨강 · 유리 = 파랑(8/4 사장님 확정 — direction 반영).
+  ipcMain.handle(IPC_CHANNELS.KPI_EXPORT_XLSX, async (_e, { year }: { year: string }) => {
+    try {
+      if (!/^\d{4}$/.test(year || '')) return { success: false, error: '연도(YYYY)가 필요합니다.' }
+      const inds = db
+        .prepare(
+          `SELECT id, name, unit, target, direction, owner_team FROM kpi_indicators
+           WHERE active = 1 ORDER BY sort_order ASC, id ASC`
+        )
+        .all() as Array<{ id: number; name: string; unit: string | null; target: number | null; direction: string; owner_team: string | null }>
+      const meas = db
+        .prepare(`SELECT indicator_id, period, value FROM kpi_measurements WHERE period LIKE ?`)
+        .all(`${year}-%`) as Array<{ indicator_id: number; period: string; value: number }>
+      const byKey = new Map(meas.map((m) => [`${m.indicator_id}|${m.period}`, m.value]))
+
+      const win = BrowserWindow.getFocusedWindow()
+      const saveRes = win
+        ? await dialog.showSaveDialog(win, {
+            title: 'KPI 실적 그리드 저장',
+            defaultPath: `KPI실적_${year}.xlsx`,
+            filters: [{ name: 'Excel 파일', extensions: ['xlsx'] }]
+          })
+        : await dialog.showSaveDialog({
+            title: 'KPI 실적 그리드 저장',
+            defaultPath: `KPI실적_${year}.xlsx`,
+            filters: [{ name: 'Excel 파일', extensions: ['xlsx'] }]
+          })
+      if (saveRes.canceled || !saveRes.filePath) return { success: false, canceled: true }
+
+      const wb = new ExcelJS.Workbook()
+      const ws = wb.addWorksheet(`KPI ${year}`, { views: [{ state: 'frozen', xSplit: 3, ySplit: 2 }] })
+      // 병합 헤더(4차 §3): 1행 = 지표/단위/목표 + 분기 그룹, 2행 = 월
+      ws.mergeCells('A1:A2'); ws.getCell('A1').value = '지표'
+      ws.mergeCells('B1:B2'); ws.getCell('B1').value = '단위'
+      ws.mergeCells('C1:C2'); ws.getCell('C1').value = '목표'
+      for (let q = 0; q < 4; q++) {
+        const start = 4 + q * 3
+        ws.mergeCells(1, start, 1, start + 2)
+        ws.getCell(1, start).value = `${q + 1}분기`
+      }
+      for (let m = 1; m <= 12; m++) ws.getCell(2, 3 + m).value = `${m}월`
+      for (let c = 1; c <= 15; c++) {
+        const h1 = ws.getCell(1, c); const h2 = ws.getCell(2, c)
+        for (const cell of [h1, h2]) {
+          cell.font = { bold: true }
+          cell.alignment = { horizontal: 'center', vertical: 'middle' }
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF4FB' } }
+          cell.border = { bottom: { style: 'thin' }, right: { style: 'thin' } }
+        }
+      }
+      for (const ind of inds) {
+        const row = ws.addRow([
+          ind.name, ind.unit || '%', ind.target,
+          ...Array.from({ length: 12 }, (_, i) => byKey.get(`${ind.id}|${year}-${String(i + 1).padStart(2, '0')}`) ?? null)
+        ])
+        for (let m = 1; m <= 12; m++) {
+          const cell = row.getCell(3 + m)
+          const v = cell.value
+          if (typeof v === 'number' && ind.target != null) {
+            const bad = ind.direction === 'lower' ? v > ind.target : v < ind.target
+            cell.font = { color: { argb: bad ? 'FFB23A3A' : 'FF2467B3' }, bold: true }
+          }
+          cell.border = { bottom: { style: 'hair' }, right: { style: 'hair' } }
+        }
+      }
+      ws.getColumn(1).width = 30; ws.getColumn(2).width = 8; ws.getColumn(3).width = 10
+      for (let m = 4; m <= 15; m++) ws.getColumn(m).width = 9
+
+      await wb.xlsx.writeFile(saveRes.filePath)
+      return { success: true, filePath: saveRes.filePath }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  })
 }
