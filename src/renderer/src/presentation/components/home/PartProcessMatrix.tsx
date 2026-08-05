@@ -1,22 +1,54 @@
 import { useEffect, useState } from 'react'
+import { Star } from 'lucide-react'
 import type { MesPartProcessDto } from '@shared/ipc-types'
 import { CardShell } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
+import { useHeatColors } from '../../hooks/useHeatColors'
 
 /**
  * P1 ⓒ 품번×공정 매트릭스 — 행 = 품번(월 수불량 SO 상위, R1 실측 정렬 260730),
  * 열 = 실측 7공정(ⓑ와 동일 매핑). 셀 = 기준일 검사 항목 수(● N) / 과거만 있으면 최근
  * 기록일(흐림) / 기록 없음 '·'. 끝열 = 기준월 SO 수량(정렬 근거 그대로 노출 — 가짜 숫자
  * 금지: 진행 LOT 표기는 lot_registry 가동(P3/M1) 후 추가).
+ * PB2 ⓔ(4차 노트): ★중점관리 별(관심종목 이식 — localStorage, 별 행 상단 고정) +
+ * 수불 열 파스텔 히트맵(농도 = 크기 — 부호 없음·단색, 색상 ON/OFF 토글 공용).
  */
 
 function shortYmd(ymd: string | null): string {
   return ymd && ymd.length >= 10 ? `${Number(ymd.slice(5, 7))}/${Number(ymd.slice(8, 10))}` : '—'
 }
 
+/** ★중점관리 품번 — 회사 DB 미혼입(개인화, activeUser 선례) */
+const STAR_KEY = 'ui.starPnos'
+function readStars(): Set<string> {
+  try {
+    const raw = localStorage.getItem(STAR_KEY)
+    const arr = raw ? (JSON.parse(raw) as unknown) : null
+    return new Set(Array.isArray(arr) ? arr.filter((x): x is string => typeof x === 'string') : [])
+  } catch {
+    return new Set()
+  }
+}
+
 export function PartProcessMatrix(): JSX.Element {
   const [data, setData] = useState<MesPartProcessDto | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [stars, setStars] = useState<Set<string>>(readStars)
+  const [colors] = useHeatColors()
+
+  const toggleStar = (pno: string): void => {
+    setStars((prev) => {
+      const next = new Set(prev)
+      if (next.has(pno)) next.delete(pno)
+      else next.add(pno)
+      try {
+        localStorage.setItem(STAR_KEY, JSON.stringify([...next]))
+      } catch {
+        /* 저장 실패 — 메모리 상태로 계속 */
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     void (async () => {
@@ -65,12 +97,27 @@ export function PartProcessMatrix(): JSX.Element {
               </tr>
             </thead>
             <tbody>
-              {data.rows.map((row) => (
-                <tr key={row.pno}>
+              {[...data.rows]
+                .sort((a, b) => Number(stars.has(b.pno)) - Number(stars.has(a.pno)))
+                .map((row) => (
+                <tr key={row.pno} className={cn(stars.has(row.pno) && colors && 'bg-warn-tint/20')}>
                   <td className="py-1.5 pr-3 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => toggleStar(row.pno)}
+                      title={stars.has(row.pno) ? '중점관리 해제' : '중점관리 지정(★ — 상단 고정)'}
+                      className="mr-1 align-middle"
+                    >
+                      <Star
+                        className={cn(
+                          'w-3.5 h-3.5 inline',
+                          stars.has(row.pno) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/40'
+                        )}
+                      />
+                    </button>
                     <span className="font-bold">{row.pno}</span>
                     {row.pname ? (
-                      <span className="block text-[11px] text-muted-foreground truncate max-w-[180px]">{row.pname}</span>
+                      <span className="block text-[11px] text-muted-foreground truncate max-w-[180px] pl-5">{row.pname}</span>
                     ) : null}
                   </td>
                   {cols.map((c) => {
@@ -91,7 +138,20 @@ export function PartProcessMatrix(): JSX.Element {
                       </td>
                     )
                   })}
-                  <td className={cn('text-right py-1.5 pl-2 font-bold whitespace-nowrap tabular-nums')}>
+                  {/* 수불 열 파스텔 히트맵(4차 §1 — 농도 = 크기. 부호 축 아님 → 하늘 단색) */}
+                  <td
+                    className="text-right py-1.5 pl-2 pr-2 font-bold whitespace-nowrap tabular-nums"
+                    style={
+                      colors && data.rows.length > 0
+                        ? {
+                            backgroundColor: `rgba(36, 103, 179, ${(
+                              0.05 +
+                              0.25 * (row.monthQty / Math.max(...data.rows.map((r) => r.monthQty), 1))
+                            ).toFixed(3)})`
+                          }
+                        : undefined
+                    }
+                  >
                     {row.monthQty.toLocaleString()}
                     <small className="font-medium text-muted-foreground"> EA</small>
                   </td>

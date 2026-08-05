@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Palette, RefreshCw } from 'lucide-react'
 import type { SqAuditCellDto, SqAuditMatrixDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore } from '../../stores/uiStore'
+import { useHeatColors } from '../../hooks/useHeatColors'
 
 /**
  * PB2 ⓒ — SQ 심사 뷰 (29번 §11 신설 · 시각 정본 = 30번 목업 v2 하단부).
@@ -24,7 +25,7 @@ const MARK_CLS: Record<string, { td: string; ink: string }> = {
   '—': { td: '', ink: 'text-muted-foreground/50' }
 }
 
-function Cell({ cell, opDays }: { cell: SqAuditCellDto; opDays: number }): JSX.Element {
+function Cell({ cell, opDays, colors }: { cell: SqAuditCellDto; opDays: number; colors: boolean }): JSX.Element {
   const m = MARK_CLS[cell.mark] ?? MARK_CLS['—']
   const sub =
     cell.mark === '×'
@@ -35,7 +36,7 @@ function Cell({ cell, opDays }: { cell: SqAuditCellDto; opDays: number }): JSX.E
           ? shortYmd(cell.lastYmd)
           : ''
   return (
-    <td className={cn('text-center py-2 px-2 border-b border-border/60 border-r border-r-border/30', m.td)}>
+    <td className={cn('text-center py-2 px-2 border-b border-border/60 border-r border-r-border/30', colors && m.td)}>
       <span className={cn('font-extrabold text-[14px]', m.ink)}>{cell.mark}</span>
       {sub && <span className="block text-[10.5px] text-muted-foreground">{sub}</span>}
     </td>
@@ -46,21 +47,23 @@ export function SqAuditView(): JSX.Element {
   const { setPage, setSelectedFormCode } = useUIStore()
   const [data, setData] = useState<SqAuditMatrixDto | null>(null)
   const [loading, setLoading] = useState(true)
+  const [days, setDays] = useState(7)
+  const [colors, toggleColors] = useHeatColors()
 
-  const load = async (): Promise<void> => {
+  const load = useCallback(async (): Promise<void> => {
     setLoading(true)
     try {
-      const d = (await window.api.invoke(window.api.channels.SQ_AUDIT_MATRIX, {})) as SqAuditMatrixDto
+      const d = (await window.api.invoke(window.api.channels.SQ_AUDIT_MATRIX, { days })) as SqAuditMatrixDto
       setData(d)
     } catch {
       setData(null)
     } finally {
       setLoading(false)
     }
-  }
+  }, [days])
   useEffect(() => {
     void load()
-  }, [])
+  }, [load])
 
   const openForm = (code: string): void => {
     setSelectedFormCode(code)
@@ -96,12 +99,40 @@ export function SqAuditView(): JSX.Element {
           </button>
         ))}
         {['엑셀', '인쇄'].map((b) => (
-          <button key={b} type="button" className={dimBtn} disabled title="ⓔ 배치(엑셀형 그리드·출력)에서 가동">
+          <button key={b} type="button" className={dimBtn} disabled title="ⓔ-2 배치(엑셀형 그리드·출력)에서 가동">
             {b}
           </button>
         ))}
-        <span className="ml-auto text-[12px] font-semibold bg-secondary text-secondary-foreground border border-primary/30 rounded-lg px-3 py-1.5">
-          기간: {shortYmd(data?.windowStart ?? null) || '—'} ~ {shortYmd(data?.windowEnd ?? null) || '—'} · 가동일 {data?.opDays ?? 0}일
+        {/* 색상 ON/OFF 단일 토글(4차 노트 §2 — 인쇄·흑백 전환. 기호·글자는 항상 유지) */}
+        <button
+          type="button"
+          onClick={toggleColors}
+          className={cn(
+            'px-3 py-1.5 rounded-lg border text-[12px] font-bold flex items-center gap-1',
+            colors ? 'border-primary/40 bg-secondary text-secondary-foreground' : 'border-border text-muted-foreground'
+          )}
+          title="셀 배경색 켜고 끄기 — 기호(●◐×)·글자는 항상 표시"
+        >
+          <Palette className="w-3 h-3" /> 색상 {colors ? 'ON' : 'OFF'}
+        </button>
+        {/* 기간 칩(4차 노트 §2 — 날짜 타이핑 제거) */}
+        <span className="ml-auto flex items-center gap-1">
+          {[7, 14, 30].map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setDays(d)}
+              className={cn(
+                'px-2.5 py-1.5 rounded-lg text-[12px] font-bold border',
+                days === d ? 'bg-secondary text-secondary-foreground border-primary/40' : 'border-border text-muted-foreground hover:bg-muted'
+              )}
+            >
+              {d}일
+            </button>
+          ))}
+          <span className="text-[12px] font-semibold bg-secondary text-secondary-foreground border border-primary/30 rounded-lg px-3 py-1.5 ml-1">
+            {shortYmd(data?.windowStart ?? null) || '—'} ~ {shortYmd(data?.windowEnd ?? null) || '—'} · 가동 {data?.opDays ?? 0}일
+          </span>
         </span>
       </div>
 
@@ -168,7 +199,12 @@ export function SqAuditView(): JSX.Element {
                     )}
                   </th>
                   {cols.map((c) => (
-                    <Cell key={c.key} cell={r.cells[c.key] ?? { mark: '—', lastYmd: null, days: 0 }} opDays={data?.opDays ?? 0} />
+                    <Cell
+                      key={c.key}
+                      cell={r.cells[c.key] ?? { mark: '—', lastYmd: null, days: 0 }}
+                      opDays={data?.opDays ?? 0}
+                      colors={colors}
+                    />
                   ))}
                 </tr>
               )

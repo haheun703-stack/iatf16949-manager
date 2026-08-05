@@ -2345,7 +2345,7 @@ export interface IpcChannelMap {
     response: MesPartProcessDto
   }
   [IPC_CHANNELS.SQ_AUDIT_MATRIX]: {
-    request: { ymd?: string } | undefined
+    request: { ymd?: string; days?: number } | undefined
     response: SqAuditMatrixDto
   }
   [IPC_CHANNELS.SQ_ASSESS_RUN]: {

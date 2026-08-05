@@ -314,12 +314,14 @@ export function registerMesRecordsHandlers(): void {
   // ● = 가동일 전부 기록 · ◐ = 일부 · × = 대상(이력 있음)인데 창 내 0 · — = 비대상(이력 원천 없음).
   // 갭 ＋행 = pack_forms 'iatf-gap'(0135 시드 — 조항 확장은 데이터 행 추가로만) → 근거 양식
   // 작성 기록(전사 축)으로 판정. 렌더러가 아니라 여기서 전부 계산 — 렌더러 무수정 원칙 계열.
-  ipcMain.handle(IPC_CHANNELS.SQ_AUDIT_MATRIX, (_e, req: { ymd?: string } | undefined): SqAuditMatrixDto => {
+  ipcMain.handle(IPC_CHANNELS.SQ_AUDIT_MATRIX, (_e, req: { ymd?: string; days?: number } | undefined): SqAuditMatrixDto => {
     const ymd = req?.ymd || todayKST()
     const db = openSide()
     const dataEndYmd = db ? typeStats(db).dataEndYmd : null
     const windowEnd = dataEndYmd && dataEndYmd < ymd ? dataEndYmd : ymd
-    const windowStart = ymdAdd(windowEnd, -6)
+    // 기간 칩(ⓔ — 4차 노트 §2): 7/14/30일. 기본 7일(도넛과 동일 창)
+    const days = Math.min(Math.max(req?.days ?? 7, 7), 30)
+    const windowStart = ymdAdd(windowEnd, -(days - 1))
     const columns = PROC_COLUMNS.map((c) => ({ key: c.key, label: c.label }))
 
     const kkey = (proc: string, kind: string): string => `${proc}|${kind}`
