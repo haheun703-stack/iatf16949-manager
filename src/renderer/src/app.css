@@ -3,38 +3,47 @@
 @import "pretendard/dist/web/variable/pretendardvariable.css";
 
 @theme {
-  /* 대시보드형 리프레시 토큰 (17번 §1, 2026-07-26 — 시각 정본 = 16번 목업 v1).
-     원칙: 원색 배경 금지 — 상태는 전부 틴트+진한 글자. 화면별 하드코딩 금지, 여기가 유일 정의처.
-     팀 5색(team-theme)·채움칸 베이지·빨강=경고 예약 원칙은 유지. */
-  --color-background: #F6F7F9;        /* 뉴트럴 그레이 캔버스 */
-  --color-foreground: #1A1F27;        /* 잉크 */
+  /* PB2 ⓓ 파스텔 라이트 토큰 (2026-08-05 — 시각 정본 = 루트 30번 목업 v2 파스텔, 29번 §11 테마 확정).
+     17번 리프레시 선례 그대로 "표피만" — 값 교체 + 배지 2쌍·도넛 3색 추가, 화면 코드 무수정.
+     원칙 유지: 원색 배경 금지(틴트+진한 글자) · 팀 5색(team-theme)·채움칸 베이지·빨강=경고 예약.
+     배지 잉크 3색(SQ #2467b3 · IATF #a03d7c · 갭 #9a6200)은 CVD 검증기 통과 — 상태는 항상
+     색+기호(●◐×)+라벨 3중 표기(색만으로 말하지 않는다). */
+  --color-background: #f7f9fc;        /* 파스텔 블루-그레이 캔버스 (v2 표면) */
+  --color-foreground: #243244;        /* 블루 캐스트 잉크 */
   --color-card: #ffffff;
-  --color-card-foreground: #1A1F27;
-  --color-primary: #2563EB;           /* 액션 블루(액센트) */
+  --color-card-foreground: #243244;
+  --color-primary: #2467b3;           /* 액션 블루 = SQ 잉크(v2 로고·헤더) */
   --color-primary-foreground: #ffffff;
-  --color-secondary: #EFF4FF;         /* 액센트 틴트(칩/비활성) */
-  --color-secondary-foreground: #1D4ED8;
-  --color-muted: #F1F2F4;             /* hover / subtle fill / 중립 칩 */
-  --color-muted-foreground: #6B7280;  /* 보조 텍스트 */
-  --color-faint: #9AA1AB;             /* 캡션(11px) 전용 */
-  --color-accent: #2563EB;
+  --color-secondary: #dcecfb;         /* 액센트 틴트(칩/활성 메뉴) = SQ 배지 필 */
+  --color-secondary-foreground: #1b4f8a;
+  --color-muted: #f4f7fa;             /* hover / subtle fill / 중립 칩 */
+  --color-muted-foreground: #68788c;  /* 보조 텍스트 */
+  --color-faint: #8695a8;             /* 캡션(11px) 전용 */
+  --color-accent: #2467b3;
   --color-accent-foreground: #ffffff;
-  --color-border: #EAECEF;
-  --color-ring: #2563EB;
-  --color-destructive: #DC2626;
-  --color-success: #16A34A;
-  --color-warning: #D97706;
+  --color-border: #e2e8f0;
+  --color-ring: #2467b3;
+  --color-destructive: #b23a3a;
+  --color-success: #1a7f4e;
+  --color-warning: #9a6200;
   --color-input: #ffffff;
-  /* 상태 칩(틴트 문법) — 완료/연체/경고/데이터(시스템 발행) */
-  --color-ok-tint: #E8F7EE;
-  --color-ok-ink: #15803D;
-  --color-bad-tint: #FDECEC;
-  --color-bad-ink: #B91C1C;
-  --color-warn-tint: #FEF3E2;
-  --color-warn-ink: #B45309;
+  /* 상태 칩(틴트 문법) — 완료/연체/경고/데이터(시스템 발행). v2 상태 3색(초록/장미/호박) */
+  --color-ok-tint: #d9f2e4;
+  --color-ok-ink: #1a7f4e;
+  --color-bad-tint: #fdf0f0;
+  --color-bad-ink: #b23a3a;
+  --color-warn-tint: #fdeed3;
+  --color-warn-ink: #9a6200;
   --color-data: #7C3AED;
   --color-data-tint: #F3EEFD;
   --color-data-ink: #6D28D9;
+  /* PB2 배지 2쌍 — SQ 배지는 secondary 재사용(#dcecfb/#2467b3), 갭 배지는 warn 재사용(v2 동색 실측) */
+  --color-iatf-tint: #f7e1f0;         /* IATF 자주 배지 필 */
+  --color-iatf-ink: #a03d7c;
+  /* PB2 ⓑ 도넛(공정 실황 커버리지) — 채움 2색 + 트랙 */
+  --color-donut-ok: #58bd8b;
+  --color-donut-warn: #f0b45c;
+  --color-donut-track: #e9eef4;
   /* 다크 사이드바 (17번 §2) */
   --color-side-bg: #171C26;
   --color-side-ink: #C6CBD4;
@@ -51,7 +60,7 @@
   --radius-lg: 14px;
   --radius-md: 8px;
   --radius-sm: 5px;
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.05);
+  --shadow-card: 0 1px 2px rgba(30, 50, 80, 0.05), 0 4px 12px rgba(30, 50, 80, 0.06);
 }
 
 /* 무층(unlayered) 전역 리셋은 @layer utilities 를 이겨 margin/padding 유틸리티를 전부 죽인다
