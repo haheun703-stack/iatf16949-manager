@@ -1152,6 +1152,12 @@ export interface MesProcessLiveCol {
   status: MesProcessStatus
   /** 원천 조합 라벨('MES 자주+설비점검' 등) — 없으면 '—' */
   source: string
+  /**
+   * PB2 ⓑ 도넛(30번 v2): 최근 7일 **가동일 대비** 기록일 %(0~100).
+   * 분모 = 창 안에서 어느 공정이든 기록이 있던 날(가동일 프록시 — 가짜 분모 금지),
+   * 분자 = 이 공정 기록일. 가동일 0(원천 없음·미반입 전체)이면 null — 도넛 회색 정직.
+   */
+  weekPct: number | null
 }
 
 export interface MesProcessLiveDto {

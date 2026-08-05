@@ -17,6 +17,7 @@ import type {
 } from '@shared/ipc-types'
 import { PipelineBand } from './PipelineBand'
 import { ProcessLiveMatrix } from './ProcessLiveMatrix'
+import { ProcessLiveDonuts } from './ProcessLiveDonuts'
 import { PartProcessMatrix } from './PartProcessMatrix'
 import { CardShell, KpiTile as StatTile, TeamDonut, MatrixBoard, MatrixLegend, SegTabs } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
@@ -283,6 +284,9 @@ export function PortalHome(): JSX.Element {
           setTimeout(() => document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' }), 50)
         }}
       />
+
+      {/* ── PB2 ⓑ 공정 실황 도넛 (30번 v2 정본 — 홈 정면) · 상세 표는 아래 유지(정보 손실 0) ── */}
+      <ProcessLiveDonuts />
 
       {/* ── P1 ⓑ 공정 실황 행렬 (동아式 커버리지 — 25번 §3) ── */}
       <ProcessLiveMatrix />

@@ -198,6 +198,13 @@ export function registerMesRecordsHandlers(): void {
     for (const c of PROC_COLUMNS) {
       agg.set(c.key, { todayRecords: 0, todayItems: 0, todayForms: 0, lastYmd: null, sources: new Set() })
     }
+    // PB2 ⓑ 도넛 % — 최근 7일 창(끝 = min(요청일, 데이터 끝)). 분모 = 창 안에서 어느
+    // 공정이든 기록이 있던 날(가동일 프록시), 분자 = 공정별 기록일. 가짜 분모 금지.
+    const windowEnd = dataEndYmd && dataEndYmd < ymd ? dataEndYmd : ymd
+    const windowStart = ymdAdd(windowEnd, -6)
+    const weekDaysAll = new Set<string>()
+    const weekDaysByProc = new Map<string, Set<string>>()
+    for (const c of PROC_COLUMNS) weekDaysByProc.set(c.key, new Set())
     const bump = (proc: string | null, ymd0: string, items: number, src: string, isToday: boolean): void => {
       if (!proc) return
       const a = agg.get(proc)
@@ -208,6 +215,10 @@ export function registerMesRecordsHandlers(): void {
       }
       a.sources.add(src) // 원천 = 전체 이력 기준(이 공정으로 들어오는 데이터 채널 조합)
       if (!a.lastYmd || ymd0 > a.lastYmd) a.lastYmd = ymd0
+      if (ymd0 >= windowStart && ymd0 <= windowEnd) {
+        weekDaysAll.add(ymd0)
+        weekDaysByProc.get(proc)?.add(ymd0)
+      }
     }
 
     if (db) {
@@ -227,23 +238,30 @@ export function registerMesRecordsHandlers(): void {
       }
     }
 
-    // 앱 작성 기록(요청일) — 공정 매핑 양식만(최소 상수), 실시간 원천
+    // 앱 작성 기록 — 공정 매핑 양식만(최소 상수), 실시간 원천. 7일 창 = 도넛 % 겸용.
     try {
       const rows = getSqlite()
         .prepare(
-          `SELECT form_code, COUNT(*) n FROM form_submissions
-           WHERE substr(created_at, 1, 10) = ? GROUP BY form_code`
+          `SELECT substr(created_at, 1, 10) d, form_code, COUNT(*) n FROM form_submissions
+           WHERE substr(created_at, 1, 10) >= ? AND substr(created_at, 1, 10) <= ?
+           GROUP BY d, form_code`
         )
-        .all(ymd) as Array<{ form_code: string; n: number }>
+        .all(windowStart < ymd ? windowStart : ymd, ymd) as Array<{ d: string; form_code: string; n: number }>
       for (const r of rows) {
         const hit = FORM_PROC.find(([pre]) => r.form_code.startsWith(pre))
         if (!hit) continue
         const a = agg.get(hit[1])
         if (!a) continue
-        a.todayForms += r.n
-        a.todayRecords += r.n
+        if (r.d === ymd) {
+          a.todayForms += r.n
+          a.todayRecords += r.n
+          if (!a.lastYmd || ymd > a.lastYmd) a.lastYmd = ymd
+        }
         a.sources.add('앱 작성')
-        if (!a.lastYmd || ymd > a.lastYmd) a.lastYmd = ymd
+        if (r.d >= windowStart && r.d <= windowEnd) {
+          weekDaysAll.add(r.d)
+          weekDaysByProc.get(hit[1])?.add(r.d)
+        }
       }
     } catch {
       /* form_submissions 조회 실패 시 MES 원천만 표시(정직 축소) */
@@ -258,6 +276,7 @@ export function registerMesRecordsHandlers(): void {
       else if (dataEndYmd && ymd > dataEndYmd) status = 'stale' // 덤프 미반입 구간 — 회색 정직
       else if (gapDays != null && gapDays >= GAP_THRESHOLD) status = 'gap'
       else status = 'stale'
+      const procDays = weekDaysByProc.get(c.key)?.size ?? 0
       return {
         key: c.key,
         label: c.label,
@@ -267,7 +286,8 @@ export function registerMesRecordsHandlers(): void {
         lastYmd: a.lastYmd,
         gapDays,
         status,
-        source: a.sources.size > 0 ? [...a.sources].join('+') : '—'
+        source: a.sources.size > 0 ? [...a.sources].join('+') : '—',
+        weekPct: weekDaysAll.size > 0 ? Math.round((procDays / weekDaysAll.size) * 100) : null
       }
     })
     return { ymd, dataEndYmd, available: !!db, columns }
