@@ -1,0 +1,12 @@
+-- ============================================================
+-- Migration 0134: pack_forms.iatf_clause — IATF 조항 축 (2026-08-05)
+-- [스키마 전용 마이그레이션 — 데이터 없음]
+--
+-- 근거 = PB2 견적 ⓐ(dailyq-PB2_MES스타일_홈재편_견적_260804.md) + 29번 §11
+-- ("겉이 MES, 속이 SQ" — 메뉴 하위 항목에 SQ·IATF 배지, MES 에 없는 IATF 추가 요구 = 갭 ＋행).
+-- pack_forms(0132 정션)에 IATF 조항 축을 더해 SQ 항목·IATF 조항·양식이 한 행에서 만난다.
+-- 갭 ＋행 = pack_code 'iatf-gap' 행(0135 시드) — 조항 확장은 데이터 행 추가로만(코드 무변).
+-- 값 형식 = clauses.id ('8.5.1.5' 등) 느슨 참조. '' = 미매핑(정직 — 추정 기입 금지).
+-- ⚠️BEGIN/COMMIT 없음(migrate.ts 트랜잭션 래핑). ADD COLUMN 은 1회 적용.
+-- ============================================================
+ALTER TABLE pack_forms ADD COLUMN iatf_clause TEXT NOT NULL DEFAULT '';

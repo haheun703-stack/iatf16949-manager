@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, AlertTriangle, CalendarDays, CalendarClock, Route, Package, ClipboardCheck,
   GitBranch, Ruler, ShieldCheck, ListChecks, FolderTree, FileEdit, Factory, Home, Users,
-  Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList, Network,
-  Activity, ListTree, Camera, Workflow
+  Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -14,6 +13,7 @@ import { useAiAuthorStore } from '../../stores/aiAuthorStore'
 import { useSimilarStore } from '../../stores/similarStore'
 import { SettingsMenu } from './SettingsMenu'
 import { UserSwitcher } from './UserSwitcher'
+import { MesMenuBar } from './MesMenuBar'
 
 /**
  * 좌측 다크 사이드바 + 상단 도구 스트립 (17번 §2 — GNB 전환, 시각 정본 = 16번 목업 v1).
@@ -50,17 +50,9 @@ const SECTIONS: { key: string; label: string; items: NavItem[] }[] = [
       { id: 'clause-tree', label: '조항 커버리지', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑' }
     ]
   },
-  {
-    key: 'semimes',
-    label: '반-MES',
-    items: [
-      { id: 'item-tree', label: '품번 트리', icon: ListTree, desc: 'BOM·라우팅·공정 — 제조 기준정보' },
-      { id: 'process-flow', label: '공정 흐름 맵', icon: Workflow, desc: '품번별 공정 흐름 — 공정 흐름도 출력' },
-      { id: 'mes-trace', label: 'LOT 계보 조회', icon: Network, desc: '자재↔생산 LOT 정·역추적' },
-      { id: 'mes-records', label: 'MES 기록 현황', icon: Activity, desc: '자주·수입·패트롤·설비점검 커버리지' },
-      { id: 'receipt-inbox', label: '수집함 (전표 사진)', icon: Camera, desc: '입고·출하 전표 사진 → 태깅 → 수불 기록 (G1)' }
-    ]
-  },
+  // PB2 ⓐ(8/5): 반-MES 섹션은 상단 MES 모듈 메뉴바로 승격 — 항목별 새 위치는
+  // docs/ui-pb2/PB2a_정보손실0_확인표_260805.md (품번트리·흐름맵→기준정보 / 수집함·LOT→자재 /
+  // 기록현황→생산 — 정보 손실 0, 사이드바는 심사·매일관리·Core Tool·문서 축으로 축소 재편).
   {
     key: 'daily',
     label: '매일 관리',
@@ -195,7 +187,7 @@ export function Sidebar(): JSX.Element {
   )
 }
 
-/** 상단 도구 스트립 — 기존 GNB 우측 요소의 새 자리(D-day·AI 도구·사용자·설정, 기능 무변) */
+/** 상단 스트립 — 좌 = MES 모듈 메뉴바(PB2 ⓐ, 30번 v2) · 우 = 기존 도구(D-day·AI·사용자·설정, 기능 무변) */
 export function TopBar(): JSX.Element {
   const toggleCopilot = useCopilotStore((s) => s.toggle)
   const copilotOpen = useCopilotStore((s) => s.open)
@@ -203,7 +195,9 @@ export function TopBar(): JSX.Element {
   const toggleSimilar = useSimilarStore((s) => s.toggle)
 
   return (
-    <div className="h-[52px] shrink-0 flex items-center justify-end gap-2.5 px-5 bg-background border-b border-border">
+    <div className="h-[52px] shrink-0 flex items-center justify-between gap-3 px-5 bg-card border-b border-border">
+      <MesMenuBar />
+      <div className="flex items-center gap-2.5 shrink-0">
       <DdayBadge />
       <button
         type="button"
@@ -242,6 +236,7 @@ export function TopBar(): JSX.Element {
       </button>
       <UserSwitcher />
       <SettingsMenu />
+      </div>
     </div>
   )
 }
