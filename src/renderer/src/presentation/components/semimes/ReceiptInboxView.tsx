@@ -70,6 +70,8 @@ export function ReceiptInboxView(): JSX.Element {
   const [filter, setFilter] = useState<Filter>('untagged')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  /** 웹 스트림 URL 실패 시 1회 채널 폴백(Electron·파일 유실) — 재귀 방지 플래그 */
+  const imageFellBack = useRef(false)
   const [imageZoom, setImageZoom] = useState(false)
   const [msg, setMsg] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
@@ -105,23 +107,16 @@ export function ReceiptInboxView(): JSX.Element {
   const rows = data?.rows ?? []
   const selected = rows.find((r) => r.id === selectedId) ?? null
 
-  // 선택 변경 → 사진 로드 + 폼 초기화(미분류일 때)
+  // 선택 변경 → 사진 소스 지정 + 폼 초기화(미분류일 때)
+  // 소견 A(8/5 검수): base64 데이터URL(JSON)은 멀티-백KB 문자열이 힙·DOM에 얹혀 렌더러가
+  // 얼어붙었다 — 웹은 로그인 가드 스트림 URL(<img>가 비동기 로드·디코드·캐시), 실패 시에만
+  // 채널 폴백(Electron file:// 오리진·파일 유실 케이스).
   useEffect(() => {
-    setImageUrl(null)
     setImageZoom(false)
     setMsg(null)
+    imageFellBack.current = false
+    setImageUrl(selected?.hasImage ? `/api/capture-image/${selected.id}` : null)
     if (!selected) return
-    let alive = true
-    void (async () => {
-      try {
-        const res = (await window.api.invoke(window.api.channels.SEMIMES_CAPTURE_IMAGE, {
-          id: selected.id
-        })) as { dataUrl: string | null }
-        if (alive) setImageUrl(res.dataUrl)
-      } catch {
-        if (alive) setImageUrl(null)
-      }
-    })()
     if (selected.status === '미분류') {
       setFormKind(selected.kind)
       setDocDate('')
@@ -130,19 +125,30 @@ export function ReceiptInboxView(): JSX.Element {
       setNote('')
       setItems([EMPTY_ROW()])
     }
-    return () => {
-      alive = false
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
 
-  // 거래처 선택 → 입고 구분 초안(자재공급처→원자재·외주처→외주재입고, 태깅 때 확정 — M1 §1)
+  /** 거래처 입력 해석: 코드 우선, 아니면 이름(공백 무시) 유일 일치 시 코드로 (소견 D — 8/5 검수) */
+  const resolvePartnerCode = useCallback(
+    (input: string): string => {
+      const t = input.trim()
+      if (!t || !data) return t
+      if (data.partners.some((p) => p.code === t)) return t
+      const key = t.replace(/[\s　]/g, '')
+      const byName = data.partners.filter((p) => p.name.replace(/[\s　]/g, '') === key)
+      return byName.length === 1 ? byName[0].code : t
+    },
+    [data]
+  )
+
+  // 거래처 입력 → 입고 구분 초안(자재공급처→원자재·외주처→외주재입고, 태깅 때 확정 — M1 §1)
+  // 이름 입력도 해석 후 초안(소견 D·E). 유형 '고객' 등은 규칙 대상 아님 — 수동 선택(설계 그대로).
   useEffect(() => {
-    const p = data?.partners.find((x) => x.code === partnerCode)
+    const p = data?.partners.find((x) => x.code === resolvePartnerCode(partnerCode))
     if (!p) return
     if (p.type === '자재공급처') setReceiptClass('원자재')
     else if (p.type === '외주처') setReceiptClass('외주재입고')
-  }, [partnerCode, data])
+  }, [partnerCode, data, resolvePartnerCode])
 
   const filtered = useMemo(() => {
     switch (filter) {
@@ -222,7 +228,7 @@ export function ReceiptInboxView(): JSX.Element {
         captureId: selected.id,
         kind: formKind,
         docDate,
-        partnerCode,
+        partnerCode: resolvePartnerCode(partnerCode),
         receiptClass: formKind === 'receipt_in' ? receiptClass || undefined : undefined,
         items: items
           .filter((r) => r.itemCode.trim())
@@ -448,6 +454,23 @@ export function ReceiptInboxView(): JSX.Element {
                 <img
                   src={imageUrl}
                   alt="전표 사진"
+                  loading="lazy"
+                  decoding="async"
+                  onError={() => {
+                    // 웹 스트림 실패(Electron file:// 오리진·파일 유실) → 1회 채널 폴백
+                    if (imageFellBack.current || !selected) return
+                    imageFellBack.current = true
+                    void (async () => {
+                      try {
+                        const res = (await window.api.invoke(window.api.channels.SEMIMES_CAPTURE_IMAGE, {
+                          id: selected.id
+                        })) as { dataUrl: string | null }
+                        setImageUrl(res.dataUrl)
+                      } catch {
+                        setImageUrl(null)
+                      }
+                    })()
+                  }}
                   onClick={() => setImageZoom((z) => !z)}
                   className={cn(
                     'w-full rounded-lg cursor-zoom-in bg-muted/30',
@@ -456,7 +479,7 @@ export function ReceiptInboxView(): JSX.Element {
                 />
               ) : (
                 <div className="h-[200px] flex items-center justify-center text-[13px] text-muted-foreground">
-                  {selected.hasImage ? '사진 로드 중…' : '사진 없음'}
+                  사진 없음
                 </div>
               )}
               <div className="mt-2 flex items-center gap-2 text-[12px] text-muted-foreground">
@@ -534,12 +557,12 @@ export function ReceiptInboxView(): JSX.Element {
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-[12px] font-semibold text-muted-foreground">
-                    거래처 (마스터 검색)
+                    거래처 (코드·이름 모두 인식)
                     <input
                       list="g1-partners"
                       value={partnerCode}
                       onChange={(e) => setPartnerCode(e.target.value)}
-                      placeholder="코드 입력·선택"
+                      placeholder="코드 또는 이름 입력·선택"
                       className="h-9 px-2.5 rounded-lg border border-border bg-card text-[13px] text-foreground"
                     />
                     <datalist id="g1-partners">
@@ -549,6 +572,11 @@ export function ReceiptInboxView(): JSX.Element {
                         </option>
                       ))}
                     </datalist>
+                    {partnerCode && data && resolvePartnerCode(partnerCode) !== partnerCode && (
+                      <span className="text-[11.5px] text-ok-ink">
+                        → 코드 {resolvePartnerCode(partnerCode)} 로 해석됨
+                      </span>
+                    )}
                   </label>
                   {formKind === 'receipt_in' && (
                     <label className="flex flex-col gap-1 text-[12px] font-semibold text-muted-foreground">

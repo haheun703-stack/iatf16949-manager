@@ -138,6 +138,36 @@ try {
   console.error('[server] bridge 로드 실패 — /api 는 404 로 응답합니다:', (e && e.message) || e)
 }
 
+// ── G1 수집함 사진 스트리밍 (검수 소견 A, 8/5) ──
+// base64 JSON(채널) 방식은 멀티-백KB 문자열이 JS 힙·DOM(data URL)에 3중 복사돼 렌더러가
+// 얼어붙는다(실사진 검수 실증). 인증 미들웨어 뒤 = 세션 필수 · id 스코프 · receipt kind 한정
+// — 정적 노출이 아니라 로그인 가드 스트림. 파일은 append-only(불변)라 캐시 허용.
+// Electron 데스크톱은 기존 semimes:captureImage 채널 폴백을 그대로 쓴다(렌더러 onError 폴백).
+app.get('/api/capture-image/:id', (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id)) return res.status(400).json({ error: 'id 필요' })
+  let row = null
+  try {
+    row = db
+      .prepare("SELECT attached_path FROM raw_captures WHERE id = ? AND kind IN ('receipt_in','receipt_out')")
+      .get(id)
+  } catch {
+    row = null
+  }
+  if (!row || !row.attached_path || !fs.existsSync(row.attached_path)) {
+    return res.status(404).json({ error: '사진 없음' })
+  }
+  const mime = String(row.attached_path).toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg'
+  res.setHeader('Content-Type', mime)
+  res.setHeader('Cache-Control', 'private, max-age=3600')
+  fs.createReadStream(row.attached_path)
+    .on('error', () => {
+      if (!res.headersSent) res.status(500)
+      res.end()
+    })
+    .pipe(res)
+})
+
 // ── 파일 다운로드(W2 3착): 저장 다이얼로그 채널 → 서버 temp 생성 → 스트림 다운로드 ──
 // 핸들러 소스 무수정: 서버가 showSaveDialog 반환 경로를 주입하면 핸들러가 그 경로에 파일을 만든다.
 // 응답에 download URL 을 실어 보내면 폴리필(web-api)이 브라우저 다운로드를 트리거한다.
