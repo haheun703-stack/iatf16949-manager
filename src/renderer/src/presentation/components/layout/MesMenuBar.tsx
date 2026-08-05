@@ -141,6 +141,20 @@ export function MesMenuBar(): JSX.Element {
 
   return (
     <div ref={barRef} className="flex items-center gap-0.5 min-w-0 overflow-x-auto" onMouseLeave={() => setOpen(null)}>
+      {/* 목업 우측 링크 — SQ 심사 뷰(ⓒ 신설). TV현황판은 PF 후순위 — 미표기(확인표 §5) */}
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(null)
+          setPage('sq-audit')
+        }}
+        className={cn(
+          'h-9 px-3 rounded-[10px] text-[13px] font-bold shrink-0 order-last ml-1',
+          currentPage === 'sq-audit' ? 'bg-secondary text-secondary-foreground' : 'text-primary hover:bg-secondary/60'
+        )}
+      >
+        SQ 심사 뷰
+      </button>
       {MODULES.map((m) => {
         const active = m.items.some((it) => it.page && it.page === currentPage)
         return (

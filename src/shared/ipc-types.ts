@@ -1169,6 +1169,48 @@ export interface MesProcessLiveDto {
   columns: MesProcessLiveCol[]
 }
 
+// ===== PB2 ⓒ SQ 심사 뷰 (SQ 항목 × 공정 ●◐× — 30번 v2 하단부, 29번 §11) =====
+
+/** 셀 기호: ● 창 내 가동일 전부 기록 · ◐ 일부 · × 공백(대상인데 0) · — 비대상(이력 원천 없음) */
+export type SqAuditMark = '●' | '◐' | '×' | '—'
+
+export interface SqAuditCellDto {
+  mark: SqAuditMark
+  /** 이 공정×검사종류 최근 기록일(전체 이력) */
+  lastYmd: string | null
+  /** 창 내 기록일 수 */
+  days: number
+}
+
+export interface SqAuditRowDto {
+  /** SQ 항목 코드('1_4' 등) — 갭 행은 '' */
+  sqItem: string
+  title: string
+  /** 근거 양식 코드 */
+  formCode: string
+  /** IATF 조항(갭 행·매핑분) — 없으면 '' */
+  iatfClause: string
+  /** IATF 추가 요구 ＋행 여부(pack_forms 'iatf-gap' — 0135 시드, 확장 = 행 추가만) */
+  gap: boolean
+  /** procKey → 셀. 갭 행은 공정축 미분해 — overall 만 사용 */
+  cells: Record<string, SqAuditCellDto>
+  /** 갭 행 전용 — 전사 축 판정(근거 양식 작성 기록, 창 내) */
+  overall?: { mark: '●' | '×'; lastYmd: string | null; count: number }
+}
+
+export interface SqAuditMatrixDto {
+  ymd: string
+  dataEndYmd: string | null
+  available: boolean
+  /** 판정 창(도넛과 동일 — 끝 = min(오늘, 데이터 끝), 7일) */
+  windowStart: string
+  windowEnd: string
+  /** 창 내 가동일 수(어느 공정이든 기록이 있던 날 — 분모) */
+  opDays: number
+  columns: { key: string; label: string }[]
+  rows: SqAuditRowDto[]
+}
+
 // ===== P1 ⓒ 품번×공정 매트릭스 (월 수불량 SO 정렬 — R1 확정 260730) =====
 
 export interface MesPartProcessCell {
@@ -2301,6 +2343,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.MES_RECORDS_PART_PROCESS]: {
     request: { ymd?: string; limit?: number }
     response: MesPartProcessDto
+  }
+  [IPC_CHANNELS.SQ_AUDIT_MATRIX]: {
+    request: { ymd?: string } | undefined
+    response: SqAuditMatrixDto
   }
   [IPC_CHANNELS.SQ_ASSESS_RUN]: {
     request: void

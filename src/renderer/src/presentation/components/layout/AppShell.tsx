@@ -28,6 +28,7 @@ import { MesTraceView } from '../mestrace/MesTraceView'
 import { MesRecordsView } from '../mesrecords/MesRecordsView'
 import { ItemTreeView } from '../semimes/ItemTreeView'
 import { ReceiptInboxView } from '../semimes/ReceiptInboxView'
+import { SqAuditView } from '../sq-audit/SqAuditView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
@@ -90,6 +91,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'mes-records' && <MesRecordsView />}
             {currentPage === 'item-tree' && <ItemTreeView />}
             {currentPage === 'receipt-inbox' && <ReceiptInboxView />}
+            {currentPage === 'sq-audit' && <SqAuditView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

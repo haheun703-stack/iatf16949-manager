@@ -42,6 +42,7 @@ const SECTIONS: { key: string; label: string; items: NavItem[] }[] = [
     key: 'audit',
     label: '심사 대응',
     items: [
+      { id: 'sq-audit', label: 'SQ 심사 뷰', icon: ListChecks, desc: 'SQ 항목 × 공정 — 기록 여부 ●◐× (PB2 ⓒ)' },
       { id: 'sq-dashboard', label: 'SQ 대시보드', icon: Gauge, desc: '점수·등급·남은 점수 — 한 장 요약' },
       { id: 'sq-assessment', label: 'SQ 자체평가', icon: BadgeCheck, desc: '42항목 확정 → 점수 → 리포트' },
       { id: 'sq-readiness', label: 'SQ 준비도', icon: ShieldCheck, desc: '항목별 신호등 상세' },

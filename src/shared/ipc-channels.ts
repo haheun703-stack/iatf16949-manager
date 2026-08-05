@@ -199,6 +199,8 @@ export const IPC_CHANNELS = {
   MES_RECORDS_DETAIL: 'mesRecords:detail',
   MES_RECORDS_PROCESS_LIVE: 'mesRecords:processLive',
   MES_RECORDS_PART_PROCESS: 'mesRecords:partProcess',
+  // PB2 ⓒ SQ 심사 뷰 (29번 §11 — SQ 항목 × 공정 ●◐× 매트릭스, 30번 v2 하단부)
+  SQ_AUDIT_MATRIX: 'sq:auditMatrix',
 
   // 반(半)-MES 코어 (15번 M0 — 마스터 6종·BOM 트리·라우팅. 0101 스키마)
   SEMIMES_SUMMARY: 'semimes:summary',

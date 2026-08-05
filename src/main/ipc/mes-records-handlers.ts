@@ -16,7 +16,11 @@ import type {
   MesRecordsDetailDto,
   MesRecordsPartRow,
   MesRecordsStatusDto,
-  MesRecordsTypeStat
+  MesRecordsTypeStat,
+  SqAuditCellDto,
+  SqAuditMark,
+  SqAuditMatrixDto,
+  SqAuditRowDto
 } from '@shared/ipc-types'
 
 /**
@@ -186,6 +190,18 @@ const FORM_PROC: Array<[string, string]> = [
 /** 공백 판정 임계 — 마지막 기록이 데이터 끝 대비 2일 이상 뒤처지면 '공백' */
 const GAP_THRESHOLD = 2
 
+// ===== PB2 ⓒ SQ 심사 뷰 — SQ 항목 행 축(최소 상수, FORM_PROC 선례) =====
+// kind = 원천 연결: W자주 / P패트롤 / I수입 / MAC설비점검 / S출하(원천 존재 시 실데이터로) /
+// LOT = 공정축 원천 없음(v1 전열 '—' 정직 — PC 단계 lot_no 동반부터 실측).
+const SQ_AUDIT_ROWS: Array<{ sqItem: string; title: string; formCode: string; kind: string }> = [
+  { sqItem: '1_4', title: '자주검사 초·중·종', formCode: 'M1200-10', kind: 'W' },
+  { sqItem: '2_7', title: '자주/순회 체크시트', formCode: 'L2100-05', kind: 'P' },
+  { sqItem: '5_1', title: 'LOT 추적성', formCode: 'M2100-10', kind: 'LOT' },
+  { sqItem: '3_1', title: '설비 일상점검', formCode: 'L1100-07', kind: 'MAC' },
+  { sqItem: '2_1', title: '수입검사', formCode: 'L2100-07', kind: 'I' },
+  { sqItem: '2_8', title: '출하검사 성적서', formCode: 'M3100-05', kind: 'S' }
+]
+
 export function registerMesRecordsHandlers(): void {
   // P1 ⓑ 공정 실황(커버리지 모드) — 사이드카(sqc/mac) + 앱 작성 기록 결합, 신규 테이블 0
   ipcMain.handle(IPC_CHANNELS.MES_RECORDS_PROCESS_LIVE, (_e, req: { ymd?: string }): MesProcessLiveDto => {
@@ -291,6 +307,121 @@ export function registerMesRecordsHandlers(): void {
       }
     })
     return { ymd, dataEndYmd, available: !!db, columns }
+  })
+
+  // ── PB2 ⓒ SQ 심사 뷰 (30번 v2 하단부) — SQ 항목 × 공정 ●◐×, 실측만 ──
+  // 창 = 도넛과 동일(끝 = min(오늘, 데이터 끝), 7일). 분모 = 창 내 가동일(전사 기록일).
+  // ● = 가동일 전부 기록 · ◐ = 일부 · × = 대상(이력 있음)인데 창 내 0 · — = 비대상(이력 원천 없음).
+  // 갭 ＋행 = pack_forms 'iatf-gap'(0135 시드 — 조항 확장은 데이터 행 추가로만) → 근거 양식
+  // 작성 기록(전사 축)으로 판정. 렌더러가 아니라 여기서 전부 계산 — 렌더러 무수정 원칙 계열.
+  ipcMain.handle(IPC_CHANNELS.SQ_AUDIT_MATRIX, (_e, req: { ymd?: string } | undefined): SqAuditMatrixDto => {
+    const ymd = req?.ymd || todayKST()
+    const db = openSide()
+    const dataEndYmd = db ? typeStats(db).dataEndYmd : null
+    const windowEnd = dataEndYmd && dataEndYmd < ymd ? dataEndYmd : ymd
+    const windowStart = ymdAdd(windowEnd, -6)
+    const columns = PROC_COLUMNS.map((c) => ({ key: c.key, label: c.label }))
+
+    const kkey = (proc: string, kind: string): string => `${proc}|${kind}`
+    const everLast = new Map<string, string>() // proc|kind → 최근 기록일(전체 이력)
+    const winDays = new Map<string, Set<string>>() // proc|kind → 창 내 기록일
+    const opDaysSet = new Set<string>() // 창 내 가동일(전사)
+    const seen = (proc: string | null, kind: string, ymd0: string): void => {
+      if (!proc) return
+      const k = kkey(proc, kind)
+      const last = everLast.get(k)
+      if (!last || ymd0 > last) everLast.set(k, ymd0)
+      if (ymd0 >= windowStart && ymd0 <= windowEnd) {
+        opDaysSet.add(ymd0)
+        let s = winDays.get(k)
+        if (!s) winDays.set(k, (s = new Set()))
+        s.add(ymd0)
+      }
+    }
+    if (db) {
+      const sqc = db
+        .prepare('SELECT ymd, qcgubun, line_no FROM sqc_daily')
+        .all() as Array<{ ymd: string; qcgubun: string; line_no: string | null }>
+      for (const r of sqc) {
+        seen(r.qcgubun === 'I' ? 'incoming' : procOf(r.line_no), r.qcgubun, r.ymd)
+      }
+      const mac = db.prepare('SELECT ymd, line_no FROM mac_daily').all() as Array<{ ymd: string; line_no: string | null }>
+      for (const r of mac) seen(procOf(r.line_no), 'MAC', r.ymd)
+    }
+    // 앱 작성 기록도 원천(수입검사 매핑분 — P1b 커버리지 매핑과 동형)
+    const main = getSqlite()
+    try {
+      const rows = main
+        .prepare(
+          `SELECT substr(created_at, 1, 10) d, form_code FROM form_submissions
+           WHERE substr(created_at, 1, 10) >= ? AND substr(created_at, 1, 10) <= ?`
+        )
+        .all(windowStart, windowEnd) as Array<{ d: string; form_code: string }>
+      for (const r of rows) {
+        const hit = FORM_PROC.find(([pre]) => r.form_code.startsWith(pre))
+        if (hit) seen(hit[1], 'I', r.d)
+      }
+    } catch {
+      /* 앱 기록 조회 실패 — MES 원천만(정직 축소) */
+    }
+    const opDays = opDaysSet.size
+
+    const clauseOf = (formCode: string): string => {
+      try {
+        const r = main
+          .prepare(`SELECT iatf_clause FROM pack_forms WHERE form_code = ? AND iatf_clause <> '' LIMIT 1`)
+          .get(formCode) as { iatf_clause: string } | undefined
+        return r?.iatf_clause ?? ''
+      } catch {
+        return ''
+      }
+    }
+
+    const rows: SqAuditRowDto[] = SQ_AUDIT_ROWS.map((def) => {
+      const cells: Record<string, SqAuditCellDto> = {}
+      for (const c of PROC_COLUMNS) {
+        const k = kkey(c.key, def.kind)
+        const last = everLast.get(k) ?? null
+        let mark: SqAuditMark
+        let days = 0
+        if (def.kind === 'LOT' || last == null || opDays === 0) {
+          mark = '—' // 비대상·원천 없음·가동일 0(판정 불가) — 정직
+        } else {
+          days = winDays.get(k)?.size ?? 0
+          mark = days === 0 ? '×' : days >= opDays ? '●' : '◐'
+        }
+        cells[c.key] = { mark, lastYmd: last, days }
+      }
+      return { sqItem: def.sqItem, title: def.title, formCode: def.formCode, iatfClause: clauseOf(def.formCode), gap: false, cells }
+    })
+
+    // 갭 ＋행 (0135 'iatf-gap' — 전사 축: 근거 양식 작성 기록으로 판정)
+    try {
+      const gaps = main
+        .prepare(`SELECT form_code, iatf_clause FROM pack_forms WHERE pack_code = 'iatf-gap' ORDER BY sort_order`)
+        .all() as Array<{ form_code: string; iatf_clause: string }>
+      for (const g of gaps) {
+        const stat = main
+          .prepare(
+            `SELECT COUNT(*) n, MAX(substr(created_at, 1, 10)) last FROM form_submissions
+             WHERE form_code = ? AND substr(created_at, 1, 10) >= ? AND substr(created_at, 1, 10) <= ?`
+          )
+          .get(g.form_code, windowStart, windowEnd) as { n: number; last: string | null }
+        rows.push({
+          sqItem: '',
+          title: `IATF ${g.iatf_clause} 추가 요구`,
+          formCode: g.form_code,
+          iatfClause: g.iatf_clause,
+          gap: true,
+          cells: {},
+          overall: { mark: stat.n > 0 ? '●' : '×', lastYmd: stat.last, count: stat.n }
+        })
+      }
+    } catch {
+      /* pack_forms 미적용(0134 전 DB) — 갭 행 없이 정직 표출 */
+    }
+
+    return { ymd, dataEndYmd, available: !!db, windowStart, windowEnd, opDays, columns, rows }
   })
 
   // P1 ⓒ 품번×공정 매트릭스 — 행 정렬 = 월 수불량 SO(subul_monthly, R1 확정 260730)
