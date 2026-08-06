@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, Save, CheckCircle2 } from 'lucide-react'
 import type { SemimesScanContextDto, SemimesTodayRecordsDto } from '@shared/ipc-types'
+import { todayKST } from '@shared/date-kst'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 
@@ -91,7 +92,8 @@ export function InspEntryView(): JSX.Element {
     setBusy(true)
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_INSP_CREATE, {
-        inspDate: new Date().toISOString().slice(0, 10),
+        // 8/6 검수 Critical: toISOString 절단 = UTC 날짜(KST 00~09시 전날화) — todayKST 강제(7/30 M-날짜 재발 방지)
+        inspDate: todayKST(),
         inspKind: kind,
         itemCode: ctx.itemCode,
         lotNo: lotNo || null,

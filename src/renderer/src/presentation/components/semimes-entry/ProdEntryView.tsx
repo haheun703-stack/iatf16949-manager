@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, Save, Ticket } from 'lucide-react'
 import type { SemimesScanContextDto, SemimesTodayRecordsDto } from '@shared/ipc-types'
+import { todayKST } from '@shared/date-kst'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -70,7 +71,8 @@ export function ProdEntryView(): JSX.Element {
     setMsg(null)
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_PROD_CREATE, {
-        recordDate: new Date().toISOString().slice(0, 10),
+        // 8/6 검수 Critical: UTC 절단 전날화 — todayKST 강제(LOT 발번 일자와 정합)
+        recordDate: todayKST(),
         itemCode: ctx.itemCode,
         lotNo: lotNo || null,
         procCode: procCode || null,

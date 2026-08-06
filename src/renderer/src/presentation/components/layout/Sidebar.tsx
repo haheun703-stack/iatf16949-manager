@@ -93,7 +93,7 @@ const SECTIONS: { key: string; label: string; defaultCollapsed?: boolean; items:
 ]
 
 /** 앱 코어스키마 리비전 — 마이그 추가 시 갱신(사이드바 풋터 표기용) */
-const SCHEMA_REV = '0136'
+const SCHEMA_REV = '0137'
 
 const COLLAPSE_KEY = 'ui.sideCollapsed'
 function readCollapsed(): Set<string> {
