@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, AlertTriangle, CalendarDays, CalendarClock, Route, Package, ClipboardCheck,
   GitBranch, Ruler, ShieldCheck, ListChecks, FolderTree, FileEdit, Factory, Home, Users,
-  Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList
+  Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList,
+  ChevronsLeft, ChevronsRight
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -109,6 +110,26 @@ export function Sidebar(): JSX.Element {
   const { currentPage, setPage } = useUIStore()
   const [companyName, setCompanyName] = useState('')
   const [serverMode, setServerMode] = useState<'web' | 'local' | null>(null)
+  // 사장님 8/6 재확정("상단 메뉴가 메인") — 사이드바 기본 = 아이콘 슬림 모드(펼침 토글 영속).
+  // 항해 정본 = 상단 7모듈 메뉴, 사이드바 = 보조(심사·매일관리·Core Tool·문서 축 아이콘).
+  const [slim, setSlim] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('ui.sideSlim') !== 'off'
+    } catch {
+      return true
+    }
+  })
+  const toggleSlim = (): void => {
+    setSlim((v) => {
+      try {
+        localStorage.setItem('ui.sideSlim', v ? 'off' : 'on')
+      } catch {
+        /* 무시 */
+      }
+      return !v
+    })
+  }
+  const lblCls = slim ? 'hidden' : 'max-[1099px]:hidden' // 슬림이면 라벨 상시 숨김(아이콘만)
   // 31호 §4 — 섹션 기본 접힘(APQP·Core Tool, 문서·양식). 사용자 조작은 localStorage 영속.
   const [collapsed, setCollapsed] = useState<Set<string>>(readCollapsed)
   const toggleSection = (key: string): void => {
@@ -166,13 +187,18 @@ export function Sidebar(): JSX.Element {
         )}
       >
         <Icon className="w-4 h-4 shrink-0 opacity-85" />
-        <span className="truncate max-[1099px]:hidden">{item.label}</span>
+        <span className={cn('truncate', lblCls)}>{item.label}</span>
       </button>
     )
   }
 
   return (
-    <nav className="w-16 min-[1100px]:w-[216px] shrink-0 bg-side-bg flex flex-col px-3 py-5 gap-0.5 overflow-y-auto">
+    <nav
+      className={cn(
+        'shrink-0 bg-side-bg flex flex-col px-3 py-5 gap-0.5 overflow-y-auto',
+        slim ? 'w-16' : 'w-16 min-[1100px]:w-[216px]'
+      )}
+    >
       {/* 브랜드 — 회사명은 company_profile(고객사마다 자기 회사) */}
       <button
         type="button"
@@ -183,10 +209,21 @@ export function Sidebar(): JSX.Element {
         <div className="w-[34px] h-[34px] rounded-[10px] shrink-0 bg-gradient-to-br from-primary to-data flex items-center justify-center">
           <Building2 className="w-4 h-4 text-white" />
         </div>
-        <div className="leading-tight max-[1099px]:hidden min-w-0">
+        <div className={cn('leading-tight min-w-0', lblCls)}>
           <div className="text-[14px] font-bold text-white truncate">{companyName || 'IATF 16949 QMS'}</div>
           <div className="text-[11px] text-side-sec">IATF 16949 QMS</div>
         </div>
+      </button>
+
+      {/* 슬림 ⇄ 펼침 토글 — 항해 정본은 상단 메뉴(8/6), 라벨이 필요할 때만 펼침 */}
+      <button
+        type="button"
+        onClick={toggleSlim}
+        title={slim ? '사이드바 펼치기' : '사이드바 접기(아이콘만)'}
+        className="w-full flex items-center gap-2.5 rounded-[10px] px-3 py-1.5 mb-1 text-side-sec hover:bg-side-hover hover:text-side-ink"
+      >
+        {slim ? <ChevronsRight className="w-4 h-4 shrink-0" /> : <ChevronsLeft className="w-4 h-4 shrink-0" />}
+        <span className={cn('text-[12px] font-semibold', lblCls)}>접기</span>
       </button>
 
       {DIRECT.map((item) => (
@@ -194,13 +231,18 @@ export function Sidebar(): JSX.Element {
       ))}
 
       {SECTIONS.map((sec) => {
-        const isCollapsed = collapsed.has(sec.key) && !sec.items.some((i) => !i.disabled && i.id === currentPage)
+        // 슬림 모드 = 아이콘 연속 표시(섹션 접힘 개념 없음 — 좁은 폭과 동일 문법)
+        const isCollapsed =
+          !slim && collapsed.has(sec.key) && !sec.items.some((i) => !i.disabled && i.id === currentPage)
         return (
           <div key={sec.key}>
             <button
               type="button"
               onClick={() => toggleSection(sec.key)}
-              className="w-full px-3 pt-4 pb-1.5 text-[10.5px] font-bold tracking-[0.08em] text-side-sec max-[1099px]:hidden text-left flex items-center gap-1 hover:text-side-ink"
+              className={cn(
+                'w-full px-3 pt-4 pb-1.5 text-[10.5px] font-bold tracking-[0.08em] text-side-sec text-left flex items-center gap-1 hover:text-side-ink',
+                lblCls
+              )}
               title={isCollapsed ? '펼치기' : '접기'}
             >
               {sec.label}
@@ -208,7 +250,7 @@ export function Sidebar(): JSX.Element {
               {isCollapsed && <span className="ml-auto font-medium">{sec.items.length}</span>}
             </button>
             {!isCollapsed && (
-              <div className="max-[1099px]:pt-3 flex flex-col gap-0.5">
+              <div className={cn('flex flex-col gap-0.5', slim ? 'pt-3' : 'max-[1099px]:pt-3')}>
                 {sec.items.map((item) => (
                   <Item key={sec.key + item.id} item={item} />
                 ))}
@@ -219,7 +261,7 @@ export function Sidebar(): JSX.Element {
       })}
 
       {/* 풋터 — 운영 상태가 늘 보이게 (17번 §2) */}
-      <div className="mt-auto pt-3 px-2 border-t border-side-line text-[11px] text-side-sec max-[1099px]:hidden">
+      <div className={cn('mt-auto pt-3 px-2 border-t border-side-line text-[11px] text-side-sec', lblCls)}>
         <span
           className={cn(
             'inline-block w-[7px] h-[7px] rounded-full mr-1.5',

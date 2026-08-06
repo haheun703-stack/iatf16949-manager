@@ -14,7 +14,8 @@ import type {
   AppUserDto,
   ObligationMatrixDto
 } from '@shared/ipc-types'
-import { ProcessLiveStrip } from './ProcessLiveStrip'
+import { ProcessLiveDonuts } from './ProcessLiveDonuts'
+import { SqAuditView } from '../sq-audit/SqAuditView'
 import { CardShell, KpiTile as StatTile, TeamDonut, MatrixBoard, MatrixLegend, SegTabs } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
 import { traceDeepLink } from '../../../lib/deeplink'
@@ -393,9 +394,11 @@ export function PortalHome(): JSX.Element {
         )
       })()}
 
-      {/* ── 3층: 공정 실황 스트립 (도넛 → 1줄 축약 · 클릭 = 커버리지 상세 — 31호 §2-3) ──
-          품번×공정 실황 표는 홈 제거 → 생산관리 메뉴 '품번×공정 실황' 조회 화면으로(§3, 손실 0) */}
-      <ProcessLiveStrip />
+      {/* ── 홈 정면 = 30번 목업 정본(사장님 8/6 재확정: "목업 HTML 타입이 메인") ──
+          공정 실황 도넛 + SQ 심사 뷰 매트릭스를 목업 배치 그대로. 31호 3층 스트립은 도넛으로
+          복귀(최신 지시 우선 — 충돌 판정은 코워크 통합 검수에 상신). TOP5·배너는 31호 존치. */}
+      <ProcessLiveDonuts />
+      <SqAuditView />
 
       {/* ── P1 ⓓ 데이터 트리거 보드 승격 (M3 — 시스템 발행, ✓는 사람 몫) ── */}
       {(() => {

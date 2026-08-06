@@ -85,7 +85,12 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
   {
     key: 'mold',
     label: '금형관리',
-    items: [{ label: '금형 타발수 대장', soon: true, note: '26번 A4 — 별도 판단' }]
+    items: [
+      { label: '금형 점검 체크시트 (일상·정기·보관)', form: 'L1100-25', sq: ['3_4'] },
+      { label: '금형 진행사항 점검', form: 'B2100-06' },
+      { label: '지그·금형 보관 위치 식별표', form: 'L1200-11' },
+      { label: '금형 타발수 대장', soon: true, note: '26번 A4 — 별도 판단' }
+    ]
   },
   {
     key: 'mgmt',
