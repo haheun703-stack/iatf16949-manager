@@ -7,14 +7,13 @@ import {
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
-import { useUIStore, type PageId } from '../../stores/uiStore'
+import { useUIStore, PAGE_LABELS, type PageId } from '../../stores/uiStore'
 import { DdayBadge } from '../shared/DdayBadge'
 import { useCopilotStore } from '../../stores/copilotStore'
 import { useAiAuthorStore } from '../../stores/aiAuthorStore'
 import { useSimilarStore } from '../../stores/similarStore'
 import { SettingsMenu } from './SettingsMenu'
 import { UserSwitcher } from './UserSwitcher'
-import { MesMenuBar } from './MesMenuBar'
 
 /**
  * 좌측 다크 사이드바 + 상단 도구 스트립 (17번 §2 — GNB 전환, 시각 정본 = 16번 목업 v1).
@@ -35,7 +34,7 @@ interface NavItem {
 }
 
 const DIRECT: NavItem[] = [
-  { id: 'home', label: '관제탑 (홈)', icon: Home, desc: '오늘 내 할 일 — 했는지·안 했는지' },
+  { id: 'home', label: 'MES 홈', icon: Home, desc: '첫 화면 — 메뉴·자주 쓰는 화면·오늘 요약 (32호 §2)' },
   { id: 'doc-browse', label: '문서 작성', icon: BookOpen, desc: '규정·양식 찾아 바로 작성' },
   { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' }
 ]
@@ -45,6 +44,7 @@ const SECTIONS: { key: string; label: string; defaultCollapsed?: boolean; items:
     key: 'audit',
     label: '심사 대응',
     items: [
+      { id: 'audit-hub', label: '관제탑 (심사대응)', icon: Home, desc: '문제 배너·TOP5·심사 뷰·KPI — 32호 §2 이동', dim: true },
       { id: 'sq-audit', label: 'SQ 심사 뷰', icon: ListChecks, desc: 'SQ 항목 × 공정 — 기록 여부 ●◐× (PB2 ⓒ)', dim: true },
       { id: 'sq-dashboard', label: 'SQ 대시보드', icon: Gauge, desc: '점수·등급·남은 점수 — 한 장 요약', dim: true },
       { id: 'sq-assessment', label: 'SQ 자체평가', icon: BadgeCheck, desc: '42항목 확정 → 점수 → 리포트' },
@@ -275,16 +275,19 @@ export function Sidebar(): JSX.Element {
   )
 }
 
-/** 상단 스트립 — 좌 = MES 모듈 메뉴바(PB2 ⓐ, 30번 v2) · 우 = 기존 도구(D-day·AI·사용자·설정, 기능 무변) */
+/** 32호 §1-1 타이틀 줄 — "데일리Q - {화면명}" + 우측 유틸(D-day·AI·사용자·설정, 기능 무변) */
 export function TopBar(): JSX.Element {
+  const currentPage = useUIStore((s) => s.currentPage)
   const toggleCopilot = useCopilotStore((s) => s.toggle)
   const copilotOpen = useCopilotStore((s) => s.open)
   const toggleAuthor = useAiAuthorStore((s) => s.toggle)
   const toggleSimilar = useSimilarStore((s) => s.toggle)
 
   return (
-    <div className="h-[52px] shrink-0 flex items-center justify-between gap-3 px-5 bg-card border-b border-border">
-      <MesMenuBar />
+    <div className="h-[48px] shrink-0 flex items-center justify-between gap-3 px-5 bg-card border-b border-border">
+      <span className="text-[15.5px] font-extrabold tracking-[-0.01em] text-mega-active truncate">
+        데일리Q <span className="text-muted-foreground font-semibold">-</span> {PAGE_LABELS[currentPage]}
+      </span>
       <div className="flex items-center gap-2.5 shrink-0">
       <DdayBadge />
       <button

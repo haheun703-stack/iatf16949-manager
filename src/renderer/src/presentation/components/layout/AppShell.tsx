@@ -1,5 +1,7 @@
 import { useUIStore } from '../../stores/uiStore'
 import { Sidebar, TopBar } from './Sidebar'
+import { MesMenuBar, MesSubTabs } from './MesMenuBar'
+import { MesHome } from '../mes-home/MesHome'
 import { Dashboard } from '../dashboard/Dashboard'
 import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
 import { SqDashboardView } from '../sq-dashboard/SqDashboardView'
@@ -53,7 +55,10 @@ export function AppShell(): JSX.Element {
           라우팅·PageId·화면 무수정 — 껍데기 교체만. */}
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col min-h-0">
+        {/* 32호 §1 5층 골격: ①타이틀 줄 ②남색 메가바 ③2차 탭 줄 → ④⑤(툴바·그리드)는 각 화면 */}
         <TopBar />
+        <MesMenuBar />
+        <MesSubTabs />
         <main className="flex-1 min-w-0 overflow-y-auto">
           {/* 전 화면 공통 중앙 칼럼 — 최대 1400px 유지(7/16 정본), 사이드바 만큼 줄어든 가용폭 기준.
               인라인 스타일 고정 — 유틸리티 클래스 미생성/충돌에도 영향받지 않는 정본.
@@ -68,7 +73,8 @@ export function AppShell(): JSX.Element {
           >
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}
           <ErrorBoundary key={currentPage}>
-            {currentPage === 'home' && <PortalHome />}
+            {currentPage === 'home' && <MesHome />}
+            {currentPage === 'audit-hub' && <PortalHome />}
             {currentPage === 'team-hub' && <TeamHubView />}
             {currentPage === 'team-detail' && <TeamDetailView />}
             {currentPage === 'dashboard' && <Dashboard />}

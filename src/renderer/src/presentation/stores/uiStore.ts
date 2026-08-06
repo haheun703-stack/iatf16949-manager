@@ -38,10 +38,11 @@ export type PageId =
   | 'insp-entry'
   | 'prod-entry'
   | 'work-order'
+  | 'audit-hub'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
-  home: '홈',
+  home: 'MES 홈',
   'team-hub': '팀 허브',
   'team-detail': '팀 상세',
   dashboard: '대시보드',
@@ -76,7 +77,8 @@ export const PAGE_LABELS: Record<PageId, string> = {
   'today-board': '오늘 할 일 보드',
   'insp-entry': '검사 등록',
   'prod-entry': '생산실적 등록',
-  'work-order': '작업지시관리'
+  'work-order': '작업지시관리',
+  'audit-hub': '심사대응 (관제탑)'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

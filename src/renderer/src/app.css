@@ -40,6 +40,10 @@
   /* PB2 배지 2쌍 — SQ 배지는 secondary 재사용(#dcecfb/#2467b3), 갭 배지는 warn 재사용(v2 동색 실측) */
   --color-iatf-tint: #f7e1f0;         /* IATF 자주 배지 필 */
   --color-iatf-ink: #a03d7c;
+  /* 32호 §7-1 — 진한 파스텔톤(강조·대제목 전용: 남색 메가바·화면 타이틀·툴바 활성 버튼) */
+  --color-mega-bg: #1b4f8a;           /* 남색 메가바 배경(캡쳐 문법) */
+  --color-mega-ink: #eaf2fb;          /* 메가바 글씨 */
+  --color-mega-active: #2467b3;       /* 메가바 활성 항목 */
   /* PB2 ⓑ 도넛(공정 실황 커버리지) — 채움 2색 + 트랙 */
   --color-donut-ok: #58bd8b;
   --color-donut-warn: #f0b45c;

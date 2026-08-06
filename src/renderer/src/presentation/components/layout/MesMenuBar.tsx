@@ -98,9 +98,23 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     items: [
       { label: 'KPI 실적 그리드 (엑셀형)', page: 'kpi-grid' },
       { label: '대시보드 (심사 준비 현황)', page: 'dashboard' },
-      { label: 'SQ 대시보드', page: 'sq-dashboard' },
-      { label: 'IATF 대시보드', page: 'iatf-dashboard' },
       { label: '팀별 허브', page: 'team-hub' }
+    ]
+  },
+  // 32호 §1-2 — 심사대응(SQ/IATF) 1차 메뉴 신설: "속이 SQ"의 전용 방(§3-3 전부 수용)
+  {
+    key: 'audit',
+    label: '심사대응',
+    items: [
+      { label: '관제탑 (문제·TOP5·심사 뷰)', page: 'audit-hub' },
+      { label: '오늘 할 일 보드', page: 'today-board' },
+      { label: 'SQ 심사 뷰 (항목×공정)', page: 'sq-audit' },
+      { label: 'SQ 대시보드', page: 'sq-dashboard' },
+      { label: 'SQ 자체평가', page: 'sq-assessment' },
+      { label: 'SQ 준비도', page: 'sq-readiness' },
+      { label: 'SQ 심사 트랙', page: 'sq-track' },
+      { label: 'IATF 대시보드', page: 'iatf-dashboard' },
+      { label: '조항 커버리지', page: 'clause-tree' }
     ]
   }
 ]
@@ -147,21 +161,12 @@ export function MesMenuBar(): JSX.Element {
   }
 
   return (
-    <div ref={barRef} className="flex items-center gap-0.5 min-w-0 overflow-x-auto" onMouseLeave={() => setOpen(null)}>
-      {/* 목업 우측 링크 — SQ 심사 뷰(ⓒ 신설). TV현황판은 PF 후순위 — 미표기(확인표 §5) */}
-      <button
-        type="button"
-        onClick={() => {
-          setOpen(null)
-          setPage('sq-audit')
-        }}
-        className={cn(
-          'h-9 px-3 rounded-[10px] text-[13px] font-bold shrink-0 order-last ml-1',
-          currentPage === 'sq-audit' ? 'bg-secondary text-secondary-foreground' : 'text-primary hover:bg-secondary/60'
-        )}
-      >
-        SQ 심사 뷰
-      </button>
+    // 32호 §1-2 — 남색 메가바(캡쳐 문법 · §7-1 진한 파스텔톤은 강조 전용)
+    <div
+      ref={barRef}
+      className="w-full flex items-center gap-0.5 px-3 min-w-0 overflow-x-auto bg-mega-bg"
+      onMouseLeave={() => setOpen(null)}
+    >
       {MODULES.map((m) => {
         const active = m.items.some((it) => it.page && it.page === currentPage)
         return (
@@ -171,19 +176,15 @@ export function MesMenuBar(): JSX.Element {
               onClick={() => setOpen((o) => (o === m.key ? null : m.key))}
               onMouseEnter={() => setOpen((o) => (o ? m.key : o))}
               className={cn(
-                'h-9 px-3 rounded-[10px] text-[13px] font-semibold flex items-center gap-1 transition-colors',
-                open === m.key
-                  ? 'bg-secondary text-secondary-foreground'
-                  : active
-                    ? 'text-primary'
-                    : 'text-foreground/80 hover:bg-muted'
+                'h-10 px-3.5 text-[13.5px] font-bold flex items-center gap-1 transition-colors',
+                open === m.key || active ? 'bg-mega-active text-white' : 'text-mega-ink hover:bg-mega-active/60'
               )}
             >
               {m.label}
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
             {open === m.key && (
-              <div className="absolute top-[42px] left-0 min-w-[340px] bg-card border border-border rounded-xl shadow-[0_10px_28px_rgba(30,50,80,.16)] overflow-hidden z-50">
+              <div className="absolute top-[40px] left-0 min-w-[340px] bg-card border border-border rounded-b-xl shadow-[0_10px_28px_rgba(30,50,80,.16)] overflow-hidden z-50">
                 {m.items.map((it) => (
                   <button
                     key={it.label}
@@ -213,6 +214,49 @@ export function MesMenuBar(): JSX.Element {
               </div>
             )}
           </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * 32호 §1-3 — 2차 메뉴 탭 줄: 현재 화면이 속한 1차 메뉴의 하위 화면들을 가로 탭으로
+ * 나열, 현재 화면 하이라이트(캡쳐 "작업지시관리" 강조 문법). 모듈 밖 화면이면 미표출.
+ */
+export function MesSubTabs(): JSX.Element | null {
+  const { currentPage, setPage, setSelectedFormCode } = useUIStore()
+  const module = MODULES.find((m) => m.items.some((it) => it.page === currentPage))
+  if (!module) return null
+  return (
+    <div className="w-full flex items-center gap-1 px-3 py-1 bg-card border-b border-border overflow-x-auto">
+      {module.items.map((it) => {
+        const isCur = it.page === currentPage
+        return (
+          <button
+            key={it.label}
+            type="button"
+            disabled={it.soon}
+            onClick={() => {
+              if (it.soon) return
+              if (it.page) setPage(it.page)
+              else if (it.form) {
+                setSelectedFormCode(it.form)
+                setPage('form-builder')
+              }
+            }}
+            className={cn(
+              'px-3 py-1.5 rounded-t-lg text-[12.5px] whitespace-nowrap border-b-2 transition-colors',
+              isCur
+                ? 'border-mega-active text-mega-active font-extrabold bg-secondary/50'
+                : it.soon
+                  ? 'border-transparent text-muted-foreground/40 cursor-not-allowed'
+                  : 'border-transparent text-muted-foreground font-semibold hover:text-foreground hover:bg-muted/60',
+              it.gap && 'text-warn-ink'
+            )}
+          >
+            {it.label}
+          </button>
         )
       })}
     </div>
