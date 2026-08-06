@@ -2216,6 +2216,42 @@ export interface IpcChannelMap {
     request: { query: string; limit?: number }
     response: SemimesItemSearchRowDto[]
   }
+  [IPC_CHANNELS.SEMIMES_SCAN_RESOLVE]: {
+    request: { query: string }
+    response: SemimesScanContextDto
+  }
+  [IPC_CHANNELS.SEMIMES_LOT_ISSUE]: {
+    request: { itemCode: string; date?: string; createdBy?: string }
+    response: { success: boolean; lotNo?: string; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_PROD_CREATE]: {
+    request: SemimesProdCreateInput
+    response: { success: boolean; id?: number; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_INSP_CREATE]: {
+    request: SemimesInspCreateInput
+    response: { success: boolean; id?: number; suggestion?: string; specRevision?: number | null; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_WORK_ORDER_UPSERT]: {
+    request: SemimesWorkOrderInput
+    response: { success: boolean; id?: number; orderNo?: string; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_WORK_ORDER_LIST]: {
+    request: { status?: string; limit?: number } | undefined
+    response: SemimesWorkOrderRowDto[]
+  }
+  [IPC_CHANNELS.SEMIMES_TODAY_RECORDS]: {
+    request: { ymd?: string } | undefined
+    response: SemimesTodayRecordsDto
+  }
+  [IPC_CHANNELS.SEMIMES_RECORD_CANCEL]: {
+    request: { kind: 'prod' | 'insp' | 'receipt'; id: number; reason: string; canceledBy?: string }
+    response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_INSP_CONFIRM]: {
+    request: { id: number; confirmer?: string }
+    response: { success: boolean; error?: string }
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -3037,6 +3073,132 @@ export interface SemimesItemSearchRowDto {
   itemCode: string
   itemName: string | null
   itemType: string
+}
+
+// ── PC 기록 쓰기 (29번 §4 · dailyq-PC 견적 — append-only·실측값 강제·§10-1 각인) ──
+
+export interface SemimesSpecRowDto {
+  id: number
+  inspItem: string
+  instrument: string | null
+  unit: string | null
+  su: number | null
+  sl: number | null
+  nominal: number | null
+  sampleCnt: number | null
+  /** §10-1 — 기록 시 spec_revision 스냅샷의 원천 */
+  revision: number
+}
+
+/** 스캔/품번 [조회] → 현장 문맥 전부 (scanResolve) */
+export interface SemimesScanContextDto {
+  found: boolean
+  itemCode: string | null
+  itemName: string | null
+  itemType: string | null
+  routing: { seq: number; procCode: string; procName: string | null }[]
+  recentLots: { lotNo: string; lotDate: string }[]
+  /** 검사종류 → 활성 스펙 행(최신 revision) */
+  specs: Record<string, SemimesSpecRowDto[]>
+  /** 불량유형 마스터(활성) — 실적 불량 기록용 */
+  defects: { code: string; name: string }[]
+  /** 쿼리가 LOT 번호로 해석된 경우 그 LOT */
+  matchedLot: string | null
+}
+
+export interface SemimesInspValueInput {
+  specId?: number
+  inspItem: string
+  sampleNo: number
+  /** 실측값 강제 — 수치 필수(○/× 단독 저장 거부, 29번 §4) */
+  value: number
+  valueText?: string | null
+}
+
+export interface SemimesInspCreateInput {
+  inspDate: string
+  inspKind: string
+  itemCode: string
+  lotNo?: string | null
+  procCode?: string | null
+  /** 자주검사 = 초품/중품/종품 필수(3차 노트 §4-2) */
+  samplePhase?: string | null
+  /** 사람 확정 판정(자동판정은 제안만 — 응답 suggestion) */
+  judgment: string
+  values: SemimesInspValueInput[]
+  note?: string
+  /** 세션 강제(STAMP) */
+  inspector?: string
+}
+
+export interface SemimesProdCreateInput {
+  recordDate: string
+  itemCode: string
+  lotNo?: string | null
+  procCode?: string | null
+  okQty: number
+  ngQty: number
+  defectCode?: string | null
+  shift?: string | null
+  workOrderId?: number | null
+  note?: string
+  /** 세션 강제(STAMP) */
+  worker?: string
+}
+
+export interface SemimesWorkOrderInput {
+  /** 있으면 상태·수량 등 갱신(작업지시는 기록이 아니라 계획 앵커 — 갱신 허용) */
+  id?: number
+  itemCode?: string
+  orderQty?: number | null
+  lineNo?: string | null
+  startDate?: string | null
+  endDate?: string | null
+  status?: string
+  note?: string | null
+  /** 세션 강제(STAMP) */
+  createdBy?: string
+}
+
+export interface SemimesWorkOrderRowDto {
+  id: number
+  orderNo: string
+  itemCode: string
+  itemName: string | null
+  orderQty: number | null
+  lineNo: string | null
+  startDate: string | null
+  endDate: string | null
+  status: string
+  createdBy: string | null
+  /** 연결 생산실적 합(양품) — 진척 참고 */
+  okSum: number
+}
+
+export interface SemimesTodayRecordsDto {
+  ymd: string
+  prod: Array<{
+    id: number
+    itemCode: string
+    lotNo: string | null
+    procCode: string | null
+    okQty: number
+    ngQty: number
+    worker: string | null
+    canceled: boolean
+  }>
+  insp: Array<{
+    id: number
+    inspKind: string
+    itemCode: string
+    lotNo: string | null
+    samplePhase: string | null
+    judgment: string | null
+    inspector: string | null
+    confirmer: string | null
+    valueCnt: number
+    canceled: boolean
+  }>
 }
 
 // ── 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력) ──

@@ -223,7 +223,14 @@ const REQUIRED_FIELDS = {
   // G1 수집함 (마이그 0136 — 쓰기 2채널)
   'semimes:captureCreate': ['kind', 'imageBase64'],
   'semimes:captureTag': ['captureId', 'kind', 'docDate', 'partnerCode'],
-  'semimes:captureImage': ['id']
+  'semimes:captureImage': ['id'],
+  // PC 기록 쓰기 (29번 §4 — 마이그 0137)
+  'semimes:scanResolve': ['query'],
+  'semimes:lotIssue': ['itemCode'],
+  'semimes:prodRecordCreate': ['recordDate', 'itemCode'],
+  'semimes:inspRecordCreate': ['inspDate', 'inspKind', 'itemCode', 'judgment'],
+  'semimes:recordCancel': ['kind', 'id', 'reason'],
+  'semimes:inspConfirm': ['id']
 }
 
 // 권한 가드(W3-4): 채널 → 허용 role. 없는 채널은 "로그인만"(미들웨어가 이미 보장).
@@ -248,7 +255,14 @@ const STAMP_FIELDS = {
   'semimes:captureTag': ['createdBy'],
   // PB2 ⓔ-2 — KPI 실적 기입 주체 세션 강제(그리드 신설 편승 — 기존 화면도 동일 혜택)
   'kpi:save': ['enteredBy'],
-  'kpi:save-batch': ['enteredBy']
+  'kpi:save-batch': ['enteredBy'],
+  // PC 기록 쓰기 — 기록주체 전부 세션 강제(29번 §2 STAMP · defaultAuthor 폴백 금지)
+  'semimes:lotIssue': ['createdBy'],
+  'semimes:prodRecordCreate': ['worker'],
+  'semimes:inspRecordCreate': ['inspector'],
+  'semimes:workOrderUpsert': ['createdBy'],
+  'semimes:recordCancel': ['canceledBy'],
+  'semimes:inspConfirm': ['confirmer']
 }
 
 // ── POST /api/{channel} 디스패처 ──

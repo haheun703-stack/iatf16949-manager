@@ -31,6 +31,9 @@ import { ReceiptInboxView } from '../semimes/ReceiptInboxView'
 import { SqAuditView } from '../sq-audit/SqAuditView'
 import { KpiGridView } from '../kpi-grid/KpiGridView'
 import { PartProcessView } from '../home/PartProcessView'
+import { InspEntryView } from '../semimes-entry/InspEntryView'
+import { ProdEntryView } from '../semimes-entry/ProdEntryView'
+import { WorkOrderView } from '../semimes-entry/WorkOrderView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
@@ -97,6 +100,9 @@ export function AppShell(): JSX.Element {
             {currentPage === 'kpi-grid' && <KpiGridView />}
             {currentPage === 'part-process' && <PartProcessView />}
             {currentPage === 'today-board' && <PortalHome mode="board" />}
+            {currentPage === 'insp-entry' && <InspEntryView />}
+            {currentPage === 'prod-entry' && <ProdEntryView />}
+            {currentPage === 'work-order' && <WorkOrderView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

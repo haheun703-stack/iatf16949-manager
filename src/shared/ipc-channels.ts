@@ -214,6 +214,16 @@ export const IPC_CHANNELS = {
   SEMIMES_CAPTURE_IMAGE: 'semimes:captureImage',
   SEMIMES_CAPTURE_TAG: 'semimes:captureTag',
   SEMIMES_ITEM_SEARCH: 'semimes:itemSearch',
+  // PC 기록 쓰기 (29번 §4 — semimes-write-handlers. append-only·실측값 강제·STAMP·recordSource)
+  SEMIMES_SCAN_RESOLVE: 'semimes:scanResolve',
+  SEMIMES_LOT_ISSUE: 'semimes:lotIssue',
+  SEMIMES_PROD_CREATE: 'semimes:prodRecordCreate',
+  SEMIMES_INSP_CREATE: 'semimes:inspRecordCreate',
+  SEMIMES_WORK_ORDER_UPSERT: 'semimes:workOrderUpsert',
+  SEMIMES_WORK_ORDER_LIST: 'semimes:workOrderList',
+  SEMIMES_TODAY_RECORDS: 'semimes:todayRecords',
+  SEMIMES_RECORD_CANCEL: 'semimes:recordCancel',
+  SEMIMES_INSP_CONFIRM: 'semimes:inspConfirm',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',
