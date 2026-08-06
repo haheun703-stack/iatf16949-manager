@@ -53,6 +53,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     label: '생산관리',
     items: [
       { label: 'MES 기록 현황 (커버리지)', page: 'mes-records', sq: ['1_4'] },
+      { label: '품번×공정 실황 (수불 상위)', page: 'part-process' },
       { label: '정기 의무 (반복 업무)', page: 'obligations' },
       { label: '작업지시관리', soon: true, iatf: ['8.5.1'], note: 'PC 단계' },
       { label: '생산실적 등록 (초·중·종 연동)', soon: true, sq: ['1_4'], iatf: ['8.5.1'], note: 'PC 단계' },

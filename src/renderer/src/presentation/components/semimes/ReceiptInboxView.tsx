@@ -8,6 +8,7 @@ import type {
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { EmptyResult, GroupLabel, StatBand, StatTile } from '../shared/list/ListKit'
+import { ModalSheet } from '../shared/ModalSheet'
 
 /**
  * G1 수집함 — 입고·출하 전표 사진 태깅 (29번 §8-⑥ · M1 견적 §2, 템플릿 C).
@@ -417,8 +418,8 @@ export function ReceiptInboxView(): JSX.Element {
           </div>
         </div>
 
-        {/* ── 우: 뷰어 + 태깅 폼 / 요약 카드 ── */}
-        {!selected ? (
+        {/* ── 우: 요약 카드 (상시 — 태깅은 모달 시트로, 31호 §6 적용 1호) ── */}
+        {
           <div className="rounded-[14px] border border-border bg-card shadow-card p-5">
             <h3 className="text-[14px] font-extrabold mb-2">수집함 요약</h3>
             <p className="text-[13px] text-muted-foreground mb-4">
@@ -446,8 +447,38 @@ export function ReceiptInboxView(): JSX.Element {
               </>
             )}
           </div>
-        ) : (
-          <div className="flex flex-col gap-4 min-w-0">
+        }
+      </div>
+
+      {/* ── 태깅 모달 시트 (31호 §6 적용 1호 — PC 중앙 모달·폰 풀스크린, 좌사진·우폼 2단) ── */}
+      <ModalSheet
+        open={!!selected}
+        wide
+        dirty={
+          !!selected &&
+          selected.status === '미분류' &&
+          (docDate !== '' || partnerCode !== '' || note !== '' ||
+            items.some((r) => r.itemCode !== '' || r.qty !== '' || r.vendorLot !== ''))
+        }
+        onClose={() => setSelectedId(null)}
+        title={
+          selected
+            ? `전표 ${selected.status === '미분류' ? '태깅' : '내용'} — ${selected.kind === 'receipt_in' ? '입고' : '출하'} · ${fmtTime(selected.createdAt)}`
+            : ''
+        }
+      >
+        {selected && msg && (
+          <div
+            className={cn(
+              'rounded-lg px-3 py-2 mb-3 text-[12.5px] font-semibold',
+              msg.tone === 'ok' ? 'bg-ok-tint text-ok-ink' : 'bg-bad-tint text-bad-ink'
+            )}
+          >
+            {msg.text}
+          </div>
+        )}
+        {selected && (
+          <div className="grid sm:grid-cols-2 gap-4 items-start min-w-0">
             {/* 사진 뷰어 */}
             <div className="rounded-[14px] border border-border bg-card shadow-card p-3">
               {imageUrl ? (
@@ -682,7 +713,7 @@ export function ReceiptInboxView(): JSX.Element {
             )}
           </div>
         )}
-      </div>
+      </ModalSheet>
     </div>
   )
 }

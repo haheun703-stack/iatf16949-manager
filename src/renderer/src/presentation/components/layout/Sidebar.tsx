@@ -29,6 +29,8 @@ interface NavItem {
   desc: string
   /** 아직 활성화되지 않은 항목(예: 입고 사진함 = M1 파일럿 후) */
   disabled?: boolean
+  /** 31호 §4 — 상단 7모듈 메뉴와 의미 중복(진입 존치 = 손실 0, 흐림 = 시각 서열만) */
+  dim?: boolean
 }
 
 const DIRECT: NavItem[] = [
@@ -37,17 +39,17 @@ const DIRECT: NavItem[] = [
   { id: 'schedule', label: '일정표', icon: CalendarDays, desc: '보드·캘린더·타임라인' }
 ]
 
-const SECTIONS: { key: string; label: string; items: NavItem[] }[] = [
+const SECTIONS: { key: string; label: string; defaultCollapsed?: boolean; items: NavItem[] }[] = [
   {
     key: 'audit',
     label: '심사 대응',
     items: [
-      { id: 'sq-audit', label: 'SQ 심사 뷰', icon: ListChecks, desc: 'SQ 항목 × 공정 — 기록 여부 ●◐× (PB2 ⓒ)' },
-      { id: 'sq-dashboard', label: 'SQ 대시보드', icon: Gauge, desc: '점수·등급·남은 점수 — 한 장 요약' },
+      { id: 'sq-audit', label: 'SQ 심사 뷰', icon: ListChecks, desc: 'SQ 항목 × 공정 — 기록 여부 ●◐× (PB2 ⓒ)', dim: true },
+      { id: 'sq-dashboard', label: 'SQ 대시보드', icon: Gauge, desc: '점수·등급·남은 점수 — 한 장 요약', dim: true },
       { id: 'sq-assessment', label: 'SQ 자체평가', icon: BadgeCheck, desc: '42항목 확정 → 점수 → 리포트' },
       { id: 'sq-readiness', label: 'SQ 준비도', icon: ShieldCheck, desc: '항목별 신호등 상세' },
       { id: 'sq-track', label: 'SQ 심사 트랙', icon: ClipboardList, desc: '품번 4종 · 심사 동선 체크리스트' },
-      { id: 'iatf-dashboard', label: 'IATF 대시보드', icon: Gauge, desc: '조항·핵심 의무·문서화 한 장' },
+      { id: 'iatf-dashboard', label: 'IATF 대시보드', icon: Gauge, desc: '조항·핵심 의무·문서화 한 장', dim: true },
       { id: 'clause-tree', label: '조항 커버리지', icon: ListChecks, desc: 'IATF 4~10장 규정 매핑' }
     ]
   },
@@ -58,30 +60,32 @@ const SECTIONS: { key: string; label: string; items: NavItem[] }[] = [
     key: 'daily',
     label: '매일 관리',
     items: [
-      { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '심사 준비 현황 · 채점' },
-      { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책' },
-      { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '반복 업무 등록·도래 관리' },
-      { id: 'team-hub', label: '팀별 허브', icon: Users, desc: '팀별 준비도 · 책임 규정' }
+      { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '심사 준비 현황 · 채점', dim: true },
+      { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책', dim: true },
+      { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '반복 업무 등록·도래 관리', dim: true },
+      { id: 'team-hub', label: '팀별 허브', icon: Users, desc: '팀별 준비도 · 책임 규정', dim: true }
     ]
   },
   {
     key: 'coretool',
     label: 'APQP · Core Tool',
+    defaultCollapsed: true, // 31호 §4 — 기본 접힘(진입 존치, 클릭으로 펼침)
     items: [
       { id: 'apqp', label: 'APQP 여정', icon: Route, desc: '5단계 43산출물' },
-      { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제' },
+      { id: 'parts', label: '품번 / ISIR', icon: Package, desc: '검사협정·관리계획서 통제', dim: true },
       { id: 'ppap', label: 'PPAP 승인', icon: ClipboardCheck, desc: '양산부품승인 18요구사항' },
-      { id: 'fmea', label: '공정 FMEA (신판)', icon: GitBranch, desc: '전환 대비 — 제출은 구판' },
-      { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR' }
+      { id: 'fmea', label: '공정 FMEA (신판)', icon: GitBranch, desc: '전환 대비 — 제출은 구판', dim: true },
+      { id: 'msa', label: 'MSA', icon: Ruler, desc: '측정시스템 %GRR', dim: true }
     ]
   },
   {
     key: 'docs',
     label: '문서 · 양식',
+    defaultCollapsed: true, // 31호 §4 — 기본 접힘
     items: [
-      { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '프로세스·규정·양식 원장' },
+      { id: 'document-bom', label: '문서 BOM', icon: FolderTree, desc: '프로세스·규정·양식 원장', dim: true },
       { id: 'form-builder', label: '양식 단독 작성', icon: FileEdit, desc: '양식만 빠르게 작성' },
-      { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '흐름도 등록 · AI 추출' }
+      { id: 'process-workbench', label: '프로세스 작업장', icon: Factory, desc: '흐름도 등록 · AI 추출', dim: true }
     ]
   }
 ]
@@ -89,10 +93,37 @@ const SECTIONS: { key: string; label: string; items: NavItem[] }[] = [
 /** 앱 코어스키마 리비전 — 마이그 추가 시 갱신(사이드바 풋터 표기용) */
 const SCHEMA_REV = '0136'
 
+const COLLAPSE_KEY = 'ui.sideCollapsed'
+function readCollapsed(): Set<string> {
+  try {
+    const raw = localStorage.getItem(COLLAPSE_KEY)
+    if (raw == null) return new Set(SECTIONS.filter((s) => s.defaultCollapsed).map((s) => s.key))
+    const arr = JSON.parse(raw) as unknown
+    return new Set(Array.isArray(arr) ? arr.filter((x): x is string => typeof x === 'string') : [])
+  } catch {
+    return new Set(SECTIONS.filter((s) => s.defaultCollapsed).map((s) => s.key))
+  }
+}
+
 export function Sidebar(): JSX.Element {
   const { currentPage, setPage } = useUIStore()
   const [companyName, setCompanyName] = useState('')
   const [serverMode, setServerMode] = useState<'web' | 'local' | null>(null)
+  // 31호 §4 — 섹션 기본 접힘(APQP·Core Tool, 문서·양식). 사용자 조작은 localStorage 영속.
+  const [collapsed, setCollapsed] = useState<Set<string>>(readCollapsed)
+  const toggleSection = (key: string): void => {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      try {
+        localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...next]))
+      } catch {
+        /* 저장 실패 — 메모리 상태로 계속 */
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     let alive = true
@@ -130,7 +161,8 @@ export function Sidebar(): JSX.Element {
           active
             ? 'bg-side-active text-white font-bold'
             : 'text-side-ink font-medium hover:bg-side-hover',
-          item.disabled && 'opacity-40 cursor-not-allowed hover:bg-transparent'
+          item.disabled && 'opacity-40 cursor-not-allowed hover:bg-transparent',
+          item.dim && !active && 'opacity-55 hover:opacity-90' // 31호 §4 — 상단 메뉴 중복(진입 존치)
         )}
       >
         <Icon className="w-4 h-4 shrink-0 opacity-85" />
@@ -161,18 +193,30 @@ export function Sidebar(): JSX.Element {
         <Item key={item.id} item={item} />
       ))}
 
-      {SECTIONS.map((sec) => (
-        <div key={sec.key}>
-          <div className="px-3 pt-4 pb-1.5 text-[10.5px] font-bold tracking-[0.08em] text-side-sec max-[1099px]:hidden">
-            {sec.label}
+      {SECTIONS.map((sec) => {
+        const isCollapsed = collapsed.has(sec.key) && !sec.items.some((i) => !i.disabled && i.id === currentPage)
+        return (
+          <div key={sec.key}>
+            <button
+              type="button"
+              onClick={() => toggleSection(sec.key)}
+              className="w-full px-3 pt-4 pb-1.5 text-[10.5px] font-bold tracking-[0.08em] text-side-sec max-[1099px]:hidden text-left flex items-center gap-1 hover:text-side-ink"
+              title={isCollapsed ? '펼치기' : '접기'}
+            >
+              {sec.label}
+              <span className="opacity-60">{isCollapsed ? '▸' : '▾'}</span>
+              {isCollapsed && <span className="ml-auto font-medium">{sec.items.length}</span>}
+            </button>
+            {!isCollapsed && (
+              <div className="max-[1099px]:pt-3 flex flex-col gap-0.5">
+                {sec.items.map((item) => (
+                  <Item key={sec.key + item.id} item={item} />
+                ))}
+              </div>
+            )}
           </div>
-          <div className="max-[1099px]:pt-3 flex flex-col gap-0.5">
-            {sec.items.map((item) => (
-              <Item key={sec.key + item.id} item={item} />
-            ))}
-          </div>
-        </div>
-      ))}
+        )
+      })}
 
       {/* 풋터 — 운영 상태가 늘 보이게 (17번 §2) */}
       <div className="mt-auto pt-3 px-2 border-t border-side-line text-[11px] text-side-sec max-[1099px]:hidden">

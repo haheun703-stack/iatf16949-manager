@@ -382,17 +382,43 @@ export function registerTeamHandlers(): void {
           // T2 [증거 공백]·T3 [문서화 갭] — 원 의무와 중복 아님 → 개별 행 유지(완료는 사람 ✓)
           const team = normalizeTeam(it.teamHint) ?? normalizeOwnerTeam(it.teamHint ?? '')
           const done = it.status === '완료'
-          const daysLeft = Math.round(
-            (new Date(`${it.bucket}T00:00:00`).getTime() - t0.getTime()) / 86400000
-          )
           // T3(reg-body): 기한(회신 기한)이 미래면 due(해야 함), 지나면 overdue. T2 는 버킷이 항상 과거.
-          // T4(receipt-insp, G1): 버킷 = 입고일 — 당일(0일)은 due(오늘 기입), 지나면 overdue.
-          const title =
-            it.entityKind === 'reg-body'
-              ? `[문서화 갭] 규정 원문 ${countMissingRegBodies(db)}종 확보·제출 — 관리팀 공문(기한 ${it.bucket})`
-              : it.entityKind === 'receipt-insp'
-                ? `[수입검사 도래] ${it.bucket} 입고분 — 수입검사 이력카드 당일 기입(SQ 2_2)`
-                : `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`
+          // T4(receipt-insp, G1): 버킷 = 입고일(전표일 — 증거 정직 유지).
+          //   소견 B 안1(31호 §8, 사장님 확정 8/5): 태깅일 > 전표일이면 '연체' 대신
+          //   **'소급 기입 n일'** 라벨 — '연체' 판정은 태깅일 이후에도 미기입인 경우에만(기한 축 = 태깅일).
+          let title: string
+          let dueBase = it.bucket
+          if (it.entityKind === 'reg-body') {
+            title = `[문서화 갭] 규정 원문 ${countMissingRegBodies(db)}종 확보·제출 — 관리팀 공문(기한 ${it.bucket})`
+          } else if (it.entityKind === 'receipt-insp') {
+            let tagYmd: string | null = null
+            try {
+              tagYmd = (
+                db
+                  .prepare(
+                    `SELECT MAX(date(created_at, 'localtime')) t FROM mat_receipt
+                     WHERE capture_id IS NOT NULL AND receipt_date = ?`
+                  )
+                  .get(it.bucket) as { t: string | null }
+              ).t
+            } catch {
+              /* 0106 미적용 DB — 전표일 기준 유지 */
+            }
+            if (tagYmd && tagYmd > it.bucket) {
+              const lag = Math.round(
+                (new Date(`${tagYmd}T00:00:00`).getTime() - new Date(`${it.bucket}T00:00:00`).getTime()) / 86400000
+              )
+              dueBase = tagYmd
+              title = `[수입검사 도래] ${it.bucket} 입고분 · 소급 기입 ${lag}일 — 이력카드 기입(SQ 2_2)`
+            } else {
+              title = `[수입검사 도래] ${it.bucket} 입고분 — 수입검사 이력카드 당일 기입(SQ 2_2)`
+            }
+          } else {
+            title = `[증거 공백] MES 일일 기록 미수신 — ${it.bucket}부터`
+          }
+          const daysLeft = Math.round(
+            (new Date(`${dueBase}T00:00:00`).getTime() - t0.getTime()) / 86400000
+          )
           const dueToday = it.entityKind === 'receipt-insp' && daysLeft === 0
           const task: TodayTaskDto = {
             id: -it.issueId, // 의무 id 와 키 충돌 방지(프론트 completing/key 용도뿐)

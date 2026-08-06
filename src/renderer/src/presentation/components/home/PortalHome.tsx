@@ -11,14 +11,10 @@ import type {
   TodayTaskDto,
   KpiIndicatorDto,
   MesRecordsStatusDto,
-  SemimesSummaryDto,
   AppUserDto,
   ObligationMatrixDto
 } from '@shared/ipc-types'
-import { PipelineBand } from './PipelineBand'
-import { ProcessLiveMatrix } from './ProcessLiveMatrix'
-import { ProcessLiveDonuts } from './ProcessLiveDonuts'
-import { PartProcessMatrix } from './PartProcessMatrix'
+import { ProcessLiveStrip } from './ProcessLiveStrip'
 import { CardShell, KpiTile as StatTile, TeamDonut, MatrixBoard, MatrixLegend, SegTabs } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
 import { traceDeepLink } from '../../../lib/deeplink'
@@ -46,7 +42,6 @@ export function PortalHome(): JSX.Element {
   const [boardView, setBoardView] = useState<'team' | 'person'>('team')
   const [completing, setCompleting] = useState<number | null>(null)
   const [mesStatus, setMesStatus] = useState<MesRecordsStatusDto | null>(null)
-  const [semimes, setSemimes] = useState<SemimesSummaryDto | null>(null)
   const [matrix, setMatrix] = useState<ObligationMatrixDto | null>(null)
   const [matrixStatus, setMatrixStatus] = useState<'ready' | 'loading' | 'error'>('loading')
   const [matrixView, setMatrixView] = useState<'team' | 'person'>('team')
@@ -114,15 +109,7 @@ export function PortalHome(): JSX.Element {
         setMesStatus(null)
       }
     })()
-    // P1 ⓐ 기준정보 4종(품목·간선·라우팅·공정) — M0 실적재 수치(채널 재사용)
-    void (async () => {
-      try {
-        const s = (await window.api.invoke(window.api.channels.SEMIMES_SUMMARY)) as SemimesSummaryDto
-        setSemimes(s)
-      } catch {
-        setSemimes(null)
-      }
-    })()
+    // 기준정보 집계는 31호 §3에 따라 홈 제거 — 기준정보 첫 화면(품번 트리)이 동일 수치 표출(손실 0)
   }, [load, loadKpis])
 
   // §4 — 첫 실행 시 사용자 선택 모달 1회(건너뛰기 허용). 선택 후·본 뒤엔 재노출 안 함.
@@ -269,30 +256,146 @@ export function PortalHome(): JSX.Element {
         </button>
       </div>
 
-      {/* ── P1 ⓐ 데이터 파이프라인 밴드 (25번 §3 — 수신상태·기준정보 4종·오늘 수신·데이터 할 일) ──
-          (구)헤더 MES 칩은 밴드 [MES 수신] 클러스터로 이동 — 정보 손실 0, 신호등·계열별 수신일 보강 */}
-      <PipelineBand
-        mes={mesStatus}
-        semimes={semimes}
-        dataTodo={dataCount}
-        boardDate={board.date}
-        onOpenMes={() => setPage('mes-records')}
-        onOpenTree={() => setPage('item-tree')}
-        onOpenBoard={() => {
-          setHomeTab('board')
-          setOnlyOpen(true)
-          setTimeout(() => document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' }), 50)
-        }}
-      />
+      {/* ══ 31호 §2 — 홈 3층 구조: ①문제 배너 ②오늘 할 일 TOP5 ③공정 스트립 ══
+          §5 정량 가드(UI 헌법): 홈 위젯 ≤5 · one-in-one-out · 동일 데이터 2회 표출 금지 ·
+          카드당 배지 1+숫자 1. 위젯 신규 추가 시 기존 1개 제거/강등을 같은 커밋에 명시할 것. */}
 
-      {/* ── PB2 ⓑ 공정 실황 도넛 (30번 v2 정본 — 홈 정면) · 상세 표는 아래 유지(정보 손실 0) ── */}
-      <ProcessLiveDonuts />
+      {/* ── 1층: 문제 배너 (조건부 — 문제만 크게. 상태 칩 4종·미반입 반복 표출을 여기로 집약) ── */}
+      {(() => {
+        const problems: Array<{ tone: 'bad' | 'warn'; text: string; onClick: () => void }> = []
+        const mesLag =
+          mesStatus?.available && mesStatus.dataEndYmd && board.date > mesStatus.dataEndYmd
+            ? Math.round(
+                (new Date(`${board.date}T00:00:00`).getTime() - new Date(`${mesStatus.dataEndYmd}T00:00:00`).getTime()) /
+                  86400000
+              )
+            : 0
+        if (mesLag >= 2) {
+          problems.push({
+            tone: 'warn',
+            text: `MES 미반입 ${mesLag}일째 (기준 ${mesStatus!.dataEndYmd!.slice(5)})`,
+            onClick: () => setPage('mes-records')
+          })
+        } else if (mesStatus && !mesStatus.available) {
+          problems.push({ tone: 'warn', text: 'MES 사이드카 미가용 — 앱 기록만 집계', onClick: () => setPage('mes-records') })
+        }
+        if (totals.overdue > 0 || dataCount > 0) {
+          problems.push({
+            tone: totals.overdue > 0 ? 'bad' : 'warn',
+            text: `할 일 ${totals.open}건 · 연체 ${totals.overdue}건 · 데이터 발행 ${dataCount}건`,
+            onClick: () => {
+              setHomeTab('board')
+              setOnlyOpen(true)
+              setTimeout(() => document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' }), 50)
+            }
+          })
+        }
+        // 심사 D-day 는 상단 TopBar DdayBadge 가 상시 표출 — 여기 중복 금지(§5-2)
+        return problems.length > 0 ? (
+          <div className="flex flex-wrap gap-2" data-testid="problem-banner">
+            {problems.map((p) => (
+              <button
+                key={p.text}
+                type="button"
+                onClick={p.onClick}
+                className={cn(
+                  'flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13.5px] font-extrabold border transition-colors',
+                  p.tone === 'bad'
+                    ? 'bg-bad-tint text-bad-ink border-bad-ink/25 hover:brightness-95'
+                    : 'bg-warn-tint text-warn-ink border-warn-ink/25 hover:brightness-95'
+                )}
+              >
+                ⚠ {p.text} <span className="text-[11.5px] font-semibold opacity-70">바로가기 →</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl px-4 py-2.5 text-[13px] font-bold bg-ok-tint text-ok-ink" data-testid="problem-banner">
+            ● 오늘 기록 정상 진행 중 — 문제 항목 없음
+          </div>
+        )
+      })()}
 
-      {/* ── P1 ⓑ 공정 실황 행렬 (동아式 커버리지 — 25번 §3) ── */}
-      <ProcessLiveMatrix />
+      {/* ── 2층: 오늘 할 일 TOP5 (연체 → 오늘 due → 확인 대기 순 · ✓는 사람) ── */}
+      {(() => {
+        const rank = (t: TodayTaskDto): number =>
+          t.status === 'overdue' ? 0 : t.triggerResolved ? 2 : t.status === 'due' ? 1 : 3
+        const top5 = allEntries
+          .filter((e) => e.task.status === 'overdue' || e.task.status === 'due')
+          .sort((a, b) => rank(a.task) - rank(b.task) || (a.task.daysLeft ?? 0) - (b.task.daysLeft ?? 0))
+          .slice(0, 5)
+        return (
+          <div className="rounded-[14px] border border-border bg-card shadow-card p-4" data-testid="today-top5">
+            <div className="flex items-center gap-2 mb-2.5">
+              <h2 className="text-[15px] font-extrabold tracking-[-0.01em]">오늘 할 일 TOP {top5.length}</h2>
+              <span className="text-[12px] text-muted-foreground">연체 → 오늘 → 확인 대기 순</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setHomeTab('board')
+                  setTimeout(() => document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' }), 50)
+                }}
+                className="ml-auto text-[12.5px] font-bold text-primary hover:underline"
+              >
+                전체 보드 →
+              </button>
+            </div>
+            {top5.length === 0 ? (
+              <p className="text-[13px] text-muted-foreground py-2">열린 할 일이 없습니다 — 오늘 몫은 끝났습니다.</p>
+            ) : (
+              <div className="flex flex-col divide-y divide-border/60">
+                {top5.map(({ task, teamId }) => (
+                  <div key={`${task.id}-${task.title}`} className="flex items-center gap-2.5 py-2">
+                    <span
+                      className={cn(
+                        'shrink-0 text-[11px] font-bold rounded-md px-1.5 py-0.5',
+                        task.status === 'overdue' ? 'bg-bad-tint text-bad-ink' : task.triggerResolved ? 'bg-ok-tint text-ok-ink' : 'bg-warn-tint text-warn-ink'
+                      )}
+                    >
+                      {task.status === 'overdue'
+                        ? `연체 ${task.daysLeft != null ? -task.daysLeft : ''}일`
+                        : task.triggerResolved
+                          ? '확인 대기'
+                          : '오늘'}
+                    </span>
+                    <span className="min-w-0 truncate text-[13px] font-semibold">{task.title}</span>
+                    {teamId && (
+                      <span
+                        className="shrink-0 text-[11px] font-bold rounded-md px-1.5 py-0.5"
+                        style={{ background: teamTheme(teamId).tintBg, color: teamTheme(teamId).darkText }}
+                      >
+                        {teamTheme(teamId).label}
+                      </span>
+                    )}
+                    <span className="flex-1" />
+                    {task.formCode && (
+                      <button
+                        type="button"
+                        onClick={() => openForm(task.formCode!)}
+                        className="shrink-0 text-[12px] font-bold text-primary hover:underline"
+                      >
+                        작성
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled={completing === task.id}
+                      onClick={() => void complete(task)}
+                      className="shrink-0 h-7 px-2.5 rounded-lg bg-primary/10 text-primary text-[12px] font-bold hover:bg-primary/20 disabled:opacity-50"
+                    >
+                      ✓ 처리
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
-      {/* ── P1 ⓒ 품번×공정 매트릭스 (월 수불량 SO 정렬 — R1 확정) ── */}
-      <PartProcessMatrix />
+      {/* ── 3층: 공정 실황 스트립 (도넛 → 1줄 축약 · 클릭 = 커버리지 상세 — 31호 §2-3) ──
+          품번×공정 실황 표는 홈 제거 → 생산관리 메뉴 '품번×공정 실황' 조회 화면으로(§3, 손실 0) */}
+      <ProcessLiveStrip />
 
       {/* ── P1 ⓓ 데이터 트리거 보드 승격 (M3 — 시스템 발행, ✓는 사람 몫) ── */}
       {(() => {
