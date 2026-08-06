@@ -34,6 +34,7 @@ export type PageId =
   | 'sq-audit'
   | 'kpi-grid'
   | 'part-process'
+  | 'today-board'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
@@ -68,7 +69,8 @@ export const PAGE_LABELS: Record<PageId, string> = {
   'receipt-inbox': '수집함 (전표 사진)',
   'sq-audit': 'SQ 심사 뷰',
   'kpi-grid': 'KPI 실적 그리드',
-  'part-process': '품번×공정 실황'
+  'part-process': '품번×공정 실황',
+  'today-board': '오늘 할 일 보드'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

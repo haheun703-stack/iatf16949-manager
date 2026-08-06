@@ -61,6 +61,7 @@ const SECTIONS: { key: string; label: string; defaultCollapsed?: boolean; items:
     key: 'daily',
     label: '매일 관리',
     items: [
+      { id: 'today-board', label: '오늘 할 일 보드', icon: ClipboardList, desc: '팀별·개인별 전체 보드 + 이행 매트릭스 (홈에서 이관 — 8/6 검수)' },
       { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, desc: '심사 준비 현황 · 채점', dim: true },
       { id: 'case-work', label: '불량 대책서', icon: AlertTriangle, desc: '접수→선별→8D→개선대책', dim: true },
       { id: 'obligations', label: '정기 의무', icon: CalendarClock, desc: '반복 업무 등록·도래 관리', dim: true },

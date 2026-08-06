@@ -96,6 +96,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'sq-audit' && <SqAuditView />}
             {currentPage === 'kpi-grid' && <KpiGridView />}
             {currentPage === 'part-process' && <PartProcessView />}
+            {currentPage === 'today-board' && <PortalHome mode="board" />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

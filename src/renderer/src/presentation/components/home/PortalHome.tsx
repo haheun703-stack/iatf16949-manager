@@ -33,7 +33,7 @@ const PROMPT_SEEN_KEY = 'user_prompt_seen'
  * SQ/IATF 는 할 일 옆 배지로만(항목 강등) — 심사 중심 화면은 '심사 대응' 탭.
  * PageHeader 예외: 대시보드형 밴드가 헤더 역할(P2 예외 4종과 동일 근거).
  */
-export function PortalHome(): JSX.Element {
+export function PortalHome({ mode = 'home' }: { mode?: 'home' | 'board' } = {}): JSX.Element {
   const [board, setBoard] = useState<TeamTodayBoardDto | null>(null)
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
   const [kpis, setKpis] = useState<KpiIndicatorDto[]>([])
@@ -239,7 +239,9 @@ export function PortalHome(): JSX.Element {
     <div className="space-y-4 break-keep">
       {/* ── 템플릿 A 헤더 밴드 (19번 규칙②) — 제목+캡션+우측 상태 칩 ── */}
       <div className="flex items-center gap-3.5 flex-wrap">
-        <h1 className="text-[20px] font-extrabold tracking-[-0.02em]">관제탑</h1>
+        <h1 className="text-[20px] font-extrabold tracking-[-0.02em]">
+          {mode === 'board' ? '오늘 할 일 — 전체 보드' : '관제탑'}
+        </h1>
         <span className="text-[13px] text-muted-foreground">
           {profile?.companyName || '데일리Q'} · {dateLabel}
         </span>
@@ -257,10 +259,12 @@ export function PortalHome(): JSX.Element {
         </button>
       </div>
 
-      {/* ══ 31호 §2 — 홈 3층 구조: ①문제 배너 ②오늘 할 일 TOP5 ③공정 스트립 ══
+      {/* ══ 31호 §2 — 홈 구조(8/6 통합검수 확정): ①문제 배너 ②TOP5 ③도넛 ④심사뷰 ⑤KPI = 5블록.
+          팀별 보드·매트릭스 존은 '오늘 할 일 보드' 화면으로 이관(§5 상한 준수 — 검수 회신 §3).
           §5 정량 가드(UI 헌법): 홈 위젯 ≤5 · one-in-one-out · 동일 데이터 2회 표출 금지 ·
           카드당 배지 1+숫자 1. 위젯 신규 추가 시 기존 1개 제거/강등을 같은 커밋에 명시할 것. */}
-
+      {mode === 'home' && (
+        <>
       {/* ── 1층: 문제 배너 (조건부 — 문제만 크게. 상태 칩 4종·미반입 반복 표출을 여기로 집약) ── */}
       {(() => {
         const problems: Array<{ tone: 'bad' | 'warn'; text: string; onClick: () => void }> = []
@@ -285,9 +289,8 @@ export function PortalHome(): JSX.Element {
             tone: totals.overdue > 0 ? 'bad' : 'warn',
             text: `할 일 ${totals.open}건 · 연체 ${totals.overdue}건 · 데이터 발행 ${dataCount}건`,
             onClick: () => {
-              setHomeTab('board')
               setOnlyOpen(true)
-              setTimeout(() => document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' }), 50)
+              setPage('today-board') // 보드 존 이관(8/6 검수 §3) — 전체 보드 화면으로
             }
           })
         }
@@ -332,10 +335,7 @@ export function PortalHome(): JSX.Element {
               <span className="text-[12px] text-muted-foreground">연체 → 오늘 → 확인 대기 순</span>
               <button
                 type="button"
-                onClick={() => {
-                  setHomeTab('board')
-                  setTimeout(() => document.getElementById('today-board')?.scrollIntoView({ behavior: 'smooth' }), 50)
-                }}
+                onClick={() => setPage('today-board')}
                 className="ml-auto text-[12.5px] font-bold text-primary hover:underline"
               >
                 전체 보드 →
@@ -561,8 +561,12 @@ export function PortalHome(): JSX.Element {
           onSaved={loadKpis}
         />
       )}
+        </>
+      )}
 
-      {/* ── P1 ⓔ 사람 의무 존 — 하단 탭(오늘 할 일 보드 ⇄ 이행 매트릭스, 정보 손실 0) ── */}
+      {mode === 'board' && (
+        <>
+      {/* ── P1 ⓔ 사람 의무 존 — '오늘 할 일 보드' 화면으로 이관(8/6 검수 §3 — 탭·기능 무변) ── */}
       <div className="flex items-center gap-2.5 pt-1">
         <SegTabs
           value={homeTab}
@@ -799,6 +803,8 @@ export function PortalHome(): JSX.Element {
         </button>
       )}
       </>
+      )}
+        </>
       )}
 
       {/* §4 — 첫 실행 시 사용자 선택 모달 1회(건너뛰기 허용) */}
