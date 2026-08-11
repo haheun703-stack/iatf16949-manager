@@ -221,36 +221,59 @@ export function registerMesRecordsHandlers(): void {
     const weekDaysAll = new Set<string>()
     const weekDaysByProc = new Map<string, Set<string>>()
     for (const c of PROC_COLUMNS) weekDaysByProc.set(c.key, new Set())
-    const bump = (proc: string | null, ymd0: string, items: number, src: string, isToday: boolean): void => {
-      if (!proc) return
-      const a = agg.get(proc)
-      if (!a) return
-      if (isToday) {
-        a.todayRecords += 1
-        a.todayItems += items
-      }
-      a.sources.add(src) // 원천 = 전체 이력 기준(이 공정으로 들어오는 데이터 채널 조합)
-      if (!a.lastYmd || ymd0 > a.lastYmd) a.lastYmd = ymd0
-      if (ymd0 >= windowStart && ymd0 <= windowEnd) {
-        weekDaysAll.add(ymd0)
-        weekDaysByProc.get(proc)?.add(ymd0)
-      }
-    }
-
     if (db) {
-      // 수입검사(I) = line 무관 열 귀속 · 자주(W)/패트롤(P) = line_no(WRKCTR)로 공정 귀속
-      const sqc = db
-        .prepare('SELECT ymd, qcgubun, line_no, items FROM sqc_daily')
-        .all() as Array<{ ymd: string; qcgubun: string; line_no: string | null; items: number }>
-      for (const r of sqc) {
-        const proc = r.qcgubun === 'I' ? 'incoming' : procOf(r.line_no)
-        bump(proc, r.ymd, r.items, `MES ${gbnLabel(r.qcgubun)}`, r.ymd === ymd)
+      // M-6: 전 이력 풀스캔 → SQL 집계 3종(오늘분·MAX 최종일·7일 창) — 덤프 누적에도 로딩 상수화.
+      // 수입검사(I) = line 무관 열 귀속 · 자주(W)/패트롤(P) = line_no(WRKCTR)로 공정 귀속(기존 규칙 유지)
+      const sqcProc = (g: string, line: string | null): string | null => (g === 'I' ? 'incoming' : procOf(line))
+      for (const r of db
+        .prepare(`SELECT qcgubun, line_no, COUNT(*) cnt, COALESCE(SUM(items),0) items FROM sqc_daily WHERE ymd = ? GROUP BY qcgubun, line_no`)
+        .all(ymd) as Array<{ qcgubun: string; line_no: string | null; cnt: number; items: number }>) {
+        const a = agg.get(sqcProc(r.qcgubun, r.line_no) ?? '')
+        if (a) {
+          a.todayRecords += r.cnt
+          a.todayItems += r.items
+        }
       }
-      const mac = db
-        .prepare('SELECT ymd, line_no, items FROM mac_daily')
-        .all() as Array<{ ymd: string; line_no: string | null; items: number }>
-      for (const r of mac) {
-        bump(procOf(r.line_no), r.ymd, r.items, 'MES 설비점검', r.ymd === ymd)
+      for (const r of db
+        .prepare(`SELECT qcgubun, line_no, MAX(ymd) last FROM sqc_daily GROUP BY qcgubun, line_no`)
+        .all() as Array<{ qcgubun: string; line_no: string | null; last: string }>) {
+        const a = agg.get(sqcProc(r.qcgubun, r.line_no) ?? '')
+        if (!a) continue
+        a.sources.add(`MES ${gbnLabel(r.qcgubun)}`) // 원천 = 전체 이력 기준
+        if (!a.lastYmd || r.last > a.lastYmd) a.lastYmd = r.last
+      }
+      for (const r of db
+        .prepare(`SELECT DISTINCT ymd, qcgubun, line_no FROM sqc_daily WHERE ymd >= ? AND ymd <= ?`)
+        .all(windowStart, windowEnd) as Array<{ ymd: string; qcgubun: string; line_no: string | null }>) {
+        const proc = sqcProc(r.qcgubun, r.line_no)
+        if (!proc || !agg.has(proc)) continue
+        weekDaysAll.add(r.ymd)
+        weekDaysByProc.get(proc)?.add(r.ymd)
+      }
+      for (const r of db
+        .prepare(`SELECT line_no, COUNT(*) cnt, COALESCE(SUM(items),0) items FROM mac_daily WHERE ymd = ? GROUP BY line_no`)
+        .all(ymd) as Array<{ line_no: string | null; cnt: number; items: number }>) {
+        const a = agg.get(procOf(r.line_no) ?? '')
+        if (a) {
+          a.todayRecords += r.cnt
+          a.todayItems += r.items
+        }
+      }
+      for (const r of db
+        .prepare(`SELECT line_no, MAX(ymd) last FROM mac_daily GROUP BY line_no`)
+        .all() as Array<{ line_no: string | null; last: string }>) {
+        const a = agg.get(procOf(r.line_no) ?? '')
+        if (!a) continue
+        a.sources.add('MES 설비점검')
+        if (!a.lastYmd || r.last > a.lastYmd) a.lastYmd = r.last
+      }
+      for (const r of db
+        .prepare(`SELECT DISTINCT ymd, line_no FROM mac_daily WHERE ymd >= ? AND ymd <= ?`)
+        .all(windowStart, windowEnd) as Array<{ ymd: string; line_no: string | null }>) {
+        const proc = procOf(r.line_no)
+        if (!proc || !agg.has(proc)) continue
+        weekDaysAll.add(r.ymd)
+        weekDaysByProc.get(proc)?.add(r.ymd)
       }
     }
 
@@ -271,8 +294,9 @@ export function registerMesRecordsHandlers(): void {
         if (r.d === ymd) {
           a.todayForms += r.n
           a.todayRecords += r.n
-          if (!a.lastYmd || ymd > a.lastYmd) a.lastYmd = ymd
         }
+        // lastYmd 는 창 내 어떤 날이든 갱신(8/6 검수 Minor: "오늘만 갱신" 모순 해소)
+        if (!a.lastYmd || r.d > a.lastYmd) a.lastYmd = r.d
         a.sources.add('앱 작성')
         if (r.d >= windowStart && r.d <= windowEnd) {
           weekDaysAll.add(r.d)
@@ -341,14 +365,34 @@ export function registerMesRecordsHandlers(): void {
       }
     }
     if (db) {
-      const sqc = db
-        .prepare('SELECT ymd, qcgubun, line_no FROM sqc_daily')
-        .all() as Array<{ ymd: string; qcgubun: string; line_no: string | null }>
-      for (const r of sqc) {
-        seen(r.qcgubun === 'I' ? 'incoming' : procOf(r.line_no), r.qcgubun, r.ymd)
+      // M-6: 전 이력 풀스캔 → MAX/GROUP BY(everLast) + 창 한정 DISTINCT(winDays) 2단 SQL
+      const sqcProc = (g: string, line: string | null): string | null => (g === 'I' ? 'incoming' : procOf(line))
+      const everOnly = (proc: string | null, kind: string, last: string): void => {
+        if (!proc) return
+        const k = kkey(proc, kind)
+        const cur = everLast.get(k)
+        if (!cur || last > cur) everLast.set(k, last)
       }
-      const mac = db.prepare('SELECT ymd, line_no FROM mac_daily').all() as Array<{ ymd: string; line_no: string | null }>
-      for (const r of mac) seen(procOf(r.line_no), 'MAC', r.ymd)
+      for (const r of db
+        .prepare(`SELECT qcgubun, line_no, MAX(ymd) last FROM sqc_daily GROUP BY qcgubun, line_no`)
+        .all() as Array<{ qcgubun: string; line_no: string | null; last: string }>) {
+        everOnly(sqcProc(r.qcgubun, r.line_no), r.qcgubun, r.last)
+      }
+      for (const r of db
+        .prepare(`SELECT line_no, MAX(ymd) last FROM mac_daily GROUP BY line_no`)
+        .all() as Array<{ line_no: string | null; last: string }>) {
+        everOnly(procOf(r.line_no), 'MAC', r.last)
+      }
+      for (const r of db
+        .prepare(`SELECT DISTINCT ymd, qcgubun, line_no FROM sqc_daily WHERE ymd >= ? AND ymd <= ?`)
+        .all(windowStart, windowEnd) as Array<{ ymd: string; qcgubun: string; line_no: string | null }>) {
+        seen(sqcProc(r.qcgubun, r.line_no), r.qcgubun, r.ymd)
+      }
+      for (const r of db
+        .prepare(`SELECT DISTINCT ymd, line_no FROM mac_daily WHERE ymd >= ? AND ymd <= ?`)
+        .all(windowStart, windowEnd) as Array<{ ymd: string; line_no: string | null }>) {
+        seen(procOf(r.line_no), 'MAC', r.ymd)
+      }
     }
     // 앱 작성 기록도 원천(수입검사 매핑분 — P1b 커버리지 매핑과 동형)
     const main = getSqlite()
@@ -362,6 +406,16 @@ export function registerMesRecordsHandlers(): void {
       for (const r of rows) {
         const hit = FORM_PROC.find(([pre]) => r.form_code.startsWith(pre))
         if (hit) seen(hit[1], 'I', r.d)
+      }
+      // everLast 는 창 밖 이력도 반영(8/6 검수 Minor: 창 한정 → '—' 오표기) — MAX/GROUP BY 1passes
+      for (const r of main
+        .prepare(`SELECT form_code, MAX(date(created_at, 'localtime')) last FROM form_submissions GROUP BY form_code`)
+        .all() as Array<{ form_code: string; last: string | null }>) {
+        const hit = r.last ? FORM_PROC.find(([pre]) => r.form_code.startsWith(pre)) : null
+        if (!hit) continue
+        const k = kkey(hit[1], 'I')
+        const cur = everLast.get(k)
+        if (!cur || r.last! > cur) everLast.set(k, r.last!)
       }
     } catch {
       /* 앱 기록 조회 실패 — MES 원천만(정직 축소) */

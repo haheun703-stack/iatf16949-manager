@@ -123,6 +123,7 @@ export function ReceiptInboxView(): JSX.Element {
       setDocDate('')
       setPartnerCode('')
       setReceiptClass('')
+      classTouched.current = false // 새 전표 = 초안 규칙 재가동
       setNote('')
       setItems([EMPTY_ROW()])
     }
@@ -144,7 +145,10 @@ export function ReceiptInboxView(): JSX.Element {
 
   // 거래처 입력 → 입고 구분 초안(자재공급처→원자재·외주처→외주재입고, 태깅 때 확정 — M1 §1)
   // 이름 입력도 해석 후 초안(소견 D·E). 유형 '고객' 등은 규칙 대상 아님 — 수동 선택(설계 그대로).
+  // 8/6 검수 Minor: 초안은 사람이 고른 구분을 덮지 않는다 — 수동 선택 후에는 초안 중지.
+  const classTouched = useRef(false)
   useEffect(() => {
+    if (classTouched.current) return
     const p = data?.partners.find((x) => x.code === resolvePartnerCode(partnerCode))
     if (!p) return
     if (p.type === '자재공급처') setReceiptClass('원자재')
@@ -203,6 +207,11 @@ export function ReceiptInboxView(): JSX.Element {
     }
   }
 
+  // 8/6 검수 Minor: 언마운트 시 검색 타이머 정리(늦은 응답의 setState 누수 방지)
+  useEffect(() => () => {
+    if (searchTimer.current) window.clearTimeout(searchTimer.current)
+  }, [])
+
   function searchItems(rowIdx: number, query: string): void {
     if (searchTimer.current) window.clearTimeout(searchTimer.current)
     searchTimer.current = window.setTimeout(() => {
@@ -222,6 +231,12 @@ export function ReceiptInboxView(): JSX.Element {
 
   async function saveTag(): Promise<void> {
     if (!selected) return
+    // 8/6 검수 Minor: qty 빈칸/0 사전검증 — 서버 거부 전에 어느 행인지 짚어 안내
+    const badRow = items.findIndex((r) => r.itemCode.trim() !== '' && !(Number(r.qty) > 0))
+    if (badRow >= 0) {
+      setMsg({ tone: 'bad', text: `${badRow + 1}행 수량이 비었거나 유효하지 않습니다 — 전표의 실측 수량을 기입하세요.` })
+      return
+    }
     setBusy(true)
     setMsg(null)
     try {
@@ -457,7 +472,8 @@ export function ReceiptInboxView(): JSX.Element {
         dirty={
           !!selected &&
           selected.status === '미분류' &&
-          (docDate !== '' || partnerCode !== '' || note !== '' ||
+          // 8/6 검수 Minor: receiptClass·kind 변경도 편집 흔적(무확인 파기 방지 축 완비)
+          (docDate !== '' || partnerCode !== '' || note !== '' || receiptClass !== '' || formKind !== selected.kind ||
             items.some((r) => r.itemCode !== '' || r.qty !== '' || r.vendorLot !== ''))
         }
         onClose={() => setSelectedId(null)}
@@ -614,7 +630,10 @@ export function ReceiptInboxView(): JSX.Element {
                       입고 구분 (거래처 유형으로 초안)
                       <select
                         value={receiptClass}
-                        onChange={(e) => setReceiptClass(e.target.value)}
+                        onChange={(e) => {
+                          classTouched.current = true // 수동 선택 — 이후 초안이 덮지 않음
+                          setReceiptClass(e.target.value)
+                        }}
                         className="h-9 px-2.5 rounded-lg border border-border bg-card text-[13px] text-foreground"
                       >
                         <option value="">선택</option>

@@ -397,7 +397,7 @@ export function registerTeamHandlers(): void {
                 db
                   .prepare(
                     `SELECT MAX(date(created_at, 'localtime')) t FROM mat_receipt
-                     WHERE capture_id IS NOT NULL AND receipt_date = ?`
+                     WHERE capture_id IS NOT NULL AND receipt_date = ? AND canceled_at IS NULL`
                   )
                   .get(it.bucket) as { t: string | null }
               ).t
@@ -419,7 +419,8 @@ export function registerTeamHandlers(): void {
           const daysLeft = Math.round(
             (new Date(`${dueBase}T00:00:00`).getTime() - t0.getTime()) / 86400000
           )
-          const dueToday = it.entityKind === 'receipt-insp' && daysLeft === 0
+          // 기한 당일 = due (overdue 는 실제 경과부터) — 의무 축(daysLeft<0=overdue)과 표기 통일(8/6 검수 Minor: T3 불일치)
+          const dueToday = daysLeft === 0
           const task: TodayTaskDto = {
             id: -it.issueId, // 의무 id 와 키 충돌 방지(프론트 completing/key 용도뿐)
             title,

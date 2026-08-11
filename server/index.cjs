@@ -62,7 +62,9 @@ try {
 }
 
 const app = express()
-app.use(express.json({ limit: '8mb' }))
+// 한도 = 수집함 사진 핸들러 상한(base64 9M자 ≈ 9MB) + JSON 오버헤드 여유 — 핸들러의 친절한
+// 크기 안내가 express 413 원시 응답에 가려지지 않도록 게이트를 핸들러보다 넓게 둔다(8/6 검수 Minor).
+app.use(express.json({ limit: '12mb' }))
 
 // ── 헬스체크(골격 실증) ──
 app.get('/api/health', (_req, res) => {

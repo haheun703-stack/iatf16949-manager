@@ -178,7 +178,7 @@ function registerCaptureInboxHandlers(): void {
     const raw = db
       .prepare(
         `SELECT c.id, c.kind, c.status, c.created_by, c.created_at, c.attached_path, c.content,
-                (SELECT COUNT(*) FROM mat_receipt m WHERE m.capture_id = c.id) AS receipt_rows
+                (SELECT COUNT(*) FROM mat_receipt m WHERE m.capture_id = c.id AND m.canceled_at IS NULL) AS receipt_rows
          FROM raw_captures c
          WHERE c.kind IN ('receipt_in','receipt_out')
          ORDER BY c.created_at DESC LIMIT 500`
@@ -251,6 +251,8 @@ function registerCaptureInboxHandlers(): void {
         return { success: false, error: '사진 데이터 해석 실패(base64 아님).' }
       }
       if (buf.length < 100) return { success: false, error: '사진 데이터가 손상됐습니다.' }
+      // M-1 최소방어: 촬영 주체 빈 값 거부(웹 = STAMP 주입)
+      if (!req.createdBy?.trim()) return { success: false, error: '촬영자 이름이 없습니다 — 사용자를 선택하세요.' }
       const ext = /^data:image\/png/i.test(req.imageBase64 || '') || (req.fileName || '').toLowerCase().endsWith('.png') ? '.png' : '.jpg'
       const name = `cap_${new Date().toISOString().replace(/[:.]/g, '-')}_${req.kind}${ext}`
       const filePath = join(capturesDir(), name)
@@ -261,7 +263,7 @@ function registerCaptureInboxHandlers(): void {
           `INSERT INTO raw_captures (kind, content, attached_path, status, created_by, created_at)
            VALUES (?, ?, ?, '미분류', ?, ?)`
         )
-        .run(req.kind, JSON.stringify(content), filePath, req.createdBy ?? null, new Date().toISOString())
+        .run(req.kind, JSON.stringify(content), filePath, req.createdBy.trim(), new Date().toISOString())
       return { success: true, id: Number(info.lastInsertRowid) }
     }
   )
@@ -286,6 +288,8 @@ function registerCaptureInboxHandlers(): void {
     if (!hasInboxSchema()) return { success: false, error: '수집함 스키마(0136) 미적용 DB입니다.' }
     // M-2: 태깅 = 수불 생성(쓰기) — sidecar 설치에서는 기록 원천이 MES(이중 기록 금지)
     if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
+    // M-1 최소방어: 태깅 주체 빈 값 거부(수불 created_by의 원천)
+    if (!req?.createdBy?.trim()) return { success: false, error: '태깅 주체가 없습니다 — 사용자를 선택하세요.' }
     const cap = db
       .prepare(`SELECT id, kind, status FROM raw_captures WHERE id = ?`)
       .get(req?.captureId) as { id: number; kind: string; status: string } | undefined
@@ -350,7 +354,7 @@ function registerCaptureInboxHandlers(): void {
           const internalLot = im.inlotuse === 1 && it.vendorLot ? it.vendorLot : null
           const info = insReceipt.run(
             content.docDate, it.itemCode, it.vendorLot, internalLot, content.partnerCode, it.qty,
-            content.note || null, req.createdBy ?? null, cap.id, receiptClass
+            content.note || null, req.createdBy!.trim(), cap.id, receiptClass
           )
           receiptIds.push(Number(info.lastInsertRowid))
         }

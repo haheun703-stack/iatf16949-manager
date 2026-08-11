@@ -113,23 +113,32 @@ export function registerSemimesWriteHandlers(): void {
     (_e, { itemCode, date, createdBy }: { itemCode: string; date?: string; createdBy?: string }) => {
       if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
       if (!itemRow(itemCode)) return { success: false, error: `품번(${itemCode})이 품목 마스터에 없습니다.` }
+      // M-1 최소방어: 발번 주체 빈 값 거부(웹 = STAMP 주입·데스크톱 = 사용자 선택 필수)
+      const issuer = createdBy?.trim()
+      if (!issuer) return { success: false, error: '발번 주체가 없습니다 — 사용자를 선택하세요.' }
       const ymd = ymdOk(date) ? date! : todayKST()
       const yymmdd = ymd.slice(2).replace(/-/g, '')
-      try {
-        const lotNo = db.transaction(() => {
-          const { s } = db
-            .prepare('SELECT COALESCE(MAX(seq), 0) + 1 AS s FROM lot_registry WHERE item_code = ? AND lot_date = ?')
-            .get(itemCode, ymd) as { s: number }
-          const no = `${itemCode}-${yymmdd}-${s}`
-          db.prepare(
-            `INSERT INTO lot_registry (lot_no, item_code, lot_date, seq, source, created_by)
-             VALUES (?, ?, ?, ?, '자체발번', ?)`
-          ).run(no, itemCode, ymd, s, createdBy ?? null)
-          return no
-        })()
-        return { success: true, lotNo }
-      } catch (err) {
-        return { success: false, error: (err as Error).message }
+      const issueTxn = db.transaction(() => {
+        const { s } = db
+          .prepare('SELECT COALESCE(MAX(seq), 0) + 1 AS s FROM lot_registry WHERE item_code = ? AND lot_date = ?')
+          .get(itemCode, ymd) as { s: number }
+        const no = `${itemCode}-${yymmdd}-${s}`
+        db.prepare(
+          `INSERT INTO lot_registry (lot_no, item_code, lot_date, seq, source, created_by)
+           VALUES (?, ?, ?, ?, '자체발번', ?)`
+        ).run(no, itemCode, ymd, s, issuer)
+        return no
+      })
+      // 발번 경합(UNIQUE) = 원시 에러 노출 금지 — 차수 재계산 재시도 2회 후 정직 안내
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return { success: true, lotNo: issueTxn.immediate() }
+        } catch (err) {
+          const msg = (err as Error).message
+          if (!/UNIQUE|SQLITE_BUSY/.test(msg) || attempt >= 2) {
+            return { success: false, error: /UNIQUE|SQLITE_BUSY/.test(msg) ? '발번 경합 — 잠시 후 다시 시도하세요.' : msg }
+          }
+        }
       }
     }
   )
@@ -146,6 +155,8 @@ export function registerSemimesWriteHandlers(): void {
     }
     if (ok === 0 && ng === 0) return { success: false, error: '양품·불량이 모두 0이면 실적이 아닙니다.' }
     if (ng > 0 && !req.defectCode) return { success: false, error: '불량이 있으면 불량유형을 지정해야 합니다(0101 계약).' }
+    // M-1 최소방어: 작업자 빈 값 거부
+    if (!req.worker?.trim()) return { success: false, error: '작업자 이름이 없습니다 — 기록주체 없는 실적은 저장할 수 없습니다.' }
     try {
       const info = db
         .prepare(
@@ -156,7 +167,7 @@ export function registerSemimesWriteHandlers(): void {
         .run(
           req.recordDate, req.workOrderId ?? null, req.itemCode, req.lotNo?.trim() || null,
           req.procCode?.trim() || null, ok, ng, req.defectCode ?? null, req.shift ?? null,
-          req.worker ?? null, req.note?.trim() || null
+          req.worker.trim(), req.note?.trim() || null
         )
       return { success: true, id: Number(info.lastInsertRowid) }
     } catch (err) {
@@ -265,6 +276,8 @@ export function registerSemimesWriteHandlers(): void {
       if (!req.itemCode || !itemRow(req.itemCode)) {
         return { success: false, error: `품번(${req.itemCode ?? ''})이 품목 마스터에 없습니다.` }
       }
+      // M-1 최소방어: 지시 발번 주체 빈 값 거부(신규 발번 한정 — 상태 전이는 갱신 동선)
+      if (!req.createdBy?.trim()) return { success: false, error: '작성자가 없습니다 — 사용자를 선택하세요.' }
       const ymd = todayKST()
       const yymmdd = ymd.slice(2).replace(/-/g, '')
       const result = db.transaction(() => {
@@ -277,7 +290,7 @@ export function registerSemimesWriteHandlers(): void {
             `INSERT INTO work_order (order_no, item_code, order_qty, line_no, start_date, end_date, status, note, created_by)
              VALUES (?, ?, ?, ?, ?, ?, '대기', ?, ?)`
           )
-          .run(orderNo, req.itemCode, req.orderQty ?? null, req.lineNo ?? null, req.startDate ?? ymd, req.endDate ?? null, req.note ?? null, req.createdBy ?? null)
+          .run(orderNo, req.itemCode, req.orderQty ?? null, req.lineNo ?? null, req.startDate ?? ymd, req.endDate ?? null, req.note ?? null, req.createdBy!.trim())
         return { id: Number(info.lastInsertRowid), orderNo }
       })()
       return { success: true, ...result }
@@ -345,14 +358,18 @@ export function registerSemimesWriteHandlers(): void {
       const table = kind === 'prod' ? 'prod_record' : kind === 'insp' ? 'insp_record' : kind === 'receipt' ? 'mat_receipt' : null
       if (!table) return { success: false, error: '취소 대상 종류(prod|insp|receipt)가 유효하지 않습니다.' }
       if (!reason?.trim()) return { success: false, error: '취소 사유는 필수입니다(두 줄 긋고 정정 서명의 전산 등가).' }
+      // M-1 최소방어: 취소 주체 빈 값 거부(정정 서명의 주체)
+      if (!canceledBy?.trim()) return { success: false, error: '취소자 이름이 없습니다 — 사용자를 선택하세요.' }
       const cur = db.prepare(`SELECT id, canceled_at FROM ${table} WHERE id = ?`).get(id) as
         | { id: number; canceled_at: string | null }
         | undefined
       if (!cur) return { success: false, error: `기록(#${id})이 없습니다.` }
       if (cur.canceled_at) return { success: false, error: '이미 취소된 기록입니다.' }
-      db.prepare(
-        `UPDATE ${table} SET canceled_at = datetime('now', 'localtime'), cancel_reason = ?, canceled_by = ? WHERE id = ?`
-      ).run(reason.trim(), canceledBy ?? null, id)
+      // 상태 조건 이중 방어 — 교차 프로세스(데스크톱+웹) 동시 취소 시 덮어씀 방지
+      const u = db.prepare(
+        `UPDATE ${table} SET canceled_at = datetime('now', 'localtime'), cancel_reason = ?, canceled_by = ? WHERE id = ? AND canceled_at IS NULL`
+      ).run(reason.trim(), canceledBy.trim(), id)
+      if (u.changes !== 1) return { success: false, error: '이미 취소된 기록입니다(경합 감지).' }
       return { success: true }
     }
   )
@@ -374,9 +391,12 @@ export function registerSemimesWriteHandlers(): void {
     if (cur.inspector.trim() === confirmer.trim()) {
       return { success: false, error: '검사자 본인은 확인자가 될 수 없습니다(2단 서명 — 자기확인 금지).' }
     }
-    db.prepare(`UPDATE insp_record SET confirmer = ?, confirmed_at = datetime('now', 'localtime') WHERE id = ?`).run(
-      confirmer.trim(), id
-    )
+    // 상태 조건 이중 방어 — 교차 프로세스 동시 확인 시 2단 서명 덮어씀 방지(1회 원칙)
+    const u = db.prepare(
+      `UPDATE insp_record SET confirmer = ?, confirmed_at = datetime('now', 'localtime')
+       WHERE id = ? AND confirmer IS NULL AND canceled_at IS NULL`
+    ).run(confirmer.trim(), id)
+    if (u.changes !== 1) return { success: false, error: '이미 확인됨 — 2단 서명은 1회입니다(경합 감지).' }
     return { success: true }
   })
 }

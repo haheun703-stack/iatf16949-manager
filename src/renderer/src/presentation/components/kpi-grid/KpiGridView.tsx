@@ -26,6 +26,7 @@ export function KpiGridView(): JSX.Element {
   const [values, setValues] = useState<Record<string, string>>({}) // `${id}|${MM}` → 입력 문자열
   const [dirty, setDirty] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null)
 
   const load = useCallback(async (): Promise<void> => {
@@ -35,10 +36,14 @@ export function KpiGridView(): JSX.Element {
       const indicators = (await window.api.invoke(window.api.channels.KPI_HOME)) as KpiIndicatorDto[]
       setInds(indicators)
       const next: Record<string, string> = {}
-      for (const mm of MONTHS) {
-        const rows = (await window.api.invoke(window.api.channels.KPI_MONTH, {
-          period: `${year}-${mm}`
-        })) as KpiMonthValueDto[]
+      // 8/6 검수 Minor: 12회 직렬 → 병렬(월별 독립 조회)
+      const perMonth = await Promise.all(
+        MONTHS.map(async (mm) => ({
+          mm,
+          rows: (await window.api.invoke(window.api.channels.KPI_MONTH, { period: `${year}-${mm}` })) as KpiMonthValueDto[]
+        }))
+      )
+      for (const { mm, rows } of perMonth) {
         for (const r of rows) next[`${r.indicatorId}|${mm}`] = String(r.value)
       }
       setValues(next)
@@ -61,6 +66,7 @@ export function KpiGridView(): JSX.Element {
   }
 
   async function saveAll(): Promise<void> {
+    if (saving) return // 8/6 검수 M-9: 저장 연타 = 이중 배치 차단
     setMsg(null)
     // 월별로 묶어 일괄 저장(kpi:save-batch — 변경분만·값 유효분만)
     const byMonth = new Map<string, { indicatorId: number; value: number }[]>()
@@ -81,21 +87,37 @@ export function KpiGridView(): JSX.Element {
       setMsg({ tone: 'bad', text: '저장할 변경이 없습니다.' })
       return
     }
+    setSaving(true)
     let saved = 0
-    for (const [mm, entries] of byMonth) {
-      const res = (await window.api.invoke(window.api.channels.KPI_SAVE_BATCH, {
-        period: `${year}-${mm}`,
-        entries,
-        enteredBy: userName
-      })) as { success: boolean; saved: number }
-      if (!res.success) {
-        setMsg({ tone: 'bad', text: `${mm}월 저장 실패` })
-        return
+    try {
+      for (const [mm, entries] of byMonth) {
+        const res = (await window.api.invoke(window.api.channels.KPI_SAVE_BATCH, {
+          period: `${year}-${mm}`,
+          entries,
+          enteredBy: userName
+        })) as { success: boolean; saved: number }
+        if (!res.success) {
+          // M-9: 부분 성공 정직 안내 — 이미 반영된 월을 숨기지 않는다(재조회로 동기화)
+          setMsg({ tone: 'bad', text: `${mm}월 저장 실패 — 이전 저장분 ${saved}칸은 반영됨. 기입 주체(사용자 선택)를 확인하세요.` })
+          await load()
+          return
+        }
+        saved += res.saved
       }
-      saved += res.saved
+      setMsg({ tone: 'ok', text: `저장 완료 — ${saved}칸 (기록 주체 = ${userName ?? '세션 사용자'})` })
+      await load()
+    } catch {
+      setMsg({ tone: 'bad', text: `통신 오류 — 이전 저장분 ${saved}칸은 반영됨(조회로 확인). 다시 시도하세요.` })
+    } finally {
+      setSaving(false)
     }
-    setMsg({ tone: 'ok', text: `저장 완료 — ${saved}칸 (기록 주체 = ${userName ?? '세션 사용자'})` })
-    await load()
+  }
+
+  /** M-9: 연도 전환 시 미저장 편집 무확인 파기 방지 (커스텀 확인창 일괄 교체는 confirm-교체 배치에서) */
+  function changeYear(y: string): void {
+    if (y === year) return
+    if (dirty.size > 0 && !window.confirm(`미저장 변경 ${dirty.size}칸이 있습니다 — ${y}년으로 이동하며 버릴까요?`)) return
+    setYear(y)
   }
 
   async function exportXlsx(): Promise<void> {
@@ -135,7 +157,7 @@ export function KpiGridView(): JSX.Element {
           <button
             key={y}
             type="button"
-            onClick={() => setYear(y)}
+            onClick={() => changeYear(y)}
             className={cn(
               'px-3 py-1.5 rounded-lg text-[12px] font-bold border',
               year === y ? 'bg-secondary text-secondary-foreground border-primary/40' : 'border-border text-muted-foreground hover:bg-muted'
@@ -155,13 +177,13 @@ export function KpiGridView(): JSX.Element {
         <button
           type="button"
           onClick={() => void saveAll()}
-          disabled={dirty.size === 0}
+          disabled={dirty.size === 0 || saving}
           className={cn(
             'px-3 py-1.5 rounded-lg text-[12px] font-bold flex items-center gap-1',
-            dirty.size > 0 ? 'bg-primary text-white' : 'border border-border bg-muted/40 text-muted-foreground/50 cursor-not-allowed'
+            dirty.size > 0 && !saving ? 'bg-primary text-white' : 'border border-border bg-muted/40 text-muted-foreground/50 cursor-not-allowed'
           )}
         >
-          <Save className="w-3 h-3" /> 저장{dirty.size > 0 ? ` (${dirty.size})` : ''}
+          <Save className="w-3 h-3" /> {saving ? '저장 중…' : `저장${dirty.size > 0 ? ` (${dirty.size})` : ''}`}
         </button>
         <button
           type="button"
@@ -246,7 +268,8 @@ export function KpiGridView(): JSX.Element {
                         className={cn(
                           'w-full h-9 px-1 text-center text-[12.5px] tabular-nums font-semibold outline-none border-0',
                           'bg-fillable/70 focus:ring-2 focus:ring-primary/40', // 채움칸 베이지 — 사람이 적는 칸
-                          dirty.has(k) && 'bg-secondary/50',
+                          // 미저장 = 색 + 점선 밑줄(색 단독 금지 — 8/6 검수 Minor 색약 접근성)
+                          dirty.has(k) && 'bg-secondary/50 underline decoration-dashed decoration-2 underline-offset-4',
                           colors && sign === 'bad' && 'text-bad-ink bg-bad-tint/60',
                           colors && sign === 'good' && 'text-[#2467b3] bg-secondary/40',
                           !colors && sign === 'bad' && 'text-bad-ink',
@@ -264,7 +287,7 @@ export function KpiGridView(): JSX.Element {
       </div>
 
       <p className="text-[12px] text-muted-foreground">
-        베이지 칸 = 사람이 적는 칸 · 하늘 칸 = 미저장 변경 · 빨강/파랑 = 목표 대비 부호(판정 신호등과 별개 축 — 4차 §1) ·
+        베이지 칸 = 사람이 적는 칸 · 하늘 칸+점선 밑줄 = 미저장 변경 · 빨강/파랑 = 목표 대비 부호(판정 신호등과 별개 축 — 4차 §1) ·
         저장은 변경분만 월 단위 일괄, 기록 주체는 세션 사용자로 각인됩니다.
       </p>
     </div>

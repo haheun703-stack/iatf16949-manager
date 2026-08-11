@@ -33,15 +33,20 @@ export function ProdEntryView(): JSX.Element {
 
   async function lookup(): Promise<void> {
     setMsg(null)
-    const res = (await window.api.invoke(window.api.channels.SEMIMES_SCAN_RESOLVE, { query })) as SemimesScanContextDto
-    setCtx(res)
-    if (!res.found) {
-      setMsg({ tone: 'bad', text: '품번/LOT을 찾지 못했습니다 — 품목 마스터 실존 코드만 기록됩니다.' })
-      return
+    // 8/6 검수 M-10: catch 없음 = 웹 모드 통신 오류 시 소리 없는 실패 — 전 invoke 에 안내 동봉
+    try {
+      const res = (await window.api.invoke(window.api.channels.SEMIMES_SCAN_RESOLVE, { query })) as SemimesScanContextDto
+      setCtx(res)
+      if (!res.found) {
+        setMsg({ tone: 'bad', text: '품번/LOT을 찾지 못했습니다 — 품목 마스터 실존 코드만 기록됩니다.' })
+        return
+      }
+      if (res.matchedLot) setLotNo(res.matchedLot)
+      setProcCode(res.routing[0]?.procCode ?? '')
+      await refreshToday()
+    } catch {
+      setMsg({ tone: 'bad', text: '조회 실패 — 통신 오류. 다시 시도하세요.' })
     }
-    if (res.matchedLot) setLotNo(res.matchedLot)
-    setProcCode(res.routing[0]?.procCode ?? '')
-    await refreshToday()
   }
 
   async function refreshToday(): Promise<void> {
@@ -54,14 +59,18 @@ export function ProdEntryView(): JSX.Element {
 
   async function issueLot(): Promise<void> {
     if (!ctx?.itemCode) return
-    const res = (await window.api.invoke(window.api.channels.SEMIMES_LOT_ISSUE, {
-      itemCode: ctx.itemCode, createdBy: userName
-    })) as { success: boolean; lotNo?: string; error?: string }
-    if (res.success && res.lotNo) {
-      setLotNo(res.lotNo)
-      setMsg({ tone: 'ok', text: `LOT 발번 — ${res.lotNo} (품번-YYMMDD-차수)` })
-    } else {
-      setMsg({ tone: 'bad', text: res.error ?? '발번 실패' })
+    try {
+      const res = (await window.api.invoke(window.api.channels.SEMIMES_LOT_ISSUE, {
+        itemCode: ctx.itemCode, createdBy: userName
+      })) as { success: boolean; lotNo?: string; error?: string }
+      if (res.success && res.lotNo) {
+        setLotNo(res.lotNo)
+        setMsg({ tone: 'ok', text: `LOT 발번 — ${res.lotNo} (품번-YYMMDD-차수)` })
+      } else {
+        setMsg({ tone: 'bad', text: res.error ?? '발번 실패' })
+      }
+    } catch {
+      setMsg({ tone: 'bad', text: '발번 실패 — 통신 오류. 다시 시도하세요.' })
     }
   }
 
@@ -91,6 +100,8 @@ export function ProdEntryView(): JSX.Element {
       setNgQty('0')
       setDefectCode('')
       await refreshToday()
+    } catch {
+      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
     } finally {
       setBusy(false)
     }
@@ -98,12 +109,16 @@ export function ProdEntryView(): JSX.Element {
 
   async function cancelRec(): Promise<void> {
     if (!cancelFor) return
-    const res = (await window.api.invoke(window.api.channels.SEMIMES_RECORD_CANCEL, {
-      kind: 'prod', id: cancelFor.id, reason: cancelFor.reason, canceledBy: userName
-    })) as { success: boolean; error?: string }
-    setMsg(res.success ? { tone: 'ok', text: `취소 마크 완료 — #${cancelFor.id}` } : { tone: 'bad', text: res.error ?? '취소 실패' })
-    setCancelFor(null)
-    await refreshToday()
+    try {
+      const res = (await window.api.invoke(window.api.channels.SEMIMES_RECORD_CANCEL, {
+        kind: 'prod', id: cancelFor.id, reason: cancelFor.reason, canceledBy: userName
+      })) as { success: boolean; error?: string }
+      setMsg(res.success ? { tone: 'ok', text: `취소 마크 완료 — #${cancelFor.id}` } : { tone: 'bad', text: res.error ?? '취소 실패' })
+      setCancelFor(null)
+      await refreshToday()
+    } catch {
+      setMsg({ tone: 'bad', text: '취소 실패 — 통신 오류. 다시 시도하세요.' })
+    }
   }
 
   return (
@@ -168,7 +183,11 @@ export function ProdEntryView(): JSX.Element {
             </label>
             <label className="flex flex-col gap-1 text-[12px] font-semibold text-muted-foreground">
               불량 수량
-              <input value={ngQty} onChange={(e) => setNgQty(e.target.value)} inputMode="numeric" className={cn(inputCls, 'text-center font-bold tabular-nums bg-fillable/70')} />
+              <input value={ngQty} onChange={(e) => {
+                setNgQty(e.target.value)
+                // 8/6 검수 Minor: ng=0 복귀 시 불량유형 잔존 — 선택 흔적까지 소거(가짜 연결 방지)
+                if (!(Number(e.target.value) > 0)) setDefectCode('')
+              }} inputMode="numeric" className={cn(inputCls, 'text-center font-bold tabular-nums bg-fillable/70')} />
             </label>
             {Number(ngQty) > 0 && (
               <label className="flex flex-col gap-1 text-[12px] font-semibold text-muted-foreground col-span-2">

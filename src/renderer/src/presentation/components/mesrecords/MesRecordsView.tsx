@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { todayKST } from '@shared/date-kst'
 import { Activity, Loader2 } from 'lucide-react'
 import type { MesRecordsCoverageDto, MesRecordsDetailDto, MesRecordsStatusDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -61,7 +62,8 @@ export function MesRecordsView(): JSX.Element {
     })()
   }, [openDetail])
 
-  const today = new Date().toISOString().slice(0, 10)
+  // 8/6 검수 Minor: 표시 전용이라도 UTC 절단 금지 — todayKST 축 통일(KST 00~09시 전날 표기 방지)
+  const today = todayKST()
 
   return (
     <div className="space-y-4 break-keep">

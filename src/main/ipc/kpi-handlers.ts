@@ -58,6 +58,8 @@ export function registerKpiHandlers(): void {
       if (!/^\d{4}-\d{2}$/.test(input.period) || !Number.isFinite(input.value)) {
         return { success: false }
       }
+      // M-1 최소방어: 기입 주체 빈 값 거부 — 웹은 STAMP 주입, 데스크톱은 사용자 미선택 시 여기서 멈춘다
+      if (!input.enteredBy?.trim()) return { success: false }
       db.prepare(
         `INSERT INTO kpi_measurements (indicator_id, period, value, entered_by)
          VALUES (?, ?, ?, ?)
@@ -91,6 +93,8 @@ export function registerKpiHandlers(): void {
         if (!/^\d{4}-\d{2}$/.test(input.period) || !Array.isArray(input.entries)) {
           return { success: false, saved: 0 }
         }
+        // M-1 최소방어: 기입 주체 빈 값 거부(단건 save와 동일)
+        if (!input.enteredBy?.trim()) return { success: false, saved: 0 }
         const stmt = db.prepare(
           `INSERT INTO kpi_measurements (indicator_id, period, value, entered_by)
            VALUES (?, ?, ?, ?)

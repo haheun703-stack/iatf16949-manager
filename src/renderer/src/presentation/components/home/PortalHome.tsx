@@ -1333,6 +1333,7 @@ function KpiTile({
   const [period, setPeriod] = useState(nowPeriod)
   const [val, setVal] = useState('')
   const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
 
   const fmt = (n: number): string => n.toLocaleString()
   const ok =
@@ -1345,19 +1346,28 @@ function KpiTile({
   const improved = diff != null && diff !== 0 ? (kpi.direction === 'lower' ? diff < 0 : diff > 0) : null
 
   const save = async (): Promise<void> => {
+    // 8/6 검수 M-7: 빈 값 Enter → Number('')===0 가짜 0 저장 차단(버튼 disabled 와 이중 방어)
+    if (val.trim() === '') return
     const v = Number(val)
     if (!Number.isFinite(v) || !period) return
     setSaving(true)
     try {
-      await window.api.invoke(window.api.channels.KPI_SAVE, {
+      const res = (await window.api.invoke(window.api.channels.KPI_SAVE, {
         indicatorId: kpi.id,
         period,
         value: v,
         enteredBy
-      })
+      })) as { success: boolean }
+      if (!res.success) {
+        setErr('저장 실패 — 기입 주체(사용자 선택)·값을 확인하세요.')
+        return
+      }
+      setErr(null)
       setEditing(false)
       setVal('')
       onSaved()
+    } catch {
+      setErr('저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.')
     } finally {
       setSaving(false)
     }
@@ -1401,6 +1411,7 @@ function KpiTile({
               {saving ? '…' : '저장'}
             </button>
           </div>
+          {err && <p className="text-[10.5px] font-semibold text-bad-ink">{err}</p>}
         </div>
       ) : (
         <>

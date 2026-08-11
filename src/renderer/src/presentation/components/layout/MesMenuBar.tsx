@@ -24,6 +24,8 @@ interface MenuEntry {
   gap?: boolean
   /** PC 단계 예약(미구현 기록 화면) */
   soon?: boolean
+  /** 진입 전용 별칭(다른 모듈이 정본) — 메가바 점등·2차 탭 귀속에서 제외(8/6 검수: 이중 등재 정리) */
+  alias?: boolean
   note?: string
 }
 
@@ -68,7 +70,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     key: 'quality',
     label: '품질관리',
     items: [
-      { label: '검사 등록 (수입·공정·패트롤·출하)', page: 'insp-entry', sq: ['2_1', '2_7'], iatf: ['8.6.1'] },
+      { label: '검사 등록 (수입·공정·패트롤·출하)', page: 'insp-entry', alias: true, sq: ['2_1', '2_7'], iatf: ['8.6.1'] },
       { label: '수입검사내역 조회', page: 'insp-incoming', sq: ['2_1', '2_2'] },
       { label: '품질검사내역 (구분 통합)', page: 'insp-history', sq: ['1_4', '2_7'] },
       { label: '자주검사 CHECK SHEET (양식)', form: 'M1200-10', sq: ['1_4', '2_7'], iatf: ['8.6.1'] },
@@ -172,7 +174,7 @@ export function MesMenuBar(): JSX.Element {
       onMouseLeave={() => setOpen(null)}
     >
       {MODULES.map((m) => {
-        const active = m.items.some((it) => it.page && it.page === currentPage)
+        const active = m.items.some((it) => it.page && it.page === currentPage && !it.alias)
         return (
           <div key={m.key} className="relative shrink-0">
             <button
@@ -230,7 +232,7 @@ export function MesMenuBar(): JSX.Element {
  */
 export function MesSubTabs(): JSX.Element | null {
   const { currentPage, setPage, setSelectedFormCode } = useUIStore()
-  const module = MODULES.find((m) => m.items.some((it) => it.page === currentPage))
+  const module = MODULES.find((m) => m.items.some((it) => it.page === currentPage && !it.alias))
   if (!module) return null
   return (
     <div className="w-full flex items-center gap-1 px-3 py-1 bg-card border-b border-border overflow-x-auto">

@@ -47,16 +47,21 @@ export function InspEntryView(): JSX.Element {
 
   async function lookup(): Promise<void> {
     setMsg(null)
-    const res = (await window.api.invoke(window.api.channels.SEMIMES_SCAN_RESOLVE, { query })) as SemimesScanContextDto
-    setCtx(res)
-    if (!res.found) {
-      setMsg({ tone: 'bad', text: '품번/LOT을 찾지 못했습니다 — 품목 마스터 실존 코드만 기록됩니다.' })
-      return
+    // 8/6 검수 M-10: catch 없음 = 웹 모드 통신 오류 시 소리 없는 실패 — 전 invoke 에 안내 동봉
+    try {
+      const res = (await window.api.invoke(window.api.channels.SEMIMES_SCAN_RESOLVE, { query })) as SemimesScanContextDto
+      setCtx(res)
+      if (!res.found) {
+        setMsg({ tone: 'bad', text: '품번/LOT을 찾지 못했습니다 — 품목 마스터 실존 코드만 기록됩니다.' })
+        return
+      }
+      if (res.matchedLot) setLotNo(res.matchedLot)
+      setProcCode(res.routing[0]?.procCode ?? '')
+      setRows(specRowsFor(res, kind))
+      await refreshToday()
+    } catch {
+      setMsg({ tone: 'bad', text: '조회 실패 — 통신 오류. 다시 시도하세요.' })
     }
-    if (res.matchedLot) setLotNo(res.matchedLot)
-    setProcCode(res.routing[0]?.procCode ?? '')
-    setRows(specRowsFor(res, kind))
-    await refreshToday()
   }
 
   async function refreshToday(): Promise<void> {
@@ -114,28 +119,38 @@ export function InspEntryView(): JSX.Element {
       setRows(specRowsFor(ctx, kind))
       setJudgment('')
       await refreshToday()
+    } catch {
+      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
     } finally {
       setBusy(false)
     }
   }
 
   async function confirmRec(id: number): Promise<void> {
-    const res = (await window.api.invoke(window.api.channels.SEMIMES_INSP_CONFIRM, { id, confirmer: userName })) as {
-      success: boolean
-      error?: string
+    try {
+      const res = (await window.api.invoke(window.api.channels.SEMIMES_INSP_CONFIRM, { id, confirmer: userName })) as {
+        success: boolean
+        error?: string
+      }
+      setMsg(res.success ? { tone: 'ok', text: `확인 완료 — #${id} (확인자 각인)` } : { tone: 'bad', text: res.error ?? '확인 실패' })
+      await refreshToday()
+    } catch {
+      setMsg({ tone: 'bad', text: '확인 실패 — 통신 오류. 다시 시도하세요.' })
     }
-    setMsg(res.success ? { tone: 'ok', text: `확인 완료 — #${id} (확인자 각인)` } : { tone: 'bad', text: res.error ?? '확인 실패' })
-    await refreshToday()
   }
 
   async function cancelRec(): Promise<void> {
     if (!cancelFor) return
-    const res = (await window.api.invoke(window.api.channels.SEMIMES_RECORD_CANCEL, {
-      kind: 'insp', id: cancelFor.id, reason: cancelFor.reason, canceledBy: userName
-    })) as { success: boolean; error?: string }
-    setMsg(res.success ? { tone: 'ok', text: `취소 마크 완료 — #${cancelFor.id} (재입력으로 정정)` } : { tone: 'bad', text: res.error ?? '취소 실패' })
-    setCancelFor(null)
-    await refreshToday()
+    try {
+      const res = (await window.api.invoke(window.api.channels.SEMIMES_RECORD_CANCEL, {
+        kind: 'insp', id: cancelFor.id, reason: cancelFor.reason, canceledBy: userName
+      })) as { success: boolean; error?: string }
+      setMsg(res.success ? { tone: 'ok', text: `취소 마크 완료 — #${cancelFor.id} (재입력으로 정정)` } : { tone: 'bad', text: res.error ?? '취소 실패' })
+      setCancelFor(null)
+      await refreshToday()
+    } catch {
+      setMsg({ tone: 'bad', text: '취소 실패 — 통신 오류. 다시 시도하세요.' })
+    }
   }
 
   const inputCls = 'h-11 px-3 rounded-lg border border-border bg-card text-[14px]' // 현장 큰 타깃
