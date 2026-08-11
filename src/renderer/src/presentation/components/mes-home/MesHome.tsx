@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ClipboardList, Factory, FlaskConical, Camera, Boxes, ShieldCheck } from 'lucide-react'
-import type { MesRecordsStatusDto, TeamTodayBoardDto } from '@shared/ipc-types'
+import type { MesRecordsStatusDto, SemimesHomeKpisDto, TeamTodayBoardDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 
@@ -26,6 +26,7 @@ export function MesHome(): JSX.Element {
   const recentForms = useUIStore((s) => s.recentForms)
   const [board, setBoard] = useState<TeamTodayBoardDto | null>(null)
   const [mes, setMes] = useState<MesRecordsStatusDto | null>(null)
+  const [kpis, setKpis] = useState<SemimesHomeKpisDto | null>(null)
 
   useEffect(() => {
     void (async () => {
@@ -40,6 +41,13 @@ export function MesHome(): JSX.Element {
         setMes((await window.api.invoke(window.api.channels.MES_RECORDS_STATUS)) as MesRecordsStatusDto)
       } catch {
         setMes(null)
+      }
+    })()
+    void (async () => {
+      try {
+        setKpis((await window.api.invoke(window.api.channels.SEMIMES_HOME_KPIS, undefined)) as SemimesHomeKpisDto)
+      } catch {
+        setKpis(null)
       }
     })()
   }, [])
@@ -70,6 +78,26 @@ export function MesHome(): JSX.Element {
           ? `⚠ ${mesLag >= 2 ? `MES 미반입 ${mesLag}일째 · ` : ''}할 일 ${totals?.open ?? 0}건 · 연체 ${totals?.overdue ?? 0}건 — 심사대응(관제탑)에서 처리 →`
           : `● 오늘 기록 정상 진행 중 — 할 일 ${totals?.open ?? 0}건 열려 있음`}
       </button>
+
+      {/* ①-b 오늘 KPI 4타일 (33호 §2-2 모듈 홈 대시보드 문법 — 원천 있는 것만, 추정 0) */}
+      {kpis && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: '오늘 생산', value: `${kpis.prodCnt}건`, sub: `양품 ${kpis.okSum.toLocaleString()}`, page: 'prod-history' as PageId },
+            { label: '오늘 검사', value: `${kpis.inspCnt}건`, sub: '자주·수입·패트롤', page: 'insp-history' as PageId },
+            { label: '2단 확인 대기', value: `${kpis.confirmWait}건`, sub: '확인자 서명 필요', page: 'insp-history' as PageId, warn: kpis.confirmWait > 0 },
+            { label: '오늘 입고 수불', value: `${kpis.receiptCnt}건`, sub: '수집함 태깅 원천', page: 'mat-stock' as PageId }
+          ].map((t) => (
+            <button key={t.label} type="button" onClick={() => setPage(t.page)}
+              className={cn('rounded-2xl border shadow-card px-4 py-3 text-left transition-colors',
+                t.warn ? 'bg-warn-tint border-warn-ink/25 hover:brightness-95' : 'bg-card border-border hover:bg-secondary/40')}>
+              <span className="block text-[11.5px] font-bold text-muted-foreground">{t.label}</span>
+              <b className={cn('block text-[22px] tracking-[-0.02em] tabular-nums', t.warn ? 'text-warn-ink' : 'text-mega-active')}>{t.value}</b>
+              <span className="block text-[11.5px] text-muted-foreground truncate">{t.sub}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ② 자주 쓰는 화면 — 현장 큰 타깃(매일 입력 동선 1~4화면 문법) */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

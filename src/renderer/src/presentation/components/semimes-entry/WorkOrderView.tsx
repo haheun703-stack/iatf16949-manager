@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
 import type { SemimesItemSearchRowDto, SemimesWorkOrderRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
 /**
  * PC — 작업지시관리 (사무실 그리드 · 관리자 문법). 지시 = 실적의 경량 앵커(15번 §2 —
  * 수주·납기 최적화 확장 금지). 발번 WO-YYMMDD-nn. 상태 전이·수량 갱신 허용(기록 5종과 구분).
+ * 32호 1차분 ① — 8버튼 툴바 이식 + 지시대비실적 탭(그림26 — okSum 대비 달성률·부호 착색).
  */
 const STATUSES = ['대기', '진행', '완료', '취소'] as const
+type Tab = 'list' | 'progress'
 
 export function WorkOrderView(): JSX.Element {
   const { users, activeUserId } = useActiveUserStore()
   const userName = users.find((u) => u.id === activeUserId)?.name
 
+  const [tab, setTab] = useState<Tab>('list')
   const [rows, setRows] = useState<SemimesWorkOrderRowDto[]>([])
   const [statusFilter, setStatusFilter] = useState('')
   const [loading, setLoading] = useState(true)
@@ -82,20 +85,41 @@ export function WorkOrderView(): JSX.Element {
         <span className="text-[13px] text-muted-foreground">실적의 앵커 — 발번 WO-YYMMDD-nn · 진척 = 연결 실적 양품 합(취소 제외)</span>
       </div>
 
-      <div className="bg-card border border-border rounded-xl px-3 py-2 flex items-center gap-1.5 flex-wrap">
-        <button type="button" onClick={() => void load()} disabled={loading} className="px-3 py-1.5 rounded-lg border border-primary/40 bg-secondary text-secondary-foreground text-[12px] font-bold flex items-center gap-1">
-          <RefreshCw className={cn('w-3 h-3', loading && 'animate-spin')} /> 조회
-        </button>
-        <button type="button" onClick={() => setAdding((v) => !v)} className="px-3 py-1.5 rounded-lg border border-border text-[12px] font-bold flex items-center gap-1 hover:bg-muted">
-          <Plus className="w-3 h-3" /> 추가
-        </button>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-8 px-2 rounded-lg border border-border bg-card text-[12px] font-semibold">
-          <option value="">전체 상태</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <span className="ml-auto text-[12px] text-muted-foreground">{rows.length}건</span>
+      {/* 32호 §1-4 8버튼 툴바 (전 화면 고정 — 미지원 흐림) */}
+      <div className="bg-card border border-border rounded-xl px-3 py-2 flex items-center gap-3 flex-wrap">
+        <MesToolbar
+          onSearch={() => void load()}
+          onAdd={tab === 'list' ? () => setAdding((v) => !v) : undefined}
+          onExcel={() =>
+            downloadCsv(
+              '작업지시.csv',
+              ['지시번호', '품번', '품명', '수량', '진척(양품)', '달성률(%)', '시작', '상태', '작성'],
+              rows.map((r) => [r.orderNo, r.itemCode, r.itemName, r.orderQty, r.okSum, r.orderQty ? ((r.okSum / r.orderQty) * 100).toFixed(1) : '', r.startDate, r.status, r.createdBy])
+            )
+          }
+          onPrint={() => window.print()}
+          busy={loading}
+        />
+        <span className="flex items-center gap-1.5 ml-auto">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-8 px-2 rounded-lg border border-border bg-card text-[12px] font-semibold">
+            <option value="">전체 상태</option>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <span className="text-[12px] text-muted-foreground">{rows.length}건</span>
+        </span>
+      </div>
+
+      {/* 그림26 — 지시대비실적 탭 (같은 원천, 관점 전환) */}
+      <div className="flex items-center gap-1">
+        {([['list', '지시 목록'], ['progress', '지시대비실적']] as Array<[Tab, string]>).map(([k, label]) => (
+          <button key={k} type="button" onClick={() => setTab(k)}
+            className={cn('px-3 py-1.5 rounded-t-lg text-[12.5px] font-bold border-b-2',
+              tab === k ? 'border-mega-active text-mega-active bg-secondary/50' : 'border-transparent text-muted-foreground hover:text-foreground')}>
+            {label}
+          </button>
+        ))}
       </div>
 
       {msg && (
@@ -144,6 +168,51 @@ export function WorkOrderView(): JSX.Element {
         </div>
       )}
 
+      {tab === 'progress' && (
+        <div className="rounded-[14px] border border-border bg-card shadow-card overflow-x-auto">
+          <table className="w-full text-[12.5px] border-collapse min-w-[760px]">
+            <thead>
+              <tr>
+                {['지시번호', '품번', '품명', '지시수량', '실적(양품)', '달성률', '상태'].map((h) => (
+                  <th key={h} className="text-left font-bold text-secondary-foreground bg-secondary/60 py-2 px-3 whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 && !loading && (
+                <tr><td colSpan={7} className="py-8 text-center text-muted-foreground text-[13px]">작업지시가 없습니다.</td></tr>
+              )}
+              {rows.map((r) => {
+                const pct = r.orderQty ? (r.okSum / r.orderQty) * 100 : null
+                return (
+                  <tr key={r.id} className={cn(r.status === '취소' && 'opacity-50')}>
+                    <td className="py-2 px-3 font-bold text-mega-active whitespace-nowrap border-b border-border/60">{r.orderNo}</td>
+                    <td className="py-2 px-3 font-semibold whitespace-nowrap border-b border-border/60">{r.itemCode}</td>
+                    <td className="py-2 px-3 text-muted-foreground border-b border-border/60 max-w-[220px] truncate">{r.itemName ?? ''}</td>
+                    <td className="py-2 px-3 text-right tabular-nums border-b border-border/60">{r.orderQty?.toLocaleString() ?? '—'}</td>
+                    <td className="py-2 px-3 text-right tabular-nums font-bold border-b border-border/60">{r.okSum.toLocaleString()}</td>
+                    <td className="py-2 px-3 border-b border-border/60 min-w-[160px]">
+                      {pct == null ? (
+                        <span className="text-muted-foreground">지시수량 없음</span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <span className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                            <span className={cn('block h-full rounded-full', pct >= 100 ? 'bg-primary' : 'bg-bad-ink/70')} style={{ width: `${Math.min(pct, 100)}%` }} />
+                          </span>
+                          <span className={cn('tabular-nums font-extrabold text-[12px]', pct >= 100 ? 'text-primary' : 'text-bad-ink')}>{pct.toFixed(1)}%</span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 px-3 border-b border-border/60">{r.status}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'list' && (
       <div className="rounded-[14px] border border-border bg-card shadow-card overflow-x-auto">
         <table className="w-full text-[12.5px] border-collapse min-w-[860px]">
           <thead>
@@ -191,6 +260,7 @@ export function WorkOrderView(): JSX.Element {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   )
 }

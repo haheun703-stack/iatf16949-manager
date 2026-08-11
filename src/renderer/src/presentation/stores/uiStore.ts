@@ -39,6 +39,10 @@ export type PageId =
   | 'prod-entry'
   | 'work-order'
   | 'audit-hub'
+  | 'prod-history'
+  | 'insp-incoming'
+  | 'insp-history'
+  | 'mat-stock'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
@@ -78,7 +82,11 @@ export const PAGE_LABELS: Record<PageId, string> = {
   'insp-entry': '검사 등록',
   'prod-entry': '생산실적 등록',
   'work-order': '작업지시관리',
-  'audit-hub': '심사대응 (관제탑)'
+  'audit-hub': '심사대응 (관제탑)',
+  'prod-history': '생산실적',
+  'insp-incoming': '수입검사내역 조회',
+  'insp-history': '품질검사내역',
+  'mat-stock': '재고현황 (자재)'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

@@ -2252,6 +2252,26 @@ export interface IpcChannelMap {
     request: { id: number; confirmer?: string }
     response: { success: boolean; error?: string }
   }
+  [IPC_CHANNELS.SEMIMES_PROD_LIST]: {
+    request: SemimesProdListReq
+    response: { rows: SemimesProdRowDto[]; agg: SemimesProdAggRowDto[] }
+  }
+  [IPC_CHANNELS.SEMIMES_INSP_LIST]: {
+    request: SemimesInspListReq
+    response: SemimesInspRowDto[]
+  }
+  [IPC_CHANNELS.SEMIMES_INSP_VALUES]: {
+    request: { id: number }
+    response: SemimesInspValueRowDto[]
+  }
+  [IPC_CHANNELS.SEMIMES_MAT_STOCK]: {
+    request: { itemCode?: string } | undefined
+    response: SemimesMatStockRowDto[]
+  }
+  [IPC_CHANNELS.SEMIMES_HOME_KPIS]: {
+    request: { ymd?: string } | undefined
+    response: SemimesHomeKpisDto
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -3199,6 +3219,99 @@ export interface SemimesTodayRecordsDto {
     valueCnt: number
     canceled: boolean
   }>
+}
+
+// ── 32호 1차분 — MES 조회 화면 원천 DTO (semimes-query-handlers · 읽기 전용) ──
+
+export interface SemimesProdListReq {
+  from: string
+  to: string
+  itemCode?: string
+  /** detail = 행 단위 · daily/monthly = 집계(취소 제외) */
+  mode?: 'detail' | 'daily' | 'monthly'
+}
+
+export interface SemimesProdRowDto {
+  id: number
+  recordDate: string
+  orderNo: string | null
+  itemCode: string
+  itemName: string | null
+  lotNo: string | null
+  procCode: string | null
+  okQty: number
+  ngQty: number
+  defectCode: string | null
+  shift: string | null
+  worker: string | null
+  canceled: boolean
+}
+
+export interface SemimesProdAggRowDto {
+  /** daily = YYYY-MM-DD · monthly = YYYY-MM */
+  bucket: string
+  rows: number
+  okSum: number
+  ngSum: number
+}
+
+export interface SemimesInspListReq {
+  from: string
+  to: string
+  /** 미지정 = 전체 */
+  kind?: string
+  itemCode?: string
+}
+
+export interface SemimesInspRowDto {
+  id: number
+  inspDate: string
+  inspKind: string
+  itemCode: string
+  itemName: string | null
+  lotNo: string | null
+  procCode: string | null
+  inspector: string | null
+  judgment: string
+  defectQty: number | null
+  samplePhase: string | null
+  specRevision: number | null
+  confirmer: string | null
+  confirmedAt: string | null
+  valueCnt: number
+  canceled: boolean
+}
+
+export interface SemimesInspValueRowDto {
+  inspItem: string
+  sampleNo: number
+  value: number
+  valueText: string | null
+  /** 연결 스펙 규격(있으면) — 이탈 표시용 */
+  su: number | null
+  sl: number | null
+  unit: string | null
+}
+
+export interface SemimesMatStockRowDto {
+  itemCode: string
+  itemName: string | null
+  itemType: string | null
+  /** 입고 합(취소 제외) − 투입 합 = 잔량 */
+  receiptSum: number
+  inputSum: number
+  balance: number
+  lastReceiptDate: string | null
+}
+
+export interface SemimesHomeKpisDto {
+  ymd: string
+  prodCnt: number
+  okSum: number
+  inspCnt: number
+  /** 2단 확인 대기(미취소·confirmer 없음) */
+  confirmWait: number
+  receiptCnt: number
 }
 
 // ── 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력) ──

@@ -224,6 +224,12 @@ export const IPC_CHANNELS = {
   SEMIMES_TODAY_RECORDS: 'semimes:todayRecords',
   SEMIMES_RECORD_CANCEL: 'semimes:recordCancel',
   SEMIMES_INSP_CONFIRM: 'semimes:inspConfirm',
+  // 32호 1차분 — MES 조회 화면 5종 원천 (읽기 전용 · semimes-query-handlers)
+  SEMIMES_PROD_LIST: 'semimes:prodList',
+  SEMIMES_INSP_LIST: 'semimes:inspList',
+  SEMIMES_INSP_VALUES: 'semimes:inspValues',
+  SEMIMES_MAT_STOCK: 'semimes:matStock',
+  SEMIMES_HOME_KPIS: 'semimes:homeKpis',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',

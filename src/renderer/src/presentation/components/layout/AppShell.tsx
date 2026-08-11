@@ -36,6 +36,9 @@ import { PartProcessView } from '../home/PartProcessView'
 import { InspEntryView } from '../semimes-entry/InspEntryView'
 import { ProdEntryView } from '../semimes-entry/ProdEntryView'
 import { WorkOrderView } from '../semimes-entry/WorkOrderView'
+import { ProdHistoryView } from '../semimes-entry/ProdHistoryView'
+import { InspHistoryView } from '../semimes-entry/InspHistoryView'
+import { MatStockView } from '../semimes-entry/MatStockView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
@@ -109,6 +112,10 @@ export function AppShell(): JSX.Element {
             {currentPage === 'insp-entry' && <InspEntryView />}
             {currentPage === 'prod-entry' && <ProdEntryView />}
             {currentPage === 'work-order' && <WorkOrderView />}
+            {currentPage === 'prod-history' && <ProdHistoryView />}
+            {currentPage === 'insp-incoming' && <InspHistoryView fixedKind="수입" />}
+            {currentPage === 'insp-history' && <InspHistoryView />}
+            {currentPage === 'mat-stock' && <MatStockView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

@@ -36,6 +36,7 @@ import { registerMesRecordsHandlers } from './mes-records-handlers'
 import { registerAppUsersHandlers } from './app-users-handlers'
 import { registerSemimesHandlers } from './semimes-handlers'
 import { registerSemimesWriteHandlers } from './semimes-write-handlers'
+import { registerSemimesQueryHandlers } from './semimes-query-handlers'
 import { registerProcessFlowHandlers } from './process-flow-handlers'
 
 export function registerAllIpcHandlers(): void {
@@ -68,6 +69,7 @@ export function registerAllIpcHandlers(): void {
   registerAppUsersHandlers()
   registerSemimesHandlers()
   registerSemimesWriteHandlers()
+  registerSemimesQueryHandlers()
   registerProcessFlowHandlers()
   const db = getSqlite()
 

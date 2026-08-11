@@ -44,6 +44,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     label: '자재관리',
     items: [
       { label: '수집함 (입고·출하 전표)', page: 'receipt-inbox', sq: ['2_1', '2_2'] },
+      { label: '재고현황 (자재)', page: 'mat-stock' },
       { label: 'LOT 계보 조회', page: 'mes-trace', sq: ['5_1'], iatf: ['8.5.2'] },
       { label: '수입검사 관리대장', form: 'L2100-07', sq: ['2_1', '2_2'] }
     ]
@@ -54,6 +55,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     items: [
       { label: '작업지시관리', page: 'work-order', iatf: ['8.5.1'] },
       { label: '생산실적 등록 (초·중·종 연동)', page: 'prod-entry', sq: ['1_4'], iatf: ['8.5.1'] },
+      { label: '생산실적 현황 (상세·일별·월별)', page: 'prod-history', sq: ['1_4'] },
       { label: '자주검사 등록 (초중종 3회)', page: 'insp-entry', sq: ['1_4', '2_7'], iatf: ['8.6.1'] },
       { label: 'MES 기록 현황 (커버리지)', page: 'mes-records', sq: ['1_4'] },
       { label: '품번×공정 실황 (수불 상위)', page: 'part-process' },
@@ -67,6 +69,8 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     label: '품질관리',
     items: [
       { label: '검사 등록 (수입·공정·패트롤·출하)', page: 'insp-entry', sq: ['2_1', '2_7'], iatf: ['8.6.1'] },
+      { label: '수입검사내역 조회', page: 'insp-incoming', sq: ['2_1', '2_2'] },
+      { label: '품질검사내역 (구분 통합)', page: 'insp-history', sq: ['1_4', '2_7'] },
       { label: '자주검사 CHECK SHEET (양식)', form: 'M1200-10', sq: ['1_4', '2_7'], iatf: ['8.6.1'] },
       { label: '순회검사(패트롤) 시트 (양식)', form: 'L2100-05', sq: ['2_7'] },
       { label: '불량 대책서 (8D)', page: 'case-work', sq: ['6_6'], iatf: ['8.7'] },
