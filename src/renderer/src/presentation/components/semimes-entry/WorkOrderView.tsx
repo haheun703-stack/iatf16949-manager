@@ -18,6 +18,7 @@ export function WorkOrderView(): JSX.Element {
   const [statusFilter, setStatusFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [newItem, setNewItem] = useState('')
   const [newQty, setNewQty] = useState('')
   const [suggest, setSuggest] = useState<SemimesItemSearchRowDto[]>([])
@@ -40,21 +41,29 @@ export function WorkOrderView(): JSX.Element {
   }, [load])
 
   async function addOrder(): Promise<void> {
+    if (saving) return // M-8: 연타 = 지시 이중 발번 — 진행 중 재진입 차단
+    setSaving(true)
     setMsg(null)
-    const res = (await window.api.invoke(window.api.channels.SEMIMES_WORK_ORDER_UPSERT, {
-      itemCode: newItem.trim(),
-      orderQty: newQty.trim() === '' ? null : Number(newQty),
-      createdBy: userName
-    })) as { success: boolean; orderNo?: string; error?: string }
-    if (!res.success) {
-      setMsg({ tone: 'bad', text: res.error ?? '등록 실패' })
-      return
+    try {
+      const res = (await window.api.invoke(window.api.channels.SEMIMES_WORK_ORDER_UPSERT, {
+        itemCode: newItem.trim(),
+        orderQty: newQty.trim() === '' ? null : Number(newQty),
+        createdBy: userName
+      })) as { success: boolean; orderNo?: string; error?: string }
+      if (!res.success) {
+        setMsg({ tone: 'bad', text: res.error ?? '등록 실패' })
+        return
+      }
+      setMsg({ tone: 'ok', text: `작업지시 발번 — ${res.orderNo}` })
+      setAdding(false)
+      setNewItem('')
+      setNewQty('')
+      await load()
+    } catch {
+      setMsg({ tone: 'bad', text: '등록 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
+    } finally {
+      setSaving(false)
     }
-    setMsg({ tone: 'ok', text: `작업지시 발번 — ${res.orderNo}` })
-    setAdding(false)
-    setNewItem('')
-    setNewQty('')
-    await load()
   }
 
   async function setStatus(id: number, status: string): Promise<void> {
@@ -129,8 +138,8 @@ export function WorkOrderView(): JSX.Element {
             지시 수량
             <input value={newQty} onChange={(e) => setNewQty(e.target.value)} inputMode="numeric" className="h-10 px-3 rounded-lg border border-border bg-card text-[13.5px] text-center tabular-nums" />
           </label>
-          <button type="button" onClick={() => void addOrder()} className="h-10 px-5 rounded-lg bg-primary text-white text-[13.5px] font-bold">
-            발번·등록
+          <button type="button" onClick={() => void addOrder()} disabled={saving} className="h-10 px-5 rounded-lg bg-primary text-white text-[13.5px] font-bold disabled:opacity-50">
+            {saving ? '발번 중…' : '발번·등록'}
           </button>
         </div>
       )}

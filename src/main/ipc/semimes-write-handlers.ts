@@ -18,7 +18,9 @@ import type {
  *  · append-only — 기록 UPDATE 채널 없음. 정정 = recordCancel(사유 필수 취소 마크) + 재입력.
  *  · 실측값 강제 — 검사값 수치 필수(○/× 단독 저장 거부). 자동판정은 제안만(suggestion), 확정은 사람.
  *  · §10-1 각인 — inspRecordCreate 가 기록 시점 활성 스펙 revision 을 spec_revision 스냅샷으로,
- *    sample_phase(초중종)를 기록. confirmer 는 inspConfirm 채널만 기입(대필 경로 0).
+ *    sample_phase(초중종)를 기록. confirmer 는 inspConfirm 채널만 기입.
+ *    데스크톱 경로 주체 인증은 W4 전 미해결 — 현 방어선은 최소방어(검사자 빈 값 거부·
+ *    자기확인 금지·검사자 부재 기록 확인 거부)까지. "대필 경로 0"은 웹(STAMP) 한정 사실.
  *  · recordSource — app_config 'semimes.recordSource': 기본 'direct'(판매 기본, 29번 §1).
  *    'sidecar'(TPC 원안)면 쓰기 채널 거부 — 기록 원천은 MES(이중 기록 금지).
  *  · 기록주체 전부 서버 세션 강제(STAMP — index.cjs) — defaultAuthor 폴백 금지.
@@ -27,7 +29,7 @@ import type {
 const INSP_KINDS = ['수입', '공정', '자주', '패트롤', '출하']
 const PHASES = ['초품', '중품', '종품']
 
-function recordSource(): 'direct' | 'sidecar' {
+export function recordSource(): 'direct' | 'sidecar' {
   try {
     const r = getSqlite()
       .prepare("SELECT value FROM app_config WHERE key = 'semimes.recordSource'")
@@ -38,7 +40,7 @@ function recordSource(): 'direct' | 'sidecar' {
   }
 }
 
-const SIDECAR_MSG =
+export const SIDECAR_MSG =
   "sidecar 모드 — 이 설치의 기록 원천은 MES입니다(이중 기록 금지). 직접 기록 전환 = app_config 'semimes.recordSource' = 'direct'."
 
 function ymdOk(s: string | undefined | null): boolean {
@@ -177,6 +179,11 @@ export function registerSemimesWriteHandlers(): void {
     if (!['합격', '불합격', '보류'].includes(req.judgment)) {
       return { success: false, error: '판정(합격/불합격/보류)은 사람이 확정해야 합니다.' }
     }
+    // C-3 최소방어: 검사자 빈 값 거부 — inspector 부재 기록은 2단 서명의 자기확인 검증이 무력해진다
+    const inspector = req.inspector?.trim()
+    if (!inspector) {
+      return { success: false, error: '검사자 이름이 없습니다 — 기록주체 없는 검사기록은 저장할 수 없습니다(2단 서명 1단).' }
+    }
     const values = Array.isArray(req.values) ? req.values : []
     if (values.length === 0) return { success: false, error: '측정값이 최소 1건 필요합니다.' }
     for (const v of values) {
@@ -218,7 +225,7 @@ export function registerSemimesWriteHandlers(): void {
           )
           .run(
             req.inspDate, req.inspKind, req.itemCode, req.lotNo?.trim() || null, req.procCode?.trim() || null,
-            req.inspector ?? null, req.judgment, req.note?.trim() || null, rev.r, req.samplePhase ?? null
+            inspector, req.judgment, req.note?.trim() || null, rev.r, req.samplePhase ?? null
           )
         const rid = Number(info.lastInsertRowid)
         const insVal = db.prepare(
@@ -360,7 +367,11 @@ export function registerSemimesWriteHandlers(): void {
     if (cur.canceled_at) return { success: false, error: '취소된 기록은 확인할 수 없습니다.' }
     if (cur.confirmer) return { success: false, error: `이미 확인됨(${cur.confirmer}) — 2단 서명은 1회입니다.` }
     if (!confirmer?.trim()) return { success: false, error: '확인자 이름이 없습니다(세션 필요).' }
-    if (cur.inspector && cur.inspector === confirmer.trim()) {
+    // C-3 최소방어: 검사자 부재 기록은 자기확인 검증이 불가 — 확인 거부(정정 = 취소+재입력)
+    if (!cur.inspector?.trim()) {
+      return { success: false, error: '검사자가 비어 있는 기록은 확인할 수 없습니다(자기확인 검증 불가) — 취소 후 재입력하세요.' }
+    }
+    if (cur.inspector.trim() === confirmer.trim()) {
       return { success: false, error: '검사자 본인은 확인자가 될 수 없습니다(2단 서명 — 자기확인 금지).' }
     }
     db.prepare(`UPDATE insp_record SET confirmer = ?, confirmed_at = datetime('now', 'localtime') WHERE id = ?`).run(

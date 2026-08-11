@@ -112,12 +112,15 @@ export function evaluateDataTriggers(
       // 발행 버킷 = 입고일(중복 방지 = UNIQUE + OR IGNORE → 1일 1건). lazy 창 14일 —
       // 설치 첫날 과거 소급 폭탄 방지(T3 "규정 265종 미적재" 선례와 같은 결).
       const windowStart = ymdAddDays(ctx.today, -14)
-      const hasInsp = db.prepare(`SELECT 1 FROM insp_record WHERE insp_kind = '수입' AND insp_date = ? LIMIT 1`)
+      // M-3: 취소 마크(canceled_at) 행은 산 기록이 아니다 — 해소 판정·발행 창·자동취소 전부 취소 제외
+      const hasInsp = db.prepare(
+        `SELECT 1 FROM insp_record WHERE insp_kind = '수입' AND insp_date = ? AND canceled_at IS NULL LIMIT 1`
+      )
       const hasCard = db.prepare(
         `SELECT 1 FROM form_submissions WHERE form_code = 'L2100-07' AND date(created_at, 'localtime') = ? LIMIT 1`
       )
       const hasReceipt = db.prepare(
-        `SELECT 1 FROM mat_receipt WHERE capture_id IS NOT NULL AND receipt_date = ? LIMIT 1`
+        `SELECT 1 FROM mat_receipt WHERE capture_id IS NOT NULL AND receipt_date = ? AND canceled_at IS NULL LIMIT 1`
       )
       const inspected = (ymd: string): boolean => !!hasInsp.get(ymd) || !!hasCard.get(ymd)
 
@@ -126,7 +129,7 @@ export function evaluateDataTriggers(
         dates = db
           .prepare(
             `SELECT DISTINCT receipt_date AS d FROM mat_receipt
-             WHERE capture_id IS NOT NULL AND receipt_date >= ? AND receipt_date <= ?`
+             WHERE capture_id IS NOT NULL AND canceled_at IS NULL AND receipt_date >= ? AND receipt_date <= ?`
           )
           .all(windowStart, ctx.today) as Array<{ d: string }>
       } catch {

@@ -258,8 +258,8 @@ export function registerMesRecordsHandlers(): void {
     try {
       const rows = getSqlite()
         .prepare(
-          `SELECT substr(created_at, 1, 10) d, form_code, COUNT(*) n FROM form_submissions
-           WHERE substr(created_at, 1, 10) >= ? AND substr(created_at, 1, 10) <= ?
+          `SELECT date(created_at, 'localtime') d, form_code, COUNT(*) n FROM form_submissions
+           WHERE date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') <= ?
            GROUP BY d, form_code`
         )
         .all(windowStart < ymd ? windowStart : ymd, ymd) as Array<{ d: string; form_code: string; n: number }>
@@ -355,8 +355,8 @@ export function registerMesRecordsHandlers(): void {
     try {
       const rows = main
         .prepare(
-          `SELECT substr(created_at, 1, 10) d, form_code FROM form_submissions
-           WHERE substr(created_at, 1, 10) >= ? AND substr(created_at, 1, 10) <= ?`
+          `SELECT date(created_at, 'localtime') d, form_code FROM form_submissions
+           WHERE date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') <= ?`
         )
         .all(windowStart, windowEnd) as Array<{ d: string; form_code: string }>
       for (const r of rows) {
@@ -405,8 +405,8 @@ export function registerMesRecordsHandlers(): void {
       for (const g of gaps) {
         const stat = main
           .prepare(
-            `SELECT COUNT(*) n, MAX(substr(created_at, 1, 10)) last FROM form_submissions
-             WHERE form_code = ? AND substr(created_at, 1, 10) >= ? AND substr(created_at, 1, 10) <= ?`
+            `SELECT COUNT(*) n, MAX(date(created_at, 'localtime')) last FROM form_submissions
+             WHERE form_code = ? AND date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') <= ?`
           )
           .get(g.form_code, windowStart, windowEnd) as { n: number; last: string | null }
         rows.push({

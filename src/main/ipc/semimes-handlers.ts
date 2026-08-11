@@ -1,6 +1,7 @@
 import { app, ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
+import { recordSource, SIDECAR_MSG } from './semimes-write-handlers'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { extname, join } from 'path'
 import type {
@@ -283,6 +284,8 @@ function registerCaptureInboxHandlers(): void {
   // ── 태깅 저장 (쓰기 — 입고 = mat_receipt N행 + content, 출하 = content 만) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_CAPTURE_TAG, (_e, req: SemimesCaptureTagInput) => {
     if (!hasInboxSchema()) return { success: false, error: '수집함 스키마(0136) 미적용 DB입니다.' }
+    // M-2: 태깅 = 수불 생성(쓰기) — sidecar 설치에서는 기록 원천이 MES(이중 기록 금지)
+    if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
     const cap = db
       .prepare(`SELECT id, kind, status FROM raw_captures WHERE id = ?`)
       .get(req?.captureId) as { id: number; kind: string; status: string } | undefined
@@ -330,8 +333,16 @@ function registerCaptureInboxHandlers(): void {
       `INSERT INTO mat_receipt (receipt_date, item_code, vendor_lot, internal_lot, partner_code, qty, note, created_by, capture_id, receipt_class)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    const updCapture = db.prepare(`UPDATE raw_captures SET kind = ?, content = ?, status = '태깅완료' WHERE id = ?`)
-    db.transaction(() => {
+    // M-5: 상태 확인→수불 생성→태깅완료 전환을 단일 IMMEDIATE 트랜잭션으로 —
+    // 교차 프로세스(데스크톱+웹 서버가 같은 DB) 동시 태깅 시 수불 2벌 차단. 상태 조건은 UPDATE에도 이중으로.
+    const updCapture = db.prepare(
+      `UPDATE raw_captures SET kind = ?, content = ?, status = '태깅완료' WHERE id = ? AND status <> '태깅완료'`
+    )
+    const tagTxn = db.transaction(() => {
+      const cur = db.prepare(`SELECT status FROM raw_captures WHERE id = ?`).get(cap.id) as { status: string } | undefined
+      if (!cur || cur.status === '태깅완료') {
+        throw new Error('이미 태깅완료된 사진입니다 — 정정은 취소+재등록(append-only)으로.')
+      }
       if (req.kind === 'receipt_in') {
         for (const it of content.items) {
           // 업체LOT 승계(INLOTUSE) 시에만 internal_lot = vendor_lot — 자체 발번은 PC 단계(lotIssue) 소관
@@ -344,8 +355,15 @@ function registerCaptureInboxHandlers(): void {
           receiptIds.push(Number(info.lastInsertRowid))
         }
       }
-      updCapture.run(req.kind, JSON.stringify(content), cap.id)
-    })()
+      if (updCapture.run(req.kind, JSON.stringify(content), cap.id).changes !== 1) {
+        throw new Error('태깅 경합 감지 — 다른 세션이 먼저 태깅했습니다.')
+      }
+    })
+    try {
+      tagTxn.immediate()
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
     return { success: true, receiptIds }
   })
 
