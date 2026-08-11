@@ -2276,6 +2276,22 @@ export interface IpcChannelMap {
     request: { from: string; to: string; itemCode?: string; receiptClass?: string }
     response: SemimesReceiptRowDto[]
   }
+  [IPC_CHANNELS.SEMIMES_SPEC_LIST]: {
+    request: { itemCode: string; inspKind?: string }
+    response: SemimesSpecRegistryRowDto[]
+  }
+  [IPC_CHANNELS.SEMIMES_SPEC_SAVE]: {
+    request: SemimesSpecSaveInput
+    response: { success: boolean; id?: number; revision?: number; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_PPM_DASH]: {
+    request: { year?: string } | undefined
+    response: SemimesPpmDashDto
+  }
+  [IPC_CHANNELS.SEMIMES_PPM_TARGET_SAVE]: {
+    request: { value: number; savedBy?: string }
+    response: { success: boolean; error?: string }
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -3323,6 +3339,47 @@ export interface SemimesReceiptRowDto {
   captureId: number | null
   createdBy: string | null
   canceled: boolean
+}
+
+export interface SemimesSpecRegistryRowDto {
+  id: number
+  itemCode: string
+  inspKind: string
+  inspItem: string
+  instrument: string | null
+  unit: string | null
+  sl: number | null
+  su: number | null
+  nominal: number | null
+  sampleCnt: number | null
+  revision: number
+  revDate: string | null
+  active: boolean
+  createdBy: string | null
+}
+
+export interface SemimesSpecSaveInput {
+  itemCode: string
+  inspKind: string
+  inspItem: string
+  instrument?: string | null
+  unit?: string | null
+  sl?: number | null
+  su?: number | null
+  nominal?: number | null
+  sampleCnt?: number | null
+  /** 개정 주체 — 세션 강제(STAMP) */
+  createdBy?: string
+}
+
+export interface SemimesPpmDashDto {
+  year: string
+  targetPpm: number | null
+  /** 월별 양품/불량 합 + PPM(취소 제외 · 실적 없으면 ppm null) */
+  months: Array<{ month: string; ok: number; ng: number; ppm: number | null }>
+  byItem: Array<{ itemCode: string; itemName: string | null; ok: number; ng: number; ppm: number | null }>
+  byDefect: Array<{ code: string; name: string | null; ng: number }>
+  currentMonthPpm: number | null
 }
 
 export interface SemimesHomeKpisDto {

@@ -40,6 +40,8 @@ import { ProdHistoryView } from '../semimes-entry/ProdHistoryView'
 import { InspHistoryView } from '../semimes-entry/InspHistoryView'
 import { MatStockView } from '../semimes-entry/MatStockView'
 import { MatReceiptsView } from '../semimes-entry/MatReceiptsView'
+import { SpecRegistryView } from '../semimes-entry/SpecRegistryView'
+import { PpmDashView } from '../semimes-entry/PpmDashView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { ConfirmDialogHost } from '../shared/ConfirmDialog'
@@ -119,6 +121,8 @@ export function AppShell(): JSX.Element {
             {currentPage === 'insp-history' && <InspHistoryView />}
             {currentPage === 'mat-stock' && <MatStockView />}
             {currentPage === 'mat-receipts' && <MatReceiptsView />}
+            {currentPage === 'insp-spec' && <SpecRegistryView />}
+            {currentPage === 'ppm-dash' && <PpmDashView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

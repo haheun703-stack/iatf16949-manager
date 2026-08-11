@@ -232,6 +232,11 @@ export const IPC_CHANNELS = {
   SEMIMES_HOME_KPIS: 'semimes:homeKpis',
   // 34호 2차분 2-1 — 자재입하/입고내역조회(수집함 태깅 결과 = mat_receipt 원천)
   SEMIMES_RECEIPT_LIST: 'semimes:receiptList',
+  // 34호 배치⑴ — #7 검사기준(SPEC)등록(개정=신규 행 · §10-1) · #14 부적합 PPM 대시보드
+  SEMIMES_SPEC_LIST: 'semimes:specList',
+  SEMIMES_SPEC_SAVE: 'semimes:specSave',
+  SEMIMES_PPM_DASH: 'semimes:ppmDash',
+  SEMIMES_PPM_TARGET_SAVE: 'semimes:ppmTargetSave',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',

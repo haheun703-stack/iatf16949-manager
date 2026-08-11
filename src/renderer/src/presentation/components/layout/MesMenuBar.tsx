@@ -74,6 +74,8 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
       { label: '검사 등록 (수입·공정·패트롤·출하)', page: 'insp-entry', alias: true, sq: ['2_1', '2_7'], iatf: ['8.6.1'] },
       { label: '수입검사내역 조회', page: 'insp-incoming', sq: ['2_1', '2_2'] },
       { label: '품질검사내역 (구분 통합)', page: 'insp-history', sq: ['1_4', '2_7'] },
+      { label: '검사기준(SPEC) 등록 — 개정=신규 행', page: 'insp-spec', sq: ['2_7'], iatf: ['8.6.1'] },
+      { label: '부적합 PPM 대시보드', page: 'ppm-dash', sq: ['6_6'] },
       { label: '자주검사 CHECK SHEET (양식)', form: 'M1200-10', sq: ['1_4', '2_7'], iatf: ['8.6.1'] },
       { label: '순회검사(패트롤) 시트 (양식)', form: 'L2100-05', sq: ['2_7'] },
       { label: '불량 대책서 (8D)', page: 'case-work', sq: ['6_6'], iatf: ['8.7'] },

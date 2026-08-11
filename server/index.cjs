@@ -284,7 +284,10 @@ const STAMP_FIELDS = {
   'semimes:inspRecordCreate': ['inspector'],
   'semimes:workOrderUpsert': ['createdBy'],
   'semimes:recordCancel': ['canceledBy'],
-  'semimes:inspConfirm': ['confirmer']
+  'semimes:inspConfirm': ['confirmer'],
+  // 34호 배치⑴ — SPEC 개정 주체·PPM 목표 기입 주체 세션 강제
+  'semimes:specSave': ['createdBy'],
+  'semimes:ppmTargetSave': ['savedBy']
 }
 
 // ── POST /api/{channel} 디스패처 ──

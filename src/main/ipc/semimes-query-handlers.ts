@@ -8,10 +8,12 @@ import type {
   SemimesInspRowDto,
   SemimesInspValueRowDto,
   SemimesMatStockRowDto,
+  SemimesPpmDashDto,
   SemimesProdAggRowDto,
   SemimesProdListReq,
   SemimesProdRowDto,
-  SemimesReceiptRowDto
+  SemimesReceiptRowDto,
+  SemimesSpecRegistryRowDto
 } from '@shared/ipc-types'
 
 /**
@@ -175,6 +177,75 @@ export function registerSemimesQueryHandlers(): void {
       return rows.map((r) => ({ ...r, canceled: !!r.canceled }))
     }
   )
+
+  // ── ⑦ specList — 검사기준 전 리비전 조회 (34호 #7 · 구판 포함 이력 정직 표기) ──
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_SPEC_LIST,
+    (_e, req: { itemCode: string; inspKind?: string }): SemimesSpecRegistryRowDto[] => {
+      if (!req?.itemCode?.trim()) return []
+      const conds = ['s.item_code = ?']
+      const args: unknown[] = [req.itemCode.trim()]
+      if (req.inspKind?.trim()) {
+        conds.push('s.insp_kind = ?')
+        args.push(req.inspKind.trim())
+      }
+      const rows = db
+        .prepare(
+          `SELECT s.id, s.item_code AS itemCode, s.insp_kind AS inspKind, s.insp_item AS inspItem,
+                  s.instrument, s.unit, s.sl, s.su, s.nominal, s.sample_cnt AS sampleCnt,
+                  s.revision, s.rev_date AS revDate, s.active, s.created_by AS createdBy
+           FROM insp_spec s WHERE ${conds.join(' AND ')}
+           ORDER BY s.insp_kind, s.insp_item, s.revision DESC LIMIT 500`
+        )
+        .all(...args) as Array<Omit<SemimesSpecRegistryRowDto, 'active'> & { active: 0 | 1 }>
+      return rows.map((r) => ({ ...r, active: !!r.active }))
+    }
+  )
+
+  // ── ⑧ ppmDash — 부적합 PPM 대시보드 (34호 #14 · v1 원천 = 생산실적 불량, 취소 제외) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_PPM_DASH, (_e, req: { year?: string } | undefined): SemimesPpmDashDto => {
+    const year = req?.year && /^\d{4}$/.test(req.year) ? req.year : todayKST().slice(0, 4)
+    let targetPpm: number | null = null
+    try {
+      const t = db.prepare("SELECT value FROM app_config WHERE key = 'quality.targetPpm'").get() as
+        | { value: string }
+        | undefined
+      if (t && Number.isFinite(Number(t.value))) targetPpm = Number(t.value)
+    } catch {
+      /* app_config 부재 — 목표 미설정 정직 */
+    }
+    const ppmOf = (ok: number, ng: number): number | null => (ok + ng > 0 ? Math.round((ng / (ok + ng)) * 1e6) : null)
+    const months = (
+      db
+        .prepare(
+          `SELECT substr(record_date, 1, 7) AS month, COALESCE(SUM(ok_qty),0) AS ok, COALESCE(SUM(ng_qty),0) AS ng
+           FROM prod_record WHERE record_date LIKE ? AND canceled_at IS NULL GROUP BY month ORDER BY month`
+        )
+        .all(`${year}-%`) as Array<{ month: string; ok: number; ng: number }>
+    ).map((m) => ({ ...m, ppm: ppmOf(m.ok, m.ng) }))
+    const byItem = (
+      db
+        .prepare(
+          `SELECT p.item_code AS itemCode, i.item_name AS itemName,
+                  COALESCE(SUM(p.ok_qty),0) AS ok, COALESCE(SUM(p.ng_qty),0) AS ng
+           FROM prod_record p LEFT JOIN item_master i ON i.item_code = p.item_code
+           WHERE p.record_date LIKE ? AND p.canceled_at IS NULL
+           GROUP BY p.item_code HAVING ok + ng > 0 ORDER BY ng DESC, ok DESC LIMIT 50`
+        )
+        .all(`${year}-%`) as Array<{ itemCode: string; itemName: string | null; ok: number; ng: number }>
+    ).map((r) => ({ ...r, ppm: ppmOf(r.ok, r.ng) }))
+    const byDefect = db
+      .prepare(
+        `SELECT p.defect_code AS code, d.name, COALESCE(SUM(p.ng_qty),0) AS ng
+         FROM prod_record p LEFT JOIN defect_type d ON d.code = p.defect_code
+         WHERE p.record_date LIKE ? AND p.canceled_at IS NULL AND p.ng_qty > 0 AND p.defect_code IS NOT NULL
+         GROUP BY p.defect_code ORDER BY ng DESC LIMIT 20`
+      )
+      .all(`${year}-%`) as Array<{ code: string; name: string | null; ng: number }>
+    const curMonth = todayKST().slice(0, 7)
+    const cur = months.find((m) => m.month === curMonth)
+    return { year, targetPpm, months, byItem, byDefect, currentMonthPpm: cur?.ppm ?? null }
+  })
 
   // ── ⑤ homeKpis — MES 홈 오늘 요약 4타일 (33호 §2-2 모듈 홈 대시보드 문법의 홈 적용) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_HOME_KPIS, (_e, req: { ymd?: string } | undefined): SemimesHomeKpisDto => {

@@ -7,6 +7,7 @@ import type {
   SemimesProdCreateInput,
   SemimesScanContextDto,
   SemimesSpecRowDto,
+  SemimesSpecSaveInput,
   SemimesTodayRecordsDto,
   SemimesWorkOrderInput,
   SemimesWorkOrderRowDto
@@ -373,6 +374,67 @@ export function registerSemimesWriteHandlers(): void {
       return { success: true }
     }
   )
+
+  // ── ⑨ specSave — 검사기준 등록/개정 (34호 #7 · §10-1 ⓐ: 개정 = 신규 행, 구판 불변) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_SPEC_SAVE, (_e, req: SemimesSpecSaveInput) => {
+    if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
+    if (!itemRow(req?.itemCode ?? '')) return { success: false, error: `품번(${req?.itemCode ?? ''})이 품목 마스터에 없습니다.` }
+    if (!INSP_KINDS.includes(req.inspKind)) return { success: false, error: `검사종류는 ${INSP_KINDS.join('/')} 중 하나여야 합니다.` }
+    if (!req.inspItem?.trim()) return { success: false, error: '검사항목명은 필수입니다.' }
+    const author = req.createdBy?.trim()
+    if (!author) return { success: false, error: '개정 주체가 없습니다 — 사용자를 선택하세요.' }
+    const num = (v: number | null | undefined): number | null | false => {
+      if (v == null) return null
+      const n = Number(v)
+      return Number.isFinite(n) ? n : false
+    }
+    const sl = num(req.sl)
+    const su = num(req.su)
+    const nominal = num(req.nominal)
+    const sampleCnt = num(req.sampleCnt)
+    if (sl === false || su === false || nominal === false || sampleCnt === false) {
+      return { success: false, error: '규격 값은 수치여야 합니다.' }
+    }
+    if (sl != null && su != null && sl > su) return { success: false, error: '하한이 상한보다 큽니다 — 규격을 확인하세요.' }
+    const item = req.inspItem.trim()
+    try {
+      const specTxn = db.transaction(() => {
+        const cur = db
+          .prepare('SELECT COALESCE(MAX(revision), 0) AS r FROM insp_spec WHERE item_code = ? AND insp_kind = ? AND insp_item = ?')
+          .get(req.itemCode, req.inspKind, item) as { r: number }
+        const rev = cur.r + 1
+        // 구판 불변 — 값은 건드리지 않고 active 강하만(개정 이력 = 행으로 보존)
+        db.prepare('UPDATE insp_spec SET active = 0 WHERE item_code = ? AND insp_kind = ? AND insp_item = ? AND active = 1').run(
+          req.itemCode, req.inspKind, item
+        )
+        const info = db
+          .prepare(
+            `INSERT INTO insp_spec (item_code, insp_kind, insp_item, instrument, unit, su, sl, nominal, sample_cnt,
+                                    revision, rev_date, active, source, created_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, '앱 등록', ?)`
+          )
+          .run(
+            req.itemCode, req.inspKind, item, req.instrument?.trim() || null, req.unit?.trim() || null,
+            su, sl, nominal, sampleCnt, rev, todayKST(), author
+          )
+        return { id: Number(info.lastInsertRowid), revision: rev }
+      })
+      return { success: true, ...specTxn.immediate() }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  })
+
+  // ── ⑩ ppmTargetSave — 부적합 목표 PPM (34호 #14 · app_config 단일 키) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_PPM_TARGET_SAVE, (_e, { value, savedBy }: { value: number; savedBy?: string }) => {
+    const v = Number(value)
+    if (!Number.isFinite(v) || v < 0) return { success: false, error: '목표 PPM 은 0 이상 수치여야 합니다.' }
+    if (!savedBy?.trim()) return { success: false, error: '기입 주체가 없습니다 — 사용자를 선택하세요.' }
+    db.prepare(
+      "INSERT INTO app_config (key, value) VALUES ('quality.targetPpm', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    ).run(String(Math.round(v)))
+    return { success: true }
+  })
 
   // ── ⑧ inspConfirm — 확인자 2단 서명(§10-1 ⓒ — ✓는 사람, 세션 각인, 1회) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_INSP_CONFIRM, (_e, { id, confirmer }: { id: number; confirmer?: string }) => {
