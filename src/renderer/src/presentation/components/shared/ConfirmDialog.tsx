@@ -42,13 +42,23 @@ export function confirmDialog(r: { title: string; body?: string; okLabel?: strin
 export function ConfirmDialogHost(): JSX.Element | null {
   const { req, settle } = useConfirmStore()
   const cancelRef = useRef<HTMLButtonElement>(null)
+  const okRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!req) return
     const prevFocus = document.activeElement as HTMLElement | null
     cancelRef.current?.focus() // 안전 기본값 = 취소
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') settle(false)
+      if (e.key === 'Escape') {
+        settle(false)
+        return
+      }
+      // Tab 2버튼 순환(8/11 검수 Major — 선언만 있고 미구현이던 트랩 실장)
+      if (e.key === 'Tab') {
+        e.preventDefault()
+        if (document.activeElement === cancelRef.current) okRef.current?.focus()
+        else cancelRef.current?.focus()
+      }
     }
     document.addEventListener('keydown', onKey)
     return () => {

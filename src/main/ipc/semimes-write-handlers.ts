@@ -137,9 +137,11 @@ export function registerSemimesWriteHandlers(): void {
         try {
           return { success: true, lotNo: issueTxn.immediate() }
         } catch (err) {
-          const msg = (err as Error).message
-          if (!/UNIQUE|SQLITE_BUSY/.test(msg) || attempt >= 2) {
-            return { success: false, error: /UNIQUE|SQLITE_BUSY/.test(msg) ? '발번 경합 — 잠시 후 다시 시도하세요.' : msg }
+          // 8/11 검수 Major: BUSY 는 message('database is locked')가 아니라 code 에 실림 — 둘 다 검사
+          const e = err as Error & { code?: string }
+          const contested = /UNIQUE/.test(e.message) || /BUSY|LOCKED/.test(e.code ?? '')
+          if (!contested || attempt >= 2) {
+            return { success: false, error: contested ? '발번 경합 — 잠시 후 다시 시도하세요.' : e.message }
           }
         }
       }
@@ -202,7 +204,8 @@ export function registerSemimesWriteHandlers(): void {
     if (values.length === 0) return { success: false, error: '측정값이 최소 1건 필요합니다.' }
     for (const v of values) {
       if (!v?.inspItem?.trim()) return { success: false, error: '검사항목명이 빈 측정값이 있습니다.' }
-      if (!Number.isFinite(Number(v.value))) {
+      // 8/11 검수: Number(null)=0·Number('')=0 — 빈 값이 실측값 0으로 저장되는 계약 우회 봉합
+      if (v.value == null || String(v.value).trim() === '' || !Number.isFinite(Number(v.value))) {
         return { success: false, error: `실측값을 수치로 기록해야 합니다(○/× 단독 저장 거부) — ${v.inspItem}` }
       }
     }
@@ -387,6 +390,10 @@ export function registerSemimesWriteHandlers(): void {
     if (!cur) return { success: false, error: `품번(${req.itemCode})이 마스터에 없습니다.` }
     if (req.active != null && ![0, 1].includes(req.active)) return { success: false, error: 'active 는 0/1 입니다.' }
     if (req.inlotuse != null && ![0, 1].includes(req.inlotuse)) return { success: false, error: 'inlotuse 는 0/1 입니다.' }
+    // 8/11 검수: NOT NULL/CHECK 열 방어 — itemType 은 비울 수 없고, null 유입도 스키마 위반
+    if (req.itemType !== undefined && (req.itemType == null || !String(req.itemType).trim())) {
+      return { success: false, error: '품목유형은 비울 수 없습니다.' }
+    }
     // 전달된 키만 명시 갱신 — null/빈 문자열 = 비우기(COALESCE 부분갱신은 값 소거 불가라 배제)
     const cols: Record<string, string> = { itemName: 'item_name', itemType: 'item_type', spec: 'spec', carType: 'car_type', inlotuse: 'inlotuse', active: 'active' }
     const sets: string[] = []
@@ -398,10 +405,14 @@ export function registerSemimesWriteHandlers(): void {
       vals.push(typeof v === 'string' ? v.trim() || null : v)
     }
     if (sets.length === 0) return { success: false, error: '변경할 값이 없습니다.' }
-    db.prepare(`UPDATE item_master SET ${sets.join(', ')}, updated_at = datetime('now') WHERE item_code = ?`).run(
-      ...vals, req.itemCode.trim()
-    )
-    return { success: true }
+    try {
+      db.prepare(`UPDATE item_master SET ${sets.join(', ')}, updated_at = datetime('now') WHERE item_code = ?`).run(
+        ...vals, req.itemCode.trim()
+      )
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: (err as Error).message } // 원시 500 대신 계약 응답(8/11 검수)
+    }
   })
 
   // ── ⑫ partnerUpdate — 거래처 마스터 정비 (34호 #2 · partner_type 오분류 정비 동선 = G1 소견 1 해소처) ──
@@ -412,6 +423,10 @@ export function registerSemimesWriteHandlers(): void {
     const cur = db.prepare('SELECT partner_code FROM partner WHERE partner_code = ?').get(req.partnerCode.trim())
     if (!cur) return { success: false, error: `거래처(${req.partnerCode})가 마스터에 없습니다.` }
     if (req.active != null && ![0, 1].includes(req.active)) return { success: false, error: 'active 는 0/1 입니다.' }
+    // 8/11 검수: 거래처명은 비울 수 없다(기록 표시 축)
+    if (req.name !== undefined && (req.name == null || !String(req.name).trim())) {
+      return { success: false, error: '거래처명은 비울 수 없습니다.' }
+    }
     // 전달된 키만 명시 갱신(위 itemUpdate 와 동일 계약 — 값 소거 가능)
     const cols: Record<string, string> = { name: 'name', partnerType: 'partner_type', bizNo: 'biz_no', ceo: 'ceo', active: 'active' }
     const sets: string[] = []
@@ -423,8 +438,12 @@ export function registerSemimesWriteHandlers(): void {
       vals.push(typeof v === 'string' ? v.trim() || null : v)
     }
     if (sets.length === 0) return { success: false, error: '변경할 값이 없습니다.' }
-    db.prepare(`UPDATE partner SET ${sets.join(', ')} WHERE partner_code = ?`).run(...vals, req.partnerCode.trim())
-    return { success: true }
+    try {
+      db.prepare(`UPDATE partner SET ${sets.join(', ')} WHERE partner_code = ?`).run(...vals, req.partnerCode.trim())
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
   })
 
   // ── ⑨ specSave — 검사기준 등록/개정 (34호 #7 · §10-1 ⓐ: 개정 = 신규 행, 구판 불변) ──
@@ -436,7 +455,8 @@ export function registerSemimesWriteHandlers(): void {
     const author = req.createdBy?.trim()
     if (!author) return { success: false, error: '개정 주체가 없습니다 — 사용자를 선택하세요.' }
     const num = (v: number | null | undefined): number | null | false => {
-      if (v == null) return null
+      // 8/11 검수: Number('')=0 — 빈 문자열이 규격 0으로 저장되는 우회 봉합(웹 API 직접 호출 경로)
+      if (v == null || (typeof (v as unknown) === 'string' && String(v).trim() === '')) return null
       const n = Number(v)
       return Number.isFinite(n) ? n : false
     }
@@ -455,19 +475,23 @@ export function registerSemimesWriteHandlers(): void {
           .prepare('SELECT COALESCE(MAX(revision), 0) AS r FROM insp_spec WHERE item_code = ? AND insp_kind = ? AND insp_item = ?')
           .get(req.itemCode, req.inspKind, item) as { r: number }
         const rev = cur.r + 1
+        // 8/11 검수: 관리한계(mu/ml — 0136 스키마·화면 입력 경로 아직 없음)는 현행에서 승계(개정 시 소실 방지)
+        const prev = db
+          .prepare('SELECT mu, ml FROM insp_spec WHERE item_code = ? AND insp_kind = ? AND insp_item = ? AND active = 1')
+          .get(req.itemCode, req.inspKind, item) as { mu: number | null; ml: number | null } | undefined
         // 구판 불변 — 값은 건드리지 않고 active 강하만(개정 이력 = 행으로 보존)
         db.prepare('UPDATE insp_spec SET active = 0 WHERE item_code = ? AND insp_kind = ? AND insp_item = ? AND active = 1').run(
           req.itemCode, req.inspKind, item
         )
         const info = db
           .prepare(
-            `INSERT INTO insp_spec (item_code, insp_kind, insp_item, instrument, unit, su, sl, nominal, sample_cnt,
+            `INSERT INTO insp_spec (item_code, insp_kind, insp_item, instrument, unit, su, sl, mu, ml, nominal, sample_cnt,
                                     revision, rev_date, active, source, created_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, '앱 등록', ?)`
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, '앱 등록', ?)`
           )
           .run(
             req.itemCode, req.inspKind, item, req.instrument?.trim() || null, req.unit?.trim() || null,
-            su, sl, nominal, sampleCnt, rev, todayKST(), author
+            su, sl, prev?.mu ?? null, prev?.ml ?? null, nominal, sampleCnt, rev, todayKST(), author
           )
         return { id: Number(info.lastInsertRowid), revision: rev }
       })
@@ -479,6 +503,10 @@ export function registerSemimesWriteHandlers(): void {
 
   // ── ⑩ ppmTargetSave — 부적합 목표 PPM (34호 #14 · app_config 단일 키) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_PPM_TARGET_SAVE, (_e, { value, savedBy }: { value: number; savedBy?: string }) => {
+    // 8/11 검수: Number(null)=0 — 빈 값이 목표 0으로 저장되는 우회 봉합
+    if (value == null || (typeof (value as unknown) === 'string' && String(value).trim() === '')) {
+      return { success: false, error: '목표 PPM 값이 비었습니다.' }
+    }
     const v = Number(value)
     if (!Number.isFinite(v) || v < 0) return { success: false, error: '목표 PPM 은 0 이상 수치여야 합니다.' }
     if (!savedBy?.trim()) return { success: false, error: '기입 주체가 없습니다 — 사용자를 선택하세요.' }

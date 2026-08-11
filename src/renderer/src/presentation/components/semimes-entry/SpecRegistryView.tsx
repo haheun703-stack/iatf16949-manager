@@ -69,9 +69,20 @@ export function SpecRegistryView(): JSX.Element {
 
   async function save(): Promise<void> {
     if (saving) return
+    // 8/11 검수 Major: 빈 품번·비수치 규격 사전검증(무통지 NaN 전송 = 규격 소실 방지)
+    if (!itemCode.trim()) {
+      setMsg({ tone: 'bad', text: '품번을 입력하세요 — 스펙은 품번×검사종류×항목 단위입니다.' })
+      return
+    }
     if (!form.inspItem.trim()) {
       setMsg({ tone: 'bad', text: '검사항목명은 필수입니다.' })
       return
+    }
+    for (const [label, v] of [['하한', form.sl], ['상한', form.su], ['기준치', form.nominal], ['시료수', form.sampleCnt]] as const) {
+      if (v.trim() !== '' && !Number.isFinite(Number(v))) {
+        setMsg({ tone: 'bad', text: `${label} 값이 수치가 아닙니다 — 확인 후 저장하세요.` })
+        return
+      }
     }
     const prev = rows.find((r) => r.inspItem === form.inspItem.trim() && r.inspKind === kind && r.active)
     const ok = await confirmDialog({

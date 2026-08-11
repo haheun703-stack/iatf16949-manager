@@ -183,7 +183,7 @@ setInterval(() => {
   const now = Date.now()
   for (const [t, info] of downloadTokens) {
     if (now - (info.createdAt || 0) > DOWNLOAD_TTL_MS) {
-      try { fs.unlinkSync(info.filePath) } catch { /* 잠김 — 다음 주기 */ }
+      try { fs.unlinkSync(info.filePath) } catch { continue } // 잠김 — 토큰 유지, 다음 주기 재시도(8/11 검수)
       downloadTokens.delete(t)
     }
   }

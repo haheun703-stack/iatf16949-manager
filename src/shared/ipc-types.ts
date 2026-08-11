@@ -2362,7 +2362,7 @@ export interface IpcChannelMap {
   }
   [IPC_CHANNELS.KPI_SAVE]: {
     request: KpiSaveInput
-    response: { success: boolean }
+    response: { success: boolean; error?: string }
   }
   [IPC_CHANNELS.KPI_MONTH]: {
     request: { period: string }
@@ -2370,7 +2370,7 @@ export interface IpcChannelMap {
   }
   [IPC_CHANNELS.KPI_SAVE_BATCH]: {
     request: KpiBatchSaveInput
-    response: { success: boolean; saved: number }
+    response: { success: boolean; saved: number; error?: string }
   }
   [IPC_CHANNELS.KPI_EXPORT_XLSX]: {
     request: { year: string }

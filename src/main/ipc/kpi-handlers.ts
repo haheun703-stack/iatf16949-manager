@@ -53,18 +53,19 @@ export function registerKpiHandlers(): void {
   })
 
   // 월별 실적 입력 — 같은 (지표, 월) 재입력 시 값 교체(정정 허용)
-  ipcMain.handle(IPC_CHANNELS.KPI_SAVE, (_event, input: KpiSaveInput): { success: boolean } => {
+  ipcMain.handle(IPC_CHANNELS.KPI_SAVE, (_event, input: KpiSaveInput): { success: boolean; error?: string } => {
     try {
       if (!/^\d{4}-\d{2}$/.test(input.period) || !Number.isFinite(input.value)) {
         return { success: false }
       }
       // M-1 최소방어: 기입 주체 빈 값 거부 — 웹은 STAMP 주입, 데스크톱은 사용자 미선택 시 여기서 멈춘다
-      if (!input.enteredBy?.trim()) return { success: false }
+      const enteredBy = input.enteredBy?.trim()
+      if (!enteredBy) return { success: false, error: '기입 주체가 없습니다 — 사용자를 선택하세요.' }
       db.prepare(
         `INSERT INTO kpi_measurements (indicator_id, period, value, entered_by)
          VALUES (?, ?, ?, ?)
          ON CONFLICT(indicator_id, period) DO UPDATE SET value = excluded.value, entered_by = excluded.entered_by`
-      ).run(input.indicatorId, input.period, input.value, input.enteredBy ?? null)
+      ).run(input.indicatorId, input.period, input.value, enteredBy)
       return { success: true }
     } catch (err) {
       console.error('[kpi:save] failed:', (err as Error).message)
@@ -88,13 +89,14 @@ export function registerKpiHandlers(): void {
   // 월별 실적 일괄 저장 — 값이 채워진 지표만 upsert(빈칸=미입력 유지). 한 트랜잭션으로 원자화.
   ipcMain.handle(
     IPC_CHANNELS.KPI_SAVE_BATCH,
-    (_event, input: KpiBatchSaveInput): { success: boolean; saved: number } => {
+    (_event, input: KpiBatchSaveInput): { success: boolean; saved: number; error?: string } => {
       try {
         if (!/^\d{4}-\d{2}$/.test(input.period) || !Array.isArray(input.entries)) {
           return { success: false, saved: 0 }
         }
         // M-1 최소방어: 기입 주체 빈 값 거부(단건 save와 동일)
-        if (!input.enteredBy?.trim()) return { success: false, saved: 0 }
+        const enteredBy = input.enteredBy?.trim()
+        if (!enteredBy) return { success: false, saved: 0, error: '기입 주체가 없습니다 — 사용자를 선택하세요.' }
         const stmt = db.prepare(
           `INSERT INTO kpi_measurements (indicator_id, period, value, entered_by)
            VALUES (?, ?, ?, ?)
@@ -104,7 +106,7 @@ export function registerKpiHandlers(): void {
           let n = 0
           for (const e of entries) {
             if (Number.isInteger(e.indicatorId) && Number.isFinite(e.value)) {
-              stmt.run(e.indicatorId, input.period, e.value, input.enteredBy ?? null)
+              stmt.run(e.indicatorId, input.period, e.value, enteredBy)
               n++
             }
           }

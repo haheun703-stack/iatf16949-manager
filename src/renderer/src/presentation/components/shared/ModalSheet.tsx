@@ -30,27 +30,34 @@ export function ModalSheet({
   // 세션 블로킹 위험이라 교체). 저장은 명시 버튼만 — 여기서는 닫기 여부만 묻는다.
   const [confirming, setConfirming] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
+  // 8/11 검수 Major: effect 의존성에 dirty/onClose 를 넣으면 dirty 전이 순간 포커스 초기화가
+  // 재실행돼 입력 중 필드에서 포커스를 강탈한다 — ref 로 최신값만 읽고 effect 는 open 에만 반응.
+  const dirtyRef = useRef(dirty)
+  dirtyRef.current = dirty
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
   const attemptClose = (): void => {
-    if (dirty) {
+    if (dirtyRef.current) {
       setConfirming(true)
       return
     }
-    onClose()
+    onCloseRef.current()
   }
 
-  // 8/6 검수 Minor(접근성): ESC + 포커스 트랩(Tab 순환) + 열림 시 초기 포커스·닫힘 시 복귀
+  // 접근성: ESC + 포커스 트랩(Tab 순환 — disabled 제외) + 열림 시 초기 포커스·닫힘 시 복귀
   useEffect(() => {
     if (!open) return
     const prevFocus = document.activeElement as HTMLElement | null
     panelRef.current?.focus()
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
-        attemptClose()
+        if (dirtyRef.current) setConfirming(true)
+        else onCloseRef.current()
         return
       }
       if (e.key === 'Tab' && panelRef.current) {
         const focusables = panelRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
         )
         if (focusables.length === 0) return
         const first = focusables[0]
@@ -70,8 +77,7 @@ export function ModalSheet({
       document.removeEventListener('keydown', onKey)
       prevFocus?.focus?.()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, dirty])
+  }, [open])
 
   // 8/6 검수 Minor(접근성): 모달 열림 동안 배경 스크롤 잠금
   useEffect(() => {

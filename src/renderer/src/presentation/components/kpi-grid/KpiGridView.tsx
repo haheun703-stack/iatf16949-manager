@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Download, Palette, RefreshCw, Save } from 'lucide-react'
 import type { KpiIndicatorDto, KpiMonthValueDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -30,13 +30,15 @@ export function KpiGridView(): JSX.Element {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null)
 
+  // 8/11 검수 Major: 연도 연타 시 늦은 응답이 새 연도 라벨 아래 이전 연도 값을 앉히고
+  // 그대로 저장하면 타 연도 기입 — seq 토큰으로 늦은 응답 전량 폐기.
+  const loadSeq = useRef(0)
   const load = useCallback(async (): Promise<void> => {
+    const seq = ++loadSeq.current
     setLoading(true)
     setMsg(null)
     try {
       const indicators = (await window.api.invoke(window.api.channels.KPI_HOME)) as KpiIndicatorDto[]
-      setInds(indicators)
-      const next: Record<string, string> = {}
       // 8/6 검수 Minor: 12회 직렬 → 병렬(월별 독립 조회)
       const perMonth = await Promise.all(
         MONTHS.map(async (mm) => ({
@@ -44,15 +46,22 @@ export function KpiGridView(): JSX.Element {
           rows: (await window.api.invoke(window.api.channels.KPI_MONTH, { period: `${year}-${mm}` })) as KpiMonthValueDto[]
         }))
       )
+      if (seq !== loadSeq.current) return // 늦은 응답 — 다른 연도가 이미 조회됨
+      setInds(indicators)
+      const next: Record<string, string> = {}
       for (const { mm, rows } of perMonth) {
         for (const r of rows) next[`${r.indicatorId}|${mm}`] = String(r.value)
       }
       setValues(next)
       setDirty(new Set())
     } catch {
-      setInds([])
+      // 8/11 검수 Minor: 통신 오류를 "지표 없음" 빈 상태로 오안내하지 않는다
+      if (seq === loadSeq.current) {
+        setInds([])
+        setMsg({ tone: 'bad', text: '조회 실패 — 통신 오류. 다시 시도하세요.' })
+      }
     } finally {
-      setLoading(false)
+      if (seq === loadSeq.current) setLoading(false)
     }
   }, [year])
 

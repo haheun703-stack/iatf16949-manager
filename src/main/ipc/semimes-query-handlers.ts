@@ -90,21 +90,25 @@ export function registerSemimesQueryHandlers(): void {
       conds.push('r.item_code = ?')
       args.push(req.itemCode.trim())
     }
-    const rows = db
-      .prepare(
-        `SELECT r.id, r.insp_date AS inspDate, r.insp_kind AS inspKind, r.item_code AS itemCode,
-                i.item_name AS itemName, r.lot_no AS lotNo, r.proc_code AS procCode, r.inspector,
-                r.judgment, r.defect_qty AS defectQty, r.sample_phase AS samplePhase,
-                r.spec_revision AS specRevision, r.confirmer, r.confirmed_at AS confirmedAt,
-                (SELECT COUNT(*) FROM insp_record_value v WHERE v.record_id = r.id) AS valueCnt,
-                (r.canceled_at IS NOT NULL) AS canceled
-         FROM insp_record r
-         LEFT JOIN item_master i ON i.item_code = r.item_code
-         WHERE ${conds.join(' AND ')}
-         ORDER BY r.insp_date DESC, r.id DESC LIMIT 500`
-      )
-      .all(...args) as Array<Omit<SemimesInspRowDto, 'canceled'> & { canceled: 0 | 1 }>
-    return rows.map((r) => ({ ...r, canceled: !!r.canceled }))
+    try {
+      const rows = db
+        .prepare(
+          `SELECT r.id, r.insp_date AS inspDate, r.insp_kind AS inspKind, r.item_code AS itemCode,
+                  i.item_name AS itemName, r.lot_no AS lotNo, r.proc_code AS procCode, r.inspector,
+                  r.judgment, r.defect_qty AS defectQty, r.sample_phase AS samplePhase,
+                  r.spec_revision AS specRevision, r.confirmer, r.confirmed_at AS confirmedAt,
+                  (SELECT COUNT(*) FROM insp_record_value v WHERE v.record_id = r.id) AS valueCnt,
+                  (r.canceled_at IS NOT NULL) AS canceled
+           FROM insp_record r
+           LEFT JOIN item_master i ON i.item_code = r.item_code
+           WHERE ${conds.join(' AND ')}
+           ORDER BY r.insp_date DESC, r.id DESC LIMIT 500`
+        )
+        .all(...args) as Array<Omit<SemimesInspRowDto, 'canceled'> & { canceled: 0 | 1 }>
+      return rows.map((r) => ({ ...r, canceled: !!r.canceled }))
+    } catch {
+      return [] // 0137 미적용 DB(canceled_at 부재) — 원시 예외 대신 빈 목록(8/11 검수)
+    }
   })
 
   // ── ③ inspValues — 검사기록 측정값(시료 1~n 열 원천 · 스펙 규격 동봉 = 이탈 표시) ──
@@ -193,16 +197,20 @@ export function registerSemimesQueryHandlers(): void {
         conds.push('s.insp_kind = ?')
         args.push(req.inspKind.trim())
       }
-      const rows = db
-        .prepare(
-          `SELECT s.id, s.item_code AS itemCode, s.insp_kind AS inspKind, s.insp_item AS inspItem,
-                  s.instrument, s.unit, s.sl, s.su, s.nominal, s.sample_cnt AS sampleCnt,
-                  s.revision, s.rev_date AS revDate, s.active, s.created_by AS createdBy
-           FROM insp_spec s WHERE ${conds.join(' AND ')}
-           ORDER BY s.insp_kind, s.insp_item, s.revision DESC LIMIT 500`
-        )
-        .all(...args) as Array<Omit<SemimesSpecRegistryRowDto, 'active'> & { active: 0 | 1 }>
-      return rows.map((r) => ({ ...r, active: !!r.active }))
+      try {
+        const rows = db
+          .prepare(
+            `SELECT s.id, s.item_code AS itemCode, s.insp_kind AS inspKind, s.insp_item AS inspItem,
+                    s.instrument, s.unit, s.sl, s.su, s.nominal, s.sample_cnt AS sampleCnt,
+                    s.revision, s.rev_date AS revDate, s.active, s.created_by AS createdBy
+             FROM insp_spec s WHERE ${conds.join(' AND ')}
+             ORDER BY s.insp_kind, s.insp_item, s.revision DESC LIMIT 500`
+          )
+          .all(...args) as Array<Omit<SemimesSpecRegistryRowDto, 'active'> & { active: 0 | 1 }>
+        return rows.map((r) => ({ ...r, active: !!r.active }))
+      } catch {
+        return [] // 0138 미적용 DB(created_by 부재) — 원시 예외 대신 빈 목록(8/11 검수)
+      }
     }
   )
 

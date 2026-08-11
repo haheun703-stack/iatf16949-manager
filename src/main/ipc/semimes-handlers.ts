@@ -350,7 +350,9 @@ function registerCaptureInboxHandlers(): void {
       if (req.kind === 'receipt_in') {
         for (const it of content.items) {
           // 업체LOT 승계(INLOTUSE) 시에만 internal_lot = vendor_lot — 자체 발번은 PC 단계(lotIssue) 소관
-          const im = itemStmt.get(it.itemCode) as { inlotuse: number }
+          const im = itemStmt.get(it.itemCode) as { inlotuse: number } | undefined
+          // 8/11 검수: 사전검증~트랜잭션 사이 교차 프로세스 비활성화 경합 — 원시 TypeError 대신 정직 안내
+          if (!im) throw new Error(`품번(${it.itemCode})이 방금 비활성화되었습니다 — 태깅을 다시 확인하세요.`)
           const internalLot = im.inlotuse === 1 && it.vendorLot ? it.vendorLot : null
           const info = insReceipt.run(
             content.docDate, it.itemCode, it.vendorLot, internalLot, content.partnerCode, it.qty,
