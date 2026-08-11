@@ -34,7 +34,11 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     key: 'master',
     label: '기준정보',
     items: [
-      { label: '품번 트리 (BOM·라우팅)', page: 'item-tree' },
+      { label: '품목코드관리', page: 'item-master' },
+      { label: '거래처코드관리', page: 'partner-master' },
+      { label: 'BOM 조회 (정/역전개)', page: 'bom-browse' },
+      { label: 'BOM관리 — 품번 트리 (레벨·라우팅)', page: 'item-tree' },
+      { label: '코드관리', page: 'code-master' },
       { label: '공정 흐름 맵', page: 'process-flow' },
       { label: '품번 / ISIR', page: 'parts' },
       { label: '문서 BOM', page: 'document-bom' },

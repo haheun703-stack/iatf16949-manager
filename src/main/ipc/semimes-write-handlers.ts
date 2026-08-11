@@ -4,6 +4,8 @@ import { todayKST } from '@shared/date-kst'
 import { getSqlite } from '../database/connection'
 import type {
   SemimesInspCreateInput,
+  SemimesItemUpdateInput,
+  SemimesPartnerUpdateInput,
   SemimesProdCreateInput,
   SemimesScanContextDto,
   SemimesSpecRowDto,
@@ -374,6 +376,56 @@ export function registerSemimesWriteHandlers(): void {
       return { success: true }
     }
   )
+
+  // ── ⑪ itemUpdate — 품목 마스터 정비 (34호 #1 · 단가 계열 무 — 돈 경계. 검사구분 3종은 의미 확정 전 편집 제외) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_ITEM_UPDATE, (_e, req: SemimesItemUpdateInput & { updatedBy?: string }) => {
+    if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
+    if (!req?.itemCode?.trim()) return { success: false, error: '품번이 없습니다.' }
+    // 정비 주체 요구(마스터에 주체 컬럼 없음 — 저장은 안 하되 익명 정비는 거부, M-1 결)
+    if (!req.updatedBy?.trim()) return { success: false, error: '정비 주체가 없습니다 — 사용자를 선택하세요.' }
+    const cur = db.prepare('SELECT item_code FROM item_master WHERE item_code = ?').get(req.itemCode.trim())
+    if (!cur) return { success: false, error: `품번(${req.itemCode})이 마스터에 없습니다.` }
+    if (req.active != null && ![0, 1].includes(req.active)) return { success: false, error: 'active 는 0/1 입니다.' }
+    if (req.inlotuse != null && ![0, 1].includes(req.inlotuse)) return { success: false, error: 'inlotuse 는 0/1 입니다.' }
+    // 전달된 키만 명시 갱신 — null/빈 문자열 = 비우기(COALESCE 부분갱신은 값 소거 불가라 배제)
+    const cols: Record<string, string> = { itemName: 'item_name', itemType: 'item_type', spec: 'spec', carType: 'car_type', inlotuse: 'inlotuse', active: 'active' }
+    const sets: string[] = []
+    const vals: unknown[] = []
+    for (const [k, col] of Object.entries(cols)) {
+      const v = (req as unknown as Record<string, unknown>)[k]
+      if (v === undefined) continue
+      sets.push(`${col} = ?`)
+      vals.push(typeof v === 'string' ? v.trim() || null : v)
+    }
+    if (sets.length === 0) return { success: false, error: '변경할 값이 없습니다.' }
+    db.prepare(`UPDATE item_master SET ${sets.join(', ')}, updated_at = datetime('now') WHERE item_code = ?`).run(
+      ...vals, req.itemCode.trim()
+    )
+    return { success: true }
+  })
+
+  // ── ⑫ partnerUpdate — 거래처 마스터 정비 (34호 #2 · partner_type 오분류 정비 동선 = G1 소견 1 해소처) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_PARTNER_UPDATE, (_e, req: SemimesPartnerUpdateInput & { updatedBy?: string }) => {
+    if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
+    if (!req?.partnerCode?.trim()) return { success: false, error: '거래처 코드가 없습니다.' }
+    if (!req.updatedBy?.trim()) return { success: false, error: '정비 주체가 없습니다 — 사용자를 선택하세요.' }
+    const cur = db.prepare('SELECT partner_code FROM partner WHERE partner_code = ?').get(req.partnerCode.trim())
+    if (!cur) return { success: false, error: `거래처(${req.partnerCode})가 마스터에 없습니다.` }
+    if (req.active != null && ![0, 1].includes(req.active)) return { success: false, error: 'active 는 0/1 입니다.' }
+    // 전달된 키만 명시 갱신(위 itemUpdate 와 동일 계약 — 값 소거 가능)
+    const cols: Record<string, string> = { name: 'name', partnerType: 'partner_type', bizNo: 'biz_no', ceo: 'ceo', active: 'active' }
+    const sets: string[] = []
+    const vals: unknown[] = []
+    for (const [k, col] of Object.entries(cols)) {
+      const v = (req as unknown as Record<string, unknown>)[k]
+      if (v === undefined) continue
+      sets.push(`${col} = ?`)
+      vals.push(typeof v === 'string' ? v.trim() || null : v)
+    }
+    if (sets.length === 0) return { success: false, error: '변경할 값이 없습니다.' }
+    db.prepare(`UPDATE partner SET ${sets.join(', ')} WHERE partner_code = ?`).run(...vals, req.partnerCode.trim())
+    return { success: true }
+  })
 
   // ── ⑨ specSave — 검사기준 등록/개정 (34호 #7 · §10-1 ⓐ: 개정 = 신규 행, 구판 불변) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_SPEC_SAVE, (_e, req: SemimesSpecSaveInput) => {

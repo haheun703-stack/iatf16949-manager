@@ -2292,6 +2292,30 @@ export interface IpcChannelMap {
     request: { value: number; savedBy?: string }
     response: { success: boolean; error?: string }
   }
+  [IPC_CHANNELS.SEMIMES_ITEM_LIST]: {
+    request: { query?: string; itemType?: string; includeInactive?: boolean; limit?: number }
+    response: { rows: SemimesItemMasterRowDto[]; total: number; types: string[] }
+  }
+  [IPC_CHANNELS.SEMIMES_ITEM_UPDATE]: {
+    request: SemimesItemUpdateInput
+    response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_PARTNER_LIST]: {
+    request: { query?: string; partnerType?: string; includeInactive?: boolean }
+    response: { rows: SemimesPartnerRowDto[]; types: string[] }
+  }
+  [IPC_CHANNELS.SEMIMES_PARTNER_UPDATE]: {
+    request: SemimesPartnerUpdateInput
+    response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_BOM_EXPLODE]: {
+    request: { itemCode: string; direction: 'down' | 'up' }
+    response: SemimesBomExplodeRowDto[]
+  }
+  [IPC_CHANNELS.SEMIMES_CODE_GROUPS]: {
+    request: void
+    response: SemimesCodeGroupDto[]
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -3380,6 +3404,72 @@ export interface SemimesPpmDashDto {
   byItem: Array<{ itemCode: string; itemName: string | null; ok: number; ng: number; ppm: number | null }>
   byDefect: Array<{ code: string; name: string | null; ng: number }>
   currentMonthPpm: number | null
+}
+
+// ── 34호 배치⑵ — 기준정보 마스터 DTO ──
+
+export interface SemimesItemMasterRowDto {
+  itemCode: string
+  itemName: string | null
+  itemType: string | null
+  spec: string | null
+  carType: string | null
+  /** 업체LOT 승계(1 = 승계) */
+  inlotuse: number
+  /** 검사구분 표식 3종 — 표시 전용(의미 확정 전 편집 금지, 대조표 #1 SQ 심기) */
+  inspSkip: number | null
+  qcGbnO: string | null
+  outYn: string | null
+  active: number
+  source: string | null
+}
+
+export interface SemimesItemUpdateInput {
+  itemCode: string
+  itemName?: string | null
+  itemType?: string | null
+  spec?: string | null
+  carType?: string | null
+  inlotuse?: number
+  active?: number
+  /** 정비 주체 — 세션 강제(STAMP) */
+  updatedBy?: string
+}
+
+export interface SemimesPartnerRowDto {
+  partnerCode: string
+  name: string | null
+  partnerType: string | null
+  bizNo: string | null
+  ceo: string | null
+  active: number
+}
+
+export interface SemimesPartnerUpdateInput {
+  partnerCode: string
+  name?: string | null
+  partnerType?: string | null
+  bizNo?: string | null
+  ceo?: string | null
+  active?: number
+  /** 정비 주체 — 세션 강제(STAMP) */
+  updatedBy?: string
+}
+
+export interface SemimesBomExplodeRowDto {
+  level: number
+  parentCode: string
+  childCode: string
+  qty: number | null
+  childName: string | null
+  childType: string | null
+}
+
+export interface SemimesCodeGroupDto {
+  key: string
+  label: string
+  note: string
+  codes: Array<{ code: string; name: string | null; active: number }>
 }
 
 export interface SemimesHomeKpisDto {

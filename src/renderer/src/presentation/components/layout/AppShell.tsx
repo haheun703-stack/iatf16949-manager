@@ -42,6 +42,10 @@ import { MatStockView } from '../semimes-entry/MatStockView'
 import { MatReceiptsView } from '../semimes-entry/MatReceiptsView'
 import { SpecRegistryView } from '../semimes-entry/SpecRegistryView'
 import { PpmDashView } from '../semimes-entry/PpmDashView'
+import { ItemMasterView } from '../semimes-entry/ItemMasterView'
+import { PartnerMasterView } from '../semimes-entry/PartnerMasterView'
+import { BomBrowseView } from '../semimes-entry/BomBrowseView'
+import { CodeMasterView } from '../semimes-entry/CodeMasterView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { ConfirmDialogHost } from '../shared/ConfirmDialog'
@@ -123,6 +127,10 @@ export function AppShell(): JSX.Element {
             {currentPage === 'mat-receipts' && <MatReceiptsView />}
             {currentPage === 'insp-spec' && <SpecRegistryView />}
             {currentPage === 'ppm-dash' && <PpmDashView />}
+            {currentPage === 'item-master' && <ItemMasterView />}
+            {currentPage === 'partner-master' && <PartnerMasterView />}
+            {currentPage === 'bom-browse' && <BomBrowseView />}
+            {currentPage === 'code-master' && <CodeMasterView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

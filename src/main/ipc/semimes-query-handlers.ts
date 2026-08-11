@@ -3,7 +3,11 @@ import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { todayKST } from '@shared/date-kst'
 import { getSqlite } from '../database/connection'
 import type {
+  SemimesBomExplodeRowDto,
+  SemimesCodeGroupDto,
   SemimesHomeKpisDto,
+  SemimesItemMasterRowDto,
+  SemimesPartnerRowDto,
   SemimesInspListReq,
   SemimesInspRowDto,
   SemimesInspValueRowDto,
@@ -245,6 +249,139 @@ export function registerSemimesQueryHandlers(): void {
     const curMonth = todayKST().slice(0, 7)
     const cur = months.find((m) => m.month === curMonth)
     return { year, targetPpm, months, byItem, byDefect, currentMonthPpm: cur?.ppm ?? null }
+  })
+
+  // ── ⑨ itemList — 품목코드관리 조회 (34호 #1 · 단가 계열 무 — 돈 경계) ──
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_ITEM_LIST,
+    (_e, req: { query?: string; itemType?: string; includeInactive?: boolean; limit?: number } | undefined): { rows: SemimesItemMasterRowDto[]; total: number; types: string[] } => {
+      const conds: string[] = []
+      const args: unknown[] = []
+      if (!req?.includeInactive) conds.push('active = 1')
+      if (req?.query?.trim()) {
+        conds.push('(item_code LIKE ? OR item_name LIKE ?)')
+        const q = `%${req.query.trim()}%`
+        args.push(q, q)
+      }
+      if (req?.itemType?.trim()) {
+        conds.push('item_type = ?')
+        args.push(req.itemType.trim())
+      }
+      const where = conds.length > 0 ? `WHERE ${conds.join(' AND ')}` : ''
+      const limit = Math.min(Math.max(req?.limit ?? 300, 1), 500)
+      const total = (db.prepare(`SELECT COUNT(*) c FROM item_master ${where}`).get(...args) as { c: number }).c
+      const rows = db
+        .prepare(
+          `SELECT item_code AS itemCode, item_name AS itemName, item_type AS itemType, spec,
+                  car_type AS carType, inlotuse, insp_skip AS inspSkip, qc_gbn_o AS qcGbnO,
+                  out_yn AS outYn, active, source
+           FROM item_master ${where} ORDER BY item_code LIMIT ${limit}`
+        )
+        .all(...args) as SemimesItemMasterRowDto[]
+      const types = (db.prepare(`SELECT DISTINCT item_type t FROM item_master WHERE item_type IS NOT NULL ORDER BY t`).all() as Array<{ t: string }>).map((r) => r.t)
+      return { rows, total, types }
+    }
+  )
+
+  // ── ⑩ partnerList — 거래처코드관리 조회 (34호 #2 · partner_type 정비 동선 원천) ──
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_PARTNER_LIST,
+    (_e, req: { query?: string; partnerType?: string; includeInactive?: boolean } | undefined): { rows: SemimesPartnerRowDto[]; types: string[] } => {
+      const conds: string[] = []
+      const args: unknown[] = []
+      if (!req?.includeInactive) conds.push('active = 1')
+      if (req?.query?.trim()) {
+        conds.push('(partner_code LIKE ? OR name LIKE ?)')
+        const q = `%${req.query.trim()}%`
+        args.push(q, q)
+      }
+      if (req?.partnerType?.trim()) {
+        conds.push('partner_type = ?')
+        args.push(req.partnerType.trim())
+      }
+      const where = conds.length > 0 ? `WHERE ${conds.join(' AND ')}` : ''
+      const rows = db
+        .prepare(
+          `SELECT partner_code AS partnerCode, name, partner_type AS partnerType, biz_no AS bizNo, ceo, active
+           FROM partner ${where} ORDER BY partner_code LIMIT 300`
+        )
+        .all(...args) as SemimesPartnerRowDto[]
+      const types = (db.prepare(`SELECT DISTINCT partner_type t FROM partner WHERE partner_type IS NOT NULL ORDER BY t`).all() as Array<{ t: string }>).map((r) => r.t)
+      return { rows, types }
+    }
+  )
+
+  // ── ⑪ bomExplode — BOM 정전개/역전개 (34호 #3 · 재귀 CTE, 순환 방어 깊이 10) ──
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_BOM_EXPLODE,
+    (_e, { itemCode, direction }: { itemCode: string; direction: 'down' | 'up' }): SemimesBomExplodeRowDto[] => {
+      const code = itemCode?.trim()
+      if (!code) return []
+      const sql =
+        direction === 'up'
+          ? `WITH RECURSIVE t(parent, child, qty, lvl) AS (
+               SELECT parent_code, child_code, qty, 1 FROM bom_edge WHERE child_code = ? AND active = 1
+               UNION ALL
+               SELECT b.parent_code, b.child_code, b.qty, t.lvl + 1
+               FROM bom_edge b JOIN t ON b.child_code = t.parent WHERE b.active = 1 AND t.lvl < 10
+             )
+             SELECT t.lvl AS level, t.parent AS parentCode, t.child AS childCode, t.qty,
+                    i.item_name AS childName, i.item_type AS childType
+             FROM t LEFT JOIN item_master i ON i.item_code = t.parent
+             ORDER BY t.lvl, t.parent LIMIT 500`
+          : `WITH RECURSIVE t(parent, child, qty, lvl) AS (
+               SELECT parent_code, child_code, qty, 1 FROM bom_edge WHERE parent_code = ? AND active = 1
+               UNION ALL
+               SELECT b.parent_code, b.child_code, b.qty, t.lvl + 1
+               FROM bom_edge b JOIN t ON b.parent_code = t.child WHERE b.active = 1 AND t.lvl < 10
+             )
+             SELECT t.lvl AS level, t.parent AS parentCode, t.child AS childCode, t.qty,
+                    i.item_name AS childName, i.item_type AS childType
+             FROM t LEFT JOIN item_master i ON i.item_code = t.child
+             ORDER BY t.lvl, t.parent, t.child LIMIT 500`
+      try {
+        return db.prepare(sql).all(code) as SemimesBomExplodeRowDto[]
+      } catch {
+        return []
+      }
+    }
+  )
+
+  // ── ⑫ codeGroups — 코드관리 골격 조회 (34호 #4 · 코드 2단 스키마 미보유 — 기존 코드성 마스터 정직 표출) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_CODE_GROUPS, (): SemimesCodeGroupDto[] => {
+    const safe = (sql: string): Array<{ code: string; name: string | null; active: number }> => {
+      try {
+        return db.prepare(sql).all() as Array<{ code: string; name: string | null; active: number }>
+      } catch {
+        return []
+      }
+    }
+    return [
+      {
+        key: 'defect',
+        label: '불량유형 (Q)',
+        note: '0101 코어 — defect_type',
+        codes: safe('SELECT code, name, active FROM defect_type ORDER BY code LIMIT 300')
+      },
+      {
+        key: 'process',
+        label: '공정 (D)',
+        note: '0101 코어 — process_master',
+        codes: safe('SELECT proc_code AS code, proc_name AS name, active FROM process_master ORDER BY proc_code LIMIT 300')
+      },
+      {
+        key: 'itemType',
+        label: '품목유형 (P)',
+        note: 'item_master 유형 축(파생 — 편집은 품목 화면에서)',
+        codes: safe("SELECT DISTINCT item_type AS code, NULL AS name, 1 AS active FROM item_master WHERE item_type IS NOT NULL ORDER BY code LIMIT 100")
+      },
+      {
+        key: 'partnerType',
+        label: '거래처유형 (M)',
+        note: 'partner 유형 축(파생 — 편집은 거래처 화면에서)',
+        codes: safe("SELECT DISTINCT partner_type AS code, NULL AS name, 1 AS active FROM partner WHERE partner_type IS NOT NULL ORDER BY code LIMIT 100")
+      }
+    ]
   })
 
   // ── ⑤ homeKpis — MES 홈 오늘 요약 4타일 (33호 §2-2 모듈 홈 대시보드 문법의 홈 적용) ──

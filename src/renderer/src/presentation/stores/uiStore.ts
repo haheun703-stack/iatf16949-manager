@@ -46,6 +46,10 @@ export type PageId =
   | 'mat-receipts'
   | 'insp-spec'
   | 'ppm-dash'
+  | 'item-master'
+  | 'partner-master'
+  | 'bom-browse'
+  | 'code-master'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
@@ -92,7 +96,11 @@ export const PAGE_LABELS: Record<PageId, string> = {
   'mat-stock': '재고현황 (자재)',
   'mat-receipts': '자재입하 / 입고내역',
   'insp-spec': '검사기준(SPEC) 등록',
-  'ppm-dash': '부적합 PPM 대시보드'
+  'ppm-dash': '부적합 PPM 대시보드',
+  'item-master': '품목코드관리',
+  'partner-master': '거래처코드관리',
+  'bom-browse': 'BOM 조회 (정/역전개)',
+  'code-master': '코드관리'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

@@ -287,7 +287,10 @@ const STAMP_FIELDS = {
   'semimes:inspConfirm': ['confirmer'],
   // 34호 배치⑴ — SPEC 개정 주체·PPM 목표 기입 주체 세션 강제
   'semimes:specSave': ['createdBy'],
-  'semimes:ppmTargetSave': ['savedBy']
+  'semimes:ppmTargetSave': ['savedBy'],
+  // 34호 배치⑵ — 마스터 정비 주체 세션 강제
+  'semimes:itemUpdate': ['updatedBy'],
+  'semimes:partnerUpdate': ['updatedBy']
 }
 
 // ── POST /api/{channel} 디스패처 ──

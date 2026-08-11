@@ -237,6 +237,13 @@ export const IPC_CHANNELS = {
   SEMIMES_SPEC_SAVE: 'semimes:specSave',
   SEMIMES_PPM_DASH: 'semimes:ppmDash',
   SEMIMES_PPM_TARGET_SAVE: 'semimes:ppmTargetSave',
+  // 34호 배치⑵ — 기준정보(#1 품목·#2 거래처·#3 BOM조회·#4 코드 골격)
+  SEMIMES_ITEM_LIST: 'semimes:itemList',
+  SEMIMES_ITEM_UPDATE: 'semimes:itemUpdate',
+  SEMIMES_PARTNER_LIST: 'semimes:partnerList',
+  SEMIMES_PARTNER_UPDATE: 'semimes:partnerUpdate',
+  SEMIMES_BOM_EXPLODE: 'semimes:bomExplode',
+  SEMIMES_CODE_GROUPS: 'semimes:codeGroups',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',
