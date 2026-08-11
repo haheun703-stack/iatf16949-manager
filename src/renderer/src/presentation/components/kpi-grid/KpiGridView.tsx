@@ -3,6 +3,7 @@ import { Download, Palette, RefreshCw, Save } from 'lucide-react'
 import type { KpiIndicatorDto, KpiMonthValueDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { confirmDialog } from '../shared/ConfirmDialog'
 import { useHeatColors } from '../../hooks/useHeatColors'
 
 /**
@@ -113,10 +114,18 @@ export function KpiGridView(): JSX.Element {
     }
   }
 
-  /** M-9: 연도 전환 시 미저장 편집 무확인 파기 방지 (커스텀 확인창 일괄 교체는 confirm-교체 배치에서) */
-  function changeYear(y: string): void {
+  /** M-9: 연도 전환 시 미저장 편집 무확인 파기 방지 (커스텀 확인창 — confirm 일괄 교체 배치) */
+  async function changeYear(y: string): Promise<void> {
     if (y === year) return
-    if (dirty.size > 0 && !window.confirm(`미저장 변경 ${dirty.size}칸이 있습니다 — ${y}년으로 이동하며 버릴까요?`)) return
+    if (dirty.size > 0) {
+      const ok = await confirmDialog({
+        title: `미저장 변경 ${dirty.size}칸이 있습니다`,
+        body: `${y}년으로 이동하면 입력한 변경이 사라집니다.`,
+        okLabel: '이동 (변경 버림)',
+        danger: true
+      })
+      if (!ok) return
+    }
     setYear(y)
   }
 
@@ -157,7 +166,7 @@ export function KpiGridView(): JSX.Element {
           <button
             key={y}
             type="button"
-            onClick={() => changeYear(y)}
+            onClick={() => void changeYear(y)}
             className={cn(
               'px-3 py-1.5 rounded-lg text-[12px] font-bold border',
               year === y ? 'bg-secondary text-secondary-foreground border-primary/40' : 'border-border text-muted-foreground hover:bg-muted'

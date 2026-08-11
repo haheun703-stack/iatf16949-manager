@@ -10,6 +10,7 @@ import { useObligationStore } from '../../stores/obligationStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { CADENCE_META, CATEGORY_CHIP, dueStatus } from './obligationMeta'
 import { ObligationModal } from './ObligationModal'
+import { confirmDialog } from '../shared/ConfirmDialog'
 
 type Cadence = 'all' | ObligationCadence
 type Quick = 'all' | 'overdue' | 'soon' | 'inactive'
@@ -35,11 +36,13 @@ export function ObligationPage(): JSX.Element {
   }, [load])
 
   const handleReset = async (): Promise<void> => {
-    const ok = window.confirm(
-      '가동 개시일 재설정\n\n' +
+    const ok = await confirmDialog({
+      title: '가동 개시일 재설정',
+      body:
         '모든 정기 의무의 도래일을 오늘로 맞춥니다. 과거 연체 표시가 사라지고 오늘부터 관리가 시작됩니다.\n' +
-        '※ 데이터 조작이 아니라 이 프로그램의 실사용 개시일 설정입니다(완료 이력은 보존).\n\n계속할까요?'
-    )
+        '※ 데이터 조작이 아니라 이 프로그램의 실사용 개시일 설정입니다(완료 이력은 보존).',
+      okLabel: '재설정'
+    })
     if (!ok) return
     setResetting(true)
     try {

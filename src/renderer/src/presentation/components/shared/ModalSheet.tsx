@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '../../../lib/utils'
@@ -29,6 +29,7 @@ export function ModalSheet({
   // 미저장 확인 = 앱 내 커스텀 확인창(8/6 검수 잔여 1 — 네이티브 confirm 은 원격 조작·웹뷰에서
   // 세션 블로킹 위험이라 교체). 저장은 명시 버튼만 — 여기서는 닫기 여부만 묻는다.
   const [confirming, setConfirming] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
   const attemptClose = (): void => {
     if (dirty) {
       setConfirming(true)
@@ -37,15 +38,50 @@ export function ModalSheet({
     onClose()
   }
 
+  // 8/6 검수 Minor(접근성): ESC + 포커스 트랩(Tab 순환) + 열림 시 초기 포커스·닫힘 시 복귀
   useEffect(() => {
     if (!open) return
+    const prevFocus = document.activeElement as HTMLElement | null
+    panelRef.current?.focus()
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') attemptClose()
+      if (e.key === 'Escape') {
+        attemptClose()
+        return
+      }
+      if (e.key === 'Tab' && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusables.length === 0) return
+        const first = focusables[0]
+        const last = focusables[focusables.length - 1]
+        const active = document.activeElement
+        if (e.shiftKey && (active === first || active === panelRef.current)) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     }
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      prevFocus?.focus?.()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, dirty])
+
+  // 8/6 검수 Minor(접근성): 모달 열림 동안 배경 스크롤 잠금
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
 
   if (!open) return null
   return (
@@ -56,8 +92,13 @@ export function ModalSheet({
       }}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
         className={cn(
-          'relative bg-background flex flex-col overflow-hidden',
+          'relative bg-background flex flex-col overflow-hidden outline-none',
           // 폰 = 풀스크린 시트 / PC = 중앙 모달
           'w-full h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:shadow-[0_18px_50px_rgba(30,50,80,.25)] sm:border sm:border-border',
           wide ? 'sm:max-w-[1100px]' : 'sm:max-w-[640px]'

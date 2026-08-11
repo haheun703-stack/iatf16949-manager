@@ -175,7 +175,27 @@ app.get('/api/capture-image/:id', (req, res) => {
 // 응답에 download URL 을 실어 보내면 폴리필(web-api)이 브라우저 다운로드를 트리거한다.
 const EXPORT_DIR = path.join(DATA_DIR, 'exports')
 mkdirSafe(EXPORT_DIR)
-const downloadTokens = new Map() // token → { filePath, name }
+const downloadTokens = new Map() // token → { filePath, name, createdAt }
+
+// 8/6 검수 Minor: 미수령 토큰·파일 무만료 → 30분 TTL(10분 주기 청소) + 기동 시 고아 파일 정리(24h)
+const DOWNLOAD_TTL_MS = 30 * 60 * 1000
+setInterval(() => {
+  const now = Date.now()
+  for (const [t, info] of downloadTokens) {
+    if (now - (info.createdAt || 0) > DOWNLOAD_TTL_MS) {
+      try { fs.unlinkSync(info.filePath) } catch { /* 잠김 — 다음 주기 */ }
+      downloadTokens.delete(t)
+    }
+  }
+}, 10 * 60 * 1000).unref()
+try {
+  for (const f of fs.readdirSync(EXPORT_DIR)) {
+    const p = path.join(EXPORT_DIR, f)
+    try {
+      if (Date.now() - fs.statSync(p).mtimeMs > 24 * 3600 * 1000) fs.unlinkSync(p)
+    } catch { /* 개별 파일 실패 무시 */ }
+  }
+} catch { /* EXPORT_DIR 미존재 등 */ }
 // 저장 다이얼로그를 쓰는 채널 → 다운로드 확장자
 const SAVE_DIALOG_CHANNELS = {
   'form:exportXlsx': 'xlsx',
@@ -304,7 +324,7 @@ app.post('/api/:channel', (req, res) => {
     const raw = (req.body && (req.body.defaultName || req.body.fileName)) || `${ch.replace(/:/g, '_')}.${ext}`
     const name = String(raw).endsWith('.' + ext) ? String(raw) : `${raw}.${ext}`
     const filePath = path.join(EXPORT_DIR, `${token}.${ext}`)
-    downloadTokens.set(token, { filePath, name })
+    downloadTokens.set(token, { filePath, name, createdAt: Date.now() })
     setPendingSave(filePath)
   }
 

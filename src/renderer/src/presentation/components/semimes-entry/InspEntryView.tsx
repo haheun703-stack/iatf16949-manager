@@ -4,6 +4,7 @@ import type { SemimesScanContextDto, SemimesTodayRecordsDto } from '@shared/ipc-
 import { todayKST } from '@shared/date-kst'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { confirmDialog } from '../shared/ConfirmDialog'
 
 /**
  * PC — 검사 등록 (현장 문법: [조회]·[저장] 2버튼·큰 타깃 — 문법노트2차 §3).
@@ -72,7 +73,19 @@ export function InspEntryView(): JSX.Element {
     }
   }
 
-  function pickKind(k: (typeof KINDS)[number]): void {
+  async function pickKind(k: (typeof KINDS)[number]): Promise<void> {
+    if (k === kind) return
+    // 8/6 검수 Minor: 검사종류 전환 시 입력 중 측정값 무확인 교체 방지
+    const typed = rows.filter((r) => r.value.trim() !== '').length
+    if (typed > 0) {
+      const ok = await confirmDialog({
+        title: '검사종류를 바꾸면 입력한 측정값이 초기화됩니다',
+        body: `측정값 ${typed}건 입력 중 — '${k}' 검사로 전환할까요?`,
+        okLabel: '전환 (입력 버림)',
+        danger: true
+      })
+      if (!ok) return
+    }
     setKind(k)
     if (ctx?.found) setRows(specRowsFor(ctx, k))
   }
@@ -199,7 +212,7 @@ export function InspEntryView(): JSX.Element {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <label className="flex flex-col gap-1 text-[12px] font-semibold text-muted-foreground">
               검사종류
-              <select value={kind} onChange={(e) => pickKind(e.target.value as (typeof KINDS)[number])} className={inputCls}>
+              <select value={kind} onChange={(e) => void pickKind(e.target.value as (typeof KINDS)[number])} className={inputCls}>
                 {KINDS.map((k) => (
                   <option key={k} value={k}>{k}검사</option>
                 ))}

@@ -41,6 +41,7 @@ import { InspHistoryView } from '../semimes-entry/InspHistoryView'
 import { MatStockView } from '../semimes-entry/MatStockView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
+import { ConfirmDialogHost } from '../shared/ConfirmDialog'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
 import { AiAuthorModal } from '../copilot/AiAuthorModal'
 import { SimilarCaseModal } from '../copilot/SimilarCaseModal'
@@ -124,6 +125,7 @@ export function AppShell(): JSX.Element {
       <GlobalCopilot />
       <AiAuthorModal />
       <SimilarCaseModal />
+      <ConfirmDialogHost />
     </div>
   )
 }

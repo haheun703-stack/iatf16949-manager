@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, UserPlus, Trash2, Power, PowerOff, KeyRound } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { confirmDialog } from '../shared/ConfirmDialog'
 import { TEAMS, normalizeTeam, teamTheme } from '@shared/team-theme'
 import type { AppUserDto, AppUserRole } from '@shared/ipc-types'
 
@@ -246,9 +247,15 @@ function UserRow({
         <button
           type="button"
           onClick={() => {
-            if (window.confirm(`'${u.name}'을(를) 완전 삭제할까요?\n\n퇴사자는 삭제하지 말고 비활성(전원 아이콘)하세요 — 과거 기록의 이름이 보존됩니다.\n삭제는 오타 입력 정리용입니다.`)) {
-              void onDelete(u.id)
-            }
+            void (async () => {
+              const ok = await confirmDialog({
+                title: `'${u.name}'을(를) 완전 삭제할까요?`,
+                body: '퇴사자는 삭제하지 말고 비활성(전원 아이콘)하세요 — 과거 기록의 이름이 보존됩니다.\n삭제는 오타 입력 정리용입니다.',
+                okLabel: '완전 삭제',
+                danger: true
+              })
+              if (ok) void onDelete(u.id)
+            })()
           }}
           title="완전 삭제 — 오타 정리용(퇴사자는 비활성 권장)"
           className="rounded p-1 text-muted-foreground/60 hover:bg-red-50 hover:text-red-600 transition-colors"

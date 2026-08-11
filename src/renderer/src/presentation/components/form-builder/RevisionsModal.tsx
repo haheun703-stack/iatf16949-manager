@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X, History, RotateCcw, Save, Loader2, Inbox } from 'lucide-react'
 import { useFormStore } from '../../stores/formStore'
+import { confirmDialog } from '../shared/ConfirmDialog'
 
 const STATUS_LABEL: Record<string, string> = {
   draft: '초안',
@@ -57,9 +58,12 @@ export function RevisionsModal({ onClose }: Props): JSX.Element {
   }
 
   const handleRestore = async (id: number, revNo: number): Promise<void> => {
-    const ok = window.confirm(
-      `Rev ${revNo} 의 입력값을 현재 작성 화면으로 불러옵니다.\n저장하지 않은 현재 입력은 사라집니다. 계속할까요?`
-    )
+    const ok = await confirmDialog({
+      title: `Rev ${revNo} 입력값 불러오기`,
+      body: '저장하지 않은 현재 입력은 사라집니다. 계속할까요?',
+      okLabel: '불러오기',
+      danger: true
+    })
     if (!ok) return
     setBusyId(id)
     try {
