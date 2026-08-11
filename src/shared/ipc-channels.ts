@@ -230,6 +230,8 @@ export const IPC_CHANNELS = {
   SEMIMES_INSP_VALUES: 'semimes:inspValues',
   SEMIMES_MAT_STOCK: 'semimes:matStock',
   SEMIMES_HOME_KPIS: 'semimes:homeKpis',
+  // 34호 2차분 2-1 — 자재입하/입고내역조회(수집함 태깅 결과 = mat_receipt 원천)
+  SEMIMES_RECEIPT_LIST: 'semimes:receiptList',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',

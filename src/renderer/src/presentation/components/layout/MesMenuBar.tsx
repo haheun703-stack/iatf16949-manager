@@ -46,6 +46,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     label: '자재관리',
     items: [
       { label: '수집함 (입고·출하 전표)', page: 'receipt-inbox', sq: ['2_1', '2_2'] },
+      { label: '자재입하 / 입고내역', page: 'mat-receipts', sq: ['2_1', '2_2'] },
       { label: '재고현황 (자재)', page: 'mat-stock' },
       { label: 'LOT 계보 조회', page: 'mes-trace', sq: ['5_1'], iatf: ['8.5.2'] },
       { label: '수입검사 관리대장', form: 'L2100-07', sq: ['2_1', '2_2'] }

@@ -39,6 +39,7 @@ import { WorkOrderView } from '../semimes-entry/WorkOrderView'
 import { ProdHistoryView } from '../semimes-entry/ProdHistoryView'
 import { InspHistoryView } from '../semimes-entry/InspHistoryView'
 import { MatStockView } from '../semimes-entry/MatStockView'
+import { MatReceiptsView } from '../semimes-entry/MatReceiptsView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { ConfirmDialogHost } from '../shared/ConfirmDialog'
@@ -117,6 +118,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'insp-incoming' && <InspHistoryView fixedKind="수입" />}
             {currentPage === 'insp-history' && <InspHistoryView />}
             {currentPage === 'mat-stock' && <MatStockView />}
+            {currentPage === 'mat-receipts' && <MatReceiptsView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

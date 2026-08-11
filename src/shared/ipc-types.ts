@@ -2272,6 +2272,10 @@ export interface IpcChannelMap {
     request: { ymd?: string } | undefined
     response: SemimesHomeKpisDto
   }
+  [IPC_CHANNELS.SEMIMES_RECEIPT_LIST]: {
+    request: { from: string; to: string; itemCode?: string; receiptClass?: string }
+    response: SemimesReceiptRowDto[]
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -3302,6 +3306,23 @@ export interface SemimesMatStockRowDto {
   inputSum: number
   balance: number
   lastReceiptDate: string | null
+}
+
+export interface SemimesReceiptRowDto {
+  id: number
+  receiptDate: string
+  itemCode: string
+  itemName: string | null
+  partnerCode: string | null
+  partnerName: string | null
+  qty: number
+  vendorLot: string | null
+  internalLot: string | null
+  receiptClass: string | null
+  /** 수집함 전표 사진 연결(1:N) — 있으면 전표 증빙 존재 */
+  captureId: number | null
+  createdBy: string | null
+  canceled: boolean
 }
 
 export interface SemimesHomeKpisDto {

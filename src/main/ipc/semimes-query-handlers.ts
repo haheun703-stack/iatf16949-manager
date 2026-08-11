@@ -10,7 +10,8 @@ import type {
   SemimesMatStockRowDto,
   SemimesProdAggRowDto,
   SemimesProdListReq,
-  SemimesProdRowDto
+  SemimesProdRowDto,
+  SemimesReceiptRowDto
 } from '@shared/ipc-types'
 
 /**
@@ -141,6 +142,39 @@ export function registerSemimesQueryHandlers(): void {
       )
       .all(...args) as SemimesMatStockRowDto[]
   })
+
+  // ── ⑥ receiptList — 자재입하/입고내역 (34호 2-1 · 원천 = 수집함 태깅 mat_receipt · SQ 2_1·2_2) ──
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_RECEIPT_LIST,
+    (_e, req: { from: string; to: string; itemCode?: string; receiptClass?: string }): SemimesReceiptRowDto[] => {
+      if (!rangeOk(req?.from, req?.to)) return []
+      const conds: string[] = ['m.receipt_date >= ?', 'm.receipt_date <= ?']
+      const args: unknown[] = [req.from, req.to]
+      if (req.itemCode?.trim()) {
+        conds.push('m.item_code = ?')
+        args.push(req.itemCode.trim())
+      }
+      if (req.receiptClass?.trim()) {
+        conds.push('m.receipt_class = ?')
+        args.push(req.receiptClass.trim())
+      }
+      const rows = db
+        .prepare(
+          `SELECT m.id, m.receipt_date AS receiptDate, m.item_code AS itemCode, i.item_name AS itemName,
+                  m.partner_code AS partnerCode, p.name AS partnerName, m.qty,
+                  m.vendor_lot AS vendorLot, m.internal_lot AS internalLot, m.receipt_class AS receiptClass,
+                  m.capture_id AS captureId, m.created_by AS createdBy,
+                  (m.canceled_at IS NOT NULL) AS canceled
+           FROM mat_receipt m
+           LEFT JOIN item_master i ON i.item_code = m.item_code
+           LEFT JOIN partner p ON p.partner_code = m.partner_code
+           WHERE ${conds.join(' AND ')}
+           ORDER BY m.receipt_date DESC, m.id DESC LIMIT 500`
+        )
+        .all(...args) as Array<Omit<SemimesReceiptRowDto, 'canceled'> & { canceled: 0 | 1 }>
+      return rows.map((r) => ({ ...r, canceled: !!r.canceled }))
+    }
+  )
 
   // ── ⑤ homeKpis — MES 홈 오늘 요약 4타일 (33호 §2-2 모듈 홈 대시보드 문법의 홈 적용) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_HOME_KPIS, (_e, req: { ymd?: string } | undefined): SemimesHomeKpisDto => {
