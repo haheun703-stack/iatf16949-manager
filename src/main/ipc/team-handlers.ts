@@ -402,7 +402,7 @@ export function registerTeamHandlers(): void {
                   .get(it.bucket) as { t: string | null }
               ).t
             } catch {
-              /* 0106 미적용 DB — 전표일 기준 유지 */
+              /* 0137(canceled_at) 미적용 DB — 전표일 기준 유지 (P2″: 주석 낡음 정정 — capture_id 는 0106, 취소 열은 0137) */
             }
             if (tagYmd && tagYmd > it.bucket) {
               const lag = Math.round(

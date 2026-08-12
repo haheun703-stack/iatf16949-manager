@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { todayKST } from '@shared/date-kst'
+import { todayKST, ymdAddKST } from '@shared/date-kst'
 import type { SemimesReceiptRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore } from '../../stores/uiStore'
@@ -13,10 +13,8 @@ import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
 const CLASSES = ['원자재', '외주재입고']
 
-function ymdAdd(days: number): string {
-  const base = new Date(`${todayKST()}T00:00:00+09:00`)
-  return new Date(base.getTime() + days * 86400e3 + 9 * 3600e3).toISOString().slice(0, 10)
-}
+// P2″(슬러지): 화면별 ymdAdd 복제 → 공용 ymdAddKST 치환
+const ymdAdd = (days: number): string => ymdAddKST(todayKST(), days)
 
 export function MatReceiptsView(): JSX.Element {
   const { setPage } = useUIStore()

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { todayKST } from '@shared/date-kst'
+import { todayKST, ymdAddKST } from '@shared/date-kst'
 import type { SemimesProdAggRowDto, SemimesProdRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useSeqGuard } from '../../lib/asyncGuard'
@@ -18,11 +18,8 @@ const TABS: Array<{ key: Tab; label: string }> = [
   { key: 'monthly', label: '월별 집계' }
 ]
 
-/** KST 기준 오늘±days (8/6 검수 M-날짜 규약 — toISOString 단독 절단 금지, todayKST 축) */
-function ymdAdd(days: number): string {
-  const base = new Date(`${todayKST()}T00:00:00+09:00`)
-  return new Date(base.getTime() + days * 86400e3 + 9 * 3600e3).toISOString().slice(0, 10)
-}
+// P2″(슬러지): 화면별 ymdAdd 복제 → 공용 ymdAddKST 치환(8/6 M-날짜 규약은 공용이 계승)
+const ymdAdd = (days: number): string => ymdAddKST(todayKST(), days)
 
 export function ProdHistoryView(): JSX.Element {
   const [tab, setTab] = useState<Tab>('detail')

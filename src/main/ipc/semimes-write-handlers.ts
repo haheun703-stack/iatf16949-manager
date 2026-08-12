@@ -229,10 +229,15 @@ export function registerSemimesWriteHandlers(): void {
         return { success: false, error: `실측값을 수치로 기록해야 합니다(○/× 단독 저장 거부) — ${v.inspItem}` }
       }
     }
-    // §10-1 스냅샷: 기록 시점 활성 스펙의 revision (없으면 null — 정직, 추정 기입 금지)
-    const rev = db
-      .prepare('SELECT MAX(revision) AS r FROM insp_spec WHERE item_code = ? AND insp_kind = ? AND active = 1')
-      .get(req.itemCode, req.inspKind) as { r: number | null }
+    // §10-1 스냅샷: 기록 시점 활성 스펙의 revision (없으면 null — 정직, 추정 기입 금지).
+    // P2″(8/11 발견): (품번×종류) MAX 단일값은 항목별 REV 상이 시 거짓 각인 —
+    // 활성 스펙들의 REV 가 **균일할 때만** 헤더에 적고, 상이하면 null(값 행 spec_id 가 실각인 정본).
+    const revs = (
+      db
+        .prepare('SELECT DISTINCT revision AS r FROM insp_spec WHERE item_code = ? AND insp_kind = ? AND active = 1')
+        .all(req.itemCode, req.inspKind) as Array<{ r: number }>
+    ).map((x) => x.r)
+    const rev = { r: revs.length === 1 ? revs[0] : null }
     // 자동판정 = 제안만: 규격(su/sl) 대조 — 스펙 매칭값 전건 규격 내면 합격 제안
     const specMap = new Map(
       (
@@ -290,13 +295,28 @@ export function registerSemimesWriteHandlers(): void {
         if (req.status && !['대기', '진행', '완료', '취소'].includes(req.status)) {
           return { success: false, error: '상태는 대기/진행/완료/취소만 허용됩니다.' }
         }
-        db.prepare(
-          `UPDATE work_order SET
-             order_qty = COALESCE(?, order_qty), line_no = COALESCE(?, line_no),
-             start_date = COALESCE(?, start_date), end_date = COALESCE(?, end_date),
-             status = COALESCE(?, status), note = COALESCE(?, note),
-             updated_at = datetime('now') WHERE id = ?`
-        ).run(req.orderQty ?? null, req.lineNo ?? null, req.startDate ?? null, req.endDate ?? null, req.status ?? null, req.note ?? null, req.id)
+        // P2″(0141): 상태 전이 = 주체·시각 각인(무주체 '취소' 전이 봉합 — STAMP createdBy 를
+        // 전이자(actor)로 재사용: 웹은 세션 강제 주입이라 위조 불가). 전이 없으면 감사 열 무변.
+        if (req.status) {
+          const actor = req.createdBy?.trim()
+          if (!actor) return { success: false, error: '전이 주체가 없습니다 — 사용자를 선택하세요.' }
+          db.prepare(
+            `UPDATE work_order SET
+               order_qty = COALESCE(?, order_qty), line_no = COALESCE(?, line_no),
+               start_date = COALESCE(?, start_date), end_date = COALESCE(?, end_date),
+               status = ?, note = COALESCE(?, note),
+               status_by = ?, status_at = datetime('now'),
+               updated_at = datetime('now') WHERE id = ?`
+          ).run(req.orderQty ?? null, req.lineNo ?? null, req.startDate ?? null, req.endDate ?? null, req.status, req.note ?? null, actor, req.id)
+        } else {
+          db.prepare(
+            `UPDATE work_order SET
+               order_qty = COALESCE(?, order_qty), line_no = COALESCE(?, line_no),
+               start_date = COALESCE(?, start_date), end_date = COALESCE(?, end_date),
+               note = COALESCE(?, note),
+               updated_at = datetime('now') WHERE id = ?`
+          ).run(req.orderQty ?? null, req.lineNo ?? null, req.startDate ?? null, req.endDate ?? null, req.note ?? null, req.id)
+        }
         return { success: true, id: req.id }
       }
       if (!req.itemCode || !itemRow(req.itemCode)) {
@@ -306,7 +326,8 @@ export function registerSemimesWriteHandlers(): void {
       if (!req.createdBy?.trim()) return { success: false, error: '작성자가 없습니다 — 사용자를 선택하세요.' }
       const ymd = todayKST()
       const yymmdd = ymd.slice(2).replace(/-/g, '')
-      const result = db.transaction(() => {
+      // P2″: 발번 경합 = lotIssue 문법 이식(immediate 트랜잭션 + UNIQUE/BUSY 재시도 2회)
+      const woTxn = db.transaction(() => {
         const { n } = db
           .prepare("SELECT COUNT(*) + 1 AS n FROM work_order WHERE order_no LIKE ?")
           .get(`WO-${yymmdd}-%`) as { n: number }
@@ -318,8 +339,18 @@ export function registerSemimesWriteHandlers(): void {
           )
           .run(orderNo, req.itemCode, req.orderQty ?? null, req.lineNo ?? null, req.startDate ?? ymd, req.endDate ?? null, req.note ?? null, req.createdBy!.trim())
         return { id: Number(info.lastInsertRowid), orderNo }
-      })()
-      return { success: true, ...result }
+      })
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return { success: true, ...woTxn.immediate() }
+        } catch (err) {
+          const e = err as Error & { code?: string }
+          const contested = /UNIQUE/.test(e.message) || /BUSY|LOCKED/.test(e.code ?? '')
+          if (!contested || attempt >= 2) {
+            return { success: false, error: contested ? '지시 발번 경합 — 잠시 후 다시 시도하세요.' : e.message }
+          }
+        }
+      }
     } catch (err) {
       return { success: false, error: (err as Error).message }
     }

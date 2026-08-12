@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SemimesItemSearchRowDto, SemimesWorkOrderRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
-import { useSingleFlight } from '../../lib/asyncGuard'
+import { useDebouncedCallback, useSingleFlight } from '../../lib/asyncGuard'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
@@ -56,6 +56,19 @@ export function WorkOrderView(): JSX.Element {
   // 8/12 재봉합 예방 확장: WO 발번도 LOT 와 같은 기전(state 가드 = 재렌더 전 더블클릭 미차단)
   const addFlight = useSingleFlight()
   const statusFlight = useSingleFlight()
+
+  // P2″(슬러지): 품번 제안 무디바운스 → 공용 250ms(수집함 선례와 통일)
+  const searchItems = useDebouncedCallback((raw: string): void => {
+    const q = raw.trim()
+    if (q.length < 2) return
+    void (async () => {
+      try {
+        setSuggest((await window.api.invoke(window.api.channels.SEMIMES_ITEM_SEARCH, { query: q, limit: 20 })) as SemimesItemSearchRowDto[])
+      } catch {
+        /* 제안 실패 — 직접 입력 유지 */
+      }
+    })()
+  })
   async function addOrder(): Promise<void> {
     if (saving) return // M-8: 연타 = 지시 이중 발번 — 진행 중 재진입 차단(표시용, 관문은 addFlight)
     setSaving(true)
@@ -124,13 +137,13 @@ export function WorkOrderView(): JSX.Element {
         <MesToolbar
           onSearch={() => void load()}
           onAdd={tab === 'list' ? () => setAdding((v) => !v) : undefined}
-          onExcel={() =>
+          // P2″(슬러지): 0행일 때 엑셀 흐림(툴바 문법 통일 — 콜백 없음 = 미가동)
+          onExcel={rows.length > 0 ? () =>
             downloadCsv(
               '작업지시.csv',
               ['지시번호', '품번', '품명', '수량', '진척(양품)', '달성률(%)', '시작', '상태', '작성'],
               rows.map((r) => [r.orderNo, r.itemCode, r.itemName, r.orderQty, r.okSum, r.orderQty ? ((r.okSum / r.orderQty) * 100).toFixed(1) : '', r.startDate, r.status, r.createdBy])
-            )
-          }
+            ) : undefined}
           onPrint={() => window.print()}
           busy={loading}
         />
@@ -172,18 +185,7 @@ export function WorkOrderView(): JSX.Element {
               value={newItem}
               onChange={(e) => {
                 setNewItem(e.target.value)
-                const q = e.target.value.trim()
-                if (q.length >= 2) {
-                  void (async () => {
-                    try {
-                      setSuggest(
-                        (await window.api.invoke(window.api.channels.SEMIMES_ITEM_SEARCH, { query: q, limit: 20 })) as SemimesItemSearchRowDto[]
-                      )
-                    } catch {
-                      /* 무시 */
-                    }
-                  })()
-                }
+                searchItems(e.target.value)
               }}
               className="h-10 px-3 rounded-lg border border-border bg-card text-[13.5px]"
             />

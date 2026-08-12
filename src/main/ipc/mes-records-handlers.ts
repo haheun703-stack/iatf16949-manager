@@ -203,6 +203,12 @@ const SQ_AUDIT_ROWS: Array<{ sqItem: string; title: string; formCode: string; ki
   { sqItem: '2_8', title: '출하검사 성적서', formCode: 'M3100-05', kind: 'S' }
 ]
 
+/** P2″(슬러지): 처리 귀속 공용 — 수입검사(I) = line 무관 열 귀속 · 그 외 = line_no(WRKCTR).
+ *  processLive·auditMatrix 두 곳의 동일 람다 2중 정의를 모듈 승격(정의 1곳). */
+function sqcProcOf(g: string, line: string | null): string | null {
+  return g === 'I' ? 'incoming' : procOf(line)
+}
+
 /** 배치⑶ #18 — 창 내 조업달력 조회(0139). 등록 행이 1건이라도 있으면 달력이 분모의 정본.
  *  반환: 등록 없으면 null(종전 프록시 유지 — 미등록 구간 가짜 분모 금지·정직 표기는 DTO 플래그로). */
 function calendarWorkDays(windowStart: string, windowEnd: string): Set<string> | null {
@@ -239,7 +245,7 @@ export function registerMesRecordsHandlers(): void {
     if (db) {
       // M-6: 전 이력 풀스캔 → SQL 집계 3종(오늘분·MAX 최종일·7일 창) — 덤프 누적에도 로딩 상수화.
       // 수입검사(I) = line 무관 열 귀속 · 자주(W)/패트롤(P) = line_no(WRKCTR)로 공정 귀속(기존 규칙 유지)
-      const sqcProc = (g: string, line: string | null): string | null => (g === 'I' ? 'incoming' : procOf(line))
+      const sqcProc = sqcProcOf // P2″: 공용 승격(정의 1곳 — 모듈 상단)
       for (const r of db
         .prepare(`SELECT qcgubun, line_no, COUNT(*) cnt, COALESCE(SUM(items),0) items FROM sqc_daily WHERE ymd = ? GROUP BY qcgubun, line_no`)
         .all(ymd) as Array<{ qcgubun: string; line_no: string | null; cnt: number; items: number }>) {
@@ -423,7 +429,7 @@ export function registerMesRecordsHandlers(): void {
     }
     if (db) {
       // M-6: 전 이력 풀스캔 → MAX/GROUP BY(everLast) + 창 한정 DISTINCT(winDays) 2단 SQL
-      const sqcProc = (g: string, line: string | null): string | null => (g === 'I' ? 'incoming' : procOf(line))
+      const sqcProc = sqcProcOf // P2″: 공용 승격(정의 1곳 — 모듈 상단)
       const everOnly = (proc: string | null, kind: string, last: string): void => {
         if (!proc) return
         const k = kkey(proc, kind)
@@ -579,14 +585,20 @@ export function registerMesRecordsHandlers(): void {
           ) as Array<{ pno: string; pname: string | null }>
         ).map((r) => [r.pno, r.pname])
       )
+      // P2″(8/11 슬러지·M-6 이식): 품번 전 이력 행 단위 풀스캔 → SQL 집계 2종(오늘분·MAX 최종일)
+      // — 덤프 누적에도 로딩 상수화(processLive/auditMatrix 와 같은 처방).
       const recs = db
-        .prepare(`SELECT pno, ymd, qcgubun, line_no, items FROM sqc_daily WHERE pno IN (${ph})`)
-        .all(...tops.map((t) => t.pno)) as Array<{
+        .prepare(
+          `SELECT pno, qcgubun, line_no, MAX(ymd) lastYmd,
+                  COALESCE(SUM(CASE WHEN ymd = ? THEN items ELSE 0 END), 0) todayItems
+           FROM sqc_daily WHERE pno IN (${ph}) GROUP BY pno, qcgubun, line_no`
+        )
+        .all(ymd, ...tops.map((t) => t.pno)) as Array<{
         pno: string
-        ymd: string
         qcgubun: string
         line_no: string | null
-        items: number
+        lastYmd: string
+        todayItems: number
       }>
 
       const byPart = new Map<string, MesPartProcessRow>()
@@ -599,8 +611,8 @@ export function registerMesRecordsHandlers(): void {
         const row = byPart.get(r.pno)
         if (!row) continue
         const cell = row.cells[proc] ?? (row.cells[proc] = { today: 0, lastYmd: null })
-        if (r.ymd === ymd) cell.today += r.items
-        if (!cell.lastYmd || r.ymd > cell.lastYmd) cell.lastYmd = r.ymd
+        cell.today += r.todayItems
+        if (!cell.lastYmd || r.lastYmd > cell.lastYmd) cell.lastYmd = r.lastYmd
       }
       return { ymd, dataEndYmd, subulMonth, available: true, columns, rows: tops.map((t) => byPart.get(t.pno)!) }
     }

@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
-import { todayKST } from '@shared/date-kst'
+import { todayKST, ymdAddKST } from '@shared/date-kst'
 import type { SemimesInspRowDto, SemimesInspValueRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore } from '../../stores/uiStore'
@@ -15,10 +15,8 @@ import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
 const KINDS = ['수입', '공정', '자주', '패트롤', '출하']
 
-function ymdAdd(days: number): string {
-  const base = new Date(`${todayKST()}T00:00:00+09:00`)
-  return new Date(base.getTime() + days * 86400e3 + 9 * 3600e3).toISOString().slice(0, 10)
-}
+// P2″(슬러지): 화면별 ymdAdd 복제 → 공용 ymdAddKST 치환(date-kst — 8/12 배치⑶ 승격분)
+const ymdAdd = (days: number): string => ymdAddKST(todayKST(), days)
 
 export function InspHistoryView({ fixedKind }: { fixedKind?: string }): JSX.Element {
   const { setPage, setSelectedFormCode } = useUIStore()

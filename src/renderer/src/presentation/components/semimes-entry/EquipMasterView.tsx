@@ -122,7 +122,8 @@ export function EquipMasterView(): JSX.Element {
         <h1 className="text-[20px] font-extrabold tracking-[-0.02em]">설비등록</h1>
         <span className="inline-block text-[10.5px] font-semibold rounded-full px-2 py-[1px] bg-secondary text-primary">SQ 4_x 접점</span>
         <span className="text-[13px] text-muted-foreground">
-          설비 마스터 원천 신설(0140) — 행은 사람이 등록 · MES 라인 연결은 선택 · 계측기(MSA) 접점은 후속
+          설비 마스터 원천 신설(0140) — <b>등록 주체 = 생산팀(현장) 동선</b>(8/12 판정③ 확정 · 품질팀은 점검표 축 관여) ·
+          MES 라인 연결은 선택 · 계측기(MSA) 접점은 후속
         </span>
       </div>
 

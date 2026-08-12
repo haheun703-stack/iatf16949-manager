@@ -1,6 +1,7 @@
-import { Fragment, useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { SemimesItemSearchRowDto, SemimesSpecRegistryRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { useDebouncedCallback } from '../../lib/asyncGuard'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 import { confirmDialog } from '../shared/ConfirmDialog'
@@ -58,14 +59,18 @@ export function SpecRegistryView(): JSX.Element {
     }
   }, [itemCode, kind])
 
-  const searchItems = async (q: string): Promise<void> => {
-    if (q.trim().length < 2) return
-    try {
-      setSuggest((await window.api.invoke(window.api.channels.SEMIMES_ITEM_SEARCH, { query: q.trim(), limit: 20 })) as SemimesItemSearchRowDto[])
-    } catch {
-      /* 제안 실패 — 직접 입력 유지 */
-    }
-  }
+  // P2″(슬러지): 품번 제안 무디바운스 → 공용 250ms(수집함 선례와 통일)
+  const searchItems = useDebouncedCallback((raw: string): void => {
+    const q = raw.trim()
+    if (q.length < 2) return
+    void (async () => {
+      try {
+        setSuggest((await window.api.invoke(window.api.channels.SEMIMES_ITEM_SEARCH, { query: q, limit: 20 })) as SemimesItemSearchRowDto[])
+      } catch {
+        /* 제안 실패 — 직접 입력 유지 */
+      }
+    })()
+  })
 
   async function save(): Promise<void> {
     if (saving) return
@@ -188,7 +193,7 @@ export function SpecRegistryView(): JSX.Element {
             value={itemCode}
             onChange={(e) => {
               setItemCode(e.target.value)
-              void searchItems(e.target.value)
+              searchItems(e.target.value)
             }}
             placeholder="품번 (마스터 검색)"
             className="h-8 w-[200px] px-2 rounded-lg border border-border bg-card text-[12px]"
@@ -251,9 +256,9 @@ export function SpecRegistryView(): JSX.Element {
             {visible.length === 0 && !busy && (
               <tr><td colSpan={11} className="py-8 text-center text-muted-foreground text-[13px]">품번을 조회하세요 — 스펙이 없으면 위 폼으로 REVISION 1을 등록합니다.</td></tr>
             )}
+            {/* P2″(슬러지): 단일 tr 을 샐던 Fragment 제거 — key 는 tr 이 직접 든다 */}
             {visible.map((r) => (
-              <Fragment key={r.id}>
-                <tr className={cn(!r.active && 'opacity-45')}>
+                <tr key={r.id} className={cn(!r.active && 'opacity-45')}>
                   <td className={cn(TD, 'font-bold', r.active ? 'text-mega-active' : 'text-muted-foreground')}>
                     {r.revision}
                     <span className={cn('ml-1.5 inline-block text-[10.5px] font-bold rounded px-1.5 py-[1px]', r.active ? 'bg-secondary text-primary' : 'bg-muted text-muted-foreground')}>
@@ -277,7 +282,6 @@ export function SpecRegistryView(): JSX.Element {
                     )}
                   </td>
                 </tr>
-              </Fragment>
             ))}
           </tbody>
         </table>

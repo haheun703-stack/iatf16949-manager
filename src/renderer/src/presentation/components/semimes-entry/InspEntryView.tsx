@@ -101,9 +101,10 @@ export function InspEntryView(): JSX.Element {
       setMsg({ tone: 'bad', text: '판정(합격/불합격/보류)을 사람이 확정해야 저장됩니다 — 자동판정은 제안일 뿐.' })
       return
     }
+    // P2″(슬러지): `_i` 죽은 왕복(붙였다 떼기만 하던 인덱스) 제거
     const values = rows
       .filter((r) => r.inspItem.trim() !== '' && r.value.trim() !== '')
-      .map((r, i) => ({ specId: r.specId, inspItem: r.inspItem, sampleNo: 1, value: Number(r.value), _i: i }))
+      .map((r) => ({ specId: r.specId, inspItem: r.inspItem, sampleNo: 1, value: Number(r.value) }))
     if (values.length === 0) {
       setMsg({ tone: 'bad', text: '측정값이 최소 1건 필요합니다 — 실측값을 수치로 기록(○/× 단독 저장 거부).' })
       return
@@ -123,7 +124,7 @@ export function InspEntryView(): JSX.Element {
         procCode: procCode || null,
         samplePhase: kind === '자주' ? phase : null,
         judgment,
-        values: values.map(({ _i, ...v }) => v),
+        values,
         inspector: userName
       })) as { success: boolean; id?: number; suggestion?: string; specRevision?: number | null; error?: string }
       if (!res.success) {

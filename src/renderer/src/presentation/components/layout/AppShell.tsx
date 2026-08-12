@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { useUIStore } from '../../stores/uiStore'
+import { markPage, startPerfWatch } from '../../lib/perfWatch'
 import { Sidebar, TopBar } from './Sidebar'
 import { MesMenuBar, MesSubTabs } from './MesMenuBar'
 import { MesHome } from '../mes-home/MesHome'
@@ -65,6 +67,15 @@ import { SimilarCaseModal } from '../copilot/SimilarCaseModal'
 
 export function AppShell(): JSX.Element {
   const { currentPage } = useUIStore()
+
+  // 8/12 계측 트랙(도장 — 육안 체감 "보였다" = 원격 한정 가설 기각): 멎음의 축 판별용
+  // 관찰자 기동 + 화면 전환 좌표 마크. 열람 = F12 → __perfLog() (perfWatch.ts 참조)
+  useEffect(() => {
+    startPerfWatch()
+  }, [])
+  useEffect(() => {
+    markPage(currentPage)
+  }, [currentPage])
 
   // P8 — 양식 작성 화면(3분할 워크벤치)은 중앙 1400px 틀을 벗어나 모니터 전체 폭을 쓴다.
   //  좁은 폭에서 정답·목록·캔버스가 눌려 엑셀 뷰가 잘리던 문제 해소. 그 외 화면은 기존 중앙 정렬 유지.
