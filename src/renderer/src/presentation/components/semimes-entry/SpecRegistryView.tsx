@@ -84,12 +84,32 @@ export function SpecRegistryView(): JSX.Element {
         return
       }
     }
-    const prev = rows.find((r) => r.inspItem === form.inspItem.trim() && r.inspKind === kind && r.active)
+    // 8/11 검수 Minor: 확인창의 REV 예고가 화면 스냅샷 기준이라, 그사이 다른 사람이 개정했으면 거짓 예고가 된다.
+    // 서버 현행값을 다시 읽어 맞추고 — 읽지 못하면 숫자를 단정하지 않는다(정직 문법).
+    const key = form.inspItem.trim()
+    let prev = rows.find((r) => r.inspItem === key && r.inspKind === kind && r.active)
+    let fresh = true
+    try {
+      const cur = (await window.api.invoke(window.api.channels.SEMIMES_SPEC_LIST, {
+        itemCode: itemCode.trim(), inspKind: kind || undefined
+      })) as SemimesSpecRegistryRowDto[]
+      setRows(cur)
+      prev = cur.find((r) => r.inspItem === key && r.inspKind === kind && r.active)
+    } catch {
+      fresh = false
+    }
+    const predicted = prev ? prev.revision + 1 : 1
     const ok = await confirmDialog({
-      title: prev ? `'${form.inspItem.trim()}' 개정 — REVISION ${prev.revision + 1} 신규 행 생성` : `'${form.inspItem.trim()}' 신규 등록 (REVISION 1)`,
-      body: prev
-        ? `구판(REV ${prev.revision})은 값 그대로 불변 보존되고 활성만 내려갑니다.\n이후 검사기록은 새 REVISION 을 스냅샷으로 각인합니다.`
-        : '등록 후 검사기록이 이 스펙의 REVISION 을 스냅샷으로 각인합니다.',
+      title: !fresh
+        ? `'${key}' 저장 — REVISION 은 서버 현행 기준으로 확정됩니다`
+        : prev
+          ? `'${key}' 개정 — REVISION ${predicted} 신규 행 생성`
+          : `'${key}' 신규 등록 (REVISION 1)`,
+      body: !fresh
+        ? '현행 스펙을 다시 읽지 못했습니다(통신) — 번호는 저장 후 결과로 안내합니다.\n계약은 그대로: 개정 = 신규 행 · 구판 불변.'
+        : prev
+          ? `구판(REV ${prev.revision})은 값 그대로 불변 보존되고 활성만 내려갑니다.\n이후 검사기록은 새 REVISION 을 스냅샷으로 각인합니다.`
+          : '등록 후 검사기록이 이 스펙의 REVISION 을 스냅샷으로 각인합니다.',
       okLabel: prev ? '개정 저장' : '등록'
     })
     if (!ok) return
@@ -112,7 +132,9 @@ export function SpecRegistryView(): JSX.Element {
         setMsg({ tone: 'bad', text: res.error ?? '저장 실패' })
         return
       }
-      setMsg({ tone: 'ok', text: `저장 완료 — REVISION ${res.revision} (개정 주체 각인 · 구판 불변 보존)` })
+      // 예고와 실제가 다르면(그사이 타인 개정) 숨기지 않고 밝힌다
+      const drift = fresh && res.revision != null && res.revision !== predicted ? ` — 확인창 예고(${predicted})와 다릅니다: 그사이 다른 개정이 있었습니다` : ''
+      setMsg({ tone: 'ok', text: `저장 완료 — REVISION ${res.revision} (개정 주체 각인 · 구판 불변 보존)${drift}` })
       setForm(EMPTY)
       await load()
     } catch {

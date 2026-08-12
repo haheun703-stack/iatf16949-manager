@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { SemimesItemMasterRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { confirmDialog } from '../shared/ConfirmDialog'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
 /**
@@ -58,7 +59,36 @@ export function ItemMasterView(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const startEdit = (r: SemimesItemMasterRowDto): void => {
+  // 8/11 검수 Minor: 편집 중 [취소]·다른 행 편집이 확인 없이 입력을 파기하던 자리 — 변경분이 있을 때만 묻는다
+  const isDirty = (): boolean => {
+    if (!editCode || !edit) return false
+    const r = rows.find((x) => x.itemCode === editCode)
+    if (!r) return false
+    return (
+      edit.itemName !== (r.itemName ?? '') || edit.itemType !== (r.itemType ?? '') || edit.spec !== (r.spec ?? '') ||
+      edit.carType !== (r.carType ?? '') || edit.inlotuse !== (r.inlotuse === 1) || edit.active !== (r.active === 1)
+    )
+  }
+
+  const confirmDiscard = async (): Promise<boolean> => {
+    if (!isDirty()) return true
+    return confirmDialog({
+      title: '수정 중인 내용을 버릴까요?',
+      body: `${editCode} — 저장하지 않은 변경이 있습니다.`,
+      okLabel: '버리기',
+      cancelLabel: '계속 수정',
+      danger: true
+    })
+  }
+
+  const closeEdit = async (): Promise<void> => {
+    if (!(await confirmDiscard())) return
+    setEditCode(null)
+    setEdit(null)
+  }
+
+  const startEdit = async (r: SemimesItemMasterRowDto): Promise<void> => {
+    if (editCode && editCode !== r.itemCode && !(await confirmDiscard())) return
     setEditCode(r.itemCode)
     setEdit({
       itemName: r.itemName ?? '', itemType: r.itemType ?? '', spec: r.spec ?? '',
@@ -159,7 +189,7 @@ export function ItemMasterView(): JSX.Element {
                       <td className={cn(TD, 'text-muted-foreground')}>{r.source ?? '—'}</td>
                       <td className={cn(TD, 'whitespace-nowrap')}>
                         <button type="button" onClick={() => void saveEdit()} disabled={saving} className="mr-1 px-2 py-1 rounded-md bg-mega-active text-white text-[11.5px] font-bold disabled:opacity-50">{saving ? '…' : '저장'}</button>
-                        <button type="button" onClick={() => setEditCode(null)} className="px-2 py-1 rounded-md border border-border text-[11.5px] font-semibold">취소</button>
+                        <button type="button" onClick={() => void closeEdit()} className="px-2 py-1 rounded-md border border-border text-[11.5px] font-semibold">취소</button>
                       </td>
                     </>
                   ) : (
@@ -173,7 +203,7 @@ export function ItemMasterView(): JSX.Element {
                       <td className={cn(TD, 'text-center font-bold', r.active === 1 ? 'text-ok-ink' : 'text-muted-foreground')}>{r.active === 1 ? '활성' : '비활성'}</td>
                       <td className={cn(TD, 'text-muted-foreground')}>{r.source ?? '—'}</td>
                       <td className={TD}>
-                        <button type="button" onClick={() => startEdit(r)} className="text-[12px] font-bold text-primary underline underline-offset-2">수정</button>
+                        <button type="button" onClick={() => void startEdit(r)} className="text-[12px] font-bold text-primary underline underline-offset-2">수정</button>
                       </td>
                     </>
                   )}

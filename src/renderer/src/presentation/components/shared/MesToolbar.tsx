@@ -70,8 +70,12 @@ export function MesToolbar(props: MesToolbarProps): JSX.Element {
 
 /** 그리드 데이터 → CSV 다운로드 (엑셀 버튼 공용 — BOM 첨부로 한글 안전) */
 export function downloadCsv(fileName: string, header: string[], rows: Array<Array<string | number | null>>): void {
+  // 8/11 검수 Minor: 수식 선행문자 방어 — 엑셀은 = + - @ 로 시작하는 셀을 수식으로 해석한다
+  // (품번·사유 등 사람이 적은 문자열이 그대로 수식이 되는 자리). 숫자는 무해화 제외 = 집계 보존.
+  const NUMERIC = /^-?\d+(\.\d+)?$/
   const esc = (v: string | number | null): string => {
-    const s = v == null ? '' : String(v)
+    let s = v == null ? '' : String(v)
+    if (typeof v !== 'number' && /^[=+\-@\t\r]/.test(s) && !NUMERIC.test(s)) s = `'${s}`
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
   }
   const csv = '﻿' + [header, ...rows].map((r) => r.map(esc).join(',')).join('\n')

@@ -26,6 +26,7 @@ export function ProdEntryView(): JSX.Element {
   const [shift, setShift] = useState<'주간' | '야간'>('주간')
   const [msg, setMsg] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [issuing, setIssuing] = useState(false)
   const [today, setToday] = useState<SemimesTodayRecordsDto | null>(null)
   const [cancelFor, setCancelFor] = useState<{ id: number; reason: string } | null>(null)
 
@@ -59,6 +60,9 @@ export function ProdEntryView(): JSX.Element {
 
   async function issueLot(): Promise<void> {
     if (!ctx?.itemCode) return
+    // 8/11 검수 MA-10: 연타 가드 없음 = 더블클릭이 LOT 차수를 이중 발번(품번-YYMMDD-01·02)
+    if (issuing) return
+    setIssuing(true)
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_LOT_ISSUE, {
         itemCode: ctx.itemCode, createdBy: userName
@@ -71,6 +75,8 @@ export function ProdEntryView(): JSX.Element {
       }
     } catch {
       setMsg({ tone: 'bad', text: '발번 실패 — 통신 오류. 다시 시도하세요.' })
+    } finally {
+      setIssuing(false)
     }
   }
 
@@ -109,6 +115,11 @@ export function ProdEntryView(): JSX.Element {
 
   async function cancelRec(): Promise<void> {
     if (!cancelFor) return
+    // 8/11 검수 Minor: 사유 사전검증 — 서버 거부(원시 문구) 전에 화면에서 짚는다(취소 사유 이중 방어의 앞단)
+    if (cancelFor.reason.trim() === '') {
+      setMsg({ tone: 'bad', text: '취소 사유는 필수입니다 — 무엇을 왜 취소하는지 적어야 기록이 남습니다.' })
+      return
+    }
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_RECORD_CANCEL, {
         kind: 'prod', id: cancelFor.id, reason: cancelFor.reason, canceledBy: userName
@@ -158,8 +169,14 @@ export function ProdEntryView(): JSX.Element {
               LOT
               <span className="flex gap-1.5">
                 <input list="prod-lots" value={lotNo} onChange={(e) => setLotNo(e.target.value)} placeholder="선택 또는 발번" className={cn(inputCls, 'flex-1 min-w-0')} />
-                <button type="button" onClick={() => void issueLot()} title="자체발번 품번-YYMMDD-차수" className="h-11 px-3 rounded-lg border border-primary/40 bg-secondary text-secondary-foreground text-[13px] font-bold flex items-center gap-1 shrink-0">
-                  <Ticket className="w-3.5 h-3.5" /> 발번
+                <button
+                  type="button"
+                  onClick={() => void issueLot()}
+                  disabled={issuing}
+                  title="자체발번 품번-YYMMDD-차수"
+                  className="h-11 px-3 rounded-lg border border-primary/40 bg-secondary text-secondary-foreground text-[13px] font-bold flex items-center gap-1 shrink-0 disabled:opacity-50"
+                >
+                  <Ticket className="w-3.5 h-3.5" /> {issuing ? '발번 중…' : '발번'}
                 </button>
               </span>
               <datalist id="prod-lots">
@@ -184,9 +201,11 @@ export function ProdEntryView(): JSX.Element {
             <label className="flex flex-col gap-1 text-[12px] font-semibold text-muted-foreground">
               불량 수량
               <input value={ngQty} onChange={(e) => {
-                setNgQty(e.target.value)
-                // 8/6 검수 Minor: ng=0 복귀 시 불량유형 잔존 — 선택 흔적까지 소거(가짜 연결 방지)
-                if (!(Number(e.target.value) > 0)) setDefectCode('')
+                const v = e.target.value
+                setNgQty(v)
+                // 8/6 검수 Minor: ng=0 복귀 시 불량유형 잔존 — 선택 흔적까지 소거(가짜 연결 방지).
+                // 8/11 검수 Minor: 단 지우고 다시 적는 중(빈 값)에는 유지 — 재선택 강요 완화.
+                if (v.trim() !== '' && !(Number(v) > 0)) setDefectCode('')
               }} inputMode="numeric" className={cn(inputCls, 'text-center font-bold tabular-nums bg-fillable/70')} />
             </label>
             {Number(ngQty) > 0 && (

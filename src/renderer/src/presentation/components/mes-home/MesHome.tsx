@@ -86,7 +86,8 @@ export function MesHome(): JSX.Element {
             { label: '오늘 생산', value: `${kpis.prodCnt}건`, sub: `양품 ${kpis.okSum.toLocaleString()}`, page: 'prod-history' as PageId },
             { label: '오늘 검사', value: `${kpis.inspCnt}건`, sub: '자주·수입·패트롤', page: 'insp-history' as PageId },
             { label: '2단 확인 대기', value: `${kpis.confirmWait}건`, sub: '확인자 서명 필요', page: 'insp-history' as PageId, warn: kpis.confirmWait > 0 },
-            { label: '오늘 입고 수불', value: `${kpis.receiptCnt}건`, sub: '수집함 태깅 원천', page: 'mat-stock' as PageId }
+            // 8/11 검수 Minor: 입고 건수 타일이 재고현황으로 새던 자리 — 세어 보여준 그 목록(자재입하/입고내역)으로
+            { label: '오늘 입고 수불', value: `${kpis.receiptCnt}건`, sub: '수집함 태깅 원천', page: 'mat-receipts' as PageId }
           ].map((t) => (
             <button key={t.label} type="button" onClick={() => setPage(t.page)}
               className={cn('rounded-2xl border shadow-card px-4 py-3 text-left transition-colors',

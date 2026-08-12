@@ -221,7 +221,9 @@ export function ReceiptInboxView(): JSX.Element {
             query,
             limit: 20
           })) as SemimesItemSearchRowDto[]
-          setItems((prev) => prev.map((r, i) => (i === rowIdx ? { ...r, suggestions: res } : r)))
+          // 8/11 검수 Minor: rowIdx 는 예약 시점 좌표 — 사이에 행이 지워지면 남의 행에 제안이 붙는다.
+          // 그 행이 아직 같은 글자를 들고 있을 때만 적용(stale 폐기).
+          setItems((prev) => prev.map((r, i) => (i === rowIdx && r.itemCode.trim() === query.trim() ? { ...r, suggestions: res } : r)))
         } catch {
           /* 검색 실패 — 제안 없이 직접 입력 유지 */
         }
@@ -235,6 +237,13 @@ export function ReceiptInboxView(): JSX.Element {
     const badRow = items.findIndex((r) => r.itemCode.trim() !== '' && !(Number(r.qty) > 0))
     if (badRow >= 0) {
       setMsg({ tone: 'bad', text: `${badRow + 1}행 수량이 비었거나 유효하지 않습니다 — 전표의 실측 수량을 기입하세요.` })
+      return
+    }
+    // 8/11 검수 Minor: 품번 없는 행은 아래에서 조용히 버려졌다(수량·업체LOT 만 적은 행 = 통째 소실).
+    // 기입 흔적이 있는데 품번이 없으면 어느 행인지 짚고 멈춘다 — 정직 문법.
+    const orphanRow = items.findIndex((r) => r.itemCode.trim() === '' && (r.qty.trim() !== '' || r.vendorLot.trim() !== ''))
+    if (orphanRow >= 0) {
+      setMsg({ tone: 'bad', text: `${orphanRow + 1}행 품번이 비었습니다 — 품번 없이는 저장되지 않습니다(수량·업체LOT만으로는 수불이 성립하지 않음).` })
       return
     }
     setBusy(true)

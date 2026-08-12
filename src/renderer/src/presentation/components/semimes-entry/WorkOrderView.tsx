@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SemimesItemSearchRowDto, SemimesWorkOrderRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { confirmDialog } from '../shared/ConfirmDialog'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
 /**
@@ -25,17 +26,25 @@ export function WorkOrderView(): JSX.Element {
   const [newItem, setNewItem] = useState('')
   const [newQty, setNewQty] = useState('')
   const [suggest, setSuggest] = useState<SemimesItemSearchRowDto[]>([])
+  const [statusBusy, setStatusBusy] = useState<number | null>(null)
   const [msg, setMsg] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null)
 
+  // 8/11 검수 MA-8: catch 없음 = 통신 오류 무통지(빈 그리드를 "지시 없음"으로 오안내).
+  // seq 토큰 동반 — 상태 필터 연타 시 늦은 응답이 뒤늦게 앉는 것 폐기(KpiGrid 선례).
+  const loadSeq = useRef(0)
   const load = useCallback(async (): Promise<void> => {
+    const seq = ++loadSeq.current
     setLoading(true)
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_WORK_ORDER_LIST, {
         status: statusFilter || undefined
       })) as SemimesWorkOrderRowDto[]
+      if (seq !== loadSeq.current) return
       setRows(res)
+    } catch {
+      if (seq === loadSeq.current) setMsg({ tone: 'bad', text: '조회 실패 — 통신 오류. 다시 시도하세요.' })
     } finally {
-      setLoading(false)
+      if (seq === loadSeq.current) setLoading(false)
     }
   }, [statusFilter])
 
@@ -69,13 +78,34 @@ export function WorkOrderView(): JSX.Element {
     }
   }
 
+  // 8/11 검수 MA-9: catch·연타 가드 없음 + '취소' 전이가 오클릭 1회로 성립하던 자리.
   async function setStatus(id: number, status: string): Promise<void> {
-    const res = (await window.api.invoke(window.api.channels.SEMIMES_WORK_ORDER_UPSERT, { id, status })) as {
-      success: boolean
-      error?: string
+    if (statusBusy !== null) return // 연타/교차 클릭 차단(전이 1건씩)
+    if (status === '취소') {
+      const row = rows.find((r) => r.id === id)
+      const ok = await confirmDialog({
+        title: '작업지시를 취소 처리할까요?',
+        body: `${row?.orderNo ?? `#${id}`} — 취소된 지시는 진척 집계에서 제외됩니다. 되돌리려면 상태를 다시 바꿔야 합니다.`,
+        okLabel: '취소 처리',
+        cancelLabel: '그만두기',
+        danger: true
+      })
+      if (!ok) return
     }
-    if (!res.success) setMsg({ tone: 'bad', text: res.error ?? '상태 변경 실패' })
-    await load()
+    setStatusBusy(id)
+    setMsg(null)
+    try {
+      const res = (await window.api.invoke(window.api.channels.SEMIMES_WORK_ORDER_UPSERT, { id, status })) as {
+        success: boolean
+        error?: string
+      }
+      if (!res.success) setMsg({ tone: 'bad', text: res.error ?? '상태 변경 실패' })
+      await load()
+    } catch {
+      setMsg({ tone: 'bad', text: '상태 변경 실패 — 통신 오류. 다시 시도하세요.' })
+    } finally {
+      setStatusBusy(null)
+    }
   }
 
   return (
@@ -128,7 +158,8 @@ export function WorkOrderView(): JSX.Element {
         </div>
       )}
 
-      {adding && (
+      {/* 8/11 검수 Minor: [추가] 는 목록 탭 전용 — 지시대비실적 탭으로 넘어가면 폼도 함께 닫는다 */}
+      {adding && tab === 'list' && (
         <div className="rounded-xl border border-border bg-card shadow-card p-3 flex items-end gap-2 flex-wrap">
           <label className="flex flex-col gap-1 text-[12px] font-semibold text-muted-foreground flex-1 min-w-[220px]">
             품번 (마스터 검색)
@@ -249,7 +280,13 @@ export function WorkOrderView(): JSX.Element {
                 </td>
                 <td className="py-2 px-3 border-b border-border/60 whitespace-nowrap">
                   {STATUSES.filter((s) => s !== r.status).map((s) => (
-                    <button key={s} type="button" onClick={() => void setStatus(r.id, s)} className="mr-1 px-2 py-0.5 rounded-md border border-border text-[11.5px] font-semibold text-muted-foreground hover:bg-muted">
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => void setStatus(r.id, s)}
+                      disabled={statusBusy !== null}
+                      className="mr-1 px-2 py-0.5 rounded-md border border-border text-[11.5px] font-semibold text-muted-foreground hover:bg-muted disabled:opacity-40"
+                    >
                       {s}
                     </button>
                   ))}

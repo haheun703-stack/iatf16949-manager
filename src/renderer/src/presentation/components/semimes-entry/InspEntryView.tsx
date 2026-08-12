@@ -154,6 +154,11 @@ export function InspEntryView(): JSX.Element {
 
   async function cancelRec(): Promise<void> {
     if (!cancelFor) return
+    // 8/11 검수 Minor: 사유 사전검증 — 서버 거부 문구가 아니라 화면 문법으로 짚는다(ProdEntry 와 동일)
+    if (cancelFor.reason.trim() === '') {
+      setMsg({ tone: 'bad', text: '취소 사유는 필수입니다 — 두 줄 긋고 정정 서명의 전산 등가입니다.' })
+      return
+    }
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_RECORD_CANCEL, {
         kind: 'insp', id: cancelFor.id, reason: cancelFor.reason, canceledBy: userName

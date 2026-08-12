@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { todayKST } from '@shared/date-kst'
 import type { SemimesPpmDashDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { useSeqGuard } from '../../lib/asyncGuard'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
@@ -20,21 +21,26 @@ export function PpmDashView(): JSX.Element {
   const [dash, setDash] = useState<SemimesPpmDashDto | null>(null)
   const [target, setTarget] = useState('')
   const [busy, setBusy] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null)
 
+  // 연도 전환 연타 = KpiGrid 와 같은 경합(늦은 응답이 새 연도 라벨 아래 앉음) — 공용 seq 가드
+  const seq = useSeqGuard()
   const load = useCallback(async (y: string = year): Promise<void> => {
+    const token = seq.begin()
     setBusy(true)
     setMsg(null)
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_PPM_DASH, { year: y })) as SemimesPpmDashDto
+      if (!seq.isCurrent(token)) return
       setDash(res)
       setTarget(res.targetPpm != null ? String(res.targetPpm) : '')
     } catch {
-      setMsg({ tone: 'bad', text: '조회 실패 — 통신 오류. 다시 시도하세요.' })
+      if (seq.isCurrent(token)) setMsg({ tone: 'bad', text: '조회 실패 — 통신 오류. 다시 시도하세요.' })
     } finally {
-      setBusy(false)
+      if (seq.isCurrent(token)) setBusy(false)
     }
-  }, [year])
+  }, [year, seq])
 
   useEffect(() => {
     void load(year)
@@ -42,12 +48,18 @@ export function PpmDashView(): JSX.Element {
   }, [year])
 
   async function saveTarget(): Promise<void> {
-    if (target.trim() === '') return
+    if (saving) return // 8/11 검수 Minor: 저장 연타 = 같은 값 이중 기입(주체 각인 중복)
+    if (target.trim() === '') {
+      // 빈 값은 거부 — 0 은 사람이 적는다(8/11 총평 수치 입력 공통 규약)
+      setMsg({ tone: 'bad', text: '목표 PPM 을 입력하세요 — 빈 값은 저장하지 않습니다.' })
+      return
+    }
     const v = Number(target)
     if (!Number.isFinite(v) || v < 0) {
       setMsg({ tone: 'bad', text: '목표 PPM 은 0 이상 수치여야 합니다.' })
       return
     }
+    setSaving(true)
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_PPM_TARGET_SAVE, { value: v, savedBy: userName })) as { success: boolean; error?: string }
       if (!res.success) {
@@ -58,6 +70,8 @@ export function PpmDashView(): JSX.Element {
       await load()
     } catch {
       setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류. 다시 시도하세요.' })
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -67,6 +81,7 @@ export function PpmDashView(): JSX.Element {
   const best = dash && dash.byItem.length > 0 ? [...dash.byItem].filter((i) => i.ppm != null).sort((a, b) => (a.ppm ?? 0) - (b.ppm ?? 0)) : []
   const maxPpm = Math.max(...withPpm.map((m) => m.ppm ?? 0), tgt ?? 0, 1)
   const maxNg = Math.max(...(dash?.byDefect.map((d) => d.ng) ?? []), 1)
+  const curOver = dash?.currentMonthPpm != null && tgt != null && dash.currentMonthPpm > tgt
 
   // 12칸 고정 X축(1~12월) SVG 좌표
   const W = 560
@@ -117,16 +132,22 @@ export function PpmDashView(): JSX.Element {
             <input value={target} onChange={(e) => setTarget(e.target.value)} inputMode="numeric"
               onKeyDown={(e) => { if (e.key === 'Enter') void saveTarget() }}
               className="w-[90px] h-8 px-2 rounded-lg border border-border bg-fillable/70 text-[16px] font-extrabold tabular-nums" />
-            <button type="button" onClick={() => void saveTarget()} className="h-8 px-2.5 rounded-lg bg-mega-active text-white text-[11.5px] font-bold">저장</button>
+            <button type="button" onClick={() => void saveTarget()} disabled={saving} className="h-8 px-2.5 rounded-lg bg-mega-active text-white text-[11.5px] font-bold disabled:opacity-50">
+              {saving ? '저장 중…' : '저장'}
+            </button>
           </span>
-          <span className="block text-[11px] text-muted-foreground mt-1">{tgt == null ? '미설정 — 정직 표기' : '초과 월·제품 = 빨강'}</span>
+          {/* 8/11 검수 Minor: 초과를 색 단독으로 알리던 자리 — 색+기호+라벨 3중(CVD 안전 · 인쇄 흑백 안전) */}
+          <span className="block text-[11px] text-muted-foreground mt-1">{tgt == null ? '미설정 — 정직 표기' : '초과 = 빨강 + ▲ 표식'}</span>
         </div>
-        <div className={cn('rounded-2xl border shadow-card px-4 py-3', dash?.currentMonthPpm != null && tgt != null && dash.currentMonthPpm > tgt ? 'bg-bad-tint border-bad-ink/25' : 'bg-card border-border')}>
+        <div className={cn('rounded-2xl border shadow-card px-4 py-3', curOver ? 'bg-bad-tint border-bad-ink/25' : 'bg-card border-border')}>
           <span className="block text-[11.5px] font-bold text-muted-foreground">현재 월 PPM</span>
-          <b className={cn('block text-[24px] tabular-nums tracking-[-0.02em]', dash?.currentMonthPpm != null && tgt != null && dash.currentMonthPpm > tgt ? 'text-bad-ink' : 'text-mega-active')}>
+          <b className={cn('block text-[24px] tabular-nums tracking-[-0.02em]', curOver ? 'text-bad-ink' : 'text-mega-active')}>
+            {curOver && <span aria-hidden="true" className="text-[16px] mr-1">▲</span>}
             {dash?.currentMonthPpm ?? '—'}
           </b>
-          <span className="block text-[11px] text-muted-foreground">{todayKST().slice(0, 7)} · 실적 없으면 —</span>
+          <span className="block text-[11px] text-muted-foreground">
+            {curOver ? `목표 ${tgt} 초과 · ` : ''}{todayKST().slice(0, 7)} · 실적 없으면 —
+          </span>
         </div>
         <div className="rounded-2xl border border-border bg-card shadow-card px-4 py-3">
           <span className="block text-[11.5px] font-bold text-muted-foreground">최저 PPM 제품</span>
@@ -155,11 +176,20 @@ export function PpmDashView(): JSX.Element {
               {withPpm.map((m) => {
                 const over = tgt != null && (m.ppm ?? 0) > tgt
                 const mi = Number(m.month.slice(5)) - 1
+                const cx = x(mi)
+                const cy = y(m.ppm ?? 0)
                 return (
                   <g key={m.month}>
-                    <circle cx={x(mi)} cy={y(m.ppm ?? 0)} r="3.6" className={over ? 'fill-bad-ink' : 'fill-mega-active'} fill="currentColor" />
-                    <text x={x(mi)} y={y(m.ppm ?? 0) - 8} textAnchor="middle" className={cn('text-[10px] font-bold tabular-nums', over ? 'fill-bad-ink' : 'fill-mega-active')}>
-                      {m.ppm}
+                    {/* 초과 = 색 + 모양(▲) 2중 — 색 단독 판독 금지(8/11 검수 Minor) */}
+                    {over ? (
+                      <polygon points={`${cx},${cy - 4.6} ${cx - 4.4},${cy + 3.4} ${cx + 4.4},${cy + 3.4}`} className="fill-bad-ink" fill="currentColor">
+                        <title>{`${m.month} — 목표 ${tgt} 초과`}</title>
+                      </polygon>
+                    ) : (
+                      <circle cx={cx} cy={cy} r="3.6" className="fill-mega-active" fill="currentColor" />
+                    )}
+                    <text x={cx} y={cy - 8} textAnchor="middle" className={cn('text-[10px] font-bold tabular-nums', over ? 'fill-bad-ink' : 'fill-mega-active')}>
+                      {over ? `▲${m.ppm}` : m.ppm}
                     </text>
                   </g>
                 )
@@ -186,7 +216,9 @@ export function PpmDashView(): JSX.Element {
                     <td className={cn(TD, 'font-semibold max-w-[180px] truncate')} title={r.itemName ?? ''}>{r.itemCode}</td>
                     <td className={cn(TD, 'text-right tabular-nums')}>{r.ok.toLocaleString()}</td>
                     <td className={cn(TD, 'text-right tabular-nums', r.ng > 0 ? 'font-bold text-bad-ink' : 'text-muted-foreground')}>{r.ng.toLocaleString()}</td>
-                    <td className={cn(TD, 'text-right tabular-nums font-extrabold', over ? 'text-bad-ink' : 'text-mega-active')}>{r.ppm ?? '—'}</td>
+                    <td className={cn(TD, 'text-right tabular-nums font-extrabold', over ? 'text-bad-ink' : 'text-mega-active')} title={over ? `목표 ${tgt} 초과` : undefined}>
+                      {over && <span aria-hidden="true">▲ </span>}{r.ppm ?? '—'}
+                    </td>
                   </tr>
                 )
               })}

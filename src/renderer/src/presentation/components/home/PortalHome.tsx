@@ -4,6 +4,7 @@ import {
   UserCircle2, Lock, ClipboardList
 } from 'lucide-react'
 import { TEAMS, normalizeTeam, teamTheme, type TeamId } from '@shared/team-theme'
+import { todayKST } from '@shared/date-kst'
 import type {
   CompanyProfile,
   TeamTodayBoardDto,
@@ -42,6 +43,8 @@ export function PortalHome({ mode = 'home' }: { mode?: 'home' | 'board' } = {}):
   const [onlyOpen, setOnlyOpen] = useState(false)
   const [boardView, setBoardView] = useState<'team' | 'person'>('team')
   const [completing, setCompleting] = useState<number | null>(null)
+  // 8/11 검수 Minor: 완료 실패 무통지 해소용 알림 1줄(성공 시 자동 소거)
+  const [actionErr, setActionErr] = useState<string | null>(null)
   const [mesStatus, setMesStatus] = useState<MesRecordsStatusDto | null>(null)
   const [matrix, setMatrix] = useState<ObligationMatrixDto | null>(null)
   const [matrixStatus, setMatrixStatus] = useState<'ready' | 'loading' | 'error'>('loading')
@@ -138,24 +141,11 @@ export function PortalHome({ mode = 'home' }: { mode?: 'home' | 'board' } = {}):
   // source='form' = [작성기록으로 확정](§0.6 결정2) / 'manual' = 무연결 의무 수동 완료.
   // 기록 주체 = 활성 사용자 우선, 없으면 defaultAuthor 폴백(§4).
   const complete = async (task: TodayTaskDto, source: 'manual' | 'form' = 'manual'): Promise<void> => {
-    // 데이터 트리거 이슈(M3) — 의무와 별도 대장(obligation_trigger_issues). ✓는 사람만(§3-2).
-    if (task.triggerIssueId) {
-      setCompleting(task.id)
-      try {
-        await window.api.invoke(window.api.channels.OBLIGATION_TRIGGER_COMPLETE, {
-          issueId: task.triggerIssueId,
-          doneBy: currentUser?.name || profile?.defaultAuthor || undefined
-        })
-        await load()
-      } catch {
-        /* 실패 시 화면 유지 */
-      } finally {
-        setCompleting(null)
-      }
-      return
-    }
+    if (completing !== null) return // 완료 왕복 중 재진입 차단
     // 대리 완료 confirm(P3-fix, 코워크): 담당이 타인인 업무는 확인 1회 — 차단이 아니라
     // "누가 누구 대신 완료했는지" 정직 기록이 목적. 본인·미지정 업무는 원클릭 유지.
+    // 8/11 검수 Minor: 트리거 이슈 분기가 이 확인 앞에서 return 해 대리 완료가 무확인으로 통과하던 자리 —
+    // 확인을 분기보다 앞으로 올려 두 경로가 같은 관문을 지나게 한다.
     if (task.assignee && currentUser && task.assignee !== currentUser.name) {
       const ok = await confirmDialog({
         title: `담당은 ${task.assignee}입니다`,
@@ -164,16 +154,26 @@ export function PortalHome({ mode = 'home' }: { mode?: 'home' | 'board' } = {}):
       })
       if (!ok) return
     }
+    setActionErr(null)
     setCompleting(task.id)
     try {
-      await window.api.invoke(window.api.channels.OBLIGATION_COMPLETE, {
-        id: task.id,
-        doneBy: currentUser?.name || profile?.defaultAuthor || undefined,
-        source
-      })
+      // 데이터 트리거 이슈(M3) — 의무와 별도 대장(obligation_trigger_issues). ✓는 사람만(§3-2).
+      if (task.triggerIssueId) {
+        await window.api.invoke(window.api.channels.OBLIGATION_TRIGGER_COMPLETE, {
+          issueId: task.triggerIssueId,
+          doneBy: currentUser?.name || profile?.defaultAuthor || undefined
+        })
+      } else {
+        await window.api.invoke(window.api.channels.OBLIGATION_COMPLETE, {
+          id: task.id,
+          doneBy: currentUser?.name || profile?.defaultAuthor || undefined,
+          source
+        })
+      }
       await load()
     } catch {
-      /* 실패 시 화면 유지 */
+      // 8/11 검수 Minor: 조용한 실패 금지 — 눌렀는데 안 된 것을 말한다
+      setActionErr(`완료 처리 실패 — 통신 오류. 목록은 그대로입니다(“${task.title}” 미완료). 다시 시도하세요.`)
     } finally {
       setCompleting(null)
     }
@@ -260,6 +260,15 @@ export function PortalHome({ mode = 'home' }: { mode?: 'home' | 'board' } = {}):
           {currentUser ? `${currentUser.name} · ${currentUser.teamDept ?? ''}` : '사용자 선택'}
         </button>
       </div>
+
+      {/* 8/11 검수 Minor: 완료(✓) 실패가 조용히 삼켜져 "눌렀는데 안 됐다"가 남던 자리 — 실패는 말한다.
+          §5 위젯 상한과 무관(조건부 1줄 알림 · 성공 시 사라짐). */}
+      {actionErr && (
+        <div className="rounded-xl px-4 py-2.5 text-[13px] font-bold bg-bad-tint text-bad-ink flex items-center gap-2" role="status">
+          {actionErr}
+          <button type="button" onClick={() => setActionErr(null)} className="ml-auto text-[12px] font-semibold underline underline-offset-2">닫기</button>
+        </div>
+      )}
 
       {/* ══ 31호 §2 — 홈 구조(8/6 통합검수 확정): ①문제 배너 ②TOP5 ③도넛 ④심사뷰 ⑤KPI = 5블록.
           팀별 보드·매트릭스 존은 '오늘 할 일 보드' 화면으로 이관(§5 상한 준수 — 검수 회신 §3).
@@ -1328,10 +1337,8 @@ function KpiTile({
   onOpenPage?: (page: PageId) => void
 }): JSX.Element {
   const link = traceDeepLink(kpi.name)
-  const nowPeriod = (() => {
-    const d = new Date()
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-  })()
+  // 8/11 검수 Minor: 브라우저 로컬 축 → 기록 날짜 축(KST)으로 통일
+  const nowPeriod = todayKST().slice(0, 7)
   const [editing, setEditing] = useState(false)
   const [period, setPeriod] = useState(nowPeriod)
   const [val, setVal] = useState('')

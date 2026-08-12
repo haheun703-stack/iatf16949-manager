@@ -194,6 +194,13 @@ export function InspHistoryView({ fixedKind }: { fixedKind?: string }): JSX.Elem
                           ))}
                         </tbody>
                       </table>
+                      {/* 8/11 검수 Minor: 시료 6번부터 열이 잘려 조용히 감춰졌다 — 감춘 사실을 표기(정직 문법).
+                          엑셀은 헤더 요약(측정값 수)만이라 대체 경로로 안내하지 않는다. */}
+                      {maxSample > sampleCols.length && (
+                        <p className="mt-2 text-[11.5px] font-semibold text-warn-ink">
+                          이 기록은 시료 {maxSample}개 — 화면에는 {sampleCols.length}개까지만 표시됩니다(시료 {sampleCols.length + 1}~{maxSample}번은 접힘 · 기록 자체는 보존).
+                        </p>
+                      )}
                     </td>
                   </tr>
                 )}

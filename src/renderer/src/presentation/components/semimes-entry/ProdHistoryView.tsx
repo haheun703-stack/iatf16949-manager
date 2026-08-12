@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { todayKST } from '@shared/date-kst'
 import type { SemimesProdAggRowDto, SemimesProdRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { useSeqGuard } from '../../lib/asyncGuard'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
 /**
@@ -33,23 +34,27 @@ export function ProdHistoryView(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
+  // 8/11 검수 Minor: 탭 연타 시 늦은 응답이 다른 탭 화면에 앉는다 — seq 가드(공용 프레임)
+  const seq = useSeqGuard()
   const load = useCallback(
     async (t: Tab = tab): Promise<void> => {
+      const token = seq.begin()
       setBusy(true)
       setErr(null)
       try {
         const res = (await window.api.invoke(window.api.channels.SEMIMES_PROD_LIST, {
           from, to, itemCode: itemCode.trim() || undefined, mode: t
         })) as { rows: SemimesProdRowDto[]; agg: SemimesProdAggRowDto[] }
+        if (!seq.isCurrent(token)) return
         setRows(res.rows)
         setAgg(res.agg)
       } catch {
-        setErr('조회 실패 — 통신 오류. 다시 시도하세요.')
+        if (seq.isCurrent(token)) setErr('조회 실패 — 통신 오류. 다시 시도하세요.')
       } finally {
-        setBusy(false)
+        if (seq.isCurrent(token)) setBusy(false)
       }
     },
-    [from, to, itemCode, tab]
+    [from, to, itemCode, tab, seq]
   )
 
   useEffect(() => {

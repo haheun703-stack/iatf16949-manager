@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Download, Palette, RefreshCw, Save } from 'lucide-react'
+import { todayKST } from '@shared/date-kst'
 import type { KpiIndicatorDto, KpiMonthValueDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useActiveUserStore } from '../../stores/activeUserStore'
@@ -21,7 +22,8 @@ export function KpiGridView(): JSX.Element {
   const userName = users.find((u) => u.id === activeUserId)?.name
   const [colors, toggleColors] = useHeatColors()
 
-  const thisYear = new Date().getFullYear()
+  // 8/11 검수 Minor: 연도 초기값이 브라우저 로컬 축 — 기록 날짜 축(KST)과 어긋날 수 있다(연말·해외 시간대 PC)
+  const thisYear = Number(todayKST().slice(0, 4))
   const [year, setYear] = useState(String(thisYear))
   const [inds, setInds] = useState<KpiIndicatorDto[]>([])
   const [values, setValues] = useState<Record<string, string>>({}) // `${id}|${MM}` → 입력 문자열
@@ -140,13 +142,18 @@ export function KpiGridView(): JSX.Element {
 
   async function exportXlsx(): Promise<void> {
     setMsg(null)
-    const res = (await window.api.invoke(window.api.channels.KPI_EXPORT_XLSX, { year })) as {
-      success: boolean
-      canceled?: boolean
-      error?: string
+    // 8/11 검수 Minor: catch 없음 — 웹 모드 통신 오류 시 아무 말 없이 끝나던 자리
+    try {
+      const res = (await window.api.invoke(window.api.channels.KPI_EXPORT_XLSX, { year })) as {
+        success: boolean
+        canceled?: boolean
+        error?: string
+      }
+      if (res.success) setMsg({ tone: 'ok', text: '엑셀 저장 완료 (부호 착색 동봉)' })
+      else if (!res.canceled) setMsg({ tone: 'bad', text: res.error ?? '엑셀 저장 실패' })
+    } catch {
+      setMsg({ tone: 'bad', text: '엑셀 저장 실패 — 통신 오류. 다시 시도하세요.' })
     }
-    if (res.success) setMsg({ tone: 'ok', text: '엑셀 저장 완료 (부호 착색 동봉)' })
-    else if (!res.canceled) setMsg({ tone: 'bad', text: res.error ?? '엑셀 저장 실패' })
   }
 
   /** 부호 판정: 목표 대비 불리 = 'bad'(빨강) · 유리 = 'good'(파랑) · 목표 없음/빈칸 = null */

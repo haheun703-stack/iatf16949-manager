@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { X, Save, Loader2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { normalizeTeam, teamTheme } from '@shared/team-theme'
+import { todayKST } from '@shared/date-kst'
 import type { KpiIndicatorDto, KpiMonthValueDto } from '@shared/ipc-types'
 
 /**
@@ -9,9 +10,9 @@ import type { KpiIndicatorDto, KpiMonthValueDto } from '@shared/ipc-types'
  * 자동산출 불가(MES 판정·불량 부재) → 수기 집계값을 월별로 기록. 빈칸=미입력 유지(가짜 숫자 금지),
  * 값 있는 지표만 upsert(같은 월 재입력=정정). 지표별 [입력] 낱개 대비 대량 입력에 최적.
  */
+/** 8/11 검수 Minor: 브라우저 로컬 축 → 기록 날짜 축(KST)으로 통일 */
 function nowPeriod(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  return todayKST().slice(0, 7)
 }
 
 export function KpiBatchEntryModal({

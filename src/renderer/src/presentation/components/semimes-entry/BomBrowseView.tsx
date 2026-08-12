@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { SemimesBomExplodeRowDto, SemimesItemSearchRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { useDebouncedCallback, useSeqGuard } from '../../lib/asyncGuard'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
 /**
@@ -18,34 +19,41 @@ export function BomBrowseView(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
 
+  // 8/11 검수 Minor: 정/역전개 방향 연타 시 늦은 응답이 반대 방향 표에 앉는다 — seq 가드(공용 프레임)
+  const seq = useSeqGuard()
   async function load(dir: 'down' | 'up' = direction): Promise<void> {
     if (!itemCode.trim()) {
       setMsg('품번을 입력하세요.')
       return
     }
+    const token = seq.begin()
     setBusy(true)
     setMsg(null)
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_BOM_EXPLODE, {
         itemCode: itemCode.trim(), direction: dir
       })) as SemimesBomExplodeRowDto[]
+      if (!seq.isCurrent(token)) return
       setRows(res)
       setQueried(true)
     } catch {
-      setMsg('조회 실패 — 통신 오류. 다시 시도하세요.')
+      if (seq.isCurrent(token)) setMsg('조회 실패 — 통신 오류. 다시 시도하세요.')
     } finally {
-      setBusy(false)
+      if (seq.isCurrent(token)) setBusy(false)
     }
   }
 
-  const searchItems = async (q: string): Promise<void> => {
+  // 품번 제안 = 250ms 디바운스(공용 — 수집함 선례와 통일. 타이핑 1글자마다 왕복하던 자리)
+  const searchItems = useDebouncedCallback((q: string): void => {
     if (q.trim().length < 2) return
-    try {
-      setSuggest((await window.api.invoke(window.api.channels.SEMIMES_ITEM_SEARCH, { query: q.trim(), limit: 20 })) as SemimesItemSearchRowDto[])
-    } catch {
-      /* 제안 실패 — 직접 입력 유지 */
-    }
-  }
+    void (async () => {
+      try {
+        setSuggest((await window.api.invoke(window.api.channels.SEMIMES_ITEM_SEARCH, { query: q.trim(), limit: 20 })) as SemimesItemSearchRowDto[])
+      } catch {
+        /* 제안 실패 — 직접 입력 유지 */
+      }
+    })()
+  })
 
   const TH = 'text-left font-bold text-secondary-foreground bg-secondary/60 py-2 px-3 whitespace-nowrap'
   const TD = 'py-2 px-3 border-b border-border/60 whitespace-nowrap'
@@ -71,7 +79,7 @@ export function BomBrowseView(): JSX.Element {
             value={itemCode}
             onChange={(e) => {
               setItemCode(e.target.value)
-              void searchItems(e.target.value)
+              searchItems(e.target.value)
             }}
             onKeyDown={(e) => { if (e.key === 'Enter') void load() }}
             placeholder="품번 (마스터 검색)"
