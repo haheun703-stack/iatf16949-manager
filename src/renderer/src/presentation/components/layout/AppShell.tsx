@@ -50,6 +50,12 @@ import { WorkCalendarView } from '../semimes-entry/WorkCalendarView'
 import { PerfIndicatorsView } from '../semimes-entry/PerfIndicatorsView'
 import { ProdChartView } from '../semimes-entry/ProdChartView'
 import { TraceBandView } from '../semimes-entry/TraceBandView'
+import { EquipMasterView } from '../semimes-entry/EquipMasterView'
+import { EquipCheckHistoryView } from '../semimes-entry/EquipCheckHistoryView'
+import { MoldView } from '../semimes-entry/MoldView'
+import { KpiIndicatorView } from '../semimes-entry/KpiIndicatorView'
+import { DailyReportView } from '../semimes-entry/DailyReportView'
+import { XbarRView } from '../semimes-entry/XbarRView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { ConfirmDialogHost } from '../shared/ConfirmDialog'
@@ -139,6 +145,12 @@ export function AppShell(): JSX.Element {
             {currentPage === 'perf-indicators' && <PerfIndicatorsView />}
             {currentPage === 'prod-chart' && <ProdChartView />}
             {currentPage === 'trace-band' && <TraceBandView />}
+            {currentPage === 'equip-master' && <EquipMasterView />}
+            {currentPage === 'equip-check' && <EquipCheckHistoryView />}
+            {currentPage === 'mold-master' && <MoldView />}
+            {currentPage === 'kpi-indicators' && <KpiIndicatorView />}
+            {currentPage === 'daily-report' && <DailyReportView />}
+            {currentPage === 'xbar-r' && <XbarRView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

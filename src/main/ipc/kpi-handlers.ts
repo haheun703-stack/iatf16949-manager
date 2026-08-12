@@ -4,6 +4,7 @@ import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
 import type {
   KpiIndicatorDto,
+  KpiIndicatorSaveInput,
   KpiMeasurementDto,
   KpiSaveInput,
   KpiMonthValueDto,
@@ -49,6 +50,49 @@ export function registerKpiHandlers(): void {
     } catch (err) {
       console.error('[kpi:home] failed:', (err as Error).message)
       return []
+    }
+  })
+
+  // ── 34호 배치⑷ #13 — KPI 기준정보관리(kpi_indicators 편집 · 그림63) ──
+  // 마스터 성격 = UPSERT. 정비 주체 요구·미저장(주체 컬럼 없음 — 익명 정비만 거부, itemUpdate 선례).
+  // 지표 삭제 없음 — active 강하만(측정값 이력 보존).
+  ipcMain.handle(IPC_CHANNELS.KPI_INDICATOR_SAVE, (_e, req: KpiIndicatorSaveInput): { success: boolean; id?: number; error?: string } => {
+    if (!req?.name?.trim()) return { success: false, error: '지표명은 필수입니다.' }
+    if (!req.updatedBy?.trim()) return { success: false, error: '정비 주체가 없습니다 — 사용자를 선택하세요.' }
+    if (req.direction != null && !['higher', 'lower'].includes(req.direction)) {
+      return { success: false, error: "direction 은 'higher'/'lower' 입니다." }
+    }
+    // 목표 = 빈 값 null(미설정 정직) · 비수치 거부(수치 입력 공통 규약 — Number('')=0 강하 금지)
+    let target: number | null = null
+    if (req.target != null && String(req.target).trim() !== '') {
+      target = Number(req.target)
+      if (!Number.isFinite(target)) return { success: false, error: '목표는 수치여야 합니다.' }
+    }
+    if (req.active != null && ![0, 1].includes(req.active)) return { success: false, error: 'active 는 0/1 입니다.' }
+    try {
+      if (req.id != null) {
+        const cur = db.prepare('SELECT id FROM kpi_indicators WHERE id = ?').get(req.id)
+        if (!cur) return { success: false, error: `지표(#${req.id})가 없습니다.` }
+        // unit 은 NOT NULL(0066) — 미전달/공란은 현행 유지(비우기 불가 스키마 그대로, 재해석 없음)
+        db.prepare(
+          `UPDATE kpi_indicators SET name = ?, unit = COALESCE(?, unit), target = ?, direction = COALESCE(?, direction),
+             owner_team = ?, sort_order = COALESCE(?, sort_order), note = ?, active = COALESCE(?, active)
+           WHERE id = ?`
+        ).run(
+          req.name.trim(), req.unit?.trim() || null, target, req.direction ?? null,
+          req.ownerTeam?.trim() || null, req.sortOrder ?? null, req.note?.trim() || null, req.active ?? null, req.id
+        )
+        return { success: true, id: req.id }
+      }
+      const info = db
+        .prepare(
+          `INSERT INTO kpi_indicators (name, unit, target, direction, owner_team, sort_order, note, active)
+           VALUES (?, COALESCE(?, '%'), ?, COALESCE(?, 'higher'), ?, COALESCE(?, (SELECT COALESCE(MAX(sort_order),0)+1 FROM kpi_indicators)), ?, COALESCE(?, 1))`
+        )
+        .run(req.name.trim(), req.unit?.trim() || null, target, req.direction ?? null, req.ownerTeam?.trim() || null, req.sortOrder ?? null, req.note?.trim() || null, req.active ?? null)
+      return { success: true, id: Number(info.lastInsertRowid) }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   })
 

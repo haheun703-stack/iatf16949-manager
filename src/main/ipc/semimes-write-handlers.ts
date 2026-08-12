@@ -3,8 +3,10 @@ import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { todayKST } from '@shared/date-kst'
 import { getSqlite } from '../database/connection'
 import type {
+  SemimesEquipSaveInput,
   SemimesInspCreateInput,
   SemimesItemUpdateInput,
+  SemimesMoldSaveInput,
   SemimesPartnerUpdateInput,
   SemimesProdCreateInput,
   SemimesScanContextDto,
@@ -559,6 +561,77 @@ export function registerSemimesWriteHandlers(): void {
       }
     }
   )
+
+  // ── ⑭ equipSave — 설비 마스터 등록/정비 (34호 배치⑷ #9 · 0140 — UPSERT·STAMP) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_EQUIP_SAVE, (_e, req: SemimesEquipSaveInput) => {
+    if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
+    if (!req?.equipCode?.trim()) return { success: false, error: '설비코드는 필수입니다.' }
+    if (!req.name?.trim()) return { success: false, error: '설비명은 필수입니다.' }
+    if (!req.updatedBy?.trim()) return { success: false, error: '정비 주체가 없습니다 — 사용자를 선택하세요.' }
+    if (req.installDate != null && req.installDate !== '' && !ymdOk(req.installDate)) {
+      return { success: false, error: '설치일은 YYYY-MM-DD 실재 일자여야 합니다.' }
+    }
+    if (req.active != null && ![0, 1].includes(req.active)) return { success: false, error: 'active 는 0/1 입니다.' }
+    try {
+      db.prepare(
+        `INSERT INTO equipment_master (equip_code, name, equip_type, line_no, location, install_date, note, active, updated_by, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, 1), ?, datetime('now'))
+         ON CONFLICT(equip_code) DO UPDATE SET name = excluded.name, equip_type = excluded.equip_type,
+           line_no = excluded.line_no, location = excluded.location, install_date = excluded.install_date,
+           note = excluded.note, active = COALESCE(excluded.active, equipment_master.active),
+           updated_by = excluded.updated_by, updated_at = excluded.updated_at`
+      ).run(
+        req.equipCode.trim(), req.name.trim(), req.equipType?.trim() || null, req.lineNo?.trim() || null,
+        req.location?.trim() || null, req.installDate?.trim() || null, req.note?.trim() || null,
+        req.active ?? null, req.updatedBy.trim()
+      )
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  })
+
+  // ── ⑮ moldSave — 금형 마스터 등록/정비 (34호 배치⑷ #11 · 26번 A4 착지 — 연결 품번 실존 강제) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_MOLD_SAVE, (_e, req: SemimesMoldSaveInput) => {
+    if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
+    if (!req?.moldCode?.trim()) return { success: false, error: '금형코드는 필수입니다.' }
+    if (!req.name?.trim()) return { success: false, error: '금형명은 필수입니다.' }
+    if (!req.updatedBy?.trim()) return { success: false, error: '정비 주체가 없습니다 — 사용자를 선택하세요.' }
+    const item = req.itemCode?.trim() || null
+    if (item && !itemRow(item)) return { success: false, error: `연결 품번(${item})이 품목 마스터에 없습니다.` }
+    // 빈 값은 null(미기입 정직) — 0·음수 캐비티/보증타수는 거부(수치 입력 공통 규약)
+    const num = (v: number | null | undefined, label: string): number | null | { err: string } => {
+      if (v == null || (typeof (v as unknown) === 'string' && String(v).trim() === '')) return null
+      const n = Number(v)
+      if (!Number.isInteger(n) || n <= 0) return { err: `${label}는 1 이상의 정수여야 합니다.` }
+      return n
+    }
+    const cavity = num(req.cavity, '캐비티')
+    if (cavity != null && typeof cavity === 'object') return { success: false, error: cavity.err }
+    const guarantee = num(req.guaranteeShots, '보증 타발수')
+    if (guarantee != null && typeof guarantee === 'object') return { success: false, error: guarantee.err }
+    if (req.installDate != null && req.installDate !== '' && !ymdOk(req.installDate)) {
+      return { success: false, error: '설치일은 YYYY-MM-DD 실재 일자여야 합니다.' }
+    }
+    try {
+      db.prepare(
+        `INSERT INTO mold_master (mold_code, name, item_code, cavity, guarantee_shots, location, install_date, note, active, updated_by, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, 1), ?, datetime('now'))
+         ON CONFLICT(mold_code) DO UPDATE SET name = excluded.name, item_code = excluded.item_code,
+           cavity = excluded.cavity, guarantee_shots = excluded.guarantee_shots, location = excluded.location,
+           install_date = excluded.install_date, note = excluded.note,
+           active = COALESCE(excluded.active, mold_master.active),
+           updated_by = excluded.updated_by, updated_at = excluded.updated_at`
+      ).run(
+        req.moldCode.trim(), req.name.trim(), item, cavity, guarantee,
+        req.location?.trim() || null, req.installDate?.trim() || null, req.note?.trim() || null,
+        req.active ?? null, req.updatedBy.trim()
+      )
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  })
 
   // ── ⑧ inspConfirm — 확인자 2단 서명(§10-1 ⓒ — ✓는 사람, 세션 각인, 1회) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_INSP_CONFIRM, (_e, { id, confirmer }: { id: number; confirmer?: string }) => {

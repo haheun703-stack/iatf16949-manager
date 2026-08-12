@@ -250,6 +250,15 @@ export const IPC_CHANNELS = {
   SEMIMES_PERF_INDICATORS: 'semimes:perfIndicators',
   SEMIMES_PROD_CHART: 'semimes:prodChart',
   SEMIMES_TRACE_BAND: 'semimes:traceBand',
+  // 34호 배치⑷ — 설비·금형·리포트(#9 설비등록·#10 일상점검내역·#11 금형 2종·#8 XBAR-R)
+  SEMIMES_EQUIP_LIST: 'semimes:equipList',
+  SEMIMES_EQUIP_SAVE: 'semimes:equipSave',
+  SEMIMES_EQUIP_CHECK_LIST: 'semimes:equipCheckList',
+  SEMIMES_MOLD_LIST: 'semimes:moldList',
+  SEMIMES_MOLD_SAVE: 'semimes:moldSave',
+  SEMIMES_XBAR_R: 'semimes:xbarR',
+  // 34호 배치⑷ — #13 KPI 기준정보관리(kpi_indicators 편집)
+  KPI_INDICATOR_SAVE: 'kpi:indicatorSave',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',

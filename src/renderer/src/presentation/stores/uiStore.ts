@@ -54,6 +54,12 @@ export type PageId =
   | 'perf-indicators'
   | 'prod-chart'
   | 'trace-band'
+  | 'equip-master'
+  | 'equip-check'
+  | 'mold-master'
+  | 'kpi-indicators'
+  | 'daily-report'
+  | 'xbar-r'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
@@ -108,7 +114,13 @@ export const PAGE_LABELS: Record<PageId, string> = {
   'work-calendar': '조업달력',
   'perf-indicators': '성과 지표',
   'prod-chart': '생산현황 차트',
-  'trace-band': '추적 공정 흐름'
+  'trace-band': '추적 공정 흐름',
+  'equip-master': '설비등록',
+  'equip-check': '설비 일상점검 내역',
+  'mold-master': '금형관리 (마스터·타발수)',
+  'kpi-indicators': 'KPI 기준정보관리',
+  'daily-report': '일일 실적현황 (문서형)',
+  'xbar-r': 'X BAR R 관리도'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

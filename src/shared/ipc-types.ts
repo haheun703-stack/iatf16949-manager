@@ -2341,6 +2341,34 @@ export interface IpcChannelMap {
     request: { orderNo: string }
     response: SemimesTraceBandDto
   }
+  [IPC_CHANNELS.SEMIMES_EQUIP_LIST]: {
+    request: { includeInactive?: boolean } | undefined
+    response: { rows: SemimesEquipRowDto[]; observedLines: string[] }
+  }
+  [IPC_CHANNELS.SEMIMES_EQUIP_SAVE]: {
+    request: SemimesEquipSaveInput
+    response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_EQUIP_CHECK_LIST]: {
+    request: { from: string; to: string }
+    response: SemimesEquipCheckDto
+  }
+  [IPC_CHANNELS.SEMIMES_MOLD_LIST]: {
+    request: { includeInactive?: boolean } | undefined
+    response: SemimesMoldRowDto[]
+  }
+  [IPC_CHANNELS.SEMIMES_MOLD_SAVE]: {
+    request: SemimesMoldSaveInput
+    response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_XBAR_R]: {
+    request: { itemCode: string; inspItem?: string; from?: string; to?: string }
+    response: SemimesXbarRDto
+  }
+  [IPC_CHANNELS.KPI_INDICATOR_SAVE]: {
+    request: KpiIndicatorSaveInput
+    response: { success: boolean; id?: number; error?: string }
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -3480,6 +3508,102 @@ export interface SemimesProdChartDto {
   byItem: Array<{ itemCode: string; itemName: string | null; ok: number; ng: number }>
   /** 조업달력 기준 조업일수(등록분만 — null = 그 기간 달력 미등록) */
   calendarWorkDays: number | null
+}
+
+// ── 34호 배치⑷ — 설비·금형·XBAR-R DTO ──
+
+export interface SemimesEquipRowDto {
+  equipCode: string
+  name: string
+  equipType: string | null
+  lineNo: string | null
+  location: string | null
+  installDate: string | null
+  note: string | null
+  active: number
+  updatedBy: string | null
+}
+
+export interface SemimesEquipSaveInput {
+  equipCode: string
+  name: string
+  equipType?: string | null
+  lineNo?: string | null
+  location?: string | null
+  installDate?: string | null
+  note?: string | null
+  active?: 0 | 1
+  updatedBy?: string
+}
+
+/** #10 설비일상점검내역 — MES(mac_daily) 축 + 앱(L1100-07) 축 병렬(원천 정직 구분) */
+export interface SemimesEquipCheckDto {
+  from: string
+  to: string
+  /** 사이드카 가용 여부 — false 면 MES 축은 '원천 없음' 정직 표기 */
+  mesAvailable: boolean
+  mes: Array<{ ymd: string; lineNo: string | null; items: number; checkers: number; confirmedItems: number }>
+  app: Array<{ id: number; ymd: string; createdBy: string | null }>
+}
+
+export interface SemimesMoldRowDto {
+  moldCode: string
+  name: string
+  itemCode: string | null
+  itemName: string | null
+  cavity: number | null
+  guaranteeShots: number | null
+  location: string | null
+  installDate: string | null
+  note: string | null
+  active: number
+  updatedBy: string | null
+  /** 연결 품번 생산수량 합(양품+불량 · 취소 제외) — 타발수 원자료 */
+  prodQty: number
+  /** 타발수 = prodQty / cavity (cavity 미기입 = null — '—' 정직) */
+  shots: number | null
+  /** 잔여 = guarantee - shots (둘 다 있을 때만) */
+  remainShots: number | null
+}
+
+export interface SemimesMoldSaveInput {
+  moldCode: string
+  name: string
+  itemCode?: string | null
+  cavity?: number | null
+  guaranteeShots?: number | null
+  location?: string | null
+  installDate?: string | null
+  note?: string | null
+  active?: 0 | 1
+  updatedBy?: string
+}
+
+/** #8 X BAR R — 시료 2~10 서브그룹(검사기록 1건 = 1군). n<2 군 제외(정직 카운트 동봉) */
+export interface SemimesXbarRDto {
+  itemCode: string
+  inspItem: string | null
+  /** 선택 가능한 검사항목(품번의 기록 실존 항목) */
+  items: string[]
+  points: Array<{ recordId: number; inspDate: string; n: number; xbar: number; r: number }>
+  /** 관리한계(군 2개 미만·군 크기 불일치 시 null — 계산하지 않는다) */
+  limits: { n: number; xbarCl: number; xbarUcl: number; xbarLcl: number; rCl: number; rUcl: number; rLcl: number } | null
+  /** 제외된 군 수(n<2 — 시료 1개 기록) */
+  skippedSmall: number
+}
+
+export interface KpiIndicatorSaveInput {
+  /** 없으면 신규 */
+  id?: number
+  name: string
+  unit?: string | null
+  target?: number | null
+  direction?: 'higher' | 'lower'
+  ownerTeam?: string | null
+  sortOrder?: number | null
+  note?: string | null
+  active?: 0 | 1
+  updatedBy?: string
 }
 
 /** #16 추적 공정 흐름 밴드 — 작업지시 1건의 지시수량→공정별 수량 열산 */

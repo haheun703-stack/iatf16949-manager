@@ -11,7 +11,9 @@ import type {
   SemimesInspListReq,
   SemimesInspRowDto,
   SemimesInspValueRowDto,
+  SemimesEquipRowDto,
   SemimesMatStockRowDto,
+  SemimesMoldRowDto,
   SemimesPerfIndicatorDto,
   SemimesPerfIndicatorsDto,
   SemimesPpmDashDto,
@@ -22,7 +24,8 @@ import type {
   SemimesReceiptRowDto,
   SemimesSpecRegistryRowDto,
   SemimesTraceBandDto,
-  SemimesWorkCalendarDto
+  SemimesWorkCalendarDto,
+  SemimesXbarRDto
 } from '@shared/ipc-types'
 
 /**
@@ -552,6 +555,145 @@ export function registerSemimesQueryHandlers(): void {
     const offRoute = Array.from(byProc.entries()).map(([procCode, list]) => ({ procCode, ...sums(list) }))
     return { found: true, orderNo: wo.orderNo, itemCode: wo.itemCode, itemName: wo.itemName, orderQty: wo.orderQty, status: wo.status, procs, offRoute }
   })
+
+  // ══ 34호 배치⑷ — 설비·금형·XBAR-R (조회 축) ══
+
+  // ── ⑰ equipList — 설비 마스터 조회 (#9 골격 · 0140. observedLines = MES 관측 라인 참고) ──
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_EQUIP_LIST,
+    (_e, req: { includeInactive?: boolean } | undefined): { rows: SemimesEquipRowDto[]; observedLines: string[] } => {
+      const where = req?.includeInactive ? '' : 'WHERE active = 1'
+      let rows: SemimesEquipRowDto[] = []
+      try {
+        rows = db
+          .prepare(
+            `SELECT equip_code AS equipCode, name, equip_type AS equipType, line_no AS lineNo,
+                    location, install_date AS installDate, note, active, updated_by AS updatedBy
+             FROM equipment_master ${where} ORDER BY equip_code LIMIT 300`
+          )
+          .all() as SemimesEquipRowDto[]
+      } catch {
+        /* 0140 미적용 DB 방어 */
+      }
+      // MES 기록에 나타난 라인(설비 연결 후보) — routing_step 공정과 별개 축(관측치 참조용)
+      let observedLines: string[] = []
+      try {
+        observedLines = (
+          db.prepare(`SELECT DISTINCT line_no l FROM prod_record WHERE line_no IS NOT NULL ORDER BY l LIMIT 100`).all() as Array<{ l: string }>
+        ).map((r) => r.l)
+      } catch {
+        /* 무시 */
+      }
+      return { rows, observedLines }
+    }
+  )
+
+  // ── ⑱ moldList — 금형 마스터 + 타발수 연동 (#11 골격 · 26번 A4 계약 착지) ──
+  // 타발수 = 연결 품번 생산수량(양품+불량 · 취소 제외) ÷ 캐비티. 캐비티 미기입 = '—'(추정 금지).
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_MOLD_LIST,
+    (_e, req: { includeInactive?: boolean } | undefined): SemimesMoldRowDto[] => {
+      const where = req?.includeInactive ? '' : 'WHERE m.active = 1'
+      try {
+        const rows = db
+          .prepare(
+            `SELECT m.mold_code AS moldCode, m.name, m.item_code AS itemCode, i.item_name AS itemName,
+                    m.cavity, m.guarantee_shots AS guaranteeShots, m.location, m.install_date AS installDate,
+                    m.note, m.active, m.updated_by AS updatedBy,
+                    COALESCE((SELECT SUM(p.ok_qty) + SUM(p.ng_qty) FROM prod_record p
+                              WHERE p.item_code = m.item_code AND p.canceled_at IS NULL), 0) AS prodQty
+             FROM mold_master m LEFT JOIN item_master i ON i.item_code = m.item_code
+             ${where} ORDER BY m.mold_code LIMIT 300`
+          )
+          .all() as Array<Omit<SemimesMoldRowDto, 'shots' | 'remainShots'>>
+        return rows.map((r) => {
+          const shots = r.itemCode && r.cavity && r.cavity > 0 ? Math.ceil(r.prodQty / r.cavity) : null
+          return {
+            ...r,
+            shots,
+            remainShots: shots != null && r.guaranteeShots != null ? r.guaranteeShots - shots : null
+          }
+        })
+      } catch {
+        return [] // 0140 미적용 DB 방어
+      }
+    }
+  )
+
+  // ── ⑲ xbarR — X BAR R 관리도 (#8 골격) ──
+  // 서브그룹 = 검사기록 1건(같은 항목 시료 2~10). n<2 군 제외(정직 카운트) · 군 크기 최빈값으로
+  // 통일해 관리한계 계산(혼합 크기 = 상수표가 다름 — 섞어 계산하지 않는다). 군 2개 미만 = 한계 없음.
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_XBAR_R,
+    (_e, req: { itemCode: string; inspItem?: string; from?: string; to?: string }): SemimesXbarRDto => {
+      const empty: SemimesXbarRDto = { itemCode: req?.itemCode ?? '', inspItem: req?.inspItem ?? null, items: [], points: [], limits: null, skippedSmall: 0 }
+      const code = req?.itemCode?.trim()
+      if (!code) return empty
+      // 품번의 기록 실존 검사항목(선택지 원천 — 추정 목록 아님)
+      const items = (
+        db
+          .prepare(
+            `SELECT DISTINCT v.insp_item it FROM insp_record_value v
+             JOIN insp_record r ON r.id = v.record_id
+             WHERE r.item_code = ? AND r.canceled_at IS NULL AND v.value IS NOT NULL ORDER BY it LIMIT 50`
+          )
+          .all(code) as Array<{ it: string }>
+      ).map((r) => r.it)
+      const inspItem = req.inspItem?.trim() || items[0] || null
+      if (!inspItem) return { ...empty, items }
+      const conds: string[] = ['r.item_code = ?', 'v.insp_item = ?', 'r.canceled_at IS NULL', 'v.value IS NOT NULL']
+      const args: unknown[] = [code, inspItem]
+      if (req.from && /^\d{4}-\d{2}-\d{2}$/.test(req.from)) { conds.push('r.insp_date >= ?'); args.push(req.from) }
+      if (req.to && /^\d{4}-\d{2}-\d{2}$/.test(req.to)) { conds.push('r.insp_date <= ?'); args.push(req.to) }
+      const raw = db
+        .prepare(
+          `SELECT r.id, r.insp_date AS d, v.value FROM insp_record_value v
+           JOIN insp_record r ON r.id = v.record_id
+           WHERE ${conds.join(' AND ')} ORDER BY r.insp_date, r.id LIMIT 2000`
+        )
+        .all(...args) as Array<{ id: number; d: string; value: number }>
+      const byRec = new Map<number, { d: string; vals: number[] }>()
+      for (const r of raw) {
+        const e = byRec.get(r.id) ?? { d: r.d, vals: [] }
+        e.vals.push(r.value)
+        byRec.set(r.id, e)
+      }
+      let skippedSmall = 0
+      const groups: Array<{ recordId: number; inspDate: string; n: number; xbar: number; r: number }> = []
+      for (const [recordId, g] of byRec) {
+        if (g.vals.length < 2 || g.vals.length > 10) {
+          skippedSmall++
+          continue
+        }
+        const xbar = g.vals.reduce((s, v) => s + v, 0) / g.vals.length
+        const r = Math.max(...g.vals) - Math.min(...g.vals)
+        groups.push({ recordId, inspDate: g.d, n: g.vals.length, xbar: Math.round(xbar * 10000) / 10000, r: Math.round(r * 10000) / 10000 })
+      }
+      // 군 크기 최빈값으로 통일(관리도 상수는 n 종속)
+      const A2: Record<number, number> = { 2: 1.88, 3: 1.023, 4: 0.729, 5: 0.577, 6: 0.483, 7: 0.419, 8: 0.373, 9: 0.337, 10: 0.308 }
+      const D3: Record<number, number> = { 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0.076, 8: 0.136, 9: 0.184, 10: 0.223 }
+      const D4: Record<number, number> = { 2: 3.267, 3: 2.574, 4: 2.282, 5: 2.114, 6: 2.004, 7: 1.924, 8: 1.864, 9: 1.816, 10: 1.777 }
+      const freq = new Map<number, number>()
+      for (const g of groups) freq.set(g.n, (freq.get(g.n) ?? 0) + 1)
+      const modeN = [...freq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+      const use = groups.filter((g) => g.n === modeN)
+      let limits: SemimesXbarRDto['limits'] = null
+      if (modeN != null && use.length >= 2) {
+        const xbarCl = use.reduce((s, g) => s + g.xbar, 0) / use.length
+        const rCl = use.reduce((s, g) => s + g.r, 0) / use.length
+        limits = {
+          n: modeN,
+          xbarCl: Math.round(xbarCl * 10000) / 10000,
+          xbarUcl: Math.round((xbarCl + A2[modeN] * rCl) * 10000) / 10000,
+          xbarLcl: Math.round((xbarCl - A2[modeN] * rCl) * 10000) / 10000,
+          rCl: Math.round(rCl * 10000) / 10000,
+          rUcl: Math.round(D4[modeN] * rCl * 10000) / 10000,
+          rLcl: Math.round(D3[modeN] * rCl * 10000) / 10000
+        }
+      }
+      return { itemCode: code, inspItem, items, points: groups, limits, skippedSmall }
+    }
+  )
 
   // ── ⑤ homeKpis — MES 홈 오늘 요약 4타일 (33호 §2-2 모듈 홈 대시보드 문법의 홈 적용) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_HOME_KPIS, (_e, req: { ymd?: string } | undefined): SemimesHomeKpisDto => {

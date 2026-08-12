@@ -64,6 +64,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
       { label: '생산실적 등록 (초·중·종 연동)', page: 'prod-entry', sq: ['1_4'], iatf: ['8.5.1'] },
       { label: '생산실적 현황 (상세·일별·월별)', page: 'prod-history', sq: ['1_4'] },
       { label: '생산현황 차트', page: 'prod-chart' },
+      { label: '일일 실적현황 (결재란 인쇄)', page: 'daily-report' },
       { label: '추적 공정 흐름 (지시→공정→LOT)', page: 'trace-band', sq: ['5_1'], iatf: ['8.5.2'] },
       { label: '조업달력 (가동일 = 공유 분모)', page: 'work-calendar' },
       { label: '자주검사 등록 (초중종 3회)', page: 'insp-entry', sq: ['1_4', '2_7'], iatf: ['8.6.1'] },
@@ -83,6 +84,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
       { label: '품질검사내역 (구분 통합)', page: 'insp-history', sq: ['1_4', '2_7'] },
       { label: '검사기준(SPEC) 등록 — 개정=신규 행', page: 'insp-spec', sq: ['2_7'], iatf: ['8.6.1'] },
       { label: '부적합 PPM 대시보드', page: 'ppm-dash', sq: ['6_6'] },
+      { label: 'X BAR R 관리도', page: 'xbar-r', sq: ['4_x'] },
       { label: '자주검사 CHECK SHEET (양식)', form: 'M1200-10', sq: ['1_4', '2_7'], iatf: ['8.6.1'] },
       { label: '순회검사(패트롤) 시트 (양식)', form: 'L2100-05', sq: ['2_7'] },
       { label: '불량 대책서 (8D)', page: 'case-work', sq: ['6_6'], iatf: ['8.7'] },
@@ -94,6 +96,8 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     key: 'equip',
     label: '설비관리',
     items: [
+      { label: '설비등록 (마스터)', page: 'equip-master' },
+      { label: '설비 일상점검 내역 (MES+앱)', page: 'equip-check', sq: ['3_1'] },
       { label: '설비 일상 점검표', form: 'L1100-07', sq: ['3_1'] },
       { label: '월간설비 정기점검 계획서', form: 'L1100-12', iatf: ['8.5.1.5'] }
     ]
@@ -102,10 +106,10 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     key: 'mold',
     label: '금형관리',
     items: [
+      { label: '금형마스터·타발수 (실적 연동)', page: 'mold-master', iatf: ['8.5.1.6'] },
       { label: '금형 점검 체크시트 (일상·정기·보관)', form: 'L1100-25', sq: ['3_4'] },
       { label: '금형 진행사항 점검', form: 'B2100-06' },
-      { label: '지그·금형 보관 위치 식별표', form: 'L1200-11' },
-      { label: '금형 타발수 대장', soon: true, note: '26번 A4 — 별도 판단' }
+      { label: '지그·금형 보관 위치 식별표', form: 'L1200-11' }
     ]
   },
   {
@@ -113,6 +117,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     label: '경영정보',
     items: [
       { label: 'KPI 실적 그리드 (엑셀형)', page: 'kpi-grid' },
+      { label: 'KPI 기준정보관리 (목표·방향)', page: 'kpi-indicators' },
       { label: '성과 지표 (양품률·수입 PPM)', page: 'perf-indicators' },
       { label: '대시보드 (심사 준비 현황)', page: 'dashboard' },
       { label: '팀별 허브', page: 'team-hub' }

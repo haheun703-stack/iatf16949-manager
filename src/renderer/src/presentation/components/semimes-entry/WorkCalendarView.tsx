@@ -140,6 +140,12 @@ export function WorkCalendarView(): JSX.Element {
         </span>
       </div>
 
+      {/* 8/12 판정① 도장: 운용 순서를 화면에 명기 — 일괄은 공휴일도 조업으로 잡으므로 정정이 뒤 */}
+      <div className="rounded-lg px-3 py-2 text-[12px] font-semibold bg-secondary/50 text-secondary-foreground">
+        운용 순서(확정): <b>매월 초 [미등록 평일 일괄 조업] → 공휴일·휴무일만 골라 [휴무 등록]으로 정정</b> —
+        일괄 등록은 공휴일도 조업으로 잡으므로 정정을 반드시 뒤에 합니다(이미 등록된 날은 일괄이 건드리지 않음).
+      </div>
+
       <div className="bg-card border border-border rounded-xl px-3 py-2 flex items-center gap-3 flex-wrap">
         <MesToolbar
           onSearch={() => void load()}

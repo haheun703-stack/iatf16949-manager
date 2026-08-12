@@ -17,6 +17,7 @@ import type {
   MesRecordsPartRow,
   MesRecordsStatusDto,
   MesRecordsTypeStat,
+  SemimesEquipCheckDto,
   SqAuditCellDto,
   SqAuditMark,
   SqAuditMatrixDto,
@@ -351,6 +352,43 @@ export function registerMesRecordsHandlers(): void {
     })
     return { ymd, dataEndYmd, available: !!db, columns, denomSource: calDays ? 'calendar' : 'proxy' }
   })
+
+  // ── 34호 배치⑷ #10 — 설비일상점검내역 (원천 = mac_daily[MES] + L1100-07[앱] 병렬 · 정직 구분) ──
+  // openSide 가 이 파일 소유라 여기 둔다(채널명은 semimes:* — 파일 귀속과 무관).
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_EQUIP_CHECK_LIST,
+    (_e, req: { from: string; to: string }): SemimesEquipCheckDto => {
+      const YMD_RE = /^\d{4}-\d{2}-\d{2}$/
+      if (!req?.from || !req?.to || !YMD_RE.test(req.from) || !YMD_RE.test(req.to) || req.from > req.to) {
+        return { from: req?.from ?? '', to: req?.to ?? '', mesAvailable: false, mes: [], app: [] }
+      }
+      const db2 = openSide()
+      const mes = db2
+        ? (db2
+            .prepare(
+              `SELECT ymd, line_no AS lineNo, COALESCE(SUM(items),0) AS items,
+                      COALESCE(SUM(checkers),0) AS checkers, COALESCE(SUM(confirmed_items),0) AS confirmedItems
+               FROM mac_daily WHERE ymd >= ? AND ymd <= ? GROUP BY ymd, line_no
+               ORDER BY ymd DESC, line_no LIMIT 500`
+            )
+            .all(req.from, req.to) as SemimesEquipCheckDto['mes'])
+        : []
+      let app: SemimesEquipCheckDto['app'] = []
+      try {
+        app = getSqlite()
+          .prepare(
+            `SELECT id, date(created_at, 'localtime') AS ymd, created_by AS createdBy
+             FROM form_submissions WHERE form_code = 'L1100-07'
+               AND date(created_at, 'localtime') >= ? AND date(created_at, 'localtime') <= ?
+             ORDER BY id DESC LIMIT 200`
+          )
+          .all(req.from, req.to) as SemimesEquipCheckDto['app']
+      } catch {
+        /* 앱 축 조회 실패 — MES 축만(정직 축소) */
+      }
+      return { from: req.from, to: req.to, mesAvailable: !!db2, mes, app }
+    }
+  )
 
   // ── PB2 ⓒ SQ 심사 뷰 (30번 v2 하단부) — SQ 항목 × 공정 ●◐×, 실측만 ──
   // 창 = 도넛과 동일(끝 = min(오늘, 데이터 끝), 7일). 분모 = 창 내 가동일(전사 기록일).
