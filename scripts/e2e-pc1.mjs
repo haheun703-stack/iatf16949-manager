@@ -44,12 +44,29 @@ const ITEM = '28236-2MAA0'
 const ctx = await api('semimes:scanResolve', { query: ITEM })
 check('1단 scanResolve found·라우팅', ctx.found === true && Array.isArray(ctx.routing), `routing=${ctx.routing.length}`)
 
-// 2단 — lotIssue 유일성
+// 2단 — lotIssue 멱등·유일성 (8/12 재봉합 계약: 미사용 발번 재사용 · 사용 후에만 차수 증가)
+// 픽스처: 미사용 자체발번 잔여물 정리(복사본 한정 — 검수 회신 '정리 재량' 이행. 취소 기록이
+// 참조한 LOT도 '사용'으로 본다 — 번호가 기록에 각인된 이상 재발급 금지, 서버 계약과 동일)
+{
+  const dbw = new Database(DB_PATH)
+  dbw.prepare(
+    `DELETE FROM lot_registry WHERE item_code = ? AND source = '자체발번'
+       AND NOT EXISTS (SELECT 1 FROM prod_record p WHERE p.lot_no = lot_registry.lot_no)
+       AND NOT EXISTS (SELECT 1 FROM insp_record i WHERE i.lot_no = lot_registry.lot_no)`
+  ).run(ITEM)
+  dbw.close()
+}
 const l1 = await api('semimes:lotIssue', { itemCode: ITEM, createdBy: '위조' })
-const l2 = await api('semimes:lotIssue', { itemCode: ITEM })
 const lotRe = new RegExp(`^${ITEM}-\\d{6}-\\d+$`)
 check('2단 발번 형식 품번-YYMMDD-차수', l1.success && lotRe.test(l1.lotNo), l1.lotNo)
-check('2단 연속 발번 차수 증가(유일)', l2.success && l2.lotNo !== l1.lotNo, `${l1.lotNo} → ${l2.lotNo}`)
+// 코워크 재봉합 지시 ③: 연타 프로브 = 실제 동시 2발(더블클릭 등가 — await 없이 나란히 발사)
+const [la, lb] = await Promise.all([
+  api('semimes:lotIssue', { itemCode: ITEM }),
+  api('semimes:lotIssue', { itemCode: ITEM })
+])
+check('2단 더블클릭(동시 2발) = 같은 번호(서버 멱등 — 미사용 재사용)',
+  la.success && lb.success && la.lotNo === lb.lotNo && la.lotNo === l1.lotNo,
+  `${la.lotNo} = ${lb.lotNo}`)
 const lotRow = dbr.prepare('SELECT created_by FROM lot_registry WHERE lot_no = ?').get(l1.lotNo)
 check('2단 발번 STAMP(위조 무시)', lotRow?.created_by === LOGIN, `created_by=${lotRow?.created_by}`)
 
@@ -61,6 +78,9 @@ const prod = await api('semimes:prodRecordCreate', { recordDate: today, itemCode
 check('3단 정상 실적 저장', prod.success === true, `#${prod.id}`)
 const prow = dbr.prepare('SELECT worker FROM prod_record WHERE id = ?').get(prod.id)
 check('3단 실적 STAMP(위조 무시)', prow?.worker === LOGIN, `worker=${prow?.worker}`)
+// 사용(실적 각인) 후의 발번만 새 차수 — 유일성 계약 불변(재봉합의 나머지 반쪽)
+const l3 = await api('semimes:lotIssue', { itemCode: ITEM })
+check('3단 사용 후 발번 = 새 차수(유일성 불변)', l3.success && l3.lotNo !== l1.lotNo && l3.reused !== true, `${l1.lotNo} → ${l3.lotNo}`)
 
 // 4단 — inspRecordCreate 계약 + §10-1 각인
 check('4단 자주 초중종 누락 거부', (await api('semimes:inspRecordCreate', { inspDate: today, inspKind: '자주', itemCode: ITEM, judgment: '합격', values: [{ inspItem: '외경', sampleNo: 1, value: 8.02 }] })).success === false)

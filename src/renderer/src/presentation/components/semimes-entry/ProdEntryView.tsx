@@ -3,6 +3,7 @@ import { Search, Save, Ticket } from 'lucide-react'
 import type { SemimesScanContextDto, SemimesTodayRecordsDto } from '@shared/ipc-types'
 import { todayKST } from '@shared/date-kst'
 import { cn } from '../../../lib/utils'
+import { useSingleFlight } from '../../lib/asyncGuard'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { useUIStore } from '../../stores/uiStore'
 
@@ -58,18 +59,27 @@ export function ProdEntryView(): JSX.Element {
     }
   }
 
+  // 8/12 재봉합(코워크 실측 -13·-14): useState 가드는 재렌더 전 더블클릭을 못 막았다 —
+  // 관문 = 동기 ref(useSingleFlight, 공용). state 는 버튼 표시 전용으로 강등.
+  // save/cancel 도 같은 기전(append-only 라 이중 기록이 더 아픔) — 예방 확장(기능 무변).
+  const issueFlight = useSingleFlight()
+  const saveFlight = useSingleFlight()
+  const cancelFlight = useSingleFlight()
   async function issueLot(): Promise<void> {
     if (!ctx?.itemCode) return
-    // 8/11 검수 MA-10: 연타 가드 없음 = 더블클릭이 LOT 차수를 이중 발번(품번-YYMMDD-01·02)
-    if (issuing) return
     setIssuing(true)
     try {
       const res = (await window.api.invoke(window.api.channels.SEMIMES_LOT_ISSUE, {
         itemCode: ctx.itemCode, createdBy: userName
-      })) as { success: boolean; lotNo?: string; error?: string }
+      })) as { success: boolean; lotNo?: string; reused?: boolean; error?: string }
       if (res.success && res.lotNo) {
         setLotNo(res.lotNo)
-        setMsg({ tone: 'ok', text: `LOT 발번 — ${res.lotNo} (품번-YYMMDD-차수)` })
+        setMsg({
+          tone: 'ok',
+          text: res.reused
+            ? `기존 미사용 LOT 재사용 — ${res.lotNo} (실적에 쓰이기 전에는 새 차수를 만들지 않습니다)`
+            : `LOT 발번 — ${res.lotNo} (품번-YYMMDD-차수)`
+        })
       } else {
         setMsg({ tone: 'bad', text: res.error ?? '발번 실패' })
       }
@@ -171,7 +181,7 @@ export function ProdEntryView(): JSX.Element {
                 <input list="prod-lots" value={lotNo} onChange={(e) => setLotNo(e.target.value)} placeholder="선택 또는 발번" className={cn(inputCls, 'flex-1 min-w-0')} />
                 <button
                   type="button"
-                  onClick={() => void issueLot()}
+                  onClick={() => void issueFlight(issueLot)}
                   disabled={issuing}
                   title="자체발번 품번-YYMMDD-차수"
                   className="h-11 px-3 rounded-lg border border-primary/40 bg-secondary text-secondary-foreground text-[13px] font-bold flex items-center gap-1 shrink-0 disabled:opacity-50"
@@ -231,7 +241,7 @@ export function ProdEntryView(): JSX.Element {
             </label>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <button type="button" disabled={busy} onClick={() => void save()} className="h-11 px-7 rounded-lg bg-primary text-white text-[15px] font-extrabold flex items-center gap-2 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={() => void saveFlight(save)} className="h-11 px-7 rounded-lg bg-primary text-white text-[15px] font-extrabold flex items-center gap-2 disabled:opacity-50">
               <Save className="w-4 h-4" /> 저장
             </button>
             <button type="button" onClick={() => setPage('insp-entry')} className="h-11 px-4 rounded-lg border border-border text-[13.5px] font-bold hover:bg-muted">
@@ -267,7 +277,7 @@ export function ProdEntryView(): JSX.Element {
                       placeholder="취소 사유(필수)"
                       className="flex-1 h-9 px-2.5 rounded-lg border border-border bg-card text-[12.5px]"
                     />
-                    <button type="button" onClick={() => void cancelRec()} className="h-9 px-3 rounded-lg bg-bad-tint text-bad-ink text-[12.5px] font-bold">취소 확정</button>
+                    <button type="button" onClick={() => void cancelFlight(cancelRec)} className="h-9 px-3 rounded-lg bg-bad-tint text-bad-ink text-[12.5px] font-bold">취소 확정</button>
                     <button type="button" onClick={() => setCancelFor(null)} className="h-9 px-3 rounded-lg border border-border text-[12.5px]">닫기</button>
                   </span>
                 )}

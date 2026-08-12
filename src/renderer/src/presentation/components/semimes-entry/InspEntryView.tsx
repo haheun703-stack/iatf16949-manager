@@ -3,6 +3,7 @@ import { Search, Save, CheckCircle2 } from 'lucide-react'
 import type { SemimesScanContextDto, SemimesTodayRecordsDto } from '@shared/ipc-types'
 import { todayKST } from '@shared/date-kst'
 import { cn } from '../../../lib/utils'
+import { useSingleFlight } from '../../lib/asyncGuard'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 
@@ -42,6 +43,10 @@ export function InspEntryView(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [today, setToday] = useState<SemimesTodayRecordsDto | null>(null)
   const [cancelFor, setCancelFor] = useState<{ id: number; reason: string } | null>(null)
+
+  // 8/12 재봉합 예방 확장: 쓰기 버튼 관문 = 동기 ref(state 가드는 재렌더 전 더블클릭 미차단 — Major ③ 기전)
+  const saveFlight = useSingleFlight()
+  const cancelFlight = useSingleFlight()
 
   const specRowsFor = (c: SemimesScanContextDto, k: string): ValRow[] =>
     (c.specs[k] ?? []).map((s) => ({ specId: s.id, inspItem: s.inspItem, value: '', su: s.su, sl: s.sl, unit: s.unit }))
@@ -324,7 +329,7 @@ export function InspEntryView(): JSX.Element {
             <button
               type="button"
               disabled={busy}
-              onClick={() => void save()}
+              onClick={() => void saveFlight(save)}
               className="ml-auto h-11 px-7 rounded-lg bg-primary text-white text-[15px] font-extrabold flex items-center gap-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4" /> 저장
@@ -381,7 +386,7 @@ export function InspEntryView(): JSX.Element {
                       placeholder="취소 사유(필수) — 두 줄 긋고 정정 서명의 전산 등가"
                       className="flex-1 h-9 px-2.5 rounded-lg border border-border bg-card text-[12.5px]"
                     />
-                    <button type="button" onClick={() => void cancelRec()} className="h-9 px-3 rounded-lg bg-bad-tint text-bad-ink text-[12.5px] font-bold">
+                    <button type="button" onClick={() => void cancelFlight(cancelRec)} className="h-9 px-3 rounded-lg bg-bad-tint text-bad-ink text-[12.5px] font-bold">
                       취소 확정
                     </button>
                     <button type="button" onClick={() => setCancelFor(null)} className="h-9 px-3 rounded-lg border border-border text-[12.5px]">

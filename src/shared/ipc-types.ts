@@ -2226,7 +2226,8 @@ export interface IpcChannelMap {
   }
   [IPC_CHANNELS.SEMIMES_LOT_ISSUE]: {
     request: { itemCode: string; date?: string; createdBy?: string }
-    response: { success: boolean; lotNo?: string; error?: string }
+    /** reused = 같은 날 미사용(실적/검사 미연결) 자체발번 재사용 — 멱등(8/12 재봉합) */
+    response: { success: boolean; lotNo?: string; reused?: boolean; error?: string }
   }
   [IPC_CHANNELS.SEMIMES_PROD_CREATE]: {
     request: SemimesProdCreateInput

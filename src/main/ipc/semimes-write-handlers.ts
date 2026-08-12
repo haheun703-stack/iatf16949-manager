@@ -125,7 +125,20 @@ export function registerSemimesWriteHandlers(): void {
       if (!issuer) return { success: false, error: '발번 주체가 없습니다 — 사용자를 선택하세요.' }
       const ymd = ymdOk(date) ? date! : todayKST()
       const yymmdd = ymd.slice(2).replace(/-/g, '')
-      const issueTxn = db.transaction(() => {
+      const issueTxn = db.transaction((): { no: string; reused: boolean } => {
+        // 8/12 재봉합(코워크 지시 — Major ③): 서버 멱등. 같은 품번·같은 날 자체발번 중
+        // 실적·검사에 아직 안 쓰인 최신 LOT가 있으면 새 차수 대신 그 번호를 돌려준다
+        // (더블클릭·재클릭 = 같은 번호. 쓰인 뒤의 발번만 차수 증가 — 유일성 계약 불변).
+        const unused = db
+          .prepare(
+            `SELECT l.lot_no AS no FROM lot_registry l
+             WHERE l.item_code = ? AND l.lot_date = ? AND l.source = '자체발번'
+               AND NOT EXISTS (SELECT 1 FROM prod_record p WHERE p.lot_no = l.lot_no)
+               AND NOT EXISTS (SELECT 1 FROM insp_record i WHERE i.lot_no = l.lot_no)
+             ORDER BY l.seq DESC LIMIT 1`
+          )
+          .get(itemCode, ymd) as { no: string } | undefined
+        if (unused) return { no: unused.no, reused: true }
         const { s } = db
           .prepare('SELECT COALESCE(MAX(seq), 0) + 1 AS s FROM lot_registry WHERE item_code = ? AND lot_date = ?')
           .get(itemCode, ymd) as { s: number }
@@ -134,12 +147,13 @@ export function registerSemimesWriteHandlers(): void {
           `INSERT INTO lot_registry (lot_no, item_code, lot_date, seq, source, created_by)
            VALUES (?, ?, ?, ?, '자체발번', ?)`
         ).run(no, itemCode, ymd, s, issuer)
-        return no
+        return { no, reused: false }
       })
       // 발번 경합(UNIQUE) = 원시 에러 노출 금지 — 차수 재계산 재시도 2회 후 정직 안내
       for (let attempt = 0; ; attempt++) {
         try {
-          return { success: true, lotNo: issueTxn.immediate() }
+          const r = issueTxn.immediate()
+          return { success: true, lotNo: r.no, reused: r.reused }
         } catch (err) {
           // 8/11 검수 Major: BUSY 는 message('database is locked')가 아니라 code 에 실림 — 둘 다 검사
           const e = err as Error & { code?: string }

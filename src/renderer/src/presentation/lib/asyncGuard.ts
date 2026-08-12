@@ -23,6 +23,25 @@ export function useSeqGuard(): { begin: () => number; isCurrent: (token: number)
 }
 
 /**
+ * 동기 재진입 차단 — 쓰기 버튼 연타(더블클릭) 가드 (8/12 검수 Major ③ 재봉합).
+ * useState busy 가드는 재렌더 전의 두 번째 클릭을 못 막는다(같은 틱에서 둘 다 false를 봄) —
+ * ref 는 즉시 반영이라 두 번째 호출이 그 자리에서 버려진다. disabled 표시는 state 로 병행하되
+ * **관문은 반드시 이것**. 쓰기 버튼 onClick 은 run(task) 경유를 표준으로 한다.
+ */
+export function useSingleFlight(): (task: () => Promise<void>) => Promise<void> {
+  const flying = useRef(false)
+  return useCallback(async (task: () => Promise<void>): Promise<void> => {
+    if (flying.current) return
+    flying.current = true
+    try {
+      await task()
+    } finally {
+      flying.current = false
+    }
+  }, [])
+}
+
+/**
  * 디바운스 호출 — 타이핑이 멎은 뒤에만 왕복(기본 250ms, 수집함 선례와 통일).
  * 언마운트 시 예약분 취소.
  */

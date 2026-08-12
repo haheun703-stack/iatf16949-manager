@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SemimesItemSearchRowDto, SemimesWorkOrderRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { useSingleFlight } from '../../lib/asyncGuard'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
@@ -52,8 +53,11 @@ export function WorkOrderView(): JSX.Element {
     void load()
   }, [load])
 
+  // 8/12 재봉합 예방 확장: WO 발번도 LOT 와 같은 기전(state 가드 = 재렌더 전 더블클릭 미차단)
+  const addFlight = useSingleFlight()
+  const statusFlight = useSingleFlight()
   async function addOrder(): Promise<void> {
-    if (saving) return // M-8: 연타 = 지시 이중 발번 — 진행 중 재진입 차단
+    if (saving) return // M-8: 연타 = 지시 이중 발번 — 진행 중 재진입 차단(표시용, 관문은 addFlight)
     setSaving(true)
     setMsg(null)
     try {
@@ -193,7 +197,7 @@ export function WorkOrderView(): JSX.Element {
             지시 수량
             <input value={newQty} onChange={(e) => setNewQty(e.target.value)} inputMode="numeric" className="h-10 px-3 rounded-lg border border-border bg-card text-[13.5px] text-center tabular-nums" />
           </label>
-          <button type="button" onClick={() => void addOrder()} disabled={saving} className="h-10 px-5 rounded-lg bg-primary text-white text-[13.5px] font-bold disabled:opacity-50">
+          <button type="button" onClick={() => void addFlight(addOrder)} disabled={saving} className="h-10 px-5 rounded-lg bg-primary text-white text-[13.5px] font-bold disabled:opacity-50">
             {saving ? '발번 중…' : '발번·등록'}
           </button>
         </div>
@@ -283,7 +287,7 @@ export function WorkOrderView(): JSX.Element {
                     <button
                       key={s}
                       type="button"
-                      onClick={() => void setStatus(r.id, s)}
+                      onClick={() => void statusFlight(() => setStatus(r.id, s))}
                       disabled={statusBusy !== null}
                       className="mr-1 px-2 py-0.5 rounded-md border border-border text-[11.5px] font-semibold text-muted-foreground hover:bg-muted disabled:opacity-40"
                     >
