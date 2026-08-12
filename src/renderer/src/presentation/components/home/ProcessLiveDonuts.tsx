@@ -72,7 +72,8 @@ export function ProcessLiveDonuts(): JSX.Element {
       <div className="flex items-baseline gap-2 mb-2.5">
         <h2 className="text-[15px] font-extrabold tracking-[-0.01em]">공정 실황</h2>
         <span className="text-[12px] text-muted-foreground">
-          도넛 = 최근 7일 가동일 대비 기록일 %(실측) · 오늘 {shortYmd(data?.ymd ?? null)}
+          도넛 = 최근 7일 가동일 대비 기록일 %(실측
+          {data?.denomSource === 'calendar' ? ' · 분모 = 조업달력' : ' · 분모 = 기록일 프록시 — 조업달력 등록 시 정밀화'}) · 오늘 {shortYmd(data?.ymd ?? null)}
           {data?.dataEndYmd && data.ymd > data.dataEndYmd ? ` · MES 기준 ${shortYmd(data.dataEndYmd)}` : ''}
         </span>
       </div>

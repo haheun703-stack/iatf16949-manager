@@ -12,12 +12,17 @@ import type {
   SemimesInspRowDto,
   SemimesInspValueRowDto,
   SemimesMatStockRowDto,
+  SemimesPerfIndicatorDto,
+  SemimesPerfIndicatorsDto,
   SemimesPpmDashDto,
   SemimesProdAggRowDto,
+  SemimesProdChartDto,
   SemimesProdListReq,
   SemimesProdRowDto,
   SemimesReceiptRowDto,
-  SemimesSpecRegistryRowDto
+  SemimesSpecRegistryRowDto,
+  SemimesTraceBandDto,
+  SemimesWorkCalendarDto
 } from '@shared/ipc-types'
 
 /**
@@ -390,6 +395,162 @@ export function registerSemimesQueryHandlers(): void {
         codes: safe("SELECT DISTINCT partner_type AS code, NULL AS name, 1 AS active FROM partner WHERE partner_type IS NOT NULL ORDER BY code LIMIT 100")
       }
     ]
+  })
+
+  // ══ 34호 배치⑶ — 지표·달력·추적 ══
+
+  // ── ⑬ workCalendar — 조업달력 월 조회 (#18 · 0139 계약: 행 없는 날 = 미등록, 가짜 가동일 금지) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_WORK_CALENDAR, (_e, req: { month: string }): SemimesWorkCalendarDto => {
+    const month = /^\d{4}-\d{2}$/.test(req?.month ?? '') ? req.month : todayKST().slice(0, 7)
+    const rows = db
+      .prepare(
+        `SELECT ymd, work_type AS workType, note, updated_by AS updatedBy
+         FROM work_calendar WHERE substr(ymd, 1, 7) = ? ORDER BY ymd`
+      )
+      .all(month) as Array<{ ymd: string; workType: '조업' | '휴무'; note: string | null; updatedBy: string | null }>
+    // "기록은 있는데 휴무로 적힌 날" 모순 표식 — 실적 존재일(취소 제외) 대조
+    const recDays = new Set(
+      (
+        db
+          .prepare(`SELECT DISTINCT record_date d FROM prod_record WHERE record_date LIKE ? AND canceled_at IS NULL`)
+          .all(`${month}-%`) as Array<{ d: string }>
+      ).map((r) => r.d)
+    )
+    const days = rows.map((r) => ({ ...r, hasRecords: recDays.has(r.ymd) }))
+    return {
+      month,
+      days,
+      workDays: days.filter((d) => d.workType === '조업').length,
+      restDays: days.filter((d) => d.workType === '휴무').length
+    }
+  })
+
+  // ── ⑭ perfIndicators — 성과 지표 표준형 (#15 골격: 지표 2종 우선 — 양품률·수입검사부적합 PPM) ──
+  // 계약: 실적 없는 달 = value null(가짜 0/100 금지) · 연간값 = 분자·분모 재합산(월평균 아님) ·
+  //       OEE 3분해는 가동시간 원천 확보 후(대조표 #15 명기 — 만들지 않는다).
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_PERF_INDICATORS, (_e, req: { year?: string } | undefined): SemimesPerfIndicatorsDto => {
+    const year = req?.year && /^\d{4}$/.test(req.year) ? req.year : todayKST().slice(0, 4)
+    const monthsOf = (rows: Array<{ month: string; numer: number; denom: number }>, calc: (n: number, d: number) => number | null): SemimesPerfIndicatorDto['months'] => {
+      const map = new Map(rows.map((r) => [r.month, r]))
+      return Array.from({ length: 12 }, (_, i) => {
+        const month = `${year}-${String(i + 1).padStart(2, '0')}`
+        const r = map.get(month)
+        return { month, numer: r?.numer ?? 0, denom: r?.denom ?? 0, value: r && r.denom > 0 ? calc(r.numer, r.denom) : null }
+      })
+    }
+    // 지표① 양품률(%) = 양품 / (양품+불량) — 생산실적, 취소 제외
+    const prodRows = db
+      .prepare(
+        `SELECT substr(record_date, 1, 7) AS month, COALESCE(SUM(ok_qty),0) AS numer,
+                COALESCE(SUM(ok_qty),0) + COALESCE(SUM(ng_qty),0) AS denom
+         FROM prod_record WHERE record_date LIKE ? AND canceled_at IS NULL GROUP BY month`
+      )
+      .all(`${year}-%`) as Array<{ month: string; numer: number; denom: number }>
+    // 지표② 수입검사부적합 PPM = 불합격 건 / 검사 건 × 10⁶ — 수입검사, 취소 제외.
+    // 수량 축(defect_qty)은 시료 수 원천이 없어 건 축으로 정직 계산(화면에 명기).
+    const inspRows = db
+      .prepare(
+        `SELECT substr(insp_date, 1, 7) AS month,
+                SUM(CASE WHEN judgment = '불합격' THEN 1 ELSE 0 END) AS numer, COUNT(*) AS denom
+         FROM insp_record WHERE insp_kind = '수입' AND insp_date LIKE ? AND canceled_at IS NULL GROUP BY month`
+      )
+      .all(`${year}-%`) as Array<{ month: string; numer: number; denom: number }>
+    const round1 = (v: number): number => Math.round(v * 10) / 10
+    const yearOf = (months: SemimesPerfIndicatorDto['months'], calc: (n: number, d: number) => number | null): number | null => {
+      const n = months.reduce((s, m) => s + m.numer, 0)
+      const d = months.reduce((s, m) => s + m.denom, 0)
+      return d > 0 ? calc(n, d) : null
+    }
+    const yieldCalc = (n: number, d: number): number => round1((n / d) * 100)
+    const ppmCalc = (n: number, d: number): number => Math.round((n / d) * 1e6)
+    const yieldMonths = monthsOf(prodRows, yieldCalc)
+    const ppmMonths = monthsOf(inspRows, ppmCalc)
+    const calendarMonths = (
+      db.prepare(`SELECT COUNT(DISTINCT substr(ymd, 1, 7)) c FROM work_calendar WHERE ymd LIKE ?`).get(`${year}-%`) as { c: number }
+    ).c
+    return {
+      year,
+      calendarMonths,
+      indicators: [
+        { key: 'yieldRate', label: '양품률', unit: '%', direction: 'higher', months: yieldMonths, yearValue: yearOf(yieldMonths, yieldCalc) },
+        { key: 'incomingPpm', label: '수입검사부적합 PPM (건 축)', unit: 'PPM', direction: 'lower', months: ppmMonths, yearValue: yearOf(ppmMonths, ppmCalc) }
+      ]
+    }
+  })
+
+  // ── ⑮ prodChart — 생산현황 차트 (#12 골격: 생산수량 축 우선 — UPH 원천 없음, 만들지 않는다) ──
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_PROD_CHART, (_e, req: { from: string; to: string }): SemimesProdChartDto => {
+    if (!rangeOk(req?.from, req?.to)) return { from: req?.from ?? '', to: req?.to ?? '', days: [], byItem: [], calendarWorkDays: null }
+    const days = db
+      .prepare(
+        `SELECT record_date AS ymd, COALESCE(SUM(ok_qty),0) AS ok, COALESCE(SUM(ng_qty),0) AS ng,
+                COUNT(DISTINCT item_code) AS items
+         FROM prod_record WHERE record_date >= ? AND record_date <= ? AND canceled_at IS NULL
+         GROUP BY record_date ORDER BY record_date`
+      )
+      .all(req.from, req.to) as SemimesProdChartDto['days']
+    const byItem = db
+      .prepare(
+        `SELECT p.item_code AS itemCode, i.item_name AS itemName,
+                COALESCE(SUM(p.ok_qty),0) AS ok, COALESCE(SUM(p.ng_qty),0) AS ng
+         FROM prod_record p LEFT JOIN item_master i ON i.item_code = p.item_code
+         WHERE p.record_date >= ? AND p.record_date <= ? AND p.canceled_at IS NULL
+         GROUP BY p.item_code ORDER BY ok + ng DESC LIMIT 30`
+      )
+      .all(req.from, req.to) as SemimesProdChartDto['byItem']
+    // 조업일수 = 달력 등록분만(0139) — 기간에 등록 행이 하나도 없으면 null(화면 '미등록' 정직)
+    const cal = db
+      .prepare(`SELECT COUNT(*) c, SUM(CASE WHEN work_type = '조업' THEN 1 ELSE 0 END) w FROM work_calendar WHERE ymd >= ? AND ymd <= ?`)
+      .get(req.from, req.to) as { c: number; w: number | null }
+    return { from: req.from, to: req.to, days, byItem, calendarWorkDays: cal.c > 0 ? (cal.w ?? 0) : null }
+  })
+
+  // ── ⑯ traceBand — 추적 공정 흐름 밴드 (#16 전면: 지시수량 → 공정별 수량 열산 + 공정별 LOT) ──
+  // 판매수량 열은 수주/판매 원천 부재 — 만들지 않는다(15번 §2 확장 금지 · 돈 경계).
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_TRACE_BAND, (_e, req: { orderNo: string }): SemimesTraceBandDto => {
+    const orderNo = req?.orderNo?.trim()
+    if (!orderNo) return { found: false }
+    const wo = db
+      .prepare(
+        `SELECT w.id, w.order_no AS orderNo, w.item_code AS itemCode, i.item_name AS itemName,
+                w.order_qty AS orderQty, w.status
+         FROM work_order w LEFT JOIN item_master i ON i.item_code = w.item_code WHERE w.order_no = ?`
+      )
+      .get(orderNo) as { id: number; orderNo: string; itemCode: string; itemName: string | null; orderQty: number | null; status: string } | undefined
+    if (!wo) return { found: false }
+    const routing = db
+      .prepare(
+        `SELECT r.seq, r.proc_code AS procCode, p.proc_name AS procName
+         FROM routing_step r LEFT JOIN process_master p ON p.proc_code = r.proc_code
+         WHERE r.item_code = ? AND r.active = 1 ORDER BY r.seq`
+      )
+      .all(wo.itemCode) as Array<{ seq: number; procCode: string; procName: string | null }>
+    // 지시 연결 실적 전량(취소 행도 로드 — LOT 그리드에 흐림 정직 표기, 합산은 취소 제외)
+    const recs = db
+      .prepare(
+        `SELECT line_no AS procCode, lot_no AS lotNo, record_date AS recordDate,
+                ok_qty AS ok, ng_qty AS ng, worker, (canceled_at IS NOT NULL) AS canceled
+         FROM prod_record WHERE work_order_id = ? ORDER BY record_date, id`
+      )
+      .all(wo.id) as Array<{ procCode: string | null; lotNo: string | null; recordDate: string; ok: number; ng: number; worker: string | null; canceled: number }>
+    const byProc = new Map<string, typeof recs>()
+    for (const r of recs) {
+      const key = r.procCode ?? '(공정 미지정)'
+      ;(byProc.get(key) ?? byProc.set(key, []).get(key)!).push(r)
+    }
+    const toLots = (list: typeof recs): NonNullable<SemimesTraceBandDto['procs']>[number]['lots'] =>
+      list.map((r) => ({ lotNo: r.lotNo, recordDate: r.recordDate, ok: r.ok, ng: r.ng, worker: r.worker, canceled: !!r.canceled }))
+    const sums = (list: typeof recs): { ok: number; ng: number } =>
+      list.reduce((a, r) => (r.canceled ? a : { ok: a.ok + r.ok, ng: a.ng + r.ng }), { ok: 0, ng: 0 })
+    const procs = routing.map((step) => {
+      const list = byProc.get(step.procCode) ?? []
+      byProc.delete(step.procCode)
+      const { ok, ng } = sums(list)
+      return { ...step, ok, ng, hasRecords: list.length > 0, lots: toLots(list) }
+    })
+    // 라우팅 밖 공정 기록 — 숨기지 않는다(공정 미지정 포함)
+    const offRoute = Array.from(byProc.entries()).map(([procCode, list]) => ({ procCode, ...sums(list) }))
+    return { found: true, orderNo: wo.orderNo, itemCode: wo.itemCode, itemName: wo.itemName, orderQty: wo.orderQty, status: wo.status, procs, offRoute }
   })
 
   // ── ⑤ homeKpis — MES 홈 오늘 요약 4타일 (33호 §2-2 모듈 홈 대시보드 문법의 홈 적용) ──

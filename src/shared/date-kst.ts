@@ -5,3 +5,10 @@ export function todayKST(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+
+/** YYYY-MM-DD ± days — KST 축 유지(+09:00 고정 앵커라 toISOString 절단 안전).
+ *  8/11 검수 슬러지: 화면별 3중 복제이던 것을 공용으로 승격 — 신규 화면은 이것만 쓴다. */
+export function ymdAddKST(ymd: string, days: number): string {
+  const base = new Date(`${ymd}T00:00:00+09:00`)
+  return new Date(base.getTime() + days * 86400e3 + 9 * 3600e3).toISOString().slice(0, 10)
+}

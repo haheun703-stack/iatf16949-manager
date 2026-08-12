@@ -202,6 +202,20 @@ const SQ_AUDIT_ROWS: Array<{ sqItem: string; title: string; formCode: string; ki
   { sqItem: '2_8', title: '출하검사 성적서', formCode: 'M3100-05', kind: 'S' }
 ]
 
+/** 배치⑶ #18 — 창 내 조업달력 조회(0139). 등록 행이 1건이라도 있으면 달력이 분모의 정본.
+ *  반환: 등록 없으면 null(종전 프록시 유지 — 미등록 구간 가짜 분모 금지·정직 표기는 DTO 플래그로). */
+function calendarWorkDays(windowStart: string, windowEnd: string): Set<string> | null {
+  try {
+    const rows = getSqlite()
+      .prepare(`SELECT ymd, work_type FROM work_calendar WHERE ymd >= ? AND ymd <= ?`)
+      .all(windowStart, windowEnd) as Array<{ ymd: string; work_type: string }>
+    if (rows.length === 0) return null
+    return new Set(rows.filter((r) => r.work_type === '조업').map((r) => r.ymd))
+  } catch {
+    return null // 미마이그 DB 방어(0137/0138 선례)
+  }
+}
+
 export function registerMesRecordsHandlers(): void {
   // P1 ⓑ 공정 실황(커버리지 모드) — 사이드카(sqc/mac) + 앱 작성 기록 결합, 신규 테이블 0
   ipcMain.handle(IPC_CHANNELS.MES_RECORDS_PROCESS_LIVE, (_e, req: { ymd?: string }): MesProcessLiveDto => {
@@ -307,6 +321,10 @@ export function registerMesRecordsHandlers(): void {
       /* form_submissions 조회 실패 시 MES 원천만 표시(정직 축소) */
     }
 
+    // 배치⑶ #18 분모 정밀화: 창 내 달력 등록이 있으면 분모 = 조업일(정본) · 분자 = 그 조업일과의
+    // 교집합(휴무일 특근 기록은 %에서 제외 — 모순 표식은 조업달력 화면 몫). 미등록 = 종전 프록시.
+    const calDays = calendarWorkDays(windowStart, windowEnd)
+    const denomDays = calDays ?? weekDaysAll
     const columns: MesProcessLiveCol[] = PROC_COLUMNS.map((c) => {
       const a = agg.get(c.key)!
       const gapDays = a.lastYmd && dataEndYmd ? daysBetween(a.lastYmd, dataEndYmd) : null
@@ -316,7 +334,8 @@ export function registerMesRecordsHandlers(): void {
       else if (dataEndYmd && ymd > dataEndYmd) status = 'stale' // 덤프 미반입 구간 — 회색 정직
       else if (gapDays != null && gapDays >= GAP_THRESHOLD) status = 'gap'
       else status = 'stale'
-      const procDays = weekDaysByProc.get(c.key)?.size ?? 0
+      const procSet = weekDaysByProc.get(c.key) ?? new Set<string>()
+      const procDays = calDays ? [...procSet].filter((d) => calDays.has(d)).length : procSet.size
       return {
         key: c.key,
         label: c.label,
@@ -327,10 +346,10 @@ export function registerMesRecordsHandlers(): void {
         gapDays,
         status,
         source: a.sources.size > 0 ? [...a.sources].join('+') : '—',
-        weekPct: weekDaysAll.size > 0 ? Math.round((procDays / weekDaysAll.size) * 100) : null
+        weekPct: denomDays.size > 0 ? Math.round((procDays / denomDays.size) * 100) : null
       }
     })
-    return { ymd, dataEndYmd, available: !!db, columns }
+    return { ymd, dataEndYmd, available: !!db, columns, denomSource: calDays ? 'calendar' : 'proxy' }
   })
 
   // ── PB2 ⓒ SQ 심사 뷰 (30번 v2 하단부) — SQ 항목 × 공정 ●◐×, 실측만 ──
@@ -420,7 +439,9 @@ export function registerMesRecordsHandlers(): void {
     } catch {
       /* 앱 기록 조회 실패 — MES 원천만(정직 축소) */
     }
-    const opDays = opDaysSet.size
+    // 배치⑶ #18 분모 정밀화: 달력 등록 창이면 분모 = 조업일 · 셀 분자 = 조업일 교집합(도넛과 동일 규칙)
+    const calDays = calendarWorkDays(windowStart, windowEnd)
+    const opDays = calDays ? calDays.size : opDaysSet.size
 
     const clauseOf = (formCode: string): string => {
       try {
@@ -443,7 +464,8 @@ export function registerMesRecordsHandlers(): void {
         if (def.kind === 'LOT' || last == null || opDays === 0) {
           mark = '—' // 비대상·원천 없음·가동일 0(판정 불가) — 정직
         } else {
-          days = winDays.get(k)?.size ?? 0
+          const set = winDays.get(k)
+          days = calDays && set ? [...set].filter((d) => calDays.has(d)).length : set?.size ?? 0
           mark = days === 0 ? '×' : days >= opDays ? '●' : '◐'
         }
         cells[c.key] = { mark, lastYmd: last, days }
@@ -477,7 +499,7 @@ export function registerMesRecordsHandlers(): void {
       /* pack_forms 미적용(0134 전 DB) — 갭 행 없이 정직 표출 */
     }
 
-    return { ymd, dataEndYmd, available: !!db, windowStart, windowEnd, opDays, columns, rows }
+    return { ymd, dataEndYmd, available: !!db, windowStart, windowEnd, opDays, denomSource: calDays ? 'calendar' : 'proxy', columns, rows }
   })
 
   // P1 ⓒ 품번×공정 매트릭스 — 행 정렬 = 월 수불량 SO(subul_monthly, R1 확정 260730)

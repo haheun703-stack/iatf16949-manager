@@ -63,6 +63,9 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
       { label: '작업지시관리', page: 'work-order', iatf: ['8.5.1'] },
       { label: '생산실적 등록 (초·중·종 연동)', page: 'prod-entry', sq: ['1_4'], iatf: ['8.5.1'] },
       { label: '생산실적 현황 (상세·일별·월별)', page: 'prod-history', sq: ['1_4'] },
+      { label: '생산현황 차트', page: 'prod-chart' },
+      { label: '추적 공정 흐름 (지시→공정→LOT)', page: 'trace-band', sq: ['5_1'], iatf: ['8.5.2'] },
+      { label: '조업달력 (가동일 = 공유 분모)', page: 'work-calendar' },
       { label: '자주검사 등록 (초중종 3회)', page: 'insp-entry', sq: ['1_4', '2_7'], iatf: ['8.6.1'] },
       { label: 'MES 기록 현황 (커버리지)', page: 'mes-records', sq: ['1_4'] },
       { label: '품번×공정 실황 (수불 상위)', page: 'part-process' },
@@ -110,6 +113,7 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
     label: '경영정보',
     items: [
       { label: 'KPI 실적 그리드 (엑셀형)', page: 'kpi-grid' },
+      { label: '성과 지표 (양품률·수입 PPM)', page: 'perf-indicators' },
       { label: '대시보드 (심사 준비 현황)', page: 'dashboard' },
       { label: '팀별 허브', page: 'team-hub' }
     ]

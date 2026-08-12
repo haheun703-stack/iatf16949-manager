@@ -290,7 +290,9 @@ const STAMP_FIELDS = {
   'semimes:ppmTargetSave': ['savedBy'],
   // 34호 배치⑵ — 마스터 정비 주체 세션 강제
   'semimes:itemUpdate': ['updatedBy'],
-  'semimes:partnerUpdate': ['updatedBy']
+  'semimes:partnerUpdate': ['updatedBy'],
+  // 34호 배치⑶ — 조업달력 기입 주체 세션 강제(분모의 원천 = 누가 적었는지 각인)
+  'semimes:workCalendarSave': ['updatedBy']
 }
 
 // ── POST /api/{channel} 디스패처 ──

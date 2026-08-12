@@ -1167,6 +1167,8 @@ export interface MesProcessLiveDto {
   dataEndYmd: string | null
   available: boolean
   columns: MesProcessLiveCol[]
+  /** 도넛 % 분모 원천(배치⑶ #18): calendar = 조업달력 등록분 · proxy = 종전 기록일 프록시(달력 미등록 구간 — 정직 표기) */
+  denomSource: 'calendar' | 'proxy'
 }
 
 // ===== PB2 ⓒ SQ 심사 뷰 (SQ 항목 × 공정 ●◐× — 30번 v2 하단부, 29번 §11) =====
@@ -1205,8 +1207,10 @@ export interface SqAuditMatrixDto {
   /** 판정 창(도넛과 동일 — 끝 = min(오늘, 데이터 끝), 7일) */
   windowStart: string
   windowEnd: string
-  /** 창 내 가동일 수(어느 공정이든 기록이 있던 날 — 분모) */
+  /** 창 내 가동일 수(분모 — denomSource 참조) */
   opDays: number
+  /** 분모 원천(배치⑶ #18): calendar = 조업달력 등록분 · proxy = 종전 기록일 프록시(정직 표기) */
+  denomSource: 'calendar' | 'proxy'
   columns: { key: string; label: string }[]
   rows: SqAuditRowDto[]
 }
@@ -2316,6 +2320,26 @@ export interface IpcChannelMap {
     request: void
     response: SemimesCodeGroupDto[]
   }
+  [IPC_CHANNELS.SEMIMES_WORK_CALENDAR]: {
+    request: { month: string }
+    response: SemimesWorkCalendarDto
+  }
+  [IPC_CHANNELS.SEMIMES_WORK_CALENDAR_SAVE]: {
+    request: { ymd: string; workType: '조업' | '휴무'; note?: string | null; updatedBy?: string }
+    response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.SEMIMES_PERF_INDICATORS]: {
+    request: { year?: string } | undefined
+    response: SemimesPerfIndicatorsDto
+  }
+  [IPC_CHANNELS.SEMIMES_PROD_CHART]: {
+    request: { from: string; to: string }
+    response: SemimesProdChartDto
+  }
+  [IPC_CHANNELS.SEMIMES_TRACE_BAND]: {
+    request: { orderNo: string }
+    response: SemimesTraceBandDto
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -3404,6 +3428,80 @@ export interface SemimesPpmDashDto {
   byItem: Array<{ itemCode: string; itemName: string | null; ok: number; ng: number; ppm: number | null }>
   byDefect: Array<{ code: string; name: string | null; ng: number }>
   currentMonthPpm: number | null
+}
+
+// ── 34호 배치⑶ — 지표·달력·추적 DTO ──
+
+/** #18 조업달력 — 1일 1행. 행이 없는 날 = '미등록'(가짜 가동일 금지 — 0139 계약) */
+export interface SemimesWorkCalendarDayDto {
+  ymd: string
+  workType: '조업' | '휴무'
+  note: string | null
+  updatedBy: string | null
+  /** 그 날짜의 실적 기록 존재(취소 제외) — "기록은 있는데 휴무로 적힌 날" 모순 표식용 */
+  hasRecords: boolean
+}
+
+export interface SemimesWorkCalendarDto {
+  /** YYYY-MM */
+  month: string
+  days: SemimesWorkCalendarDayDto[]
+  /** 월 요약 — 등록 행 기준(미등록 일수는 화면이 달력 길이로 계산) */
+  workDays: number
+  restDays: number
+}
+
+/** #15 성과 지표 표준형 — 지표 1종의 연간 축(월 12칸 고정, 실적 없는 달 = null 정직) */
+export interface SemimesPerfIndicatorDto {
+  key: 'yieldRate' | 'incomingPpm'
+  label: string
+  unit: string
+  /** 방향 — higher = 높을수록 좋음(양품률) · lower = 낮을수록 좋음(PPM) */
+  direction: 'higher' | 'lower'
+  /** month = YYYY-MM · value = null(실적 없음 — 가짜 0 금지) */
+  months: Array<{ month: string; value: number | null; numer: number; denom: number }>
+  /** 연간 누계값(분자·분모 합산으로 재계산 — 월평균 아님) */
+  yearValue: number | null
+}
+
+export interface SemimesPerfIndicatorsDto {
+  year: string
+  indicators: SemimesPerfIndicatorDto[]
+  /** 조업달력 등록 월수(0 = 전량 프록시 분모 — 화면 정직 표기용) */
+  calendarMonths: number
+}
+
+/** #12 생산현황 차트 — 기간 내 일별 생산수량(취소 제외). UPH 축 없음(원천 부재 정직) */
+export interface SemimesProdChartDto {
+  from: string
+  to: string
+  days: Array<{ ymd: string; ok: number; ng: number; items: number }>
+  byItem: Array<{ itemCode: string; itemName: string | null; ok: number; ng: number }>
+  /** 조업달력 기준 조업일수(등록분만 — null = 그 기간 달력 미등록) */
+  calendarWorkDays: number | null
+}
+
+/** #16 추적 공정 흐름 밴드 — 작업지시 1건의 지시수량→공정별 수량 열산 */
+export interface SemimesTraceBandDto {
+  found: boolean
+  orderNo?: string
+  itemCode?: string
+  itemName?: string | null
+  orderQty?: number | null
+  status?: string
+  /** 라우팅 순서대로 — 실적 없는 공정 = ok/ng 0 + hasRecords false(정직) */
+  procs?: Array<{
+    seq: number
+    procCode: string
+    procName: string | null
+    ok: number
+    ng: number
+    hasRecords: boolean
+    /** 이 공정 기록들의 LOT 목록(그리드용) */
+    lots: Array<{ lotNo: string | null; recordDate: string; ok: number; ng: number; worker: string | null; canceled: boolean }>
+  }>
+  /** 지시와 무관 공정의 기록(라우팅 밖 공정 — 숨기지 않는다) */
+  offRoute?: Array<{ procCode: string; ok: number; ng: number }>
 }
 
 // ── 34호 배치⑵ — 기준정보 마스터 DTO ──

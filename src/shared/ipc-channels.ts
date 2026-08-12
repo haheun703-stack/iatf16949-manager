@@ -244,6 +244,12 @@ export const IPC_CHANNELS = {
   SEMIMES_PARTNER_UPDATE: 'semimes:partnerUpdate',
   SEMIMES_BOM_EXPLODE: 'semimes:bomExplode',
   SEMIMES_CODE_GROUPS: 'semimes:codeGroups',
+  // 34호 배치⑶ — 지표·달력·추적(#18 조업달력·#15 성과 지표·#12 생산현황 차트·#16 추적 밴드)
+  SEMIMES_WORK_CALENDAR: 'semimes:workCalendar',
+  SEMIMES_WORK_CALENDAR_SAVE: 'semimes:workCalendarSave',
+  SEMIMES_PERF_INDICATORS: 'semimes:perfIndicators',
+  SEMIMES_PROD_CHART: 'semimes:prodChart',
+  SEMIMES_TRACE_BAND: 'semimes:traceBand',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',

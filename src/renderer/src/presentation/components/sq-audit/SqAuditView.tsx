@@ -132,6 +132,7 @@ export function SqAuditView(): JSX.Element {
           ))}
           <span className="text-[12px] font-semibold bg-secondary text-secondary-foreground border border-primary/30 rounded-lg px-3 py-1.5 ml-1">
             {shortYmd(data?.windowStart ?? null) || '—'} ~ {shortYmd(data?.windowEnd ?? null) || '—'} · 가동 {data?.opDays ?? 0}일
+            {data?.denomSource === 'calendar' ? ' (조업달력)' : ' (기록일 프록시)'}
           </span>
         </span>
       </div>

@@ -50,6 +50,10 @@ export type PageId =
   | 'partner-master'
   | 'bom-browse'
   | 'code-master'
+  | 'work-calendar'
+  | 'perf-indicators'
+  | 'prod-chart'
+  | 'trace-band'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
@@ -100,7 +104,11 @@ export const PAGE_LABELS: Record<PageId, string> = {
   'item-master': '품목코드관리',
   'partner-master': '거래처코드관리',
   'bom-browse': 'BOM 조회 (정/역전개)',
-  'code-master': '코드관리'
+  'code-master': '코드관리',
+  'work-calendar': '조업달력',
+  'perf-indicators': '성과 지표',
+  'prod-chart': '생산현황 차트',
+  'trace-band': '추적 공정 흐름'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

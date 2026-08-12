@@ -46,6 +46,10 @@ import { ItemMasterView } from '../semimes-entry/ItemMasterView'
 import { PartnerMasterView } from '../semimes-entry/PartnerMasterView'
 import { BomBrowseView } from '../semimes-entry/BomBrowseView'
 import { CodeMasterView } from '../semimes-entry/CodeMasterView'
+import { WorkCalendarView } from '../semimes-entry/WorkCalendarView'
+import { PerfIndicatorsView } from '../semimes-entry/PerfIndicatorsView'
+import { ProdChartView } from '../semimes-entry/ProdChartView'
+import { TraceBandView } from '../semimes-entry/TraceBandView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { ConfirmDialogHost } from '../shared/ConfirmDialog'
@@ -131,6 +135,10 @@ export function AppShell(): JSX.Element {
             {currentPage === 'partner-master' && <PartnerMasterView />}
             {currentPage === 'bom-browse' && <BomBrowseView />}
             {currentPage === 'code-master' && <CodeMasterView />}
+            {currentPage === 'work-calendar' && <WorkCalendarView />}
+            {currentPage === 'perf-indicators' && <PerfIndicatorsView />}
+            {currentPage === 'prod-chart' && <ProdChartView />}
+            {currentPage === 'trace-band' && <TraceBandView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
           </ErrorBoundary>
           </div>

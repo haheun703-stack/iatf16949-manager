@@ -47,7 +47,11 @@ export const SIDECAR_MSG =
   "sidecar 모드 — 이 설치의 기록 원천은 MES입니다(이중 기록 금지). 직접 기록 전환 = app_config 'semimes.recordSource' = 'direct'."
 
 function ymdOk(s: string | undefined | null): boolean {
-  return !!s && /^\d{4}-\d{2}-\d{2}$/.test(s)
+  // 8/11 검수 P2″(조기 봉합 — 배치⑶ 조업달력이 분모 원천이라): 형식만 보던 것을 실재 일자까지.
+  // +09:00 앵커 왕복이 원문과 같아야 실재(2026-13-45·2026-02-30 거부).
+  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false
+  const d = new Date(`${s}T00:00:00+09:00`)
+  return !Number.isNaN(d.getTime()) && new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 10) === s
 }
 
 export function registerSemimesWriteHandlers(): void {
@@ -515,6 +519,32 @@ export function registerSemimesWriteHandlers(): void {
     ).run(String(Math.round(v)))
     return { success: true }
   })
+
+  // ── ⑬ workCalendarSave — 조업달력 등록/정정 (34호 배치⑶ #18 · 0139 계약) ──
+  // 마스터 성격(사후 정정 허용) = UPSERT. 분모의 원천이라 기입 주체 각인(STAMP — updatedBy 세션 강제).
+  ipcMain.handle(
+    IPC_CHANNELS.SEMIMES_WORK_CALENDAR_SAVE,
+    (_e, req: { ymd: string; workType: '조업' | '휴무'; note?: string | null; updatedBy?: string }) => {
+      if (recordSource() === 'sidecar') return { success: false, error: SIDECAR_MSG }
+      if (!ymdOk(req?.ymd)) return { success: false, error: '날짜는 YYYY-MM-DD 형식이어야 합니다.' }
+      if (req.workType !== '조업' && req.workType !== '휴무') {
+        return { success: false, error: "구분은 '조업' 또는 '휴무'여야 합니다." }
+      }
+      const author = req.updatedBy?.trim()
+      if (!author) return { success: false, error: '기입 주체가 없습니다 — 사용자를 선택하세요.' }
+      try {
+        db.prepare(
+          `INSERT INTO work_calendar (ymd, work_type, note, updated_by, updated_at)
+           VALUES (?, ?, ?, ?, datetime('now'))
+           ON CONFLICT(ymd) DO UPDATE SET work_type = excluded.work_type, note = excluded.note,
+             updated_by = excluded.updated_by, updated_at = excluded.updated_at`
+        ).run(req.ymd, req.workType, req.note?.trim() || null, author)
+        return { success: true }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    }
+  )
 
   // ── ⑧ inspConfirm — 확인자 2단 서명(§10-1 ⓒ — ✓는 사람, 세션 각인, 1회) ──
   ipcMain.handle(IPC_CHANNELS.SEMIMES_INSP_CONFIRM, (_e, { id, confirmer }: { id: number; confirmer?: string }) => {
