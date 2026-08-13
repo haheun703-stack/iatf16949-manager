@@ -65,6 +65,9 @@ export function TvBoardView(): JSX.Element {
     }
   }, [seq])
 
+  // 8/13 폭주 재봉합: useSeqGuard 가 동일 참조를 보장하게 되어 load 가 마운트 간 안정 —
+  // 이 effect 는 마운트 1회 + 60초 간격만 발사한다(코워크 실측 초당 100건+ 재발사의 뿌리는
+  // 훅의 매 렌더 새 객체 반환 — asyncGuard.ts 주석 참조). 검증 = F12 __invokeRate().
   useEffect(() => {
     void load()
     const timer = window.setInterval(() => void load(), POLL_MS)
@@ -163,8 +166,10 @@ export function TvBoardView(): JSX.Element {
               const accent = pct != null && pct >= 100 ? '#34d399' : '#f5a623'
               return (
                 <div key={o.orderNo} className="rounded-2xl bg-neutral-950 border border-neutral-800 px-4 pb-4 pt-3" style={{ borderTopColor: accent, borderTopWidth: 3 }}>
+                  {/* 머리 = 품번(8/13 판정 — 그림65 "사람이 아는 이름이 머리" 취지 · 설비명 축은 v2).
+                      지시번호는 그 밑에 작게 — 같은 품번 지시 여러 건의 구분자(추적 앵커)로 유지. */}
                   <div className="flex items-center justify-between gap-2">
-                    <b className="text-[16px] font-extrabold truncate tabular-nums">{o.orderNo}</b>
+                    <b className="text-[19px] font-extrabold truncate tabular-nums">{o.itemCode}</b>
                     <span
                       className={
                         'text-[12px] font-bold rounded-full px-2.5 py-[2px] shrink-0 ' +
@@ -173,6 +178,9 @@ export function TvBoardView(): JSX.Element {
                     >
                       {o.status}
                     </span>
+                  </div>
+                  <div className="text-[12px] text-neutral-500 tabular-nums truncate" title="작업지시번호 — 실적·LOT 추적의 앵커">
+                    {o.orderNo}
                   </div>
                   <Donut pct={pct} />
                   <div className="text-[15px] leading-[2] text-neutral-300">
@@ -193,8 +201,7 @@ export function TvBoardView(): JSX.Element {
                     </div>
                   </div>
                   <div className="mt-2 pt-2 border-t border-neutral-800 text-center">
-                    <div className="text-[15px] font-extrabold tabular-nums truncate">{o.itemCode}</div>
-                    <div className="text-[13px] text-neutral-400 truncate">{o.itemName ?? '—'}</div>
+                    <div className="text-[13.5px] text-neutral-400 truncate">{o.itemName ?? '—'}</div>
                   </div>
                 </div>
               )

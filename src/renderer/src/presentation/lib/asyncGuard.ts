@@ -14,12 +14,20 @@ import { useCallback, useEffect, useRef } from 'react'
  * seq 토큰 — 늦은 응답 폐기.
  * 사용: const seq = useSeqGuard()
  *       const t = seq.begin(); ... await; if (!seq.isCurrent(t)) return
+ *
+ * ⚠️반환 객체는 **동일 참조 보장**(useRef 고정) — 의존성 배열에 그대로 넣어도 안전하다.
+ * 8/13 전광판 폭주(코워크 실측 초당 100건+)의 뿌리: 종전 구현이 매 렌더 새 객체를 반환해,
+ * seq 를 deps 에 문 load 가 렌더마다 재생성 → useEffect(…, [load]) 재발사 → fetch→setState→
+ * 재렌더의 자기 루프. 다른 12개 화면은 effect 가 원시값 deps 라 잠복만 했다 — 훅이 안정
+ * 참조를 보장하는 것이 규약의 완성이다(개별 화면 회피책 금지).
  */
 export function useSeqGuard(): { begin: () => number; isCurrent: (token: number) => boolean } {
   const ref = useRef(0)
-  const begin = useCallback((): number => ++ref.current, [])
-  const isCurrent = useCallback((token: number): boolean => token === ref.current, [])
-  return { begin, isCurrent }
+  const api = useRef({
+    begin: (): number => ++ref.current,
+    isCurrent: (token: number): boolean => token === ref.current
+  })
+  return api.current
 }
 
 /**
