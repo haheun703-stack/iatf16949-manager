@@ -277,9 +277,9 @@ const PROTECTED = {
   'semimes:workCalendarSave': ['manager', 'executive'], // 조업달력 = 도넛·심사·지표 공유 분모(0139)
   'kpi:indicatorSave': ['manager', 'executive'], // KPI 기준정보(목표·방향 = 착색·목표선 원천)
   'semimes:ppmTargetSave': ['manager', 'executive'], // PPM 목표선
-  // W4-B(#19): 매트릭스 관리 = 사용자 관리(appUser 계열)와 동일 축(manager+).
-  // executive 전용 축소는 판정 대기(검수요청 명기) — 조회(perm:list)는 로그인만.
-  'perm:save': ['manager', 'executive']
+  // W4-B(#19) 판정 ①(사장님 확정 8/13 — 코워크 권고 수용): 권한 배분 = 조직 설계 행위 →
+  // executive 전용. manager 확대는 안정 후 재론(1줄 수정 자리). 조회(perm:list)는 로그인만.
+  'perm:save': ['executive']
 }
 
 // 세션 기록주체 강제 주입(W3-3, 2착 봉쇄 해소): 클라가 보낸 값은 무시하고 세션 사용자로 덮어쓴다.

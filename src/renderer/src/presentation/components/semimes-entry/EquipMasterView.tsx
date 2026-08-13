@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { SemimesEquipRowDto, SemimesEquipSaveInput } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useSeqGuard, useSingleFlight } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
@@ -81,8 +82,8 @@ export function EquipMasterView(): JSX.Element {
       setForm(EMPTY)
       setEditing(false)
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.') })
     } finally {
       setSaving(false)
     }
@@ -107,8 +108,8 @@ export function EquipMasterView(): JSX.Element {
       })) as { success: boolean; error?: string }
       if (!res.success) setMsg({ tone: 'bad', text: res.error ?? '변경 실패' })
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '변경 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '변경 실패 — 통신 오류. 다시 시도하세요.') })
     }
   }
 

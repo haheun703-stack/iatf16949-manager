@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { SemimesItemSearchRowDto, SemimesMoldRowDto, SemimesMoldSaveInput } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useDebouncedCallback, useSeqGuard, useSingleFlight } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
@@ -101,8 +102,8 @@ export function MoldView(): JSX.Element {
       setForm(EMPTY)
       setEditing(false)
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.') })
     } finally {
       setSaving(false)
     }

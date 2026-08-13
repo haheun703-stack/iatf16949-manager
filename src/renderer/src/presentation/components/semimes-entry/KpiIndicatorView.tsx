@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { KpiIndicatorDto, KpiIndicatorSaveInput } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useSeqGuard, useSingleFlight } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { useUIStore } from '../../stores/uiStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
@@ -86,8 +87,8 @@ export function KpiIndicatorView(): JSX.Element {
       setMsg({ tone: 'ok', text: `지표 #${res.id} ${form.id != null ? '정비' : '신설'} — KPI 그리드 부호 착색·성과 지표 목표선이 이 값을 따릅니다.` })
       setForm(EMPTY)
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.') })
     } finally {
       setSaving(false)
     }
@@ -108,8 +109,8 @@ export function KpiIndicatorView(): JSX.Element {
       })) as { success: boolean; error?: string }
       if (!res.success) setMsg({ tone: 'bad', text: res.error ?? '변경 실패' })
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '변경 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '변경 실패 — 통신 오류. 다시 시도하세요.') })
     }
   }
 

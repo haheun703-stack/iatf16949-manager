@@ -3,6 +3,7 @@ import { Download, Palette, RefreshCw, Save } from 'lucide-react'
 import { todayKST } from '@shared/date-kst'
 import type { KpiIndicatorDto, KpiMonthValueDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 import { useHeatColors } from '../../hooks/useHeatColors'
@@ -118,8 +119,8 @@ export function KpiGridView(): JSX.Element {
       }
       setMsg({ tone: 'ok', text: `저장 완료 — ${saved}칸 (기록 주체 = ${userName ?? '세션 사용자'})` })
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: `통신 오류 — 이전 저장분 ${saved}칸은 반영됨(조회로 확인). 다시 시도하세요.` })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, `통신 오류 — 이전 저장분 ${saved}칸은 반영됨(조회로 확인). 다시 시도하세요.`) })
     } finally {
       setSaving(false)
     }
@@ -151,8 +152,8 @@ export function KpiGridView(): JSX.Element {
       }
       if (res.success) setMsg({ tone: 'ok', text: '엑셀 저장 완료 (부호 착색 동봉)' })
       else if (!res.canceled) setMsg({ tone: 'bad', text: res.error ?? '엑셀 저장 실패' })
-    } catch {
-      setMsg({ tone: 'bad', text: '엑셀 저장 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '엑셀 저장 실패 — 통신 오류. 다시 시도하세요.') })
     }
   }
 

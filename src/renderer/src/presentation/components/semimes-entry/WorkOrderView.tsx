@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SemimesItemSearchRowDto, SemimesWorkOrderRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useDebouncedCallback, useSingleFlight } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
@@ -88,8 +89,8 @@ export function WorkOrderView(): JSX.Element {
       setNewItem('')
       setNewQty('')
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '등록 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '등록 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.') })
     } finally {
       setSaving(false)
     }
@@ -118,8 +119,8 @@ export function WorkOrderView(): JSX.Element {
       }
       if (!res.success) setMsg({ tone: 'bad', text: res.error ?? '상태 변경 실패' })
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '상태 변경 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '상태 변경 실패 — 통신 오류. 다시 시도하세요.') })
     } finally {
       setStatusBusy(null)
     }

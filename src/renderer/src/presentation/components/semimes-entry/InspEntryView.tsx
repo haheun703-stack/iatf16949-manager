@@ -4,6 +4,7 @@ import type { SemimesScanContextDto, SemimesTodayRecordsDto } from '@shared/ipc-
 import { todayKST } from '@shared/date-kst'
 import { cn } from '../../../lib/utils'
 import { useSingleFlight } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 
@@ -138,8 +139,8 @@ export function InspEntryView(): JSX.Element {
       setRows(specRowsFor(ctx, kind))
       setJudgment('')
       await refreshToday()
-    } catch {
-      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.') })
     } finally {
       setBusy(false)
     }
@@ -153,8 +154,8 @@ export function InspEntryView(): JSX.Element {
       }
       setMsg(res.success ? { tone: 'ok', text: `확인 완료 — #${id} (확인자 각인)` } : { tone: 'bad', text: res.error ?? '확인 실패' })
       await refreshToday()
-    } catch {
-      setMsg({ tone: 'bad', text: '확인 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '확인 실패 — 통신 오류. 다시 시도하세요.') })
     }
   }
 
@@ -172,8 +173,8 @@ export function InspEntryView(): JSX.Element {
       setMsg(res.success ? { tone: 'ok', text: `취소 마크 완료 — #${cancelFor.id} (재입력으로 정정)` } : { tone: 'bad', text: res.error ?? '취소 실패' })
       setCancelFor(null)
       await refreshToday()
-    } catch {
-      setMsg({ tone: 'bad', text: '취소 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '취소 실패 — 통신 오류. 다시 시도하세요.') })
     }
   }
 

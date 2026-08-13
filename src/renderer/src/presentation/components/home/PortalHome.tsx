@@ -18,6 +18,7 @@ import type {
 import { SqAuditView } from '../sq-audit/SqAuditView'
 import { CardShell, KpiTile as StatTile, TeamDonut, MatrixBoard, MatrixLegend, SegTabs } from '../shared/dash/DashKit'
 import { cn } from '../../../lib/utils'
+import { invokeErrText } from '../../lib/errText'
 import { traceDeepLink } from '../../../lib/deeplink'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
@@ -171,9 +172,9 @@ export function PortalHome({ mode = 'home' }: { mode?: 'home' | 'board' } = {}):
         })
       }
       await load()
-    } catch {
+    } catch (e) {
       // 8/11 검수 Minor: 조용한 실패 금지 — 눌렀는데 안 된 것을 말한다
-      setActionErr(`완료 처리 실패 — 통신 오류. 목록은 그대로입니다(“${task.title}” 미완료). 다시 시도하세요.`)
+      setActionErr(invokeErrText(e, `완료 처리 실패 — 통신 오류. 목록은 그대로입니다(“${task.title}” 미완료). 다시 시도하세요.`))
     } finally {
       setCompleting(null)
     }
@@ -1376,8 +1377,8 @@ function KpiTile({
       setEditing(false)
       setVal('')
       onSaved()
-    } catch {
-      setErr('저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.')
+    } catch (e) {
+      setErr(invokeErrText(e, '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.'))
     } finally {
       setSaving(false)
     }

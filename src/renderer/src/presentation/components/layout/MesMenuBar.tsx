@@ -28,8 +28,10 @@ interface MenuEntry {
   soon?: boolean
   /** 진입 전용 별칭(다른 모듈이 정본) — 메가바 점등·2차 탭 귀속에서 제외(8/6 검수: 이중 등재 정리) */
   alias?: boolean
-  /** manager+ 전용 항목(W4-B 권한 매트릭스 등 관리 화면) — member 에겐 미표출 */
+  /** manager+ 전용 항목(관리 화면) — member 에겐 미표출 */
   adminOnly?: boolean
+  /** executive 전용 항목(W4-B 판정 ① — 권한 배분은 사장님 고유) — 그 외 미표출 */
+  execOnly?: boolean
   note?: string
 }
 
@@ -48,8 +50,8 @@ export const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
       { label: '품번 / ISIR', page: 'parts' },
       { label: '문서 BOM', page: 'document-bom' },
       { label: '프로세스 작업장', page: 'process-workbench' },
-      // W4-B(#19) — 그림33 화면별 권한관리(manager+ 관리 화면)
-      { label: '화면별 권한관리', page: 'screen-perm', adminOnly: true }
+      // W4-B(#19) — 그림33 화면별 권한관리(판정 ① 8/13: 사장님 전용)
+      { label: '화면별 권한관리', page: 'screen-perm', execOnly: true }
     ]
   },
   {
@@ -170,6 +172,7 @@ function useMenuVisible(): (it: MenuEntry) => boolean {
   const { users, activeUserId } = useActiveUserStore()
   const role = users.find((u) => u.id === activeUserId)?.role
   return (it: MenuEntry): boolean => {
+    if (it.execOnly && role !== 'executive') return false
     if (it.adminOnly && role !== 'manager' && role !== 'executive') return false
     if (it.page && !bypass) {
       const r = rules[it.page]

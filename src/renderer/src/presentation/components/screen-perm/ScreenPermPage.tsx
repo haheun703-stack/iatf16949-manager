@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ScreenPermBits, ScreenPermRuleDto, ScreenPermSaveInput } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useSeqGuard, useSingleFlight } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { usePermStore } from '../../stores/permStore'
 import { PAGE_LABELS, type PageId } from '../../stores/uiStore'
@@ -31,7 +32,7 @@ const TREE = MODULES.map((m) => ({
   key: m.key,
   label: m.label,
   pages: m.items
-    .filter((it) => it.page && !it.alias && !it.adminOnly)
+    .filter((it) => it.page && !it.alias && !it.adminOnly && !it.execOnly)
     .map((it) => ({ page: it.page as PageId, label: it.label }))
 })).filter((m) => m.pages.length > 0)
 
@@ -147,7 +148,7 @@ export function ScreenPermPage(): JSX.Element {
       await load()
       await reloadEffective() // 내 규칙이 바뀐 경우 메뉴 보조막 동기화
     } catch (e) {
-      setMsg({ tone: 'bad', text: e instanceof Error ? e.message : '저장 실패 — 통신 오류. 다시 시도하세요.' })
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류. 다시 시도하세요.') })
     } finally {
       setSaving(false)
     }
@@ -173,7 +174,8 @@ export function ScreenPermPage(): JSX.Element {
       <div className="flex items-baseline gap-2 flex-wrap">
         <h1 className="text-[20px] font-extrabold tracking-[-0.02em]">화면별 권한관리</h1>
         <span className="text-[13px] text-muted-foreground">
-          권한그룹(부서)·개인 × 메뉴 × 7종 체크(그림33) — 규칙 없는 화면 = 현행 허용 · 최종관리자(executive) = 전권
+          권한그룹(부서)·개인 × 메뉴 × 7종 체크(그림33) — 규칙 없는 화면 = 현행 허용 ·
+          저장 = 최종관리자(사장님) 전용(판정 ① 8/13) · executive = 매트릭스 전권
         </span>
       </div>
 

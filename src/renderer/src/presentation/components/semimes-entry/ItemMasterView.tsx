@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { SemimesItemMasterRowDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
@@ -118,8 +119,8 @@ export function ItemMasterView(): JSX.Element {
       setMsg({ tone: 'ok', text: `${editCode} 정비 저장 완료` })
       setEditCode(null)
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.') })
     } finally {
       setSaving(false)
     }

@@ -4,6 +4,7 @@ import type { SemimesScanContextDto, SemimesTodayRecordsDto } from '@shared/ipc-
 import { todayKST } from '@shared/date-kst'
 import { cn } from '../../../lib/utils'
 import { useSingleFlight } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { useUIStore } from '../../stores/uiStore'
 
@@ -83,8 +84,8 @@ export function ProdEntryView(): JSX.Element {
       } else {
         setMsg({ tone: 'bad', text: res.error ?? '발번 실패' })
       }
-    } catch {
-      setMsg({ tone: 'bad', text: '발번 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '발번 실패 — 통신 오류. 다시 시도하세요.') })
     } finally {
       setIssuing(false)
     }
@@ -116,8 +117,8 @@ export function ProdEntryView(): JSX.Element {
       setNgQty('0')
       setDefectCode('')
       await refreshToday()
-    } catch {
-      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류(입력은 보존됨). 다시 시도하세요.') })
     } finally {
       setBusy(false)
     }
@@ -137,8 +138,8 @@ export function ProdEntryView(): JSX.Element {
       setMsg(res.success ? { tone: 'ok', text: `취소 마크 완료 — #${cancelFor.id}` } : { tone: 'bad', text: res.error ?? '취소 실패' })
       setCancelFor(null)
       await refreshToday()
-    } catch {
-      setMsg({ tone: 'bad', text: '취소 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '취소 실패 — 통신 오류. 다시 시도하세요.') })
     }
   }
 

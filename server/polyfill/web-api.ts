@@ -24,7 +24,12 @@ async function invoke(channel: string, payload?: unknown): Promise<unknown> {
     } catch {
       /* 본문 없음 */
     }
-    throw new Error(msg)
+    // W4-B 검수 소견(8/13): 비2xx 공용 분기 — 403 권한·401 세션은 서버 안내문이 정본.
+    // 이름표를 붙여 렌더러 폴백("통신 오류")이 이 안내문을 덮지 않게 한다(lib/errText 소비).
+    const err = new Error(msg)
+    if (res.status === 403) err.name = 'PermissionError'
+    else if (res.status === 401) err.name = 'AuthError'
+    throw err
   }
   const json = (await res.json()) as unknown
 

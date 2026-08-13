@@ -3,6 +3,7 @@ import { todayKST } from '@shared/date-kst'
 import type { SemimesPpmDashDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useSeqGuard } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
 
@@ -68,8 +69,8 @@ export function PpmDashView(): JSX.Element {
       }
       setMsg({ tone: 'ok', text: `목표 PPM ${Math.round(v)} 저장 (기입 주체 각인)` })
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류. 다시 시도하세요.') })
     } finally {
       setSaving(false)
     }

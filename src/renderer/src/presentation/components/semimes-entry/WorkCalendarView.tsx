@@ -3,6 +3,7 @@ import { todayKST, ymdAddKST } from '@shared/date-kst'
 import type { SemimesWorkCalendarDayDto, SemimesWorkCalendarDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useSeqGuard } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 import { MesToolbar, downloadCsv } from '../shared/MesToolbar'
@@ -67,8 +68,8 @@ export function WorkCalendarView(): JSX.Element {
       setMsg({ tone: 'ok', text: `${ymd} = ${workType} 등록 (기입 주체 각인)` })
       setNote('')
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '저장 실패 — 통신 오류. 다시 시도하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류. 다시 시도하세요.') })
     } finally {
       setSaving(false)
     }
@@ -105,8 +106,8 @@ export function WorkCalendarView(): JSX.Element {
       }
       setMsg({ tone: 'ok', text: `평일 ${done}일 조업 일괄 등록 완료.` })
       await load()
-    } catch {
-      setMsg({ tone: 'bad', text: '일괄 등록 중 통신 오류 — 화면을 조회해 어디까지 등록됐는지 확인하세요.' })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '일괄 등록 중 통신 오류 — 화면을 조회해 어디까지 등록됐는지 확인하세요.') })
       await load()
     } finally {
       setSaving(false)
