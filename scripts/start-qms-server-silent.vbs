@@ -30,4 +30,11 @@ If Not ServerAlive() Then
     WScript.Sleep 700
     If ServerAlive() Then Exit For
   Next
+  ' 260813 NO MUTE FAILURE: autostart must not fail silently either - one popup at logon
+  ' is better than a dead server nobody notices until they try to log in.
+  If Not ServerAlive() Then
+    MsgBox "QMS server did NOT start at logon." & vbCrLf & _
+      "Check the 'IATF QMS Server' window in the taskbar (it stays open with the reason)." & vbCrLf & _
+      "Log: %TEMP%\qms-server.log", vbCritical, "QMS autostart - start failed"
+  End If
 End If

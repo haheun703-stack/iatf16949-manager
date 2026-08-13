@@ -31,6 +31,14 @@ If Not ServerAlive() Then
     WScript.Sleep 700
     If ServerAlive() Then Exit For
   Next
+  ' 260813 NO MUTE FAILURE: if the server still is not up, SAY SO and stop -
+  ' do not open a browser onto nothing (the batch window stays open with the reason).
+  If Not ServerAlive() Then
+    MsgBox "QMS server did NOT start." & vbCrLf & _
+      "Check the 'IATF QMS Server' window in the taskbar (it stays open with the reason)." & vbCrLf & _
+      "Log: %TEMP%\qms-server.log", vbCritical, "QMS launcher - start failed"
+    WScript.Quit 1
+  End If
 End If
 
 ' Open the app in a new chrome window if chrome is found, else default browser.
