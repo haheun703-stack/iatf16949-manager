@@ -22,7 +22,11 @@ if %errorlevel%==0 (
 )
 
 set ELECTRON_RUN_AS_NODE=1
-echo IATF QMS web server running. Close this window to stop. ( http://127.0.0.1:8080 )
+rem 260813: the old text said "Close this window to stop" - PROVEN WRONG (electron is a GUI
+rem subsystem exe, it detaches from this console and survives the close as an orphan).
+echo IATF QMS web server running.  ( http://127.0.0.1:8080 )
+echo KEEP this window open - minimize it. Closing it does NOT stop the server.
+echo To stop or restart: run scripts\restart-qms-server.bat
 "node_modules\electron\dist\electron.exe" "server\index.cjs" >> "%TEMP%\qms-server.log" 2>&1
 
 rem -- reached only when the server exits BY ITSELF (crash/port race): keep window + show log tail
