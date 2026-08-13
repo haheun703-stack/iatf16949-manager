@@ -829,6 +829,50 @@ export interface AppUserUpsertInput {
   sortOrder?: number
 }
 
+// ===== 화면별 권한 매트릭스 (0142 screen_permission — W4-B, 그림33 골격) =====
+
+/** 7종 체크(그림33): 읽기·쓰기·수정·삭제·엑셀·프린트·단가. 단가는 스키마 하드락(항상 false). */
+export interface ScreenPermBits {
+  read: boolean
+  write: boolean
+  edit: boolean
+  delete: boolean
+  excel: boolean
+  print: boolean
+  price: boolean
+}
+
+export interface ScreenPermRuleDto extends ScreenPermBits {
+  id: number
+  /** 'team' = 권한그룹(부서 = app_users.team_dept) | 'user' = 개인 오버라이드 */
+  subjectKind: 'team' | 'user'
+  /** team: team_dept 문자열 | user: app_users.id 문자열 */
+  subjectKey: string
+  /** uiStore PageId */
+  pageId: string
+  updatedBy: string | null
+  updatedAt: string
+}
+
+export interface ScreenPermSaveInput {
+  subjectKind: 'team' | 'user'
+  subjectKey: string
+  /** 저장 대상 화면들 — 각 화면에 bits 를 동일 적용(그림33 "선택메뉴 권한설정 저장") */
+  pageIds: string[]
+  bits: ScreenPermBits
+  /** true = 해당 (주체, 화면) 규칙 삭제(= 현행 허용으로 복귀) */
+  remove?: boolean
+  /** 세션 강제(STAMP) — 클라 값 무시 */
+  updatedBy?: string
+}
+
+/** 현 세션 사용자의 병합 규칙(개인>팀) — 렌더러 화면 숨김(보조)용. 규칙 없는 화면은 미포함(=현행 허용). */
+export interface ScreenPermEffectiveDto {
+  /** executive = 그림33 최종관리자 — 매트릭스 무시 전권(빈 rules) */
+  bypass: boolean
+  rules: Record<string, ScreenPermBits>
+}
+
 // ===== SQ 작성 가이드층 (0064, 코워크 07/08 지시서) =====
 
 export type SqCheckpointStatus = 'met' | 'partial' | 'missing' | 'na'
@@ -2388,6 +2432,19 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.APP_USER_RESET_PASSWORD]: {
     request: { id: number; newPassword: string }
     response: { success: boolean; error?: string }
+  }
+  [IPC_CHANNELS.PERM_LIST]: {
+    request: void
+    response: ScreenPermRuleDto[]
+  }
+  [IPC_CHANNELS.PERM_SAVE]: {
+    request: ScreenPermSaveInput
+    response: { success: boolean; saved?: number; error?: string }
+  }
+  [IPC_CHANNELS.PERM_EFFECTIVE]: {
+    // userName 은 서버 STAMP 주입(세션 정본) — 렌더러는 빈 호출(데스크톱 = bypass)
+    request: void
+    response: ScreenPermEffectiveDto
   }
   [IPC_CHANNELS.OBLIGATION_MATRIX]: {
     request: { days?: number } | undefined

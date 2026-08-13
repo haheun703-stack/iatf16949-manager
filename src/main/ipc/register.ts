@@ -34,6 +34,7 @@ import { registerIntegrityHandlers } from './integrity-handlers'
 import { registerMesTraceHandlers } from './mes-trace-handlers'
 import { registerMesRecordsHandlers } from './mes-records-handlers'
 import { registerAppUsersHandlers } from './app-users-handlers'
+import { registerPermHandlers } from './perm-handlers'
 import { registerSemimesHandlers } from './semimes-handlers'
 import { registerSemimesWriteHandlers } from './semimes-write-handlers'
 import { registerSemimesQueryHandlers } from './semimes-query-handlers'
@@ -67,6 +68,7 @@ export function registerAllIpcHandlers(): void {
   registerMesTraceHandlers()
   registerMesRecordsHandlers()
   registerAppUsersHandlers()
+  registerPermHandlers()
   registerSemimesHandlers()
   registerSemimesWriteHandlers()
   registerSemimesQueryHandlers()

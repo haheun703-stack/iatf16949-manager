@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
+import { usePermStore } from '../../stores/permStore'
+import { useActiveUserStore } from '../../stores/activeUserStore'
 
 /**
  * PB2 ⓐ — 상단 MES 모듈 메뉴바 (29번 §11 "겉이 MES, 속이 SQ" · 시각 정본 = 30번 목업 v2).
@@ -26,10 +28,13 @@ interface MenuEntry {
   soon?: boolean
   /** 진입 전용 별칭(다른 모듈이 정본) — 메가바 점등·2차 탭 귀속에서 제외(8/6 검수: 이중 등재 정리) */
   alias?: boolean
+  /** manager+ 전용 항목(W4-B 권한 매트릭스 등 관리 화면) — member 에겐 미표출 */
+  adminOnly?: boolean
   note?: string
 }
 
-const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
+// W4-B: 권한 매트릭스 관리자 화면의 메뉴 트리 원천으로도 쓰인다(그림33 좌측 트리) — export.
+export const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
   {
     key: 'master',
     label: '기준정보',
@@ -42,7 +47,9 @@ const MODULES: { key: string; label: string; items: MenuEntry[] }[] = [
       { label: '공정 흐름 맵', page: 'process-flow' },
       { label: '품번 / ISIR', page: 'parts' },
       { label: '문서 BOM', page: 'document-bom' },
-      { label: '프로세스 작업장', page: 'process-workbench' }
+      { label: '프로세스 작업장', page: 'process-workbench' },
+      // W4-B(#19) — 그림33 화면별 권한관리(manager+ 관리 화면)
+      { label: '화면별 권한관리', page: 'screen-perm', adminOnly: true }
     ]
   },
   {
@@ -156,8 +163,25 @@ function Badge({ tone, children }: { tone: 'sq' | 'iatf' | 'gap'; children: stri
   )
 }
 
+// W4-B 화면 숨김(보조): 읽기 꺼진 화면·member 의 관리 항목을 메뉴에서 감춘다.
+// 서버 SCREEN_GUARD 가 정본(쓰기·수정·삭제·엑셀 403) — 여기는 어수선함 방지용 보조막.
+function useMenuVisible(): (it: MenuEntry) => boolean {
+  const { bypass, rules } = usePermStore()
+  const { users, activeUserId } = useActiveUserStore()
+  const role = users.find((u) => u.id === activeUserId)?.role
+  return (it: MenuEntry): boolean => {
+    if (it.adminOnly && role !== 'manager' && role !== 'executive') return false
+    if (it.page && !bypass) {
+      const r = rules[it.page]
+      if (r && !r.read) return false
+    }
+    return true
+  }
+}
+
 export function MesMenuBar(): JSX.Element {
   const { currentPage, setPage, setSelectedFormCode } = useUIStore()
+  const visible = useMenuVisible()
   const [open, setOpen] = useState<string | null>(null)
   const barRef = useRef<HTMLDivElement>(null)
 
@@ -207,7 +231,7 @@ export function MesMenuBar(): JSX.Element {
             </button>
             {open === m.key && (
               <div className="absolute top-[40px] left-0 min-w-[340px] bg-card border border-border rounded-b-xl shadow-[0_10px_28px_rgba(30,50,80,.16)] overflow-hidden z-50">
-                {m.items.map((it) => (
+                {m.items.filter(visible).map((it) => (
                   <button
                     key={it.label}
                     type="button"
@@ -248,11 +272,12 @@ export function MesMenuBar(): JSX.Element {
  */
 export function MesSubTabs(): JSX.Element | null {
   const { currentPage, setPage, setSelectedFormCode } = useUIStore()
+  const visible = useMenuVisible()
   const module = MODULES.find((m) => m.items.some((it) => it.page === currentPage && !it.alias))
   if (!module) return null
   return (
     <div className="w-full flex items-center gap-1 px-3 py-1 bg-card border-b border-border overflow-x-auto">
-      {module.items.map((it) => {
+      {module.items.filter(visible).map((it) => {
         const isCur = it.page === currentPage
         return (
           <button

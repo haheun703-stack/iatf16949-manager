@@ -117,8 +117,10 @@ const t = await api('semimes:todayRecords', {})
 check('7단 오늘 기록 반영', t.prod.some((r) => r.id === prod.id && r.canceled === true) && t.insp.some((r) => r.id === insp.id), `prod=${t.prod.length} insp=${t.insp.length}`)
 
 // 8단 — 작업지시: 발번·상태·진척
+// W4-B 편승⑴: 발번 주체(세션)가 E2E봇이면 'E2E-WO-' 접두 — 실지시 번호대(WO-)와 분리.
+const woPrefix = LOGIN === 'E2E봇' ? 'E2E-WO-' : 'WO-'
 const wo = await api('semimes:workOrderUpsert', { itemCode: ITEM, orderQty: 500, createdBy: '위조' })
-check('8단 지시 발번 WO-YYMMDD-nn', wo.success && /^WO-\d{6}-\d{2}$/.test(wo.orderNo), wo.orderNo)
+check(`8단 지시 발번 ${woPrefix}YYMMDD-nn(주체별 접두)`, wo.success && new RegExp(`^${woPrefix}\\d{6}-\\d{2}$`).test(wo.orderNo), wo.orderNo)
 await api('semimes:workOrderUpsert', { id: wo.id, status: '진행' })
 const prod2 = await api('semimes:prodRecordCreate', { recordDate: today, itemCode: ITEM, okQty: 50, ngQty: 0, workOrderId: wo.id })
 const wl = await api('semimes:workOrderList', {})

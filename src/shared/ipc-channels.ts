@@ -30,6 +30,12 @@ export const IPC_CHANNELS = {
   APP_USER_DELETE: 'appUser:delete',
   // 관리형 비번 체계(W4, 사장님 7/25): 관리팀이 4자리 비번을 지정·재설정 — 대장 기반 통제
   APP_USER_RESET_PASSWORD: 'appUser:resetPassword',
+  // W4-B(37호 — 34호 #19): 화면별 권한 매트릭스(0142 screen_permission — 그림33 골격).
+  // list = 관리자 화면 조회 · save = 규칙 일괄 저장(manager+ 가드·STAMP) ·
+  // effective = 현 세션 사용자의 병합 규칙(개인>팀) — 렌더러 화면 숨김(보조)용.
+  PERM_LIST: 'perm:list',
+  PERM_SAVE: 'perm:save',
+  PERM_EFFECTIVE: 'perm:effective',
   // IATF 대시보드 — 인증 심사 준비 한 장 (조항·핵심 의무·문서화)
   IATF_DASHBOARD: 'iatf:dashboard',
   // 규정·양식 찾아보기 (포털 2단계) — 규정 카드 그리드 + 상세(하위 양식)

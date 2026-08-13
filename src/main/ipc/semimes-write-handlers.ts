@@ -326,12 +326,16 @@ export function registerSemimesWriteHandlers(): void {
       if (!req.createdBy?.trim()) return { success: false, error: '작성자가 없습니다 — 사용자를 선택하세요.' }
       const ymd = todayKST()
       const yymmdd = ymd.slice(2).replace(/-/g, '')
+      // W4-B 편승⑴(코워크 8/13 권고): 발번 주체가 E2E봇이면 'E2E-WO-' 접두로 분리 —
+      // 검수 픽스처가 실지시 번호대(WO-)를 점유/혼동하는 일 자체를 없앤다(WO-260813-01 소명 후속).
+      // 카운트도 접두별(LIKE 는 접두 앵커라 상호 불침범) — 실지시 채번 무영향.
+      const woPrefix = req.createdBy!.trim() === 'E2E봇' ? 'E2E-WO-' : 'WO-'
       // P2″: 발번 경합 = lotIssue 문법 이식(immediate 트랜잭션 + UNIQUE/BUSY 재시도 2회)
       const woTxn = db.transaction(() => {
         const { n } = db
           .prepare("SELECT COUNT(*) + 1 AS n FROM work_order WHERE order_no LIKE ?")
-          .get(`WO-${yymmdd}-%`) as { n: number }
-        const orderNo = `WO-${yymmdd}-${String(n).padStart(2, '0')}`
+          .get(`${woPrefix}${yymmdd}-%`) as { n: number }
+        const orderNo = `${woPrefix}${yymmdd}-${String(n).padStart(2, '0')}`
         const info = db
           .prepare(
             `INSERT INTO work_order (order_no, item_code, order_qty, line_no, start_date, end_date, status, note, created_by)

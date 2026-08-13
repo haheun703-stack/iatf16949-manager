@@ -61,6 +61,7 @@ export type PageId =
   | 'daily-report'
   | 'xbar-r'
   | 'tv-board'
+  | 'screen-perm'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
@@ -122,7 +123,8 @@ export const PAGE_LABELS: Record<PageId, string> = {
   'kpi-indicators': 'KPI 기준정보관리',
   'daily-report': '일일 실적현황 (문서형)',
   'xbar-r': 'X BAR R 관리도',
-  'tv-board': 'TV현황판 (생산현황 전광판)'
+  'tv-board': 'TV현황판 (생산현황 전광판)',
+  'screen-perm': '화면별 권한관리'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

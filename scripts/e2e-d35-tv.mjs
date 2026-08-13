@@ -42,19 +42,20 @@ let woIds = {}
   const dbw = new Database(DB_PATH)
   dbw.prepare("DELETE FROM prod_record WHERE work_order_id IN (SELECT id FROM work_order WHERE order_no LIKE 'E2E-TV-%')").run()
   dbw.prepare("DELETE FROM work_order WHERE order_no LIKE 'E2E-TV-%'").run()
-  const wo = dbw.prepare("INSERT INTO work_order (order_no, item_code, order_qty, status, created_by) VALUES (?, ?, ?, ?, 'E2E')")
+  // W4-B 편승⑵: 픽스처 기록 주체 표기 = 'E2E봇' 단일(계정명과 통일 — 'E2E' 혼재 정리)
+  const wo = dbw.prepare("INSERT INTO work_order (order_no, item_code, order_qty, status, created_by) VALUES (?, ?, ?, ?, 'E2E봇')")
   const pr = dbw.prepare('INSERT INTO prod_record (record_date, work_order_id, item_code, ok_qty, ng_qty, worker, canceled_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
   // W1 진행 1000: 실적 130+70(양품)·불량 5 + 취소 999(집계 제외 대상) → okSum 200 · ngSum 5 · 20%
   woIds.w1 = wo.run('E2E-TV-01', ITEM, 1000, '진행').lastInsertRowid
-  pr.run(YMD, woIds.w1, ITEM, 130, 5, 'E2E', null)
-  pr.run(YMD, woIds.w1, ITEM, 70, 0, 'E2E', null)
-  pr.run(YMD, woIds.w1, ITEM, 999, 99, 'E2E', new Date().toISOString()) // 취소 행 — 합산 금지
+  pr.run(YMD, woIds.w1, ITEM, 130, 5, 'E2E봇', null)
+  pr.run(YMD, woIds.w1, ITEM, 70, 0, 'E2E봇', null)
+  pr.run(YMD, woIds.w1, ITEM, 999, 99, 'E2E봇', new Date().toISOString()) // 취소 행 — 합산 금지
   // W2 진행 100: 실적 239 → 239% (그림65 실측 — 100% 초과 그대로)
   woIds.w2 = wo.run('E2E-TV-02', ITEM, 100, '진행').lastInsertRowid
-  pr.run(YMD, woIds.w2, ITEM, 239, 0, 'E2E', null)
+  pr.run(YMD, woIds.w2, ITEM, 239, 0, 'E2E봇', null)
   // W3 대기 · 지시수량 NULL: 실적 50 → 달성률 '—'(계산 불가 정직)
   woIds.w3 = wo.run('E2E-TV-03', ITEM, null, '대기').lastInsertRowid
-  pr.run(YMD, woIds.w3, ITEM, 50, 0, 'E2E', null)
+  pr.run(YMD, woIds.w3, ITEM, 50, 0, 'E2E봇', null)
   // W4 완료 · W5 취소 — 전광판 미출현 대상
   woIds.w4 = wo.run('E2E-TV-04', ITEM, 500, '완료').lastInsertRowid
   woIds.w5 = wo.run('E2E-TV-05', ITEM, 500, '취소').lastInsertRowid

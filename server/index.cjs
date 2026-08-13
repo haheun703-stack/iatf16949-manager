@@ -259,7 +259,9 @@ const REQUIRED_FIELDS = {
   'semimes:prodRecordCreate': ['recordDate', 'itemCode'],
   'semimes:inspRecordCreate': ['inspDate', 'inspKind', 'itemCode', 'judgment'],
   'semimes:recordCancel': ['kind', 'id', 'reason'],
-  'semimes:inspConfirm': ['id']
+  'semimes:inspConfirm': ['id'],
+  // W4-B(#19) — 권한 매트릭스 저장(0142)
+  'perm:save': ['subjectKind', 'subjectKey', 'pageIds']
 }
 
 // 권한 가드(W3-4): 채널 → 허용 role. 없는 채널은 "로그인만"(미들웨어가 이미 보장).
@@ -274,7 +276,10 @@ const PROTECTED = {
   // 화면×7종 정밀 통제는 배치B(#19 권한 매트릭스)의 몫, 여기는 명백 관리성 3종만.
   'semimes:workCalendarSave': ['manager', 'executive'], // 조업달력 = 도넛·심사·지표 공유 분모(0139)
   'kpi:indicatorSave': ['manager', 'executive'], // KPI 기준정보(목표·방향 = 착색·목표선 원천)
-  'semimes:ppmTargetSave': ['manager', 'executive'] // PPM 목표선
+  'semimes:ppmTargetSave': ['manager', 'executive'], // PPM 목표선
+  // W4-B(#19): 매트릭스 관리 = 사용자 관리(appUser 계열)와 동일 축(manager+).
+  // executive 전용 축소는 판정 대기(검수요청 명기) — 조회(perm:list)는 로그인만.
+  'perm:save': ['manager', 'executive']
 }
 
 // 세션 기록주체 강제 주입(W3-3, 2착 봉쇄 해소): 클라가 보낸 값은 무시하고 세션 사용자로 덮어쓴다.
@@ -309,7 +314,71 @@ const STAMP_FIELDS = {
   // 34호 배치⑷ — 설비·금형·KPI 기준정보 정비 주체 세션 강제
   'semimes:equipSave': ['updatedBy'],
   'semimes:moldSave': ['updatedBy'],
-  'kpi:indicatorSave': ['updatedBy']
+  'kpi:indicatorSave': ['updatedBy'],
+  // W4-B(#19) — 매트릭스 저장 주체 세션 강제 + effective 는 세션 사용자 자신만 조회
+  'perm:save': ['updatedBy'],
+  'perm:effective': ['userName']
+}
+
+// ══ W4-B(37호 배치B — 34호 #19): 화면×7종 권한 매트릭스 강제(서버가 정본) ══
+// 0142 screen_permission — 규칙이 있는 (주체, 화면)에만 효력. 규칙 부재 = 현행 허용
+// (PROTECTED role 가드는 그대로 바닥 — 두 관문 모두 통과해야 실행).
+// 매핑 원칙 = REQUIRED_FIELDS 와 동일: 채널→화면 귀속이 DTO 수준으로 명백한 것만 넣는다
+// (추측 금지·오차단 방지 — 여러 화면이 공유하는 조회·완료 채널은 매핑하지 않음).
+// 읽기·프린트 축은 렌더러 화면 숨김(보조)만 — 조회 채널은 화면 합성 공유가 많아 단사상이
+// 아니므로 서버 차단 시 무관 화면이 깨진다(범위·근거는 검수요청 문서 명기).
+// page 가 함수면 payload 로 화면 판별(recordCancel 의 kind 축).
+const SCREEN_GUARD = {
+  // 쓰기(write)
+  'semimes:workOrderUpsert': { page: 'work-order', act: 'write' },
+  'semimes:lotIssue': { page: 'prod-entry', act: 'write' },
+  'semimes:prodRecordCreate': { page: 'prod-entry', act: 'write' },
+  'semimes:inspRecordCreate': { page: 'insp-entry', act: 'write' },
+  'semimes:captureCreate': { page: 'receipt-inbox', act: 'write' },
+  'semimes:captureTag': { page: 'receipt-inbox', act: 'write' },
+  'semimes:workCalendarSave': { page: 'work-calendar', act: 'write' },
+  'semimes:specSave': { page: 'insp-spec', act: 'write' },
+  'semimes:equipSave': { page: 'equip-master', act: 'write' },
+  'semimes:moldSave': { page: 'mold-master', act: 'write' },
+  'semimes:ppmTargetSave': { page: 'ppm-dash', act: 'write' },
+  'kpi:save': { page: 'kpi-grid', act: 'write' },
+  'kpi:save-batch': { page: 'kpi-grid', act: 'write' },
+  'kpi:indicatorSave': { page: 'kpi-indicators', act: 'write' },
+  // 수정(edit)
+  'semimes:itemUpdate': { page: 'item-master', act: 'edit' },
+  'semimes:partnerUpdate': { page: 'partner-master', act: 'edit' },
+  'semimes:inspConfirm': { page: 'insp-entry', act: 'edit' },
+  // 삭제(delete) — append-only 취소 = 삭제 축. kind 로 화면 판별
+  'semimes:recordCancel': {
+    page: (body) => (body.kind === 'insp' ? 'insp-entry' : body.kind === 'receipt' ? 'mat-receipts' : 'prod-entry'),
+    act: 'delete'
+  },
+  // 엑셀(excel) — 내보내기 채널 중 화면 귀속 명백 3종
+  'kpi:exportXlsx': { page: 'kpi-grid', act: 'excel' },
+  'fmea:export': { page: 'fmea', act: 'excel' },
+  'form:exportXlsx': { page: 'form-builder', act: 'excel' }
+}
+const ACT_COL = { write: 'can_write', edit: 'can_edit', delete: 'can_delete', excel: 'can_excel' }
+const ACT_LABEL = { write: '쓰기', edit: '수정', delete: '삭제', excel: '엑셀' }
+
+// 세션 사용자의 (화면) 유효 규칙: 개인 행이 팀 행을 통째로 대체(그림33 오버라이드).
+// executive = 최종관리자 전권(규칙 무시). 0142 미적용 등 조회 불능 = 현행 유지(가짜 차단 금지).
+function screenRuleOf(session, pageId) {
+  if (!session || session.role === 'executive') return null
+  try {
+    const u = db
+      .prepare("SELECT * FROM screen_permission WHERE subject_kind = 'user' AND subject_key = ? AND page_id = ?")
+      .get(String(session.userId), pageId)
+    if (u) return u
+    if (!session.teamDept) return null
+    return (
+      db
+        .prepare("SELECT * FROM screen_permission WHERE subject_kind = 'team' AND subject_key = ? AND page_id = ?")
+        .get(session.teamDept, pageId) || null
+    )
+  } catch {
+    return null
+  }
 }
 
 // ── POST /api/{channel} 디스패처 ──
@@ -323,6 +392,18 @@ app.post('/api/:channel', (req, res) => {
   const allowedRoles = PROTECTED[ch]
   if (allowedRoles && !(req.session && allowedRoles.includes(req.session.role))) {
     return res.status(403).json({ error: `권한 부족: '${ch}' 는 ${allowedRoles.join('/')} 전용입니다.` })
+  }
+
+  // 화면×7종 매트릭스(W4-B — 0142): role 바닥 통과 후 화면 규칙 확인(서버가 정본).
+  const guard = SCREEN_GUARD[ch]
+  if (guard) {
+    const pageId = typeof guard.page === 'function' ? guard.page(req.body || {}) : guard.page
+    const rule = pageId ? screenRuleOf(req.session, pageId) : null
+    if (rule && rule[ACT_COL[guard.act]] !== 1) {
+      return res.status(403).json({
+        error: `권한 매트릭스: '${pageId}' 화면의 ${ACT_LABEL[guard.act]} 권한이 없습니다 — 관리자(권한 매트릭스 화면)에 문의하세요.`
+      })
+    }
   }
 
   // 세션 기록주체 강제 주입(W3-3): 클라 값 무시, 세션 사용자로 덮어씀.

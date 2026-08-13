@@ -60,6 +60,8 @@ import { DailyReportView } from '../semimes-entry/DailyReportView'
 import { XbarRView } from '../semimes-entry/XbarRView'
 import { TvBoardView } from '../tv-board/TvBoardView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
+import { ScreenPermPage } from '../screen-perm/ScreenPermPage'
+import { usePermStore } from '../../stores/permStore'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { ConfirmDialogHost } from '../shared/ConfirmDialog'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
@@ -74,6 +76,12 @@ export function AppShell(): JSX.Element {
   useEffect(() => {
     startPerfWatch()
   }, [])
+  // W4-B 화면 숨김(보조): 세션 사용자의 유효 권한 1회 로드(웹 = perm:effective ·
+  // 데스크톱/실패 = bypass 현행 유지). 서버 SCREEN_GUARD 가 정본 — 이건 메뉴 보조막.
+  const loadPerm = usePermStore((s) => s.load)
+  useEffect(() => {
+    void loadPerm()
+  }, [loadPerm])
   useEffect(() => {
     markPage(currentPage)
   }, [currentPage])
@@ -174,6 +182,7 @@ export function AppShell(): JSX.Element {
             {currentPage === 'daily-report' && <DailyReportView />}
             {currentPage === 'xbar-r' && <XbarRView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
+            {currentPage === 'screen-perm' && <ScreenPermPage />}
           </ErrorBoundary>
           </div>
         </main>
