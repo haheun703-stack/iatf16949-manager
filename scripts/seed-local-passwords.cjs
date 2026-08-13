@@ -40,4 +40,15 @@ for (const role of ['member', 'manager', 'executive']) {
   const u = db.prepare('SELECT name FROM app_users WHERE role=? AND active=1 LIMIT 1').get(role)
   if (u) console.log(`   [${role}] 예: ${u.name}`)
 }
+
+// W4-A(37호 배치A — 8/13 E2E 오인 사고 후속): 검수 복사본 전용 E2E 계정.
+// E2E 가 실무자 계정(서규하)으로 로그인하면 STAMP 가 사람 이름으로 각인돼 "실사용"으로
+// 오인된다(8/13 실증 — 양품 589 사건). 복사본에서 E2E 는 반드시 이 계정으로 로그인할 것.
+// role=manager: b3 조업달력 저장 등 관리성 채널(W4-A 가드) 통과용.
+db.prepare(
+  `INSERT INTO app_users (name, team_dept, role, active, sort_order, password_hash, must_change_pw)
+   VALUES ('E2E봇', '검수', 'manager', 1, 999, ?, 0)
+   ON CONFLICT(name) DO UPDATE SET password_hash = excluded.password_hash, active = 1, role = 'manager'`
+).run(hash)
+console.log(`[seed-pw] E2E봇 계정 보장(manager·검수 — 복사본 전용, 비번="${pw}")`)
 db.close()

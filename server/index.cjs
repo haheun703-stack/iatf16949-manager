@@ -66,12 +66,19 @@ const app = express()
 // 크기 안내가 express 413 원시 응답에 가려지지 않도록 게이트를 핸들러보다 넓게 둔다(8/6 검수 Minor).
 app.use(express.json({ limit: '12mb' }))
 
-// ── 헬스체크(골격 실증) ──
-app.get('/api/health', (_req, res) => {
+// ── 헬스체크 ──
+// W4-A(37호 ④, P1 보류 청산): 비로그인 = {ok:true} 만 — 런처/자동시작의 생존 확인(200)용.
+// DB 경로·건수·런타임 등 상세는 세션이 있을 때만(사내망이라도 무인증 정보 노출 금지).
+// copy = 검수 복사본 서버 표식(IATF_DATA_DIR 지정 구동 = 라이브 기본 경로가 아님) —
+// 렌더러가 이 플래그로 "검수 복사본" 표지를 띄운다(8/13 E2E 오인 사고 후속).
+const IS_COPY_SERVER = !!process.env.IATF_DATA_DIR
+app.get('/api/health', (req, res) => {
+  const s = auth.sessionOf(req)
+  if (!s) return res.json({ ok: true })
   const forms = db.prepare('SELECT COUNT(*) AS c FROM forms').get().c
   const obl = db.prepare('SELECT COUNT(*) AS c FROM recurring_obligations WHERE active=1').get().c
   const users = db.prepare('SELECT COUNT(*) AS c FROM app_users WHERE active=1').get().c
-  res.json({ ok: true, db: DB_PATH, forms, obligations: obl, users, runtime: `electron-node ${process.versions.modules}` })
+  res.json({ ok: true, db: DB_PATH, forms, obligations: obl, users, runtime: `electron-node ${process.versions.modules}`, copy: IS_COPY_SERVER })
 })
 
 // ══ W3 인증 (로그인·세션·권한) — 아래 라우트는 인증 미들웨어 앞(미인증 허용) ══
@@ -261,7 +268,13 @@ const PROTECTED = {
   'obligation:resetDue': ['executive', 'manager'],
   'appUser:resetPassword': ['manager', 'executive'],
   'appUser:upsert': ['manager', 'executive'],
-  'appUser:delete': ['manager', 'executive']
+  'appUser:delete': ['manager', 'executive'],
+  // W4-A(37호 배치A — 관리성 채널 점검): 경영지표·공유 분모의 정비는 manager+ 로.
+  // 현장 쓰기 채널(실적·검사·LOT·지시·설비 등록 = 생산팀 주체 8/12 판정)은 member 유지 —
+  // 화면×7종 정밀 통제는 배치B(#19 권한 매트릭스)의 몫, 여기는 명백 관리성 3종만.
+  'semimes:workCalendarSave': ['manager', 'executive'], // 조업달력 = 도넛·심사·지표 공유 분모(0139)
+  'kpi:indicatorSave': ['manager', 'executive'], // KPI 기준정보(목표·방향 = 착색·목표선 원천)
+  'semimes:ppmTargetSave': ['manager', 'executive'] // PPM 목표선
 }
 
 // 세션 기록주체 강제 주입(W3-3, 2착 봉쇄 해소): 클라가 보낸 값은 무시하고 세션 사용자로 덮어쓴다.

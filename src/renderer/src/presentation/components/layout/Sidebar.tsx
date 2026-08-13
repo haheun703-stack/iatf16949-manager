@@ -284,10 +284,36 @@ export function TopBar(): JSX.Element {
   const toggleAuthor = useAiAuthorStore((s) => s.toggle)
   const toggleSimilar = useSimilarStore((s) => s.toggle)
 
+  // W4-A(8/13 E2E 오인 사고 후속): 검수 복사본 서버(:8081 등 IATF_DATA_DIR 구동)면 적색 표지.
+  // health 의 copy 플래그는 세션이 있어야 내려온다(무인증 슬림) — SPA 는 로그인 후 로드라 충족.
+  const [isCopy, setIsCopy] = useState(false)
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const j = (await (await fetch('/api/health')).json()) as { copy?: boolean }
+        if (alive) setIsCopy(!!j.copy)
+      } catch {
+        /* 데스크톱(express 없음) — 표지 없음 */
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+
   return (
     <div className="h-[48px] shrink-0 flex items-center justify-between gap-3 px-5 bg-card border-b border-border">
       <span className="text-[15.5px] font-extrabold tracking-[-0.01em] text-mega-active truncate">
         데일리Q <span className="text-muted-foreground font-semibold">-</span> {PAGE_LABELS[currentPage]}
+        {isCopy && (
+          <span
+            className="ml-3 inline-block align-middle text-[11.5px] font-bold rounded-full px-2.5 py-[3px] bg-red-600 text-white tracking-normal"
+            title="이 서버는 검수용 복사본입니다 — 여기 입력한 기록은 라이브에 남지 않습니다. 실기록은 :8080 에서."
+          >
+            검수 복사본 — 실기록 입력 금지
+          </span>
+        )}
       </span>
       <div className="flex items-center gap-2.5 shrink-0">
       <DdayBadge />
