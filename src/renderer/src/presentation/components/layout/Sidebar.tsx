@@ -3,7 +3,7 @@ import {
   LayoutDashboard, AlertTriangle, CalendarDays, CalendarClock, Route, Package, ClipboardCheck,
   GitBranch, Ruler, ShieldCheck, ListChecks, FolderTree, FileEdit, Factory, Home, Users,
   Sparkles, Wand2, Search, Building2, Gauge, BadgeCheck, BookOpen, ClipboardList,
-  ChevronsLeft, ChevronsRight
+  ChevronsLeft, ChevronsRight, Tv
 } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
@@ -278,6 +278,7 @@ export function Sidebar(): JSX.Element {
 /** 32호 §1-1 타이틀 줄 — "데일리Q - {화면명}" + 우측 유틸(D-day·AI·사용자·설정, 기능 무변) */
 export function TopBar(): JSX.Element {
   const currentPage = useUIStore((s) => s.currentPage)
+  const setPage = useUIStore((s) => s.setPage)
   const toggleCopilot = useCopilotStore((s) => s.toggle)
   const copilotOpen = useCopilotStore((s) => s.open)
   const toggleAuthor = useAiAuthorStore((s) => s.toggle)
@@ -290,6 +291,17 @@ export function TopBar(): JSX.Element {
       </span>
       <div className="flex items-center gap-2.5 shrink-0">
       <DdayBadge />
+      {/* 35호 — 32호 §1-1 유틸 "TV현황판" 진입(그림65 전광판 모드 · 표시 전용) */}
+      <button
+        type="button"
+        onClick={() => setPage('tv-board')}
+        aria-label="TV현황판"
+        title="TV현황판 — 생산현황 전광판(지시별 달성률 · 60초 자동 갱신 · ESC 복귀)"
+        className="h-8 px-2.5 rounded-md flex items-center gap-1.5 text-[12px] font-semibold border border-border hover:bg-muted text-foreground transition-colors"
+      >
+        <Tv className="w-3.5 h-3.5" />
+        TV현황판
+      </button>
       <button
         type="button"
         onClick={toggleAuthor}

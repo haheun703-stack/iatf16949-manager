@@ -24,6 +24,7 @@ import type {
   SemimesReceiptRowDto,
   SemimesSpecRegistryRowDto,
   SemimesTraceBandDto,
+  SemimesTvBoardDto,
   SemimesWorkCalendarDto,
   SemimesXbarRDto
 } from '@shared/ipc-types'
@@ -715,5 +716,33 @@ export function registerSemimesQueryHandlers(): void {
       ),
       receiptCnt: one(`SELECT COUNT(*) c FROM mat_receipt WHERE receipt_date = ? AND canceled_at IS NULL`)
     }
+  })
+
+  // ══ 35호 — 생산현황 전광판(TV현황판, 그림65 · 32호 §7-3 재상신 도장분) ══
+
+  // ── tvBoard — 미완료 지시별 진척 + 오늘 조업 판정 (읽기 전용 — 60초 폴링 1왕복) ──
+  // 계약: 달성률은 화면 계산(okSum/orderQty — 100% 초과 그대로) · 실적 합 = 취소 제외 ·
+  //       수집(설비 자동수집) 원천 없음 = DTO 에 만들지 않는다 · limit 절단은 total 로 정직.
+  ipcMain.handle(IPC_CHANNELS.SEMIMES_TV_BOARD, (_e, req: { limit?: number } | undefined): SemimesTvBoardDto => {
+    const ymd = todayKST()
+    const limit = Math.min(Math.max(req?.limit ?? 24, 1), 60)
+    const cal = db.prepare(`SELECT work_type AS workType, note FROM work_calendar WHERE ymd = ?`).get(ymd) as
+      | { workType: '조업' | '휴무'; note: string | null }
+      | undefined
+    const total = (db.prepare(`SELECT COUNT(*) c FROM work_order WHERE status IN ('대기','진행')`).get() as { c: number }).c
+    const orders = db
+      .prepare(
+        `SELECT w.order_no AS orderNo, w.item_code AS itemCode, i.item_name AS itemName,
+                w.order_qty AS orderQty, w.status, w.start_date AS startDate,
+                COALESCE((SELECT SUM(p.ok_qty) FROM prod_record p
+                          WHERE p.work_order_id = w.id AND p.canceled_at IS NULL), 0) AS okSum,
+                COALESCE((SELECT SUM(p.ng_qty) FROM prod_record p
+                          WHERE p.work_order_id = w.id AND p.canceled_at IS NULL), 0) AS ngSum
+         FROM work_order w LEFT JOIN item_master i ON i.item_code = w.item_code
+         WHERE w.status IN ('대기','진행')
+         ORDER BY CASE w.status WHEN '진행' THEN 0 ELSE 1 END, w.id DESC LIMIT ?`
+      )
+      .all(limit) as SemimesTvBoardDto['orders']
+    return { ymd, calToday: cal ?? null, orders, total }
   })
 }

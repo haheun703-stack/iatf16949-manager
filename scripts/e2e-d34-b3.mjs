@@ -9,6 +9,9 @@
 //   추적 밴드 = 지시수량→공정 열산 자기일관(밴드 합 = 지시 진척 합)·라우팅 밖 정직.
 // 대상 = 검증 웹서버(:8081 복사본) + better-sqlite3 직접 단언. 라이브(:8080) 오염 금지.
 //   E2E_DB=<복사본.db> node(electron) scripts/e2e-d34-b3.mjs <로그인> [비번]
+// ⚠️픽스처 전제(8/13 실증): 복사본 = iatf16949.db 단독 — 사이드카(mes_records.db) 동봉 금지.
+//   동봉하면 7일 창이 사이드카 dataEnd(과거)에 앵커돼 4단의 "오늘 달력 등록 → calendar 전환"
+//   이 창 밖으로 밀려 proxy 오탐 2건(제품 무혐의 — 창 앵커는 PB2 정직 계약 그대로).
 // ============================================================
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)

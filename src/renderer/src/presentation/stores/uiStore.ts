@@ -60,6 +60,7 @@ export type PageId =
   | 'kpi-indicators'
   | 'daily-report'
   | 'xbar-r'
+  | 'tv-board'
 
 // P11 뒤로가기: 페이지 라벨(← 버튼에 직전 화면명 표시). 실제 GNB/화면 제목과 맞춤.
 export const PAGE_LABELS: Record<PageId, string> = {
@@ -120,7 +121,8 @@ export const PAGE_LABELS: Record<PageId, string> = {
   'mold-master': '금형관리 (마스터·타발수)',
   'kpi-indicators': 'KPI 기준정보관리',
   'daily-report': '일일 실적현황 (문서형)',
-  'xbar-r': 'X BAR R 관리도'
+  'xbar-r': 'X BAR R 관리도',
+  'tv-board': 'TV현황판 (생산현황 전광판)'
 }
 
 // P11 뒤로가기 히스토리 스냅샷: 페이지 + 그 화면의 선택 컨텍스트(복원용).

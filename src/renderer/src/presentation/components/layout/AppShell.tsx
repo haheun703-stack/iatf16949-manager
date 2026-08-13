@@ -58,6 +58,7 @@ import { MoldView } from '../semimes-entry/MoldView'
 import { KpiIndicatorView } from '../semimes-entry/KpiIndicatorView'
 import { DailyReportView } from '../semimes-entry/DailyReportView'
 import { XbarRView } from '../semimes-entry/XbarRView'
+import { TvBoardView } from '../tv-board/TvBoardView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { ConfirmDialogHost } from '../shared/ConfirmDialog'
@@ -80,6 +81,16 @@ export function AppShell(): JSX.Element {
   // P8 — 양식 작성 화면(3분할 워크벤치)은 중앙 1400px 틀을 벗어나 모니터 전체 폭을 쓴다.
   //  좁은 폭에서 정답·목록·캔버스가 눌려 엑셀 뷰가 잘리던 문제 해소. 그 외 화면은 기존 중앙 정렬 유지.
   const fullBleed = currentPage === 'form-builder'
+
+  // 35호 — 전광판은 5층 골격 예외(32호 §1 "별도 전광판 모드로 분리"): 껍데기 없이 전체화면.
+  // 훅(perfWatch 마크 포함)은 위에서 이미 걸렸다 — ESC/닫기로 복귀하면 껍데기 복원.
+  if (currentPage === 'tv-board') {
+    return (
+      <ErrorBoundary key={currentPage}>
+        <TvBoardView />
+      </ErrorBoundary>
+    )
+  }
 
   return (
     <div className="h-screen flex">

@@ -259,6 +259,8 @@ export const IPC_CHANNELS = {
   SEMIMES_XBAR_R: 'semimes:xbarR',
   // 34호 배치⑷ — #13 KPI 기준정보관리(kpi_indicators 편집)
   KPI_INDICATOR_SAVE: 'kpi:indicatorSave',
+  // 35호 — 생산현황 전광판(TV현황판, 그림65 · 32호 §7-3 재상신 도장분). 읽기 전용 — 60초 폴링 1왕복
+  SEMIMES_TV_BOARD: 'semimes:tvBoard',
 
   // 공정 흐름 맵 (2배치 선두 — CP→라우팅 파이프라인 기반, ISIR #14 공정 흐름도 출력물)
   PROCESS_FLOW_LIST: 'processFlow:list',

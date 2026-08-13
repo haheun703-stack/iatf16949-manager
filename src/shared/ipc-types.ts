@@ -2369,6 +2369,10 @@ export interface IpcChannelMap {
     request: KpiIndicatorSaveInput
     response: { success: boolean; id?: number; error?: string }
   }
+  [IPC_CHANNELS.SEMIMES_TV_BOARD]: {
+    request: { limit?: number } | undefined
+    response: SemimesTvBoardDto
+  }
   [IPC_CHANNELS.PROCESS_FLOW_LIST]: {
     request: void
     response: ProcessFlowPartDto[]
@@ -3590,6 +3594,30 @@ export interface SemimesXbarRDto {
   limits: { n: number; xbarCl: number; xbarUcl: number; xbarLcl: number; rCl: number; rUcl: number; rLcl: number } | null
   /** 제외된 군 수(n<2 — 시료 1개 기록) */
   skippedSmall: number
+}
+
+/**
+ * 35호 — 생산현황 전광판(TV현황판, 그림65). 미완료(대기·진행) 지시별 진척 1왕복.
+ * 달성률 = okSum/orderQty 는 화면 계산(100% 초과 그대로 · 지시 0/null = '—').
+ * 수집(설비 자동수집) 열은 원천 없음 — DTO 에 만들지 않는다(화면이 '—' 정직 표기).
+ */
+export interface SemimesTvBoardDto {
+  ymd: string
+  /** 오늘 조업달력 행 — 없으면 null = 미등록('—' 정직, 0139 계약) */
+  calToday: { workType: '조업' | '휴무'; note: string | null } | null
+  orders: Array<{
+    orderNo: string
+    itemCode: string
+    itemName: string | null
+    orderQty: number | null
+    /** 연결 실적 합(취소 제외) */
+    okSum: number
+    ngSum: number
+    status: string
+    startDate: string | null
+  }>
+  /** 미완료 전체 건수 — limit 절단 시 화면이 "+n건" 정직 표기 */
+  total: number
 }
 
 export interface KpiIndicatorSaveInput {
