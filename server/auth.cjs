@@ -1,9 +1,9 @@
 // ============================================================
 // server/auth.cjs — 웹전환 W3: 로그인·세션·권한 (로컬 한정)
 //
-// - 로그인: app_users.name(실명) + 비밀번호(bcrypt). password_hash NULL 이면 최초 로그인으로
-//   간주하고 그 비번을 설정(must_change_pw 는 유지 → 다음에 변경 유도). 실제 초기 비번 일괄 발급은
-//   사장님 정책 결정 후(§6) — 지금은 로컬 검증용.
+// - 로그인: app_users.name(실명) + 비밀번호(bcrypt). password_hash NULL = **로그인 불가**(N-8) —
+//   비번 발급은 관리팀 몫이다(일괄 scripts/setup-passwords.cjs · 개별 appUser:resetPassword).
+//   종전의 "최초 로그인 시 자가 설정"은 계정 선점 창구라 8/14 검수 2차에서 폐지.
 // - 세션: httponly 쿠키(sid) + 서버 메모리 Map. 유휴 4시간 만료. 프레임워크 신설 없이 경량 구현.
 // - 권한: role(member/manager/executive). 채널별 가드는 server/index.cjs 의 PROTECTED 맵.
 //
@@ -37,13 +37,14 @@ function login(db, name, password) {
     .get(name)
   if (!u || !u.active) return { error: '존재하지 않거나 비활성 사용자입니다.' }
 
+  // N-8(8/14 검수 2차): 종전엔 password_hash NULL 이면 "최초 로그인"으로 보고 **요청자가 보낸
+  // 비번을 그대로 설정**했다 → 신설 계정을 아무나 선점해 그 실명으로 STAMP 활동이 가능(계정 선점).
+  // 관리형 비번 체계(사장님 7/25 — 관리팀이 4자리 비번 지정·대장 보관)가 정본이 된 뒤로 자가 설정
+  // 창구는 불필요하다. 발급 경로: 일괄 = scripts/setup-passwords.cjs, 개별 = appUser:resetPassword.
   if (!u.password_hash) {
-    // 최초 로그인: 이 비번으로 설정(로컬 검증 편의). 변경 유도 플래그는 유지.
-    if (!password || password.length < 4) return { error: '초기 비밀번호는 4자 이상이어야 합니다.' }
-    const hash = bcrypt.hashSync(password, 10)
-    db.prepare('UPDATE app_users SET password_hash = ? WHERE id = ?').run(hash, u.id)
-    u.password_hash = hash
-  } else if (!bcrypt.compareSync(password || '', u.password_hash)) {
+    return { error: '초기 비밀번호가 발급되지 않은 계정입니다. 관리팀에 발급을 요청하세요.' }
+  }
+  if (!bcrypt.compareSync(password || '', u.password_hash)) {
     return { error: '비밀번호가 일치하지 않습니다.' }
   }
 

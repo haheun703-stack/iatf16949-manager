@@ -19,6 +19,14 @@ import type { SqSuggestedState } from '@shared/ipc-types'
 
 const FINAL_STATES: SqSuggestedState[] = ['우수', '양호', '보완', '일부미흡', '다수미흡', '미관리', '미해당']
 
+/**
+ * 웹(서버) 실행 여부 — server/electron-shim.cjs 만 `__webShim` 표식을 단다(실제 Electron 엔 없음).
+ * N-1(8/14 검수 2차): 웹의 저장 경로는 서버가 주입한 임시 토큰 경로라 DB 각인 금지 판별에 쓴다.
+ */
+function isWebRuntime(): boolean {
+  return (app as unknown as { __webShim?: boolean }).__webShim === true
+}
+
 function templatePath(): string {
   const rel = join('templates', 'sq_gap_forms', 'SQ자체평가_내부리포트_양식_Ver4.xlsx')
   return app.isPackaged
@@ -133,7 +141,13 @@ export async function exportSqReport(
       /* 검증 실패해도 파일 자체는 유효 */
     }
 
-    db.prepare('UPDATE sq_assessments SET report_path = ? WHERE id = ?').run(save.filePath, assessmentId)
+    // N-1(8/14 검수 2차): 웹 모드의 save.filePath 는 서버 exports 의 **임시 토큰 경로**로,
+    // 다운로드 1회 or 30분 TTL 후 삭제된다. 각인하면 ①라이브 DB 에 곧 죽을 경로가 남고
+    // ②데스크톱이 남긴 정상 경로까지 덮어쓴다. 웹은 사용자 PC 의 저장 위치를 서버가 알 수 없으므로
+    // 미갱신이 정직한 상태(화면은 report_path 가 있을 때만 "리포트: …" 를 표시).
+    if (!isWebRuntime()) {
+      db.prepare('UPDATE sq_assessments SET report_path = ? WHERE id = ?').run(save.filePath, assessmentId)
+    }
     return { success: true, filePath: save.filePath, validationsPreserved }
   } catch (err) {
     console.error('[sq:assessExport] failed:', (err as Error).message)

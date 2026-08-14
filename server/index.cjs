@@ -84,9 +84,33 @@ app.use(express.json({ limit: '12mb' }))
 // ── 헬스체크 ──
 // W4-A(37호 ④, P1 보류 청산): 비로그인 = {ok:true} 만 — 런처/자동시작의 생존 확인(200)용.
 // DB 경로·건수·런타임 등 상세는 세션이 있을 때만(사내망이라도 무인증 정보 노출 금지).
-// copy = 검수 복사본 서버 표식(IATF_DATA_DIR 지정 구동 = 라이브 기본 경로가 아님) —
-// 렌더러가 이 플래그로 "검수 복사본" 표지를 띄운다(8/13 E2E 오인 사고 후속).
-const IS_COPY_SERVER = !!process.env.IATF_DATA_DIR
+// copy = 검수 복사본 서버 표식. 렌더러의 "검수 복사본" 표지(8/13 E2E 오인 사고 후속)와
+// E2E 하네스 게이트(scripts/lib/e2e.mjs loginBot)가 이 값 하나를 믿고 쓰기까지 진행한다.
+// N-6(8/14 검수 2차): 종전 `!!IATF_DATA_DIR` 은 env 존재만 봐서 **env 가 라이브 폴더를 가리켜도**
+//   copy=true(거짓 안심)였다. 이제 "env 지정" + "실제로 연 DB 가 라이브 DB 가 아님"을 함께 요구한다.
+//   정션·subst 우회 차단 위해 realpath(native) 실경로 비교 + 동일 파일(dev·ino) 비교를 병행하고,
+//   판별 불능(APPDATA 미설정 등)이면 copy=false = fail-closed(하네스 즉시 중단 — M-7 원칙).
+function realPathOf(p) {
+  try {
+    return fs.realpathSync.native(p)
+  } catch {
+    return path.resolve(p) // 미존재·권한 등 — 정규화만 하고 문자열 비교로 진행
+  }
+}
+function isSameFile(a, b) {
+  if (realPathOf(a).toLowerCase() === realPathOf(b).toLowerCase()) return true
+  try {
+    const sa = fs.statSync(a)
+    const sb = fs.statSync(b)
+    return sa.ino !== 0 && sa.ino === sb.ino && sa.dev === sb.dev // 하드링크·잔여 우회
+  } catch {
+    return false
+  }
+}
+const LIVE_DB_PATH = process.env.APPDATA
+  ? path.join(process.env.APPDATA, 'iatf16949-manager', 'iatf16949.db')
+  : null
+const IS_COPY_SERVER = !!process.env.IATF_DATA_DIR && !!LIVE_DB_PATH && !isSameFile(DB_PATH, LIVE_DB_PATH)
 // M-12(8/13 전수 검수): 무인증에도 신원 아닌 "식별자"(pid·기동시각)는 노출한다 —
 // 재기동 스크립트가 응답 중인 서버가 구판인지 신판인지 구분할 유일한 근거
 // (배치A 슬림화가 이를 없애 8/13 무음 실패 사고 형태가 재현 가능했다).
@@ -561,6 +585,8 @@ const HOST = '127.0.0.1'
 app.listen(PORT, HOST, () => {
   console.log(`[server] IATF QMS (W1 골격) → http://${HOST}:${PORT}`)
   console.log(`[server] DB=${DB_PATH} (readonly)`)
+  // N-6: 기동 로그로도 라이브/복사본을 못 박는다(health 를 못 보는 재기동 창에서의 오인 방지)
+  console.log(`[server] 대상 = ${IS_COPY_SERVER ? '검수 복사본(copy=true)' : '★라이브(copy=false)'}`)
 })
 
 module.exports = { app, db, routes }

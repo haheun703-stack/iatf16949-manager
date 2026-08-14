@@ -1,18 +1,24 @@
-# TODO — 이어서 작업 (갱신: 2026-08-14 2차 · **★처분 A·B·C 이행 + 전수 검수 2차 완료 — 내일 = 2차 처분 A′→B′→C′, 재기동은 A′ 후**)
+# TODO — 이어서 작업 (갱신: 2026-08-14 3차 · **★A′군 이행 완료(N-12 신규 동반) — 남은 것 = 라이브 재기동 1회(사장님 창) → B′ → C′**)
 
-## ▶▶▶ 8/15 (토)/차기 작업 지시 — 전수 검수 2차 처분 (정본 = `docs/code-review-2026-08-14.md` §7)
+## ▶▶▶ 차기 작업 지시 — 전수 검수 2차 처분 (정본 = `docs/code-review-2026-08-14.md` §7)
 
-**오늘 신규 Critical 0 · Major 11(오늘 회귀 6 + 잠복 5) · Minor 12 · 자기정정 3.**
-⚠**재기동 순서 변경: A′ 처분 후 재기동**(N-1 이 재기동 순간부터 라이브 DB 오염 — sq 내보내기가
-report_path 에 임시 토큰 경로 각인).
+**8/14 검수 2차: 신규 Critical 0 · Major 11(회귀 6 + 잠복 5) · Minor 12 · 자기정정 4(야간 +1).**
 
-### A′군 — 라이브 재기동 전 필수 (서버)
+### A′군 — 라이브 재기동 전 필수 (서버) — ✅ **완료 (8/14 야간)**
 
-- [ ] **N-1(최우선)** sq:assessExport 웹 모드 `report_path` 각인 차단(`sq-report-exporter.ts:136` —
-      웹=미갱신 or 영구 보관 경로) — M-1 소생의 동반 회귀
-- [ ] **N-6** `IS_COPY_SERVER` 판정 강화 — IATF_DATA_DIR 가 라이브 경로면 copy 아님
-- [ ] **N-8** auth NULL 비번 첫 로그인 선점 제거(신설 = resetPassword 경유) — 판단 여지 있으면 사장님
-- [ ] 완료 후 **라이브 재기동 1회**(0143 동승·재로그인 1회·M-7 fail-closed 라 bat [FAIL] 확인)
+- [x] **N-1** sq:assessExport 웹 모드 `report_path` 각인 차단 — shim `__webShim` 표식 신설 +
+      `sq-report-exporter` 가드(웹=미갱신). 실증 7/7
+- [x] **N-12(신규)** shim `getAppPath()` 가 번들 후 `<root>/server` 를 가리켜 **웹 SQ 리포트
+      내보내기 전면 불능**이던 것 — 앱 루트 자동 탐색으로 정정(N-1 실증 중 발견)
+- [x] **N-6** `IS_COPY_SERVER` = env 지정 **+ 실제 DB 가 라이브 아님**(realpath·ino 비교, 정션 우회
+      차단, 판별 불능=fail-closed) + 기동 로그 `대상 = 라이브/복사본` 1줄. 실증 8/8 · 정션 3/3
+- [x] **N-8** NULL 비번 첫 로그인 선점 제거 → 관리팀 발급 경유(일괄 `setup-passwords.cjs` ·
+      개별 `appUser:resetPassword`). 라이브 NULL 0명 = 영향 0 · **사장님 확인 요청 1건**
+- [x] 회귀 153/153(cr13a 20·cr13b 8·b3 24·d35 12·g1 27·pc1 27·w4a 9·w4b 26) · typecheck:node ·
+      build:server · **라이브 접촉 0**(가짜 %APPDATA% 격리 · :8080/:8081 무접촉)
+- [ ] **▶ 다음 한 수: 라이브 재기동 1회**(A′ = 서버 축 · 재로그인 1회 · M-7 fail-closed 라
+      bat [FAIL] 확인 · 기동 로그에 `대상 = ★라이브(copy=false)` 떠야 정상)
+- [ ] 검수요청 회신 대기: `mes-foundation/dailyq-검수처분A프라임_검수요청_260814.md`
 
 ### B′군 — 렌더러
 

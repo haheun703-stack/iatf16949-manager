@@ -11,12 +11,29 @@
 // ============================================================
 const path = require('path')
 const os = require('os')
+const fs = require('fs')
 
 /** 채널 → 핸들러. ipcMain.handle 이 여기에 쌓고, 서버가 읽어 디스패치한다. */
 const routes = new Map()
 
 // 데이터 루트: 서버엔 userData 개념이 없으므로 env 로 외부화(§0.5 난관2).
 const DATA_DIR = process.env.IATF_DATA_DIR || path.join(process.env.APPDATA || os.homedir(), 'iatf16949-manager')
+
+// 앱 루트(= resources/ 를 품은 폴더). N-12(8/15 A′ 실증 중 발견): 종전 `join(__dirname,'..')` 은
+//   **번들 후** __dirname 이 server/dist 라 <root>/server 를 가리켰다 → getAppPath 소비처
+//   (sq-report-exporter 템플릿)가 없는 폴더를 봐서 웹 SQ 리포트 내보내기가 항상 "템플릿 없음" 실패.
+//   번들 위치에 의존하지 않도록 resources/migrations 를 품은 조상 폴더를 찾아 올라간다.
+function findAppRoot(start) {
+  let dir = start
+  for (let i = 0; i < 6; i++) {
+    if (fs.existsSync(path.join(dir, 'resources', 'migrations'))) return dir
+    const up = path.dirname(dir)
+    if (up === dir) break
+    dir = up
+  }
+  return path.join(start, '..') // 못 찾으면 종전 동작 보존
+}
+const APP_ROOT = findAppRoot(__dirname)
 
 const app = {
   getPath(name) {
@@ -37,9 +54,13 @@ const app = {
     /* 서버는 경로 고정(env) — no-op */
   },
   isPackaged: false,
+  // N-1(8/14 검수 2차): 핸들러가 "지금은 웹(서버)"임을 알 유일한 표식. 실제 Electron 의 app 엔 없다.
+  // 웹의 dialog 경로는 서버가 주입한 **임시 토큰 경로**(1회 다운로드 or 30분 TTL 후 삭제)라
+  // DB 에 각인하면 안 되는 자리가 있다 → 핸들러가 이 값으로 분기한다(sq-report-exporter).
+  __webShim: true,
   getName: () => 'iatf16949-manager',
   getVersion: () => process.env.APP_VERSION || '1.0.0',
-  getAppPath: () => path.join(__dirname, '..'),
+  getAppPath: () => APP_ROOT,
   whenReady: () => Promise.resolve(),
   on() {},
   once() {},
