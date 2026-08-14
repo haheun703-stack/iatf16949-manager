@@ -62,6 +62,7 @@ import { TvBoardView } from '../tv-board/TvBoardView'
 import { ProcessFlowPage } from '../process-flow/ProcessFlowPage'
 import { ScreenPermPage } from '../screen-perm/ScreenPermPage'
 import { usePermStore } from '../../stores/permStore'
+import { useActiveUserStore } from '../../stores/activeUserStore'
 import { ErrorBoundary } from '../shared/ErrorBoundary'
 import { ConfirmDialogHost } from '../shared/ConfirmDialog'
 import { GlobalCopilot } from '../copilot/GlobalCopilot'
@@ -70,6 +71,11 @@ import { SimilarCaseModal } from '../copilot/SimilarCaseModal'
 
 export function AppShell(): JSX.Element {
   const { currentPage } = useUIStore()
+  // M-11(8/13 검수): 권한관리 화면은 메뉴 숨김(execOnly)만으로는 못 막는다 — 사용자 전환·
+  // 딥링크로 열람 가능(perm:list 는 로그인만). 진입 자체를 role 로 가드(저장은 서버 403 정본).
+  const users = useActiveUserStore((s) => s.users)
+  const activeUserId = useActiveUserStore((s) => s.activeUserId)
+  const isExec = users.find((u) => u.id === activeUserId)?.role === 'executive'
 
   // 8/12 계측 트랙(도장 — 육안 체감 "보였다" = 원격 한정 가설 기각): 멎음의 축 판별용
   // 관찰자 기동 + 화면 전환 좌표 마크. 열람 = F12 → __perfLog() (perfWatch.ts 참조)
@@ -182,7 +188,17 @@ export function AppShell(): JSX.Element {
             {currentPage === 'daily-report' && <DailyReportView />}
             {currentPage === 'xbar-r' && <XbarRView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
-            {currentPage === 'screen-perm' && <ScreenPermPage />}
+            {currentPage === 'screen-perm' &&
+              (isExec ? (
+                <ScreenPermPage />
+              ) : (
+                <div className="rounded-[14px] border border-border bg-card shadow-card p-8 text-center">
+                  <div className="text-[15px] font-bold mb-1">화면별 권한관리 — 최종관리자 전용</div>
+                  <div className="text-[12.5px] text-muted-foreground">
+                    권한 배분은 최종관리자(사장님) 고유 권한입니다(판정 ① 8/13). 열람이 필요하면 관리자에게 문의하세요.
+                  </div>
+                </div>
+              ))}
           </ErrorBoundary>
           </div>
         </main>

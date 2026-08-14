@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
+import { SCREEN_PERM_PAGE_IDS } from '@shared/screen-perm-pages'
 import { getSqlite } from '../database/connection'
 import type {
   ScreenPermBits,
@@ -75,14 +76,31 @@ export function registerPermHandlers(): void {
         if (input?.subjectKind !== 'team' && input?.subjectKind !== 'user') {
           return { success: false, error: '주체 종류(team/user)가 없습니다.' }
         }
-        const subjectKey = String(input.subjectKey ?? '').trim()
+        let subjectKey = String(input.subjectKey ?? '').trim()
         if (!subjectKey) return { success: false, error: '주체(부서/개인)가 없습니다.' }
-        if (input.subjectKind === 'user') {
-          const u = db.prepare('SELECT id FROM app_users WHERE id = ?').get(Number(subjectKey))
+        if (input.subjectKind === 'user' && !input.remove) {
+          // Minor(8/13 검수) — subject_key 정규화: '007' 같은 표기 변형이 별도 규칙 행이 되는
+          // 것을 차단(개인 키 = 정규 숫자 문자열 단일 표기). remove 는 정규화·존재 검사 제외 —
+          // 퇴사자 삭제·부서 개명으로 생긴 고아 규칙도 해제는 가능해야 한다(고아 정리 동선).
+          const idNum = Number(subjectKey)
+          if (!Number.isInteger(idNum) || idNum <= 0) {
+            return { success: false, error: `개인 주체 키가 숫자가 아닙니다: '${subjectKey}'` }
+          }
+          subjectKey = String(idNum)
+          const u = db.prepare('SELECT id FROM app_users WHERE id = ?').get(idNum)
           if (!u) return { success: false, error: `개인 주체(#${subjectKey})가 명단에 없습니다.` }
         }
         const pageIds = (input.pageIds ?? []).map((p) => String(p).trim()).filter(Boolean)
         if (pageIds.length === 0) return { success: false, error: '저장할 화면을 선택하세요.' }
+        // Minor(8/13 검수) — pageIds 화이트리스트: 오타·임의 문자열이 유령 규칙 행으로
+        // 쌓이는 것을 차단(고아 규칙 예방 — 목록 계약은 shared/screen-perm-pages).
+        // remove 는 제외 — 구판이 남긴 목록 밖 규칙도 해제는 가능해야 한다.
+        if (!input.remove) {
+          const unknown = pageIds.filter((p) => !(SCREEN_PERM_PAGE_IDS as readonly string[]).includes(p))
+          if (unknown.length > 0) {
+            return { success: false, error: `알 수 없는 화면 ID: ${unknown.join(', ')} — 메뉴 트리의 화면만 저장할 수 있습니다.` }
+          }
+        }
 
         if (input.remove) {
           const del = db.prepare(

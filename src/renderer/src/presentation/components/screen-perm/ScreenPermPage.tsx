@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ScreenPermBits, ScreenPermRuleDto, ScreenPermSaveInput } from '@shared/ipc-types'
+import { SCREEN_PERM_PAGE_IDS, SERVER_ENFORCED_PAGE_IDS } from '@shared/screen-perm-pages'
 import { cn } from '../../../lib/utils'
 import { useSeqGuard, useSingleFlight } from '../../lib/asyncGuard'
 import { invokeErrText } from '../../lib/errText'
@@ -36,6 +37,18 @@ const TREE = MODULES.map((m) => ({
     .map((it) => ({ page: it.page as PageId, label: it.label }))
 })).filter((m) => m.pages.length > 0)
 
+// M-2(8/13 검수) — 서버가 실제 403 으로 강제하는 화면. 그 외 = "표시 전용"(메뉴 숨김 보조만).
+const ENFORCED = new Set<string>(SERVER_ENFORCED_PAGE_IDS)
+// 동기 계약 tripwire: 메뉴에 화면을 추가했는데 화이트리스트(shared/screen-perm-pages) 미갱신 시
+// 저장이 서버에서 거부된다 — dev 콘솔로 어긋남을 조기 감지.
+{
+  const wl = new Set<string>(SCREEN_PERM_PAGE_IDS)
+  const missing = TREE.flatMap((m) => m.pages).filter((p) => !wl.has(p.page))
+  if (missing.length > 0) {
+    console.warn('[screen-perm] 메뉴↔화이트리스트 어긋남 — shared/screen-perm-pages 갱신 필요:', missing.map((p) => p.page).join(', '))
+  }
+}
+
 export function ScreenPermPage(): JSX.Element {
   const { users, activeUserId } = useActiveUserStore()
   const userName = users.find((u) => u.id === activeUserId)?.name
@@ -58,15 +71,19 @@ export function ScreenPermPage(): JSX.Element {
   const activeUsers = useMemo(() => users.filter((u) => u.active), [users])
 
   const seq = useSeqGuard()
-  const load = useCallback(async (): Promise<void> => {
+  // 반환 = 조회 성공 여부(Minor 8/13: 저장 성공 메시지를 load 실패 문구가 덮지 않게 —
+  // 호출자가 결과를 알고 메시지를 마지막에 확정한다)
+  const load = useCallback(async (): Promise<boolean> => {
     const token = seq.begin()
     setBusy(true)
     try {
       const res = (await window.api.invoke(window.api.channels.PERM_LIST)) as ScreenPermRuleDto[]
-      if (!seq.isCurrent(token)) return
+      if (!seq.isCurrent(token)) return true
       setRules(res)
+      return true
     } catch {
       if (seq.isCurrent(token)) setMsg({ tone: 'bad', text: '조회 실패 — 통신 오류. 다시 시도하세요.' })
+      return false
     } finally {
       if (seq.isCurrent(token)) setBusy(false)
     }
@@ -139,14 +156,13 @@ export function ScreenPermPage(): JSX.Element {
         setMsg({ tone: 'bad', text: res.error ?? '저장 실패' })
         return
       }
-      setMsg({
-        tone: 'ok',
-        text: remove
-          ? `규칙 ${res.saved ?? 0}건 해제 — 해당 화면은 현행 허용으로 복귀.`
-          : `화면 ${res.saved ?? 0}건 권한설정 저장 — 서버 즉시 효력(쓰기·수정·삭제·엑셀), 메뉴 숨김은 대상자 재로그인/새로고침부터.`
-      })
-      await load()
+      const loadedOk = await load()
       await reloadEffective() // 내 규칙이 바뀐 경우 메뉴 보조막 동기화
+      // Minor(8/13 검수): 저장 결과가 정본 — load 실패 문구가 성공 메시지를 덮지 않게 마지막에 확정
+      const base = remove
+        ? `규칙 ${res.saved ?? 0}건 해제 — 해당 화면은 현행 허용으로 복귀.`
+        : `화면 ${res.saved ?? 0}건 권한설정 저장 — 서버 즉시 효력(쓰기·수정·삭제·엑셀), 메뉴 숨김은 대상자 재로그인/새로고침부터.`
+      setMsg({ tone: 'ok', text: loadedOk ? base : `${base} · 목록 새로고침 실패 — 화면 새로고침으로 확인하세요.` })
     } catch (e) {
       setMsg({ tone: 'bad', text: invokeErrText(e, '저장 실패 — 통신 오류. 다시 시도하세요.') })
     } finally {
@@ -158,6 +174,44 @@ export function ScreenPermPage(): JSX.Element {
     setSelected(new Set([r.pageId as PageId]))
     setBits({ read: r.read, write: r.write, edit: r.edit, delete: r.delete, excel: r.excel, print: r.print, price: false })
     setMsg(null)
+  }
+
+  // ── 전체 규칙 뷰(Minor 8/13 — M-5 동반): 부서 개명·퇴사 뒤 남는 고아 규칙의 조회·해제 동선 ──
+  const [showAll, setShowAll] = useState(false)
+  function subjectNameOf(r: ScreenPermRuleDto): string {
+    if (r.subjectKind === 'team') return `부서 · ${r.subjectKey}`
+    const u = users.find((x) => String(x.id) === r.subjectKey)
+    return u ? `개인 · ${u.name}` : `개인 · #${r.subjectKey}`
+  }
+  /** 고아 = 효력 주체가 더는 없다(부서 개명·명단 삭제). 비활성 = 퇴사자 규칙(효력 없음·이름 보존) */
+  function orphanOf(r: ScreenPermRuleDto): 'orphan' | 'inactive' | null {
+    if (r.subjectKind === 'team') return teams.includes(r.subjectKey) ? null : 'orphan'
+    const u = users.find((x) => String(x.id) === r.subjectKey)
+    if (!u) return 'orphan'
+    return u.active ? null : 'inactive'
+  }
+  async function removeOne(r: ScreenPermRuleDto): Promise<void> {
+    const ok = await confirmDialog({
+      title: `규칙 해제 — ${subjectNameOf(r)} · ${(PAGE_LABELS as Record<string, string>)[r.pageId] ?? r.pageId}`,
+      body: '해제 = 규칙 삭제 — 그 화면은 현행 허용(role 가드만)으로 돌아갑니다.',
+      okLabel: '규칙 해제', danger: true
+    })
+    if (!ok) return
+    try {
+      const res = (await window.api.invoke(window.api.channels.PERM_SAVE, {
+        subjectKind: r.subjectKind, subjectKey: r.subjectKey, pageIds: [r.pageId],
+        bits: DEFAULT_BITS, remove: true, updatedBy: userName
+      } satisfies ScreenPermSaveInput)) as { success: boolean; error?: string }
+      if (!res.success) {
+        setMsg({ tone: 'bad', text: res.error ?? '해제 실패' })
+        return
+      }
+      const loadedOk = await load()
+      await reloadEffective()
+      setMsg({ tone: 'ok', text: `규칙 해제 — ${subjectNameOf(r)} · 현행 허용 복귀.${loadedOk ? '' : ' · 목록 새로고침 실패 — 화면 새로고침으로 확인하세요.'}` })
+    } catch (e) {
+      setMsg({ tone: 'bad', text: invokeErrText(e, '해제 실패 — 통신 오류. 다시 시도하세요.') })
+    }
   }
 
   const subjectLabel =
@@ -231,11 +285,19 @@ export function ScreenPermPage(): JSX.Element {
                       <label key={p.page} className="flex items-center gap-2 pl-7 pr-3 py-1 text-[12.5px] cursor-pointer hover:bg-muted/40">
                         <input type="checkbox" checked={selected.has(p.page)} onChange={() => toggle(p.page)} />
                         <span className="min-w-0 truncate">{p.label}</span>
-                        {r && (
-                          <span className={cn('ml-auto shrink-0 text-[10.5px] font-semibold rounded-full px-2 py-[1px]', r.read ? 'bg-secondary text-primary' : 'bg-bad-tint text-bad-ink')}>
-                            규칙 {r.read ? '' : '· 읽기 차단'}
-                          </span>
-                        )}
+                        <span className="ml-auto shrink-0 flex items-center gap-1">
+                          {/* M-2(8/13 검수) 정직 표기: 서버 강제 밖 화면 = 표시 전용(메뉴 숨김·표기 보조만) */}
+                          {!ENFORCED.has(p.page) && (
+                            <span className="text-[10px] font-semibold rounded-full px-1.5 py-[1px] bg-muted text-muted-foreground/80" title="서버 강제 없음 — 규칙은 메뉴 숨김·표기 보조로만 동작합니다">
+                              표시 전용
+                            </span>
+                          )}
+                          {r && (
+                            <span className={cn('text-[10.5px] font-semibold rounded-full px-2 py-[1px]', r.read ? 'bg-secondary text-primary' : 'bg-bad-tint text-bad-ink')}>
+                              규칙 {r.read ? '' : '· 읽기 차단'}
+                            </span>
+                          )}
+                        </span>
                       </label>
                     )
                   })}
@@ -252,22 +314,41 @@ export function ScreenPermPage(): JSX.Element {
               7종 권한 — <span className="text-primary">{subjectLabel}</span> · 선택 화면 {selected.size}건에 적용
             </div>
             <div className="flex items-center gap-4 flex-wrap">
-              {BIT_KEYS.map((k) => (
-                <label key={k} className={cn('flex items-center gap-1.5 text-[13px] font-semibold', k === 'price' && 'opacity-50 cursor-not-allowed')}>
-                  <input
-                    type="checkbox"
-                    checked={bits[k]}
-                    disabled={k === 'price'}
-                    onChange={(e) => setBits({ ...bits, [k]: e.target.checked })}
-                  />
-                  {BIT_LABELS[k]}
-                  {k === 'price' && <span className="text-[10.5px] rounded-full px-1.5 bg-bad-tint text-bad-ink font-bold">전원 잠금</span>}
-                </label>
-              ))}
+              {BIT_KEYS.map((k) => {
+                // M-4(8/13 검수): 프린트 = 소비처 0(서버 ACT_COL 밖·렌더러 미참조) — 단가 선례로 잠금 표기
+                const locked = k === 'price' || k === 'print'
+                const disabled = locked || (k !== 'read' && !bits.read)
+                return (
+                  <label key={k} className={cn('flex items-center gap-1.5 text-[13px] font-semibold', disabled && 'opacity-50 cursor-not-allowed')}>
+                    <input
+                      type="checkbox"
+                      checked={bits[k]}
+                      disabled={disabled}
+                      onChange={(e) => {
+                        const on = e.target.checked
+                        // Minor(8/13 검수): 최빈 동선 = "읽기 차단" — 읽기를 끄면 나머지 자동 해제
+                        // (종전엔 서버 모순 거부로 1차 저장이 반드시 실패했다)
+                        if (k === 'read' && !on) {
+                          setBits({ read: false, write: false, edit: false, delete: false, excel: false, print: false, price: false })
+                        } else {
+                          setBits({ ...bits, [k]: on })
+                        }
+                      }}
+                    />
+                    {BIT_LABELS[k]}
+                    {k === 'price' && <span className="text-[10.5px] rounded-full px-1.5 bg-bad-tint text-bad-ink font-bold">전원 잠금</span>}
+                    {k === 'print' && <span className="text-[10.5px] rounded-full px-1.5 bg-muted text-muted-foreground font-bold" title="인쇄를 막는 장치가 아직 없습니다(전 화면 브라우저 인쇄) — 자리만 확보">미배선</span>}
+                  </label>
+                )
+              })}
             </div>
             <div className="text-[11.5px] text-muted-foreground mt-2">
               단가 = 돈 경계 헌법(15번) — 자리만 확보, 개방은 별도 판정(스키마 잠금). ·
-              읽기를 끄면 그 화면은 메뉴에서 숨음(나머지 권한 동시 지정 불가).
+              프린트 = 미배선(막는 장치 없음 — 자리만). · 읽기를 끄면 나머지는 자동 해제(메뉴 숨김).
+              <br />
+              서버 403 강제 = <b>배지 없는 화면 {ENFORCED.size - 1}개</b>(쓰기·수정·삭제 + 엑셀은 KPI그리드·FMEA 2화면) —
+              <span className="mx-1 text-[10px] font-semibold rounded-full px-1.5 py-[1px] bg-muted text-muted-foreground/80">표시 전용</span>
+              배지 화면은 규칙이 메뉴 숨김·표기로만 동작합니다(정직 표기 — 8/13 검수 M-2).
             </div>
             <div className="flex items-center gap-2 mt-3">
               <button
@@ -318,6 +399,53 @@ export function ScreenPermPage(): JSX.Element {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* 전체 규칙(고아 점검) — Minor 8/13: 부서 개명·퇴사 뒤 남는 규칙은 주체 선택으로는
+              보이지 않아 "통제 중" 착각을 만든다(M-5). 여기서 전량 조회·행 단위 해제. */}
+          <div className="rounded-[14px] border border-border bg-card shadow-card overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="w-full px-3 py-2 bg-secondary/60 text-[12.5px] font-bold text-left flex items-center justify-between"
+            >
+              <span>전체 규칙 {rules.length}건 — 고아 규칙 점검(부서 개명·퇴사 잔존)</span>
+              <span className="text-muted-foreground font-semibold">{showAll ? '접기 ▲' : '펼치기 ▼'}</span>
+            </button>
+            {showAll && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-[12.5px] border-collapse min-w-[560px]">
+                  <thead>
+                    <tr>{['주체', '화면', '상태', '정비', ''].map((h, i) => <th key={i} className={TH}>{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {rules.length === 0 && (
+                      <tr><td colSpan={5} className="py-5 text-center text-muted-foreground text-[13px]">저장된 규칙 없음 — 전 화면 현행 허용.</td></tr>
+                    )}
+                    {rules.map((r) => {
+                      const o = orphanOf(r)
+                      return (
+                        <tr key={r.id} className={cn(o === 'orphan' && 'bg-bad-tint/40')}>
+                          <td className={cn(TD, 'font-semibold')}>
+                            {subjectNameOf(r)}
+                            {o === 'orphan' && <span className="ml-1.5 text-[10px] font-bold rounded-full px-1.5 py-[1px] bg-bad-tint text-bad-ink" title="주체가 현 명단·부서에 없음 — 효력 없는 유령 규칙">고아</span>}
+                            {o === 'inactive' && <span className="ml-1.5 text-[10px] font-bold rounded-full px-1.5 py-[1px] bg-warn-tint text-warn-ink" title="퇴사·휴직(비활성) 대상 — 현재 효력 없음">비활성</span>}
+                          </td>
+                          <td className={TD}>{(PAGE_LABELS as Record<string, string>)[r.pageId] ?? r.pageId}</td>
+                          <td className={cn(TD, 'text-muted-foreground text-[11.5px]')}>
+                            {BIT_KEYS.filter((k) => r[k]).map((k) => BIT_LABELS[k]).join('·') || '전부 차단'}
+                          </td>
+                          <td className={cn(TD, 'text-muted-foreground text-[11.5px]')}>{r.updatedBy ?? '—'} · {r.updatedAt.slice(5, 16)}</td>
+                          <td className={TD}>
+                            <button type="button" onClick={() => void removeOne(r)} className="underline underline-offset-2 text-bad-ink font-semibold">해제</button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>

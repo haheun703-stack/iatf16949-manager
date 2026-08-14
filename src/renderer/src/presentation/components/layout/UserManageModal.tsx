@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, UserPlus, Trash2, Power, PowerOff, KeyRound } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { invokeErrText } from '../../lib/errText'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { confirmDialog } from '../shared/ConfirmDialog'
 import { TEAMS, normalizeTeam, teamTheme } from '@shared/team-theme'
@@ -241,6 +242,8 @@ function UserRow({
                     : `실패: ${r.error ?? '알 수 없는 오류'}`
                 )
               })
+              // M-10(8/13 검수): 403(권한)·401(세션) 이 무통지로 삼켜지던 자리 — 서버 안내문 표출
+              .catch((e) => window.alert(invokeErrText(e, '재설정 실패 — 통신 오류. 다시 시도해 주세요.')))
           }}
           title="비밀번호 재설정 — 4자리 숫자 지정(관리팀 비번 대장 정책)"
           className="rounded p-1 text-muted-foreground hover:bg-amber-50 hover:text-amber-700 transition-colors"

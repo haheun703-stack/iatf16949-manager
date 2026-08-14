@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import type { ScreenPermEffectiveDto, ScreenPermBits } from '@shared/ipc-types'
-import type { PageId } from './uiStore'
 
 /**
  * W4-B(37호 — 34호 #19) — 화면 숨김(보조)용 유효 권한.
@@ -8,17 +7,16 @@ import type { PageId } from './uiStore'
  * 읽기 꺼진 화면을 감추는 보조막 — 숨겨도 서버 정본이 최종 방어선(딥링크 등).
  * perm:effective 는 세션 사용자 기준(서버 STAMP) — 데스크톱(세션 없음)·executive = bypass
  * (규칙 미적용 = 현행 그대로). 로드 실패 시에도 bypass 유지(가짜 차단 금지).
+ * (canRead() 죽은 API 는 8/13 검수 슬러지로 제거 — 소비처는 rules 직접 판독뿐이었다.)
  */
 interface PermState {
   bypass: boolean
   rules: Record<string, ScreenPermBits>
   loaded: boolean
   load: () => Promise<void>
-  /** 규칙 없는 화면 = 허용(현행). 읽기 0 규칙만 false. */
-  canRead: (page: PageId) => boolean
 }
 
-export const usePermStore = create<PermState>((set, get) => ({
+export const usePermStore = create<PermState>((set) => ({
   bypass: true,
   rules: {},
   loaded: false,
@@ -30,12 +28,5 @@ export const usePermStore = create<PermState>((set, get) => ({
     } catch {
       set({ bypass: true, rules: {}, loaded: true })
     }
-  },
-
-  canRead: (page) => {
-    const { bypass, rules } = get()
-    if (bypass) return true
-    const r = rules[page]
-    return r ? r.read : true
   }
 }))

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { X, Save, Loader2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { invokeErrText } from '../../lib/errText'
 import { normalizeTeam, teamTheme } from '@shared/team-theme'
 import { todayKST } from '@shared/date-kst'
 import type { KpiIndicatorDto, KpiMonthValueDto } from '@shared/ipc-types'
@@ -84,6 +85,10 @@ export function KpiBatchEntryModal({
       } else {
         setMsg('저장 실패 — 다시 시도해 주세요.')
       }
+    } catch (e) {
+      // M-10(8/13 검수): kpi:save-batch 는 W4-A에서 403이 새로 생긴 채널인데 catch 가 없어
+      // 스피너만 돌고 끝났다(저장된 줄 오인). 서버 안내문(권한/세션)은 그대로 표출.
+      setMsg(invokeErrText(e, '저장 실패 — 통신 오류. 다시 시도해 주세요.'))
     } finally {
       setSaving(false)
     }

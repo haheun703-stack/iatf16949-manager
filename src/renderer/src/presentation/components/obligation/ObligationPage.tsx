@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { CalendarClock, Plus, Loader2, Check, AlertTriangle, Network, RotateCcw, ListChecks, Clock, PauseCircle } from 'lucide-react'
 import { OBLIGATION_CADENCES, type ObligationCadence, type ObligationDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { invokeErrText } from '../../lib/errText'
 import { traceDeepLink } from '../../../lib/deeplink'
 import { useUIStore } from '../../stores/uiStore'
 import { PageHeader } from '../shared/PageHeader'
@@ -48,6 +49,9 @@ export function ObligationPage(): JSX.Element {
     try {
       const count = await resetDueDates(currentUser?.name)
       window.alert(`도래일을 오늘로 재설정했습니다 — 대상 ${count}건. 오늘부터 관리가 시작됩니다.`)
+    } catch (e) {
+      // M-10(8/13 검수): 403/401 이 무통지로 삼켜지던 자리 — 서버 안내문 표출
+      window.alert(invokeErrText(e, '재설정 실패 — 통신 오류. 다시 시도해 주세요.'))
     } finally {
       setResetting(false)
     }
