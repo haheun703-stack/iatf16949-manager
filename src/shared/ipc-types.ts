@@ -827,6 +827,9 @@ export interface AppUserUpsertInput {
   role?: AppUserRole
   active?: boolean
   sortOrder?: number
+  /** C-1(8/13 검수) — 서버 디스패처가 세션에서 강제 주입(클라 전달값은 덮어써짐). 빈 값 = 거부 */
+  actorName?: string
+  actorRole?: string
 }
 
 // ===== 화면별 권한 매트릭스 (0142 screen_permission — W4-B, 그림33 골격) =====
@@ -2430,7 +2433,8 @@ export interface IpcChannelMap {
     response: { success: boolean }
   }
   [IPC_CHANNELS.APP_USER_RESET_PASSWORD]: {
-    request: { id: number; newPassword: string }
+    // actor* = 서버 디스패처 세션 주입(C-1) — 클라 전달값 무시. 감사 각인(0143) 주체로 쓰임
+    request: { id: number; newPassword: string; actorName?: string; actorRole?: string }
     response: { success: boolean; error?: string }
   }
   [IPC_CHANNELS.PERM_LIST]: {
@@ -2496,11 +2500,12 @@ export interface IpcChannelMap {
   }
   [IPC_CHANNELS.APP_USER_UPSERT]: {
     request: AppUserUpsertInput
-    response: { success: boolean; id?: number }
+    response: { success: boolean; id?: number; error?: string }
   }
   [IPC_CHANNELS.APP_USER_DELETE]: {
-    request: { id: number }
-    response: { success: boolean }
+    // actor* = 서버 디스패처 세션 주입(C-1) — 클라 전달값 무시
+    request: { id: number; actorName?: string; actorRole?: string }
+    response: { success: boolean; error?: string }
   }
   [IPC_CHANNELS.IATF_DASHBOARD]: {
     request: void

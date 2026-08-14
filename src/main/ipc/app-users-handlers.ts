@@ -10,6 +10,28 @@ import type { AppUserDto, AppUserUpsertInput, AppUserRole } from '@shared/ipc-ty
  */
 const VALID_ROLES: AppUserRole[] = ['member', 'manager', 'executive']
 
+/**
+ * C-1(8/13 전수 검수) — 사용자 관리 쓰기 공통 방어(웹 PROTECTED executive 전용의 2중막):
+ * ① 주체 없음(데스크톱 bridge 직행 = 세션 미주입) = 거부 — W4-C 데스크톱 방어선과 동일 계약.
+ * ② executive 가 아니면 경영진을 만들 수도(role 지정) 건드릴 수도(수정·삭제·비번) 없다.
+ * 반환 = 거부 사유 문구, 통과 시 null.
+ */
+function actorDenied(
+  db: ReturnType<typeof getSqlite>,
+  actorRole: string | undefined,
+  targetId: number | undefined,
+  wantRole?: string
+): string | null {
+  if (!actorRole) return '작업 주체가 없습니다 — 웹 로그인 세션에서만 가능합니다.'
+  if (actorRole === 'executive') return null
+  if (wantRole === 'executive') return '경영진 역할 부여는 최종관리자 전용입니다.'
+  if (targetId != null) {
+    const t = db.prepare('SELECT role FROM app_users WHERE id=?').get(targetId) as { role?: string } | undefined
+    if (t?.role === 'executive') return '경영진 계정은 최종관리자만 관리할 수 있습니다.'
+  }
+  return null
+}
+
 export function registerAppUsersHandlers(): void {
   const db = getSqlite()
 
@@ -37,11 +59,17 @@ export function registerAppUsersHandlers(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.APP_USER_UPSERT,
-    (_e, input: AppUserUpsertInput): { success: boolean; id?: number } => {
+    (_e, input: AppUserUpsertInput): { success: boolean; id?: number; error?: string } => {
       try {
         const name = (input.name || '').trim()
         if (!name) return { success: false }
         const role: AppUserRole = input.role && VALID_ROLES.includes(input.role) ? input.role : 'member'
+        // C-1: INSERT 경로도 name UNIQUE 충돌 시 기존 행을 UPDATE 하므로, 대상 = id 또는 동명 기존 행.
+        const existing = input.id
+          ? input.id
+          : (db.prepare('SELECT id FROM app_users WHERE name=?').get(name) as { id?: number } | undefined)?.id
+        const denied = actorDenied(db, input.actorRole, existing, role)
+        if (denied) return { success: false, error: denied }
         const active = input.active === false ? 0 : 1
         const teamDept = input.teamDept ?? null
         const sortOrder = input.sortOrder ?? 0
@@ -70,8 +98,10 @@ export function registerAppUsersHandlers(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.APP_USER_DELETE,
-    (_e, { id }: { id: number }): { success: boolean } => {
+    (_e, { id, actorRole }: { id: number; actorName?: string; actorRole?: string }): { success: boolean; error?: string } => {
       try {
+        const denied = actorDenied(db, actorRole, id)
+        if (denied) return { success: false, error: denied }
         db.prepare('DELETE FROM app_users WHERE id=?').run(id)
         return { success: true }
       } catch (err) {
@@ -85,20 +115,28 @@ export function registerAppUsersHandlers(): void {
   // must_change_pw=0 고정 — 강제 변경 없음, 대장(관리팀 보관)이 정본. 웹 모드는 manager+ 가드(server PROTECTED).
   ipcMain.handle(
     IPC_CHANNELS.APP_USER_RESET_PASSWORD,
-    (_e, { id, newPassword }: { id: number; newPassword: string }): { success: boolean; error?: string } => {
+    (
+      _e,
+      { id, newPassword, actorName, actorRole }: { id: number; newPassword: string; actorName?: string; actorRole?: string }
+    ): { success: boolean; error?: string } => {
       try {
+        const denied = actorDenied(db, actorRole, id)
+        if (denied) return { success: false, error: denied }
         if (!/^\d{4}$/.test(newPassword ?? '')) {
           return { success: false, error: '비밀번호는 4자리 숫자입니다(관리팀 대장 정책).' }
         }
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const bcrypt = require('bcryptjs') as { hashSync: (s: string, r: number) => string }
         const hash = bcrypt.hashSync(newPassword, 10)
+        // C-1 감사 각인(0143): 누가 언제 바꿨나 — 세션 주입 actorName 이 주체(무기록 금지)
         const res = db
-          .prepare('UPDATE app_users SET password_hash=?, must_change_pw=0 WHERE id=?')
-          .run(hash, id)
+          .prepare(
+            "UPDATE app_users SET password_hash=?, must_change_pw=0, pw_reset_by=?, pw_reset_at=datetime('now','localtime') WHERE id=?"
+          )
+          .run(hash, actorName ?? null, id)
         return res.changes > 0 ? { success: true } : { success: false, error: '대상 사용자가 없습니다.' }
       } catch (err) {
-        // 0100 미적용 DB(구 설치판) 등 — 정직 실패
+        // 0100/0143 미적용 DB(구 설치판) 등 — 정직 실패
         console.error('[appUser:resetPassword] failed:', (err as Error).message)
         return { success: false, error: (err as Error).message }
       }

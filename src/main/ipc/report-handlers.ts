@@ -45,16 +45,17 @@ export function registerReportHandlers(): void {
         return { success: false, error: '채점된 양식이 없습니다. 먼저 양식을 AI 채점해 주세요.' }
       }
 
+      // M-1 동반(8/13 검수): 웹 모드는 창 스텁이 null — 조기 반환하면 shim 경로 주입까지
+      // 못 가서 다운로드가 영구 불능이었다. kpi 핸들러 패턴(win 분기)으로 정정.
       const win = BrowserWindow.getFocusedWindow()
-      if (!win) return { success: false, error: '활성 창을 찾을 수 없습니다.' }
-
       const now = new Date()
       const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`
-      const saveRes = await dialog.showSaveDialog(win, {
+      const dialogOpts = {
         title: 'AI 채점 리포트 저장',
         defaultPath: `IATF16949_AI채점리포트_${stamp}.xlsx`,
         filters: [{ name: 'Excel 파일', extensions: ['xlsx'] }]
-      })
+      }
+      const saveRes = win ? await dialog.showSaveDialog(win, dialogOpts) : await dialog.showSaveDialog(dialogOpts)
       if (saveRes.canceled || !saveRes.filePath) {
         return { success: false, canceled: true }
       }

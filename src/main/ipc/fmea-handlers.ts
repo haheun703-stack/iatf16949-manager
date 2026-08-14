@@ -252,13 +252,15 @@ export function registerFmeaHandlers(): void {
     const doc = db.prepare('SELECT fmea_no FROM fmea_documents WHERE id = ?').get(docId) as
       | { fmea_no: string }
       | undefined
+    // M-1 동반(8/13 검수): 웹 모드는 창 스텁이 null — 조기 반환하면 shim 경로 주입까지
+    // 못 가서 다운로드가 영구 불능이었다. kpi 핸들러 패턴(win 분기)으로 정정.
     const win = BrowserWindow.getFocusedWindow()
-    if (!win) return { success: false, error: '활성 창 없음' }
-    const save = await dialog.showSaveDialog(win, {
+    const dialogOpts = {
       title: '공정 FMEA 신판 시트 출력',
       defaultPath: `${doc?.fmea_no || 'PFMEA'}.xlsx`,
       filters: [{ name: 'Excel 파일', extensions: ['xlsx'] }]
-    })
+    }
+    const save = win ? await dialog.showSaveDialog(win, dialogOpts) : await dialog.showSaveDialog(dialogOpts)
     if (save.canceled || !save.filePath) return { success: false, canceled: true }
     try {
       return await exportFmeaXlsx(db, docId, save.filePath)

@@ -34,10 +34,11 @@ const dbr = new Database(DB_PATH, { readonly: true })
 const memberName = dbr.prepare("SELECT name FROM app_users WHERE role='member' AND active=1 ORDER BY sort_order LIMIT 1").get()?.name
 if (!memberName) { console.error('member 계정 없음'); process.exit(1) }
 
-// 0단 — health 무인증 슬림(37호 ④): {ok}만, DB 경로·건수·런타임 비노출
+// 0단 — health 무인증 슬림(37호 ④ + 8/13 검수 M-12 정정): 경로·건수·런타임 비노출 유지,
+// 단 신원 아닌 "식별자"(pid·startedAt)는 노출 — 재기동 스크립트의 구판/신판 구분 근거.
 {
   const j = await (await fetch(`${BASE}/api/health`)).json()
-  check('0단 health 무인증 = {ok}만(경로·건수 비노출)', j.ok === true && !('db' in j) && !('users' in j) && !('forms' in j) && !('runtime' in j), Object.keys(j).join(','))
+  check('0단 health 무인증 = 슬림(경로·건수 비노출) + 식별자(pid·startedAt)', j.ok === true && !('db' in j) && !('users' in j) && !('forms' in j) && !('runtime' in j) && typeof j.pid === 'number' && !!j.startedAt, Object.keys(j).join(','))
 }
 
 // 1단 — E2E봇 계정(시드 보장) + health 세션 상세 + copy 플래그

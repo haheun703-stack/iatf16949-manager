@@ -12,11 +12,16 @@ import type { AppUserDto, AppUserRole } from '@shared/ipc-types'
  *   완전 삭제(DELETE)는 오타 입력 정리용으로만 — 작게·확인 후.
  */
 const TEAM_OPTIONS = ['경영지원', ...TEAMS.map((t) => t.label)]
+// C-1(8/13 검수): '경영진' 선택지는 최종관리자(executive) 화면에서만 노출 — 서버도
+// appUser 쓰기 3종을 executive 전용으로 차단하지만(정본), 화면에서 선택지 자체를 치운다.
 const ROLE_OPTIONS: { value: AppUserRole; label: string }[] = [
   { value: 'member', label: '팀원' },
   { value: 'manager', label: '팀장' },
   { value: 'executive', label: '경영진' }
 ]
+function roleOptionsFor(meRole: AppUserRole | undefined): { value: AppUserRole; label: string }[] {
+  return meRole === 'executive' ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value !== 'executive')
+}
 
 function avatarStyle(u: AppUserDto): { background: string; color: string } {
   const tid = normalizeTeam(u.teamDept)
@@ -28,6 +33,10 @@ export function UserManageModal({ onClose }: { onClose: () => void }): JSX.Eleme
   const users = useActiveUserStore((s) => s.users)
   const upsertUser = useActiveUserStore((s) => s.upsertUser)
   const deleteUser = useActiveUserStore((s) => s.deleteUser)
+  const activeUserId = useActiveUserStore((s) => s.activeUserId)
+  // 웹 모드는 activeUserId 가 세션 사용자로 강제 동기화됨(loadUsers) — 세션 role 의 보조 거울.
+  const meRole = users.find((u) => u.id === activeUserId)?.role
+  const roleOptions = roleOptionsFor(meRole)
 
   const [newName, setNewName] = useState('')
   const [newTeam, setNewTeam] = useState<string>(TEAMS[3].label) // 품질팀 기본
@@ -102,7 +111,7 @@ export function UserManageModal({ onClose }: { onClose: () => void }): JSX.Eleme
             onChange={(e) => setNewRole(e.target.value as AppUserRole)}
             className="text-[12px] px-1.5 py-1.5 rounded border border-border bg-background"
           >
-            {ROLE_OPTIONS.map((r) => (
+            {roleOptions.map((r) => (
               <option key={r.value} value={r.value}>
                 {r.label}
               </option>
@@ -122,7 +131,7 @@ export function UserManageModal({ onClose }: { onClose: () => void }): JSX.Eleme
         {/* 목록 */}
         <div className="max-h-[52vh] overflow-y-auto p-2">
           {active.map((u) => (
-            <UserRow key={u.id} u={u} onPatch={patch} onDelete={deleteUser} />
+            <UserRow key={u.id} u={u} roleOptions={roleOptions} onPatch={patch} onDelete={deleteUser} />
           ))}
 
           {inactive.length > 0 && (
@@ -131,7 +140,7 @@ export function UserManageModal({ onClose }: { onClose: () => void }): JSX.Eleme
                 비활성(퇴사·휴직) — 기록 이름 보존
               </div>
               {inactive.map((u) => (
-                <UserRow key={u.id} u={u} onPatch={patch} onDelete={deleteUser} />
+                <UserRow key={u.id} u={u} roleOptions={roleOptions} onPatch={patch} onDelete={deleteUser} />
               ))}
             </div>
           )}
@@ -145,10 +154,12 @@ type AppUserUpsertField = { name: string; teamDept: string | null; role: AppUser
 
 function UserRow({
   u,
+  roleOptions,
   onPatch,
   onDelete
 }: {
   u: AppUserDto
+  roleOptions: { value: AppUserRole; label: string }[]
   onPatch: (u: AppUserDto, fields: Partial<AppUserUpsertField>) => Promise<boolean>
   onDelete: (id: number) => Promise<void>
 }): JSX.Element {
@@ -193,12 +204,17 @@ function UserRow({
           </option>
         ))}
       </select>
+      {/* C-1: 경영진 행은 최종관리자만 편집 — 그 외 화면에선 표시 전용(선택지에도 '경영진' 없음) */}
       <select
         value={u.role}
+        disabled={u.role === 'executive' && !roleOptions.some((r) => r.value === 'executive')}
         onChange={(e) => onPatch(u, { role: e.target.value as AppUserRole })}
-        className="text-[11px] px-1 py-0.5 rounded border border-border bg-background"
+        className="text-[11px] px-1 py-0.5 rounded border border-border bg-background disabled:opacity-60"
       >
-        {ROLE_OPTIONS.map((r) => (
+        {u.role === 'executive' && !roleOptions.some((r) => r.value === 'executive') && (
+          <option value="executive">경영진</option>
+        )}
+        {roleOptions.map((r) => (
           <option key={r.value} value={r.value}>
             {r.label}
           </option>

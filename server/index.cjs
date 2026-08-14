@@ -55,10 +55,25 @@ function runServerMigrations(database) {
   }
   if (applied === 0) console.log('[server] migrations up-to-date')
 }
+// M-7(8/13 전수 검수 — 조용한 fail-open 차단): 마이그 적용 실패 = 기동 중단.
+// 종전엔 "계속 진행"이라 0142 실패 시 screenRuleOf 의 catch 가 "규칙 없음 = 허용"으로
+// 해석해 권한 매트릭스가 통째로 꺼진 채 조용히 서빙됐다. 런처 bat 이 [FAIL]+로그 꼬리를
+// 남기므로(8/13 보강) 중단이 곧 발견이다 — 가짜 가동보다 정직한 정지.
 try {
   runServerMigrations(authDb)
 } catch (e) {
-  console.error('[server] 마이그 적용 실패(계속 진행):', (e && e.message) || e)
+  console.error('[server] 마이그 적용 실패 — 기동 중단(M-7 fail-open 금지):', (e && e.message) || e)
+  console.error('[server] DB 와 resources/migrations 상태를 확인한 뒤 다시 기동하세요.')
+  process.exit(1)
+}
+// M-7 부팅 후 검증: 권한 매트릭스 테이블(0142)이 실재해야 기동 — 마이그 체인이 어긋난
+// DB(수동 복원본 등)로 뜨면 매트릭스 없는 서버가 정상인 척 서빙되는 것을 막는다.
+{
+  const t = authDb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='screen_permission'").get()
+  if (!t) {
+    console.error('[server] screen_permission 테이블 없음(0142 미적용 DB) — 기동 중단(M-7)')
+    process.exit(1)
+  }
 }
 
 const app = express()
@@ -72,13 +87,18 @@ app.use(express.json({ limit: '12mb' }))
 // copy = 검수 복사본 서버 표식(IATF_DATA_DIR 지정 구동 = 라이브 기본 경로가 아님) —
 // 렌더러가 이 플래그로 "검수 복사본" 표지를 띄운다(8/13 E2E 오인 사고 후속).
 const IS_COPY_SERVER = !!process.env.IATF_DATA_DIR
+// M-12(8/13 전수 검수): 무인증에도 신원 아닌 "식별자"(pid·기동시각)는 노출한다 —
+// 재기동 스크립트가 응답 중인 서버가 구판인지 신판인지 구분할 유일한 근거
+// (배치A 슬림화가 이를 없애 8/13 무음 실패 사고 형태가 재현 가능했다).
+// DB 경로·건수·런타임 상세는 여전히 세션 전용(무인증 정보 노출 금지 유지).
+const STARTED_AT = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' })
 app.get('/api/health', (req, res) => {
   const s = auth.sessionOf(req)
-  if (!s) return res.json({ ok: true })
+  if (!s) return res.json({ ok: true, pid: process.pid, startedAt: STARTED_AT })
   const forms = db.prepare('SELECT COUNT(*) AS c FROM forms').get().c
   const obl = db.prepare('SELECT COUNT(*) AS c FROM recurring_obligations WHERE active=1').get().c
   const users = db.prepare('SELECT COUNT(*) AS c FROM app_users WHERE active=1').get().c
-  res.json({ ok: true, db: DB_PATH, forms, obligations: obl, users, runtime: `electron-node ${process.versions.modules}`, copy: IS_COPY_SERVER })
+  res.json({ ok: true, pid: process.pid, startedAt: STARTED_AT, db: DB_PATH, forms, obligations: obl, users, runtime: `electron-node ${process.versions.modules}`, copy: IS_COPY_SERVER })
 })
 
 // ══ W3 인증 (로그인·세션·권한) — 아래 라우트는 인증 미들웨어 앞(미인증 허용) ══
@@ -204,11 +224,14 @@ try {
   }
 } catch { /* EXPORT_DIR 미존재 등 */ }
 // 저장 다이얼로그를 쓰는 채널 → 다운로드 확장자
+// M-1/S-5(8/13 전수 검수): 종전 키 3개가 실존하지 않는 채널명이었다('fmea:export'·
+// 'report:export'·'sqReport:export') — 그 결과 웹에서 FMEA 신판·양식채점 리포트·SQ 평가
+// 엑셀이 전부 무음 취소(shim 미주입 = canceled)였다. 실채널명으로 정정 = 다운로드 소생.
 const SAVE_DIALOG_CHANNELS = {
   'form:exportXlsx': 'xlsx',
-  'fmea:export': 'xlsx',
-  'report:export': 'xlsx',
-  'sqReport:export': 'xlsx',
+  'fmea:exportXlsx': 'xlsx',
+  'report:exportScores': 'xlsx',
+  'sq:assessExport': 'xlsx',
   'docgen:saveDialog': 'xlsx',
   // PB2 ⓔ-2 — KPI 그리드 엑셀 다운로드
   'kpi:exportXlsx': 'xlsx'
@@ -268,9 +291,13 @@ const REQUIRED_FIELDS = {
 // 스모크 표에서 무인증 응답하던 관리성 채널 — 지시서 §3(도래일=exec/manager, 사용자관리=manager+).
 const PROTECTED = {
   'obligation:resetDue': ['executive', 'manager'],
-  'appUser:resetPassword': ['manager', 'executive'],
-  'appUser:upsert': ['manager', 'executive'],
-  'appUser:delete': ['manager', 'executive'],
+  // C-1(8/13 전수 검수 — 권한 승격 봉쇄, TODO 정본 8/13 도장): 사용자 관리 = 조직 설계 행위 →
+  // executive 전용. manager+ 로 두면 팀장이 클릭 4번으로 자기 role 을 경영진으로 승격해
+  // 판정①(권한 배분 = 사장님 고유)이 무력화된다. 7/25 "관리팀이 비번 재설정" 운용은
+  // 이 봉쇄와 충돌 — 사장님 전용으로 좁힘(manager 재확대는 안정 후 재론 1줄 자리).
+  'appUser:resetPassword': ['executive'],
+  'appUser:upsert': ['executive'],
+  'appUser:delete': ['executive'],
   // W4-A(37호 배치A — 관리성 채널 점검): 경영지표·공유 분모의 정비는 manager+ 로.
   // 현장 쓰기 채널(실적·검사·LOT·지시·설비 등록 = 생산팀 주체 8/12 판정)은 member 유지 —
   // 화면×7종 정밀 통제는 배치B(#19 권한 매트릭스)의 몫, 여기는 명백 관리성 3종만.
@@ -281,6 +308,9 @@ const PROTECTED = {
   // executive 전용. manager 확대는 안정 후 재론(1줄 수정 자리). 조회(perm:list)는 로그인만.
   'perm:save': ['executive']
 }
+
+// C-1 — 사용자 관리 쓰기 3종: 디스패처가 세션 주체(actorName/actorRole)를 주입하는 대상.
+const APP_USER_WRITE = new Set(['appUser:upsert', 'appUser:delete', 'appUser:resetPassword'])
 
 // 세션 기록주체 강제 주입(W3-3, 2착 봉쇄 해소): 클라가 보낸 값은 무시하고 세션 사용자로 덮어쓴다.
 // → created_by/done_by 가 항상 로그인 사용자로 스탬프되어 "작성자 불명" 우회가 불가능해진다.
@@ -354,8 +384,9 @@ const SCREEN_GUARD = {
     act: 'delete'
   },
   // 엑셀(excel) — 내보내기 채널 중 화면 귀속 명백 3종
+  // M-1(8/13 검수): 'fmea:export' 는 실존하지 않는 채널명 — 가드가 죽어 있었다. 실채널로 정정.
   'kpi:exportXlsx': { page: 'kpi-grid', act: 'excel' },
-  'fmea:export': { page: 'fmea', act: 'excel' },
+  'fmea:exportXlsx': { page: 'fmea', act: 'excel' },
   'form:exportXlsx': { page: 'form-builder', act: 'excel' }
 }
 const ACT_COL = { write: 'can_write', edit: 'can_edit', delete: 'can_delete', excel: 'can_excel' }
@@ -376,7 +407,9 @@ function screenRuleOf(session, pageId) {
         .prepare("SELECT * FROM screen_permission WHERE subject_kind = 'team' AND subject_key = ? AND page_id = ?")
         .get(session.teamDept, pageId) || null
     )
-  } catch {
+  } catch (e) {
+    // 조회 불능 = 현행 유지(가짜 차단 금지) — 단 무음 금지(8/13 검수 Minor): 로그 1줄.
+    console.error('[perm] screen_permission 조회 실패 — 현행 유지로 통과:', (e && e.message) || e)
     return null
   }
 }
@@ -411,6 +444,16 @@ app.post('/api/:channel', (req, res) => {
   if (stamp && req.session) {
     req.body = req.body || {}
     for (const fld of stamp) req.body[fld] = req.session.name
+  }
+
+  // C-1(8/13 전수 검수): 사용자 관리 쓰기 = 실행 주체(누가·어떤 role)를 세션에서 강제 주입.
+  // 클라가 보낸 actor* 값은 무시된다(STAMP 와 동일 원칙). 핸들러가 actorRole 로
+  // "manager 는 executive 를 만들 수도 건드릴 수도 없다"를 2중 방어하고, actor 빈 값
+  // (데스크톱 bridge 직행 = 세션 없음)은 거부한다 — W4-C 데스크톱 방어선과 동일 계약.
+  if (APP_USER_WRITE.has(ch) && req.session) {
+    req.body = req.body || {}
+    req.body.actorName = req.session.name
+    req.body.actorRole = req.session.role
   }
 
   const required = REQUIRED_FIELDS[ch]
