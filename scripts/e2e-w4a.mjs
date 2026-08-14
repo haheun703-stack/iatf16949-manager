@@ -9,13 +9,14 @@
 //   E2E_DB=<복사본.db> node(electron) scripts/e2e-w4a.mjs [비번(기본 qms1234)]
 // ============================================================
 import { createRequire } from 'module'
+import { assertCopyDb, assertBaseNotLive } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081'
-const DB_PATH = process.env.E2E_DB
+// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080 거부(copy 게이트는 1단이 원조)
+const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081')
+const DB_PATH = assertCopyDb(process.env.E2E_DB)
 const PW = process.argv[2] || 'qms1234'
-if (!DB_PATH) { console.error('사용법: E2E_DB=<복사본.db> ... [비번]'); process.exit(1) }
 
 let pass = 0, fail = 0
 const check = (n, ok, d) => { console.log(`${ok ? '✓' : '✗'} ${n}${d ? ' — ' + d : ''}`); ok ? pass++ : fail++ }

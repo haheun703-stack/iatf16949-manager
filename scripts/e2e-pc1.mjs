@@ -8,14 +8,15 @@
 //   E2E_DB=<복사본.db> node(electron) scripts/e2e-pc1.mjs 서규하 e2e-g1
 // ============================================================
 import { createRequire } from 'module'
+import { assertCopyDb, assertBaseNotLive, guardLoginName, ymdKST } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081'
-const DB_PATH = process.env.E2E_DB
-const LOGIN = process.argv[2]
+// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080 거부·E2E봇 로그인 강제
+const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081')
+const DB_PATH = assertCopyDb(process.env.E2E_DB)
+const LOGIN = guardLoginName(process.argv[2])
 const PW = process.argv[3] || 'qms1234'
-if (!LOGIN || !DB_PATH) { console.error('사용법: E2E_DB=<복사본.db> ... <로그인> [비번]'); process.exit(1) }
 
 let pass = 0, fail = 0
 const check = (n, ok, d) => { console.log(`${ok ? '✓' : '✗'} ${n}${d ? ' — ' + d : ''}`); ok ? pass++ : fail++ }
@@ -30,6 +31,11 @@ async function api(ch, body) {
 const login = await fetch(`${BASE}/api/auth:login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: LOGIN, password: PW }) })
 if (!login.ok) { console.error('로그인 실패'); process.exit(1) }
 cookie = (login.headers.get('set-cookie') || '').split(';')[0]
+// 복사본 서버 게이트(M-13 공용화): health.copy ≠ true = 라이브 DB 서버 — 즉시 중단
+{
+  const hj = await (await fetch(`${BASE}/api/health`, { headers: { cookie } })).json().catch(() => null)
+  if (!hj || hj.copy !== true) { console.error(`[e2e-guard] 복사본 서버 아님(copy=${hj && hj.copy}) — 중단`); process.exit(1) }
+}
 console.log(`로그인 ${LOGIN} ✓`)
 
 // 0단 — 0137 스키마
@@ -70,8 +76,8 @@ check('2단 더블클릭(동시 2발) = 같은 번호(서버 멱등 — 미사�
 const lotRow = dbr.prepare('SELECT created_by FROM lot_registry WHERE lot_no = ?').get(l1.lotNo)
 check('2단 발번 STAMP(위조 무시)', lotRow?.created_by === LOGIN, `created_by=${lotRow?.created_by}`)
 
-// 3단 — prodRecordCreate 계약
-const today = new Date().toISOString().slice(0, 10)
+// 3단 — prodRecordCreate 계약 (8/13 검수 슬러지: UTC 오용 → KST 공용식)
+const today = ymdKST()
 check('3단 불량>0 무유형 거부', (await api('semimes:prodRecordCreate', { recordDate: today, itemCode: ITEM, okQty: 10, ngQty: 2 })).success === false)
 check('3단 0/0 거부', (await api('semimes:prodRecordCreate', { recordDate: today, itemCode: ITEM, okQty: 0, ngQty: 0 })).success === false)
 const prod = await api('semimes:prodRecordCreate', { recordDate: today, itemCode: ITEM, lotNo: l1.lotNo, okQty: 100, ngQty: 0, worker: '위조작업자' })
@@ -129,12 +135,17 @@ check('8단 상태 전이·진척(양품 합, 취소 제외)', wrow?.status === 
 void prod2
 
 // 9단 — sidecar 모드 쓰기 거부 (복사본 설정 직접 전환 → 복원)
+// C-2 잔여(8/13 검수): 전환~복원 사이 예외로 죽으면 기록 쓰기가 잠긴 채 남는다 → try/finally
 const dbw = new Database(DB_PATH)
-dbw.prepare("INSERT INTO app_config (key, value) VALUES ('semimes.recordSource', 'sidecar') ON CONFLICT(key) DO UPDATE SET value = 'sidecar'").run()
-const blocked = await api('semimes:prodRecordCreate', { recordDate: today, itemCode: ITEM, okQty: 1, ngQty: 0 })
+let blocked
+try {
+  dbw.prepare("INSERT INTO app_config (key, value) VALUES ('semimes.recordSource', 'sidecar') ON CONFLICT(key) DO UPDATE SET value = 'sidecar'").run()
+  blocked = await api('semimes:prodRecordCreate', { recordDate: today, itemCode: ITEM, okQty: 1, ngQty: 0 })
+} finally {
+  dbw.prepare("DELETE FROM app_config WHERE key = 'semimes.recordSource'").run()
+  dbw.close()
+}
 check('9단 sidecar 모드 쓰기 거부', blocked.success === false && /sidecar/.test(blocked.error ?? ''), blocked.error?.slice(0, 40))
-dbw.prepare("DELETE FROM app_config WHERE key = 'semimes.recordSource'").run()
-dbw.close()
 const again = await api('semimes:prodRecordCreate', { recordDate: today, itemCode: ITEM, okQty: 1, ngQty: 0 })
 check('9단 direct 복원 후 저장', again.success === true)
 await api('semimes:recordCancel', { kind: 'prod', id: again.id, reason: 'E2E 정리' })

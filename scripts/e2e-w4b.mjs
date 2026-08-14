@@ -10,13 +10,14 @@
 //   E2E_DB=<복사본.db> node(electron) scripts/e2e-w4b.mjs [비번(기본 qms1234)]
 // ============================================================
 import { createRequire } from 'module'
+import { assertCopyDb, assertBaseNotLive, ymdKST } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081'
-const DB_PATH = process.env.E2E_DB
+// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080 거부. copy 게이트는 로그인 직후.
+const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081')
+const DB_PATH = assertCopyDb(process.env.E2E_DB)
 const PW = process.argv[2] || 'qms1234'
-if (!DB_PATH) { console.error('사용법: E2E_DB=<복사본.db> ... [비번]'); process.exit(1) }
 
 let pass = 0, fail = 0
 const check = (n, ok, d) => { console.log(`${ok ? '✓' : '✗'} ${n}${d ? ' — ' + d : ''}`); ok ? pass++ : fail++ }
@@ -51,13 +52,22 @@ if (!memberName || !execName || !botRow) { console.error('계정 시드 부족(m
   let blocked = false
   try {
     dbw.prepare("INSERT INTO screen_permission (subject_kind, subject_key, page_id, can_price) VALUES ('team','스키마검증','work-order',1)").run()
-  } catch (e) { blocked = /CHECK|constraint/i.test(String(e)) }
+  } catch (e) { blocked = /can_price/.test(String(e)) } // M-14 동반(8/13 검수): 매처 좁히기 — 무관 제약 오탐 방지
   dbw.prepare("DELETE FROM screen_permission WHERE subject_key='스키마검증'").run()
+  // M-15(8/13 검수): 이전 실행이 도중 죽어 남긴 거부 규칙 스윕 — 3단 "규칙 없음" 전제 복원
+  // (복사본 한정 — 규칙은 이 하네스의 검증 산물뿐이어야 정상)
+  const swept = dbw.prepare('DELETE FROM screen_permission').run().changes
+  if (swept > 0) console.log(`… 시작 스윕: 잔류 규칙 ${swept}행 제거(이전 실행 크래시 잔여물)`)
   dbw.close()
   check('0.5단 단가 can_price=1 = 스키마 CHECK 거부(전원 잠금 하드락)', blocked)
 }
 
 const bot = await login('E2E봇', PW)
+// 복사본 서버 게이트(M-13 — w4a 에만 있던 것의 공용화): health.copy ≠ true = 라이브 DB 서버
+{
+  const hj = await (await fetch(`${BASE}/api/health`, { headers: { cookie: bot } })).json().catch(() => null)
+  if (!hj || hj.copy !== true) { console.error(`[e2e-guard] 복사본 서버 아님(copy=${hj && hj.copy}) — 중단`); process.exit(1) }
+}
 const mem = await login(memberName, PW)
 // 판정 ①(사장님 확정 8/13): perm:save = executive 전용 — 규칙 저장은 이 세션만.
 // (규칙은 종료 시 전량 삭제 — 실기록 STAMP 아님, E2E봇 단일 로그인 규약의 예외 아님)
@@ -94,11 +104,14 @@ const BITS_ALLOW = { read: true, write: true, edit: true, delete: true, excel: t
   check('3단 규칙 없음 = 현행 허용(조업달력 저장 200)', r0.status === 200 && r0.json && r0.json.success === true, r0.json && r0.json.error)
 
   const deny = { ...BITS_ALLOW, write: false, edit: false, delete: false, excel: false, print: false }
-  await api(ex, 'perm:save', { subjectKind: 'team', subjectKey: botRow.team_dept, pageIds: ['work-calendar'], bits: deny })
+  // M-14(8/13 검수): 규칙 저장 결과 확인 — 저장이 조용히 실패하면 아래 403 단언이 공허해진다
+  const s1 = await api(ex, 'perm:save', { subjectKind: 'team', subjectKey: botRow.team_dept, pageIds: ['work-calendar'], bits: deny })
+  check('3단 차단 규칙 저장 확인(공허 단언 방지)', s1.status === 200 && s1.json?.success === true && s1.json?.saved === 1, s1.json?.error)
   const r1 = await api(bot, CAL, CAL_BODY)
   check('3단 팀(검수) 쓰기 0 규칙 → 403(서버 정본 즉시 효력)', r1.status === 403 && /권한 매트릭스/.test((r1.json && r1.json.error) || ''), r1.json && r1.json.error)
 
-  await api(ex, 'perm:save', { subjectKind: 'user', subjectKey: String(botRow.id), pageIds: ['work-calendar'], bits: BITS_ALLOW })
+  const s2 = await api(ex, 'perm:save', { subjectKind: 'user', subjectKey: String(botRow.id), pageIds: ['work-calendar'], bits: BITS_ALLOW })
+  check('3단 개인 오버라이드 저장 확인(M-14)', s2.status === 200 && s2.json?.success === true && s2.json?.saved === 1, s2.json?.error)
   const r2 = await api(bot, CAL, CAL_BODY)
   check('3단 개인 오버라이드(쓰기 1) → 200(개인이 팀을 대체)', r2.status === 200 && r2.json && r2.json.success === true, r2.json && r2.json.error)
 
@@ -120,7 +133,11 @@ const BITS_ALLOW = { read: true, write: true, edit: true, delete: true, excel: t
 {
   const exRow = dbr.prepare('SELECT id FROM app_users WHERE name = ?').get(execName)
   const deny = { ...BITS_ALLOW, write: false }
-  await api(ex, 'perm:save', { subjectKind: 'user', subjectKey: String(exRow.id), pageIds: ['work-calendar'], bits: deny })
+  // M-14(8/13 검수): 차단 규칙이 실제로 생겼는지 저장 결과 + DB 실행(實row) 확인 —
+  // 종전엔 미확인이라 executive bypass 코드를 지워도 "규칙 없음 = 200"으로 통과했다(공허 단언)
+  const s4 = await api(ex, 'perm:save', { subjectKind: 'user', subjectKey: String(exRow.id), pageIds: ['work-calendar'], bits: deny })
+  const s4row = dbr.prepare("SELECT can_write FROM screen_permission WHERE subject_kind='user' AND subject_key=? AND page_id='work-calendar'").get(String(exRow.id))
+  check('4단 차단 규칙 실재 확인(저장 성공 + DB can_write=0)', s4.json?.success === true && s4row?.can_write === 0, `saved=${s4.json?.saved} row=${JSON.stringify(s4row)}`)
   const r = await api(ex, CAL, { ymd: '2026-08-15', workType: '조업', note: 'W4B 전권 검증' })
   check('4단 executive 쓰기 0 규칙에도 200(그림33 최종관리자 전권)', r.status === 200 && r.json && r.json.success === true, r.json && r.json.error)
   const eff = await api(ex, 'perm:effective', {})
@@ -130,7 +147,7 @@ const BITS_ALLOW = { read: true, write: true, edit: true, delete: true, excel: t
 
 // 5단 — 편승⑴: E2E봇 지시 발번 = E2E-WO- 접두 · 실번호대(WO-) 카운트 불침범
 {
-  const ymd = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(2, 10).replace(/-/g, '')
+  const ymd = ymdKST().slice(2).replace(/-/g, '') // 8/13 검수 슬러지: 날짜식 복제 → lib 공용식
   const realBefore = dbr.prepare("SELECT COUNT(*) c FROM work_order WHERE order_no LIKE ?").get(`WO-${ymd}-%`).c
   const w1 = await api(bot, 'semimes:workOrderUpsert', { itemCode: '28236-2MAA0', orderQty: 100, createdBy: '위조' })
   const w2 = await api(bot, 'semimes:workOrderUpsert', { itemCode: '28236-2MAA0', orderQty: 200 })

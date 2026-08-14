@@ -10,16 +10,18 @@
 // 잔여물 0 계약: 규칙은 try/finally 로 전량 정리.
 // ============================================================
 import { createRequire } from 'module'
+import { assertCopyDb, assertBaseNotLive } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081'
-const DB_PATH = process.env.E2E_DB
+// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080 거부
+const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081')
 const PW = process.argv[2] || 'qms1234'
-if (!process.env.IATF_DATA_DIR || !DB_PATH) {
+if (!process.env.IATF_DATA_DIR) {
   console.error('사용법: IATF_DATA_DIR=<복사본폴더> E2E_DB=<복사본.db> ... [비번] (라이브 보호 — 필수)')
   process.exit(1)
 }
+const DB_PATH = assertCopyDb(process.env.E2E_DB)
 
 let pass = 0, fail = 0
 const check = (n, ok, d) => { console.log(`${ok ? '✓' : '✗'} ${n}${d ? ' — ' + d : ''}`); ok ? pass++ : fail++ }
@@ -42,6 +44,11 @@ const rulesBefore = dbr.prepare('SELECT COUNT(*) c FROM screen_permission').get(
 const BITS = { read: true, write: true, edit: true, delete: true, excel: true, print: true, price: false }
 
 const ex = await login(execName, PW)
+// 복사본 서버 게이트(M-13 공용화): health.copy ≠ true = 라이브 DB 서버 — 즉시 중단
+{
+  const hj = await (await fetch(`${BASE}/api/health`, { headers: { cookie: ex } })).json().catch(() => null)
+  if (!hj || hj.copy !== true) { console.error(`[e2e-guard] 복사본 서버 아님(copy=${hj && hj.copy}) — 중단`); process.exit(1) }
+}
 
 // 1단 — pageIds 화이트리스트: 목록 밖 화면 ID = 거부
 {

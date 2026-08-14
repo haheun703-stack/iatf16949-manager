@@ -15,7 +15,21 @@ const Database = require('better-sqlite3')
 const bcrypt = require('bcryptjs')
 const path = require('path')
 
-const dir = process.env.IATF_DATA_DIR || path.join(process.env.APPDATA || '', 'iatf16949-manager')
+// C-2(8/13 전수 검수): 종전엔 env 없으면 라이브로 떨어졌다 — 실행 한 번에 활성 17명 비번이
+// 전부 임시 비번으로 덮이고(원본 해시 소실 = 복구 불가) E2E봇이 라이브 명단에 생긴다.
+// 헤더 규약이 아니라 코드로 강제: ①IATF_DATA_DIR 필수(기본 경로 폴백 제거) ②라이브 경로 거부.
+const dir = process.env.IATF_DATA_DIR
+if (!dir) {
+  console.error('[seed-pw] IATF_DATA_DIR=<복사본폴더> 필수 — 라이브 보호(기본 경로 폴백 제거, 8/13 검수 C-2)')
+  process.exit(1)
+}
+if (process.env.APPDATA) {
+  const liveRoot = path.resolve(path.join(process.env.APPDATA, 'iatf16949-manager'))
+  if (path.resolve(dir).toLowerCase().startsWith(liveRoot.toLowerCase())) {
+    console.error(`[seed-pw] 라이브 경로 거부: ${dir} — 이 스크립트는 복사본 전용(활성 사용자 비번 전량 덮어씀)`)
+    process.exit(1)
+  }
+}
 const dbPath = path.join(dir, 'iatf16949.db')
 const db = new Database(dbPath)
 

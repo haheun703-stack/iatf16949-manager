@@ -13,15 +13,13 @@
 // 실행: E2E_BASE=http://127.0.0.1:8081 E2E_DB=<복사본.db> node scripts/e2e-g1-inbox.mjs <로그인이름> [비번]
 // ============================================================
 import Database from 'better-sqlite3'
+import { assertCopyDb, assertBaseNotLive, guardLoginName, ymdKST } from './lib/e2e.mjs'
 
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081'
-const DB_PATH = process.env.E2E_DB
-const LOGIN = process.argv[2]
+// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080 거부·E2E봇 로그인 강제
+const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081')
+const DB_PATH = assertCopyDb(process.env.E2E_DB)
+const LOGIN = guardLoginName(process.argv[2])
 const PW = process.argv[3] || 'qms1234'
-if (!LOGIN || !DB_PATH) {
-  console.error('사용법: E2E_DB=<복사본.db> node scripts/e2e-g1-inbox.mjs <로그인이름> [비번]')
-  process.exit(1)
-}
 
 let pass = 0, fail = 0
 const check = (name, ok, detail) => {
@@ -66,9 +64,14 @@ const loginRes = await fetch(`${BASE}/api/auth:login`, {
 })
 if (!loginRes.ok) { console.error('로그인 실패:', await loginRes.text()); process.exit(1) }
 cookie = (loginRes.headers.get('set-cookie') || '').split(';')[0]
+// 복사본 서버 게이트(M-13 공용화): health.copy ≠ true = 라이브 DB 서버 — 즉시 중단
+{
+  const hj = await (await fetch(`${BASE}/api/health`, { headers: { cookie } })).json().catch(() => null)
+  if (!hj || hj.copy !== true) { console.error(`[e2e-guard] 복사본 서버 아님(copy=${hj && hj.copy}) — 중단`); process.exit(1) }
+}
 console.log(`로그인: ${LOGIN} ✓ (${BASE})`)
 
-const today = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}` })()
+const today = ymdKST() // 8/13 검수 슬러지: 날짜식 복제 → lib 공용식
 
 // ── 1단: captureCreate (더미 바이트 512B — 데이터 흐름 검증용. 실사진 리허설은 검수 캡처로) ──
 const fakeJpeg = Buffer.alloc(512, 7).toString('base64')

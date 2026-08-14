@@ -70,15 +70,18 @@ const ITEM = '28236-2MAA0'
   check('2단 생산실적 저장(미선택) = 거부(작업자 이름 없음)', r && r.success === false && /작업자 이름|기록주체/.test(r.error ?? ''), r && r.error)
 }
 
-// 실행 증거 스크린샷
+// 실행 증거 스크린샷 — S-1(8/13 검수): 고정 파일명이 기존 인용 증거(배치C 문서의
+// M1_desktop_reject_260813.png)를 덮어쓰던 것 → 실행 시각 스탬프로 분리(증거 불변성)
 {
   const shot = await send('Page.captureScreenshot', { format: 'png' })
   const dir = join(repo, 'captures')
   mkdirSync(dir, { recursive: true })
-  const file = join(dir, 'M1_desktop_reject_260813.png')
+  const stamp = new Date(Date.now() + 9 * 3600e3).toISOString().slice(2, 16).replace(/[-:]/g, '').replace('T', '_')
+  const name = `M1_desktop_reject_${stamp}.png`
+  const file = join(dir, name)
   if (shot.result && shot.result.data) {
     writeFileSync(file, Buffer.from(shot.result.data, 'base64'))
-    check('3단 실행 증거 스크린샷 저장', true, 'captures/M1_desktop_reject_260813.png')
+    check('3단 실행 증거 스크린샷 저장', true, `captures/${name}`)
   } else {
     check('3단 실행 증거 스크린샷 저장', false)
   }

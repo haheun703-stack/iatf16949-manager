@@ -9,6 +9,7 @@
 //   IATF_DATA_DIR=<복사본폴더> E2E_DB=<복사본.db> node(electron) scripts/e2e-w4c-desktop.mjs
 // ============================================================
 import { createRequire } from 'module'
+import { assertCopyDb } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
@@ -16,6 +17,9 @@ if (!process.env.IATF_DATA_DIR || !process.env.E2E_DB) {
   console.error('사용법: IATF_DATA_DIR=<복사본폴더> E2E_DB=<복사본.db> ... (라이브 보호 — 필수)')
   process.exit(1)
 }
+// 공용 게이트(8/14 — lib/e2e.mjs): env 존재만으론 부족 — 값이 라이브 경로면 거부
+assertCopyDb(process.env.E2E_DB)
+assertCopyDb(process.env.IATF_DATA_DIR + '\\iatf16949.db')
 
 const { buildRoutes } = require('../server/dist/bridge.cjs')
 const routes = buildRoutes()
