@@ -6,7 +6,10 @@ import {
   type ObligationCadence,
   type ObligationCategory
 } from '@shared/ipc-types'
+import { useSingleFlight } from '../../lib/asyncGuard'
+import { invokeErrText } from '../../lib/errText'
 import { useObligationStore } from '../../stores/obligationStore'
+import { confirmDialog } from '../shared/ConfirmDialog'
 
 export function ObligationModal(): JSX.Element | null {
   const { modalOpen, editing, closeModal, create, update, remove } = useObligationStore()
@@ -22,6 +25,11 @@ export function ObligationModal(): JSX.Element | null {
   const [active, setActive] = useState(true)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
+  // Minor 1(8/14 검수 2차): 저장·삭제가 실패해도 catch 가 없어 **모달이 열린 채 침묵**했다
+  // (사용자는 왜 안 닫히는지 모른 채 재클릭). 사유를 모달 안에 띄우고, 쓰기 관문도 규약대로.
+  const [err, setErr] = useState<string | null>(null)
+  const saveFlight = useSingleFlight()
+  const deleteFlight = useSingleFlight()
 
   useEffect(() => {
     if (!modalOpen) return
@@ -55,6 +63,7 @@ export function ObligationModal(): JSX.Element | null {
   const handleSave = async (): Promise<void> => {
     if (!title.trim()) return
     setSaving(true)
+    setErr(null)
     try {
       const payload = {
         title: title.trim(),
@@ -71,6 +80,8 @@ export function ObligationModal(): JSX.Element | null {
       if (editing) await update({ id: editing.id, ...payload })
       else await create(payload)
       closeModal()
+    } catch (e) {
+      setErr(invokeErrText(e, '저장 실패 — 통신 오류. 다시 시도해 주세요.'))
     } finally {
       setSaving(false)
     }
@@ -78,11 +89,21 @@ export function ObligationModal(): JSX.Element | null {
 
   const handleDelete = async (): Promise<void> => {
     if (!editing) return
-    if (!confirm(`"${editing.title}" 정기 의무를 삭제할까요?`)) return
+    // window.confirm 은 Electron 미지원 — 전역 확인창 규약(8/11 묶음 배치)으로 통일
+    const ok = await confirmDialog({
+      title: `"${editing.title}" 정기 의무를 삭제할까요?`,
+      body: '삭제하면 이 의무의 도래 관리가 중단됩니다(완료 이력도 함께 정리됩니다).',
+      okLabel: '삭제',
+      danger: true
+    })
+    if (!ok) return
     setSaving(true)
+    setErr(null)
     try {
       await remove(editing.id)
       closeModal()
+    } catch (e) {
+      setErr(invokeErrText(e, '삭제 실패 — 통신 오류. 다시 시도해 주세요.'))
     } finally {
       setSaving(false)
     }
@@ -172,11 +193,18 @@ export function ObligationModal(): JSX.Element | null {
           </Field>
         </div>
 
+        {/* Minor 1: 실패 사유 — 모달을 닫지 않고 그 자리에서 알린다(침묵 금지) */}
+        {err && (
+          <div className="mx-5 mb-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] font-semibold text-destructive">
+            {err}
+          </div>
+        )}
+
         <footer className="px-5 py-3 border-t border-border flex items-center justify-between gap-2 sticky bottom-0 bg-card">
           {editing ? (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => void deleteFlight(handleDelete)}
               disabled={saving}
               className="text-xs font-semibold px-3 py-2 rounded-md text-destructive hover:bg-destructive/10 flex items-center gap-1.5"
             >
@@ -192,7 +220,7 @@ export function ObligationModal(): JSX.Element | null {
             </button>
             <button
               type="button"
-              onClick={handleSave}
+              onClick={() => void saveFlight(handleSave)}
               disabled={saving || !title.trim()}
               className="text-xs font-semibold px-4 py-2 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
             >

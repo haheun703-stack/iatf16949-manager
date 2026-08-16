@@ -73,9 +73,17 @@ export function AppShell(): JSX.Element {
   const { currentPage } = useUIStore()
   // M-11(8/13 검수): 권한관리 화면은 메뉴 숨김(execOnly)만으로는 못 막는다 — 사용자 전환·
   // 딥링크로 열람 가능(perm:list 는 로그인만). 진입 자체를 role 로 가드(저장은 서버 403 정본).
+  // N-7(8/14 검수 2차): 그 가드가 **로컬 role**(UserSwitcher = localStorage)을 믿고 있었다 —
+  // 웹에서 팀원이 비번 없이 스위처 클릭 1회로 '경영진'을 골라 매트릭스를 열람할 수 있었다.
+  // 판정 근거를 서버 세션(auth:me)으로 옮긴다. 데스크톱은 세션 개념이 없어 로컬 판정 유지
+  // (그 축은 서버 강제도 자기신고라 여기서 못 닫는다 — N-9·Minor 4 잔존, 화면에 고지).
   const users = useActiveUserStore((s) => s.users)
   const activeUserId = useActiveUserStore((s) => s.activeUserId)
-  const isExec = users.find((u) => u.id === activeUserId)?.role === 'executive'
+  const session = useActiveUserStore((s) => s.session)
+  const sessionChecked = useActiveUserStore((s) => s.sessionChecked)
+  const isExec = session
+    ? session.role === 'executive'
+    : users.find((u) => u.id === activeUserId)?.role === 'executive'
 
   // 8/12 계측 트랙(도장 — 육안 체감 "보였다" = 원격 한정 가설 기각): 멎음의 축 판별용
   // 관찰자 기동 + 화면 전환 좌표 마크. 열람 = F12 → __perfLog() (perfWatch.ts 참조)
@@ -189,7 +197,13 @@ export function AppShell(): JSX.Element {
             {currentPage === 'xbar-r' && <XbarRView />}
             {currentPage === 'process-flow' && <ProcessFlowPage />}
             {currentPage === 'screen-perm' &&
-              (isExec ? (
+              // N-7: 세션 확인 전에는 거부 화면을 띄우지 않는다(로드 직후 한 틱 "권한 없음"이
+              // 번쩍이던 가짜 거부 방지 — 판정 유예를 정직하게 표기).
+              (!sessionChecked ? (
+                <div className="rounded-[14px] border border-border bg-card shadow-card p-8 text-center">
+                  <div className="text-[12.5px] text-muted-foreground">권한 확인 중…</div>
+                </div>
+              ) : isExec ? (
                 <ScreenPermPage />
               ) : (
                 <div className="rounded-[14px] border border-border bg-card shadow-card p-8 text-center">

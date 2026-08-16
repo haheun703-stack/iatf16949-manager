@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { CalendarClock, Plus, Loader2, Check, AlertTriangle, Network, RotateCcw, ListChecks, Clock, PauseCircle } from 'lucide-react'
 import { OBLIGATION_CADENCES, type ObligationCadence, type ObligationDto } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
+import { useSingleFlight } from '../../lib/asyncGuard'
 import { invokeErrText } from '../../lib/errText'
 import { traceDeepLink } from '../../../lib/deeplink'
 import { useUIStore } from '../../stores/uiStore'
@@ -21,7 +22,7 @@ type Quick = 'all' | 'overdue' | 'soon' | 'inactive'
  * 템플릿 B(19번): 숫자 밴드(클릭=필터) → 검색·주기 필터 → 주기별 그룹 행 리스트. 등록·편집은 행 액션(모달).
  */
 export function ObligationPage(): JSX.Element {
-  const { items, loading, load, openCreate, openEdit, complete, resetDueDates } = useObligationStore()
+  const { items, loading, error, load, openCreate, openEdit, complete, resetDueDates } = useObligationStore()
   const [cadence, setCadence] = useState<Cadence>('all')
   const [quick, setQuick] = useState<Quick>('all')
   const [q, setQ] = useState('')
@@ -54,6 +55,18 @@ export function ObligationPage(): JSX.Element {
       window.alert(invokeErrText(e, '재설정 실패 — 통신 오류. 다시 시도해 주세요.'))
     } finally {
       setResetting(false)
+    }
+  }
+
+  // Minor 1·2(8/14 검수 2차) — 이행 처리: 쓰기 관문(useSingleFlight) + 실패 통지 +
+  // 주체(doneBy) 전달. 웹은 서버 STAMP 가 doneBy 를 세션으로 덮어쓰므로 이 값은
+  // 데스크톱(세션 없음)에서 done_by 가 NULL 로 적재되던 것을 막는 용도다.
+  const completeFlight = useSingleFlight()
+  const completeOne = async (it: { id: number; title: string }): Promise<void> => {
+    try {
+      await complete(it.id, currentUser?.name)
+    } catch (e) {
+      window.alert(invokeErrText(e, `'${it.title}' 이행 처리에 실패했습니다 — 통신 오류. 다시 시도해 주세요.`))
     }
   }
 
@@ -180,7 +193,16 @@ export function ObligationPage(): JSX.Element {
       </SearchBar>
 
       {/* ③ 주기별 그룹 행 리스트 */}
-      {!loading && items.length === 0 ? (
+      {/* Minor 1(8/14 검수 2차): 조회 실패를 "등록된 의무 없음"으로 표시하던 자리 —
+          비어 있는 것과 못 읽은 것은 전혀 다른 사실이다(도래 관리를 통째로 놓친다). */}
+      {!loading && error ? (
+        <div className="rounded-[14px] border border-bad-tint bg-bad-tint/30 p-6 text-center">
+          <div className="text-[14px] font-bold text-bad-ink mb-1">의무 목록을 불러오지 못했습니다</div>
+          <div className="text-[12.5px] text-muted-foreground">
+            {error} — 화면을 새로고침하거나 관리자에게 문의하세요. <b>(목록이 비어 보이는 것은 조회 실패 때문이며, 등록된 의무가 없다는 뜻이 아닙니다.)</b>
+          </div>
+        </div>
+      ) : !loading && items.length === 0 ? (
         <EmptyResult message="등록된 정기 의무가 없습니다. 우측 상단 “의무 추가”로 시작하세요." />
       ) : groups.length === 0 ? (
         <EmptyResult message="조건에 맞는 의무가 없습니다." onReset={resetFilters} />
@@ -200,7 +222,10 @@ export function ObligationPage(): JSX.Element {
                       key={it.id}
                       item={it}
                       onEdit={() => openEdit(it)}
-                      onComplete={() => void complete(it.id)}
+                      // Minor 1·2(8/14 검수 2차): 이행은 쓰기인데 가드도 catch 도 없었다
+                      // (실패해도 아무 말 없이 행이 그대로 = 처리된 줄 오인) + doneBy 미전달로
+                      // 데스크톱 done_by=NULL. 관문·통지·주체를 한꺼번에 채운다.
+                      onComplete={() => void completeFlight(() => completeOne(it))}
                     />
                   ))}
                 </div>

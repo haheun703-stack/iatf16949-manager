@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ScreenPermBits, ScreenPermRuleDto, ScreenPermSaveInput } from '@shared/ipc-types'
-import { SCREEN_PERM_PAGE_IDS, SERVER_ENFORCED_PAGE_IDS } from '@shared/screen-perm-pages'
+import { ACT_LABELS, SCREEN_PERM_PAGE_IDS, enforcedActsOf } from '@shared/screen-perm-pages'
 import { cn } from '../../../lib/utils'
 import { useSeqGuard, useSingleFlight } from '../../lib/asyncGuard'
 import { invokeErrText } from '../../lib/errText'
@@ -29,16 +29,29 @@ const DEFAULT_BITS: ScreenPermBits = {
 }
 
 /** 매트릭스 대상 화면 = 메뉴 트리의 page 항목(별칭·관리 항목 제외 — 그림33 메뉴 기준) */
-const TREE = MODULES.map((m) => ({
-  key: m.key,
-  label: m.label,
-  pages: m.items
-    .filter((it) => it.page && !it.alias && !it.adminOnly && !it.execOnly)
-    .map((it) => ({ page: it.page as PageId, label: it.label }))
-})).filter((m) => m.pages.length > 0)
+const TREE: { key: string; label: string; pages: { page: PageId; label: string }[] }[] = [
+  ...MODULES.map((m) => ({
+    key: m.key,
+    label: m.label,
+    pages: m.items
+      .filter((it) => it.page && !it.alias && !it.adminOnly && !it.execOnly)
+      .map((it) => ({ page: it.page as PageId, label: it.label }))
+  })).filter((m) => m.pages.length > 0),
+  // Minor 7(8/14 검수 2차): form-builder 는 메뉴 트리 밖(양식에서 직접 진입)이라 트리에
+  // 안 뜨는데 서버는 엑셀 축(form:exportXlsx)을 실제로 강제한다 — 규칙을 걸 UI 동선이
+  // 아예 없었다. 별도 묶음으로 노출한다(화이트리스트에는 이미 있음).
+  { key: '_offmenu', label: '메뉴 밖 (직접 진입 화면)', pages: [{ page: 'form-builder' as PageId, label: '양식 작성(엑셀 내보내기)' }] }
+]
 
-// M-2(8/13 검수) — 서버가 실제 403 으로 강제하는 화면. 그 외 = "표시 전용"(메뉴 숨김 보조만).
-const ENFORCED = new Set<string>(SERVER_ENFORCED_PAGE_IDS)
+// M-2(8/13 검수) — 서버가 실제 403 으로 강제하는 화면.
+// N-10(8/14 검수 2차) — 강제는 (화면×행위) 단위다. 화면 단위 배지는 fmea(엑셀만)·
+// item-master/partner-master(수정만)·mat-receipts(삭제만)에서 "쓰기·수정·삭제 403" 으로
+// 과장돼 읽혔다 → 축을 그대로 적는다(원천 = shared/screen-perm-pages ↔ SCREEN_GUARD 1:1).
+function actBadgeOf(pageId: string): { text: string; full: boolean } {
+  const acts = enforcedActsOf(pageId)
+  if (acts.length === 0) return { text: '표시 전용', full: false }
+  return { text: `강제 ${acts.map((a) => ACT_LABELS[a]).join('·')}`, full: true }
+}
 // 동기 계약 tripwire: 메뉴에 화면을 추가했는데 화이트리스트(shared/screen-perm-pages) 미갱신 시
 // 저장이 서버에서 거부된다 — dev 콘솔로 어긋남을 조기 감지.
 {
@@ -50,7 +63,7 @@ const ENFORCED = new Set<string>(SERVER_ENFORCED_PAGE_IDS)
 }
 
 export function ScreenPermPage(): JSX.Element {
-  const { users, activeUserId } = useActiveUserStore()
+  const { users, activeUserId, loaded: usersLoaded } = useActiveUserStore()
   const userName = users.find((u) => u.id === activeUserId)?.name
   const reloadEffective = usePermStore((s) => s.load)
 
@@ -123,6 +136,9 @@ export function ScreenPermPage(): JSX.Element {
   }
 
   const saveFlight = useSingleFlight()
+  // Minor 5(8/14 검수 2차): 규칙 해제도 쓰기 관문이다 — 연타를 confirm 중첩이 "실질적으로"
+  // 막고 있었을 뿐 규약(쓰기 버튼 = useSingleFlight)에서 벗어나 있었다.
+  const removeFlight = useSingleFlight()
   async function save(remove: boolean): Promise<void> {
     if (!subjectKey) {
       setMsg({ tone: 'bad', text: '주체(부서 또는 개인)를 먼저 선택하세요.' })
@@ -183,9 +199,25 @@ export function ScreenPermPage(): JSX.Element {
     const u = users.find((x) => String(x.id) === r.subjectKey)
     return u ? `개인 · ${u.name}` : `개인 · #${r.subjectKey}`
   }
-  /** 고아 = 효력 주체가 더는 없다(부서 개명·명단 삭제). 비활성 = 퇴사자 규칙(효력 없음·이름 보존) */
-  function orphanOf(r: ScreenPermRuleDto): 'orphan' | 'inactive' | null {
-    if (r.subjectKind === 'team') return teams.includes(r.subjectKey) ? null : 'orphan'
+  /**
+   * 고아 = 효력 주체가 더는 없다(부서 개명·명단 삭제). 비활성 = 퇴사·휴직(효력 없음·이름 보존).
+   * Minor 6(8/14 검수 2차) — 종전 판정은 두 갈래로 비대칭이었다:
+   *   ① 팀 축이 **활성자만 모은 `teams`** 로 판정 → 전원 휴직·전원 퇴사한 부서가 '고아'로 오표기
+   *      (부서는 멀쩡히 존재하고 복직하면 규칙이 되살아난다 — 유령이 아니다).
+   *   ② `users` 로드 전(빈 배열) 한 틱 동안 **전 규칙이 '고아'** 로 붉게 표시.
+   * → 비활성 인원까지 포함한 명단으로 존재 여부를 보고, 로드 전에는 판정을 유보한다.
+   */
+  const allTeams = useMemo(() => {
+    const set = new Set<string>()
+    for (const u of users) if (u.teamDept) set.add(u.teamDept)
+    return set
+  }, [users])
+  function orphanOf(r: ScreenPermRuleDto): 'orphan' | 'inactive' | 'unknown' | null {
+    if (!usersLoaded) return 'unknown' // 명단 미로드 = 판정 불가(가짜 고아 금지)
+    if (r.subjectKind === 'team') {
+      if (teams.includes(r.subjectKey)) return null // 활성 인원이 있는 부서
+      return allTeams.has(r.subjectKey) ? 'inactive' : 'orphan' // 전원 비활성 vs 부서 자체 소멸
+    }
     const u = users.find((x) => String(x.id) === r.subjectKey)
     if (!u) return 'orphan'
     return u.active ? null : 'inactive'
@@ -286,12 +318,25 @@ export function ScreenPermPage(): JSX.Element {
                         <input type="checkbox" checked={selected.has(p.page)} onChange={() => toggle(p.page)} />
                         <span className="min-w-0 truncate">{p.label}</span>
                         <span className="ml-auto shrink-0 flex items-center gap-1">
-                          {/* M-2(8/13 검수) 정직 표기: 서버 강제 밖 화면 = 표시 전용(메뉴 숨김·표기 보조만) */}
-                          {!ENFORCED.has(p.page) && (
-                            <span className="text-[10px] font-semibold rounded-full px-1.5 py-[1px] bg-muted text-muted-foreground/80" title="서버 강제 없음 — 규칙은 메뉴 숨김·표기 보조로만 동작합니다">
-                              표시 전용
-                            </span>
-                          )}
+                          {/* M-2 정직 표기 + N-10 축 정밀화: 어떤 행위가 실제 403 인지 그대로 적는다 */}
+                          {(() => {
+                            const b = actBadgeOf(p.page)
+                            return (
+                              <span
+                                className={cn(
+                                  'text-[10px] font-semibold rounded-full px-1.5 py-[1px]',
+                                  b.full ? 'bg-secondary text-primary/90' : 'bg-muted text-muted-foreground/80'
+                                )}
+                                title={
+                                  b.full
+                                    ? `서버가 403 으로 막는 행위 = ${b.text.replace('강제 ', '')}. 나머지 축(읽기·프린트 및 미표기 행위)은 메뉴 숨김·표기 보조로만 동작합니다.`
+                                    : '서버 강제 없음 — 규칙은 메뉴 숨김·표기 보조로만 동작합니다'
+                                }
+                              >
+                                {b.text}
+                              </span>
+                            )
+                          })()}
                           {r && (
                             <span className={cn('text-[10.5px] font-semibold rounded-full px-2 py-[1px]', r.read ? 'bg-secondary text-primary' : 'bg-bad-tint text-bad-ink')}>
                               규칙 {r.read ? '' : '· 읽기 차단'}
@@ -346,9 +391,14 @@ export function ScreenPermPage(): JSX.Element {
               단가 = 돈 경계 헌법(15번) — 자리만 확보, 개방은 별도 판정(스키마 잠금). ·
               프린트 = 미배선(막는 장치 없음 — 자리만). · 읽기를 끄면 나머지는 자동 해제(메뉴 숨김).
               <br />
-              서버 403 강제 = <b>배지 없는 화면 {ENFORCED.size - 1}개</b>(쓰기·수정·삭제 + 엑셀은 KPI그리드·FMEA 2화면) —
+              {/* N-10(8/14 검수 2차): 종전 문구 "배지 없는 화면 15개 = 쓰기·수정·삭제 403" 은
+                  축 과장이었다(fmea = 엑셀만, item/partner = 수정만, mat-receipts = 삭제만). */}
+              서버 403 강제는 <b>(화면 × 행위)</b> 단위입니다 — 화면마다
+              <span className="mx-1 text-[10px] font-semibold rounded-full px-1.5 py-[1px] bg-secondary text-primary/90">강제 쓰기·삭제</span>
+              처럼 <b>실제로 막히는 행위만</b> 배지에 적었습니다(원천 = 서버 SCREEN_GUARD 1:1).
               <span className="mx-1 text-[10px] font-semibold rounded-full px-1.5 py-[1px] bg-muted text-muted-foreground/80">표시 전용</span>
-              배지 화면은 규칙이 메뉴 숨김·표기로만 동작합니다(정직 표기 — 8/13 검수 M-2).
+              배지 화면과, 강제 목록에 없는 행위·읽기·프린트 축은 규칙이 메뉴 숨김·표기로만 동작합니다
+              (정직 표기 — 8/13 M-2 · 8/14 N-10).
             </div>
             <div className="flex items-center gap-2 mt-3">
               <button
@@ -429,7 +479,8 @@ export function ScreenPermPage(): JSX.Element {
                           <td className={cn(TD, 'font-semibold')}>
                             {subjectNameOf(r)}
                             {o === 'orphan' && <span className="ml-1.5 text-[10px] font-bold rounded-full px-1.5 py-[1px] bg-bad-tint text-bad-ink" title="주체가 현 명단·부서에 없음 — 효력 없는 유령 규칙">고아</span>}
-                            {o === 'inactive' && <span className="ml-1.5 text-[10px] font-bold rounded-full px-1.5 py-[1px] bg-warn-tint text-warn-ink" title="퇴사·휴직(비활성) 대상 — 현재 효력 없음">비활성</span>}
+                            {o === 'inactive' && <span className="ml-1.5 text-[10px] font-bold rounded-full px-1.5 py-[1px] bg-warn-tint text-warn-ink" title="퇴사·휴직(비활성) 대상 — 현재 효력 없음(복직·신규 배치 시 되살아납니다)">비활성</span>}
+                            {o === 'unknown' && <span className="ml-1.5 text-[10px] font-bold rounded-full px-1.5 py-[1px] bg-muted text-muted-foreground" title="사용자 명단 로드 전 — 고아 여부를 판정할 수 없습니다">확인 중</span>}
                           </td>
                           <td className={TD}>{(PAGE_LABELS as Record<string, string>)[r.pageId] ?? r.pageId}</td>
                           <td className={cn(TD, 'text-muted-foreground text-[11.5px]')}>
@@ -437,7 +488,7 @@ export function ScreenPermPage(): JSX.Element {
                           </td>
                           <td className={cn(TD, 'text-muted-foreground text-[11.5px]')}>{r.updatedBy ?? '—'} · {r.updatedAt.slice(5, 16)}</td>
                           <td className={TD}>
-                            <button type="button" onClick={() => void removeOne(r)} className="underline underline-offset-2 text-bad-ink font-semibold">해제</button>
+                            <button type="button" onClick={() => void removeFlight(() => removeOne(r))} className="underline underline-offset-2 text-bad-ink font-semibold">해제</button>
                           </td>
                         </tr>
                       )

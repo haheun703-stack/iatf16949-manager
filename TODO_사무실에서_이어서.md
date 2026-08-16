@@ -1,4 +1,62 @@
-# TODO — 이어서 작업 (갱신: 2026-08-14 3차 · **★A′군 이행 완료(N-12 신규 동반) — 남은 것 = 라이브 재기동 1회(사장님 창) → B′ → C′**)
+# TODO — 이어서 작업 (갱신: 2026-08-16 · **★A′ 라이브 반영 + B′군 완결(렌더러·즉시 반영) — 다음 = C′ → D군**)
+
+## ▶▶▶ 8/16(일) 1차 — 라이브 재기동 1회 이행 (사장님 승인 → 실행)
+
+- **세션 시작 점검(36호)**: `docs/mes-foundation` 신규 코워크 회신 **0건** — 8/14 발행 검수요청
+  **4건(A·B·C·A′) 전부 회신 대기**. 8/15 커밋 0건. 작업 트리 클린 · HEAD = `124652c`.
+- **기동 전 실측 2건**:
+  ⑴ **라이브가 이미 죽어 있었다** — :8080 리스너 0. 로그 마지막 기록 = **8/14 18:29:36**
+     (= A군 커밋 이전 판). 8/15(토)·8/16(일) 주말이라 실사용 영향 낮음. HKCU Run 자동기동이
+     주말 사이 유실된 것으로 보임(재발 시 원인 추적 필요 — **관찰 항목으로 등재**).
+  ⑵ **스윕 사정권 사전 확인** — restart bat [2/4] 가 `WINDOWTITLE eq IATF QMS Server*` 를 `/t`
+     로 죽이므로 :8081(코워크 검수 대상) 동반 사망 위험을 먼저 검사. 결과 = 필터 매치 **PID
+     26804 단독**(자식 conhost 뿐 = 고아 창) · :8081 electron(40784)은 부모 40680 이 이미 죽어
+     **26804 의 자손이 아님** → 사정권 밖. 규약("검수 중 :8081 재기동 금지") 무위반 확인 후 실행.
+- **번들 정합 확인**(기동 전 필수 — 반쪽 배포 재발 방지): A′ 4파일 중 `server/*.cjs` 3개는
+  런타임 직접 로드(최신), `src/main/docgen/sq-report-exporter.ts` + `electron-shim.cjs` 는
+  `server/dist/bridge.cjs`(**8/14 20:33:55 재번들** — `__webShim` ×2 · `findAppRoot`/`APP_ROOT`
+  실재)에 반영. `out/renderer`(19:44)는 A′ 무변경분이라 무관.
+- **재기동 실측(`scripts/restart-qms-server.bat`)** = 신판 **PID 40288 · 10:17:06** ·
+  `migration applied: 0143_app_user_pw_audit.sql`(라이브 최초 적용 — 직전 판이 A군 이전이었음) ·
+  `채널 197개 등록` · **`대상 = ★라이브(copy=false)`**(N-6 신설 줄 정상 표출) ·
+  tvBoard **401**(=채널 등록 신판 · 404 아님) · **고아 창 1개 스윕 완료**(잔여 창 = 신판 호스트
+  35828 단독) · **:8081 무피해**(PID 40784 그대로 · health 응답). ⚠직원 재로그인 1회 발생.
+- **N-8 판정 확정(사장님 8/16)** = **선점 차단 유지** — NULL 비번 첫 로그인 선점 제거분 존치,
+  관리팀 발급 경유. 되돌림 시 `server/auth.cjs` 분기 1곳 복원.
+- ⚠ 미검증 1건: 라이브 DB 직접 판독(0143 컬럼·NULL 비번 0명 재확인)은 **권한 분류기 차단** —
+  기동 로그의 `migration applied: 0143` 으로 갈음. 필요 시 사장님 승인 후 재시도.
+## ▶▶▶ 8/16(일) 2차 — **B′군 완결**(렌더러) — 검수 대기
+
+- **N-2** 사용자 관리 무통지 5동선 = ①②표시 전용 전환(비exec 는 배너 + 추가 UI 미표출 · select 전량
+  disabled · 이름 readOnly · 버튼 3종 잠금) ③`activeUserStore.upsertUser/deleteUser` 반환형
+  `boolean/void` → **`WriteResult{ok,error}`** + `invokeErrText` 경유 ④"이미 있는 이름" 단정 →
+  서버 사유 정본(실패 시 입력값 보존)
+- **N-7** 가드 근거를 **세션(auth:me)** 으로 = `activeUserStore.session`/`sessionChecked` 신설
+  (세션을 목록보다 **먼저** 확정 — 목록 실패 시 sessionChecked 가 영영 false 이던 구멍 동반 해소) ·
+  `AppShell.isExec` 세션 정본 + **"권한 확인 중…"** 유예(가짜 거부 깜빡임 제거) ·
+  **동반** `MesMenuBar.useMenuVisible` execOnly/adminOnly 도 세션 role
+- **N-10** **`SERVER_ENFORCED_ACTS`(page→acts) 신설** = server `SCREEN_GUARD` 와 **행위까지 1:1** ·
+  `SERVER_ENFORCED_PAGE_IDS` 는 키에서 파생(수기 목록 제거) · 배지 = `강제 쓰기·삭제` 식 축 표기
+- **Minor 1·2** 의무 계열 = 저장·삭제·이행 catch(모달 내 사유 표출) · **조회 실패를 "의무 없음"으로
+  표시하던 것** → 전용 오류 블록 · `window.confirm`→`confirmDialog` · `complete(id, doneBy)` 주체
+- **Minor 5·6·7** = removeOne·KPI 일괄저장 `useSingleFlight` · 고아 판정 비대칭(전원 휴직 부서 오표기 →
+  `비활성` · 명단 미로드 → `확인 중`) · `form-builder` 트리 노출("메뉴 밖" 묶음)
+- **검증** = 신규 `scripts/e2e-bprime-ui.mjs` **30/30**(1부 계약 대조 10 = shared↔SCREEN_GUARD 소스
+  파싱 tripwire · 2부 헤드리스 실측 20 = **스위처 비번 0회 경영진 전환 후에도 봉쇄** 실증 · 쓰기 0 검산)
+  + 회귀 **153/153**(cr13a 20·cr13b 8·w4a 9·w4b 26·b3 24·d35 12·g1 27·pc1 27) + typecheck + build +
+  build:server. ⚠**하네스는 `node` 아닌 `electron.exe`(ELECTRON_RUN_AS_NODE=1) 로 실행**해야 한다
+  (better-sqlite3 = Electron ABI 125 · 시스템 node 22 = ABI 127 → ERR_DLOPEN_FAILED). 헤더 표기
+  "node(electron)"의 실제 의미 — **재발 방지로 등재**.
+- **라이브 반영** = 렌더러 한정이라 **빌드 = 즉시 반영**(사장님 8/16 승인) · 재기동·재로그인 불요 ·
+  직원 새로고침 1회. 서버 프로세스는 10:17 신판 유지.
+- **검수요청** = `mes-foundation/dailyq-검수처분B프라임_검수요청_260816.md`(판정 요청 0 ·
+  규약 채택 1 = 재기동 전 스윕 사정권 사전 조회)
+- **잔존(정직 고지)**: Minor 3(window.prompt 데스크톱) · Minor 4·N-9(데스크톱 축 = 세션 부재라
+  렌더러에서 못 닫음 → **D군 상신**) · C′군 전건 미착수.
+
+- ▶ 다음 = **C′군**(N-3·4·5 + lib 헬퍼 실사용 + 구세대 하네스 9종) → D군 판단 3건.
+
+# (이전) TODO — 이어서 작업 (갱신: 2026-08-14 3차 · **★A′군 이행 완료(N-12 신규 동반) — 남은 것 = 라이브 재기동 1회(사장님 창) → B′ → C′**)
 
 ## ▶▶▶ 차기 작업 지시 — 전수 검수 2차 처분 (정본 = `docs/code-review-2026-08-14.md` §7)
 

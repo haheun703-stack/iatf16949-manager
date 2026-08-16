@@ -19,7 +19,12 @@ interface ObligationState {
   create: (input: ObligationCreateInput) => Promise<void>
   update: (input: ObligationUpdateInput) => Promise<void>
   remove: (id: number) => Promise<void>
-  complete: (id: number) => Promise<void>
+  /**
+   * 이행 처리. Minor 2(8/14 검수 2차): 종전엔 `{id}` 만 보내 **데스크톱에서 done_by=NULL**
+   * 로 적재됐다(주체 원칙 위반 — 웹은 STAMP 가 doneBy 를 세션으로 덮어써 구제되고 있었다).
+   * 호출부가 현재 사용자를 실어 준다(웹에선 서버 STAMP 가 여전히 정본).
+   */
+  complete: (id: number, doneBy?: string) => Promise<void>
   /** 도래일 일괄 재설정(실사용 개시) — 재설정된 건수 반환 */
   resetDueDates: (by?: string) => Promise<number>
 
@@ -61,8 +66,8 @@ export const useObligationStore = create<ObligationState>((set, get) => ({
     await get().load()
   },
 
-  complete: async (id) => {
-    await window.api.invoke(ch('OBLIGATION_COMPLETE'), { id })
+  complete: async (id, doneBy) => {
+    await window.api.invoke(ch('OBLIGATION_COMPLETE'), { id, doneBy })
     await get().load()
   },
 

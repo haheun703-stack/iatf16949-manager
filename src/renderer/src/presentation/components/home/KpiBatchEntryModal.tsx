@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { X, Save, Loader2 } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { useSingleFlight } from '../../lib/asyncGuard'
 import { invokeErrText } from '../../lib/errText'
 import { normalizeTeam, teamTheme } from '@shared/team-theme'
 import { todayKST } from '@shared/date-kst'
@@ -32,6 +33,9 @@ export function KpiBatchEntryModal({
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
+  // Minor 5(8/14 검수 2차): 쓰기 버튼 관문 = useSingleFlight(동기 ref) 가 규약이다(MA-10 교훈 —
+  // useState 가드는 재렌더 전 더블클릭을 못 막는다). 여기만 `disabled={saving}` 뿐이었다.
+  const saveFlight = useSingleFlight()
 
   // 선택 월의 기존 실적을 프리필(그 위에 정정 입력)
   useEffect(() => {
@@ -230,7 +234,7 @@ export function KpiBatchEntryModal({
           </button>
           <button
             type="button"
-            onClick={() => void save()}
+            onClick={() => void saveFlight(save)}
             disabled={saving || loading}
             className="text-[13px] font-bold px-4 py-2 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
           >

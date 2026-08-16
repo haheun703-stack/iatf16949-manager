@@ -169,8 +169,11 @@ function Badge({ tone, children }: { tone: 'sq' | 'iatf' | 'gap'; children: stri
 // 서버 SCREEN_GUARD 가 정본(쓰기·수정·삭제·엑셀 403) — 여기는 어수선함 방지용 보조막.
 function useMenuVisible(): (it: MenuEntry) => boolean {
   const { bypass, rules } = usePermStore()
-  const { users, activeUserId } = useActiveUserStore()
-  const role = users.find((u) => u.id === activeUserId)?.role
+  const { users, activeUserId, session } = useActiveUserStore()
+  // N-7(8/14 검수 2차): execOnly·adminOnly 판정도 세션 role 정본 — 종전엔 로컬 스위처 선택을
+  // 믿어서 팀원이 '경영진'으로 갈아타면 관리 메뉴가 그대로 떴다(진입은 AppShell 가드가
+  // 막지만 메뉴가 뜨는 것 자체가 오안내). 데스크톱(세션 없음) = 로컬 판정 유지.
+  const role = session ? session.role : users.find((u) => u.id === activeUserId)?.role
   return (it: MenuEntry): boolean => {
     if (it.execOnly && role !== 'executive') return false
     if (it.adminOnly && role !== 'manager' && role !== 'executive') return false
