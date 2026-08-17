@@ -80,11 +80,20 @@ foreach ($c in $candidates) {
     continue
   }
   Stop-Process -Id $id -Force -ErrorAction SilentlyContinue
-  if (Get-Process -Id $id -ErrorAction SilentlyContinue) {
-    Write-Host "       FAILED  pid $id - could not close (permissions?)"
-  } else {
+  # Termination is asynchronous: checking immediately reports a false FAILED (observed on the
+  # 8/17 13:59 live restart - pid 35828 was in fact gone, the script just looked too early).
+  # A false "FAILED" is not harmless here: it tells a human the orphan window survived, which
+  # is exactly the M-12 symptom they would then go hunting for. Wait briefly, then re-check.
+  $gone = $false
+  for ($i = 0; $i -lt 10; $i++) {
+    Start-Sleep -Milliseconds 200
+    if (-not (Get-Process -Id $id -ErrorAction SilentlyContinue)) { $gone = $true; break }
+  }
+  if ($gone) {
     $killed++
     Write-Host "       swept   pid $id - orphan window, owned no listening port"
+  } else {
+    Write-Host "       FAILED  pid $id - still running after 2s (permissions?)"
   }
 }
 Write-Host "       result: swept $killed, kept $kept (protected listeners: $($protect.Count) pids)"
