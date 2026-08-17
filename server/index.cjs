@@ -339,6 +339,11 @@ const APP_USER_WRITE = new Set(['appUser:upsert', 'appUser:delete', 'appUser:res
 // 세션 기록주체 강제 주입(W3-3, 2착 봉쇄 해소): 클라가 보낸 값은 무시하고 세션 사용자로 덮어쓴다.
 // → created_by/done_by 가 항상 로그인 사용자로 스탬프되어 "작성자 불명" 우회가 불가능해진다.
 //   (defaultAuthor 폴백 금지 원칙 유지 — 세션이 유일한 기록 주체.)
+// M-9 처분(8/17): 이 채널들은 **필드의 유무 자체가 의미를 갖는다**(있음 = 완료 저장 의도).
+// 그래서 "무조건 주입"이 아니라 "보냈을 때만 세션 값으로 덮어쓰기"다. 나머지 채널은 종전대로
+// 무조건 주입 — 거기서는 유무가 의미를 갖지 않고, 빠지면 REQUIRED_FIELDS 가 400 으로 잡는다.
+const STAMP_ONLY_IF_PRESENT = new Set(['form:submissionCreate', 'form:submissionUpdate'])
+
 const STAMP_FIELDS = {
   'form:submissionCreate': ['createdBy'],
   'form:submissionUpdate': ['createdBy'],
@@ -464,10 +469,23 @@ app.post('/api/:channel', (req, res) => {
   }
 
   // 세션 기록주체 강제 주입(W3-3): 클라 값 무시, 세션 사용자로 덮어씀.
+  // ★M-9(8/13 검수 · 라이브 데이터 소실 — 8/17 처분): 양식 저장 2채널만은 **값을 보냈을 때만**
+  //   덮어쓴다. 핸들러가 `createdBy` 의 **존재 여부**를 "완료 저장" 신호로 쓰는데(form-handlers
+  //   §W2 2착), STAMP 가 무조건 채우는 바람에 **초안 저장·자동저장까지 완료 저장으로 오인**돼
+  //   fact 공란 검사에 걸려 500 이 났다. 그 예외를 자동저장 catch 가 삼켜 **작성 중 내용이
+  //   말없이 사라졌다**(라이브 현존 결함).
+  //   ⚠위조 방어는 그대로다 — 값을 보내면 **언제나 세션 이름으로 덮어쓴다**. 클라가 통제하는
+  //   것은 "값"이 아니라 "완료 의도(필드 유무)"뿐이고, 그건 종전에도 클라의 몫이었다.
+  //   폴백 금지 원칙도 유지된다(서버가 주체를 지어내지 않는다 — 없으면 없는 채로 초안).
   const stamp = STAMP_FIELDS[ch]
   if (stamp && req.session) {
     req.body = req.body || {}
-    for (const fld of stamp) req.body[fld] = req.session.name
+    const onlyIfPresent = STAMP_ONLY_IF_PRESENT.has(ch)
+    for (const fld of stamp) {
+      const v = req.body[fld]
+      if (onlyIfPresent && (v === undefined || v === null || v === '')) continue
+      req.body[fld] = req.session.name
+    }
   }
 
   // C-1(8/13 전수 검수): 사용자 관리 쓰기 = 실행 주체(누가·어떤 role)를 세션에서 강제 주입.

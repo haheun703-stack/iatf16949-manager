@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Save, ArrowLeft, ArrowRight, AlertCircle, Sparkles, Gauge, Loader2, Printer, FileDown, FileText, PencilLine, ClipboardPaste, FolderOpen, FileSpreadsheet, History, Table2, CheckCircle2, PanelLeftOpen, ShieldAlert } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { invokeErrText } from '../../lib/errText'
 import { useFormStore } from '../../stores/formStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
 import { isExampleCopyBlocked } from '@shared/form-validation'
@@ -203,24 +204,36 @@ export function FormCanvas({
       goBackWithGuard()
       return
     }
-    try {
-      await saveDraft() // [이어서 작성]과 같은 규율 — 작성 중 값 보존
-    } catch (err) {
-      console.error('[form] 이전 양식으로 이동 전 자동 저장 실패', err)
-    }
+    // ★M-9(8/17): 자동 저장이 실패하면 **이동을 멈춘다**. 종전엔 catch 가 예외를 삼키고
+    //   그대로 다른 양식을 로드해 작성 중 내용이 말없이 사라졌다(주석은 "값 보존"이었는데
+    //   실제로는 값을 버리는 경로였다). 저장에 실패했으면 화면을 떠나지 않는 게 보존이다.
+    if (!(await autoSaveOrWarn('이전 양식으로 이동'))) return
     setSelectedFormCode(prev)
     void loadFormDefinition(prev)
+  }
+
+  /**
+   * 화면 이탈 전 자동 저장. 성공 = true, 실패 = false(호출부는 이동을 취소해야 한다).
+   * 실패 사유는 서버 안내문이 정본(invokeErrText) — 침묵 금지.
+   */
+  const autoSaveOrWarn = async (what: string): Promise<boolean> => {
+    try {
+      await saveDraft()
+      return true
+    } catch (err) {
+      const msg = invokeErrText(err, err instanceof Error ? err.message : '알 수 없는 오류')
+      setSaveStatus('error')
+      setSaveWarn(`자동 저장에 실패해 ${what}을(를) 취소했습니다 — ${msg}\n작성 중 내용은 화면에 그대로 있습니다. 저장 후 다시 시도하세요.`)
+      return false
+    }
   }
 
   const handleGoToNext = async (): Promise<void> => {
     if (!currentForm?.nextFormCode) return
     const next = currentForm.nextFormCode
     // 다음 양식으로 넘어가기 전에 현재 작성 내용을 자동 저장(데이터 손실 방지)
-    try {
-      await saveDraft()
-    } catch (err) {
-      console.error('[form] 이어서 작성 전 자동 저장 실패', err)
-    }
+    // ★M-9(8/17): 실패 시 이동 취소 — 위 handleBack 과 같은 규율.
+    if (!(await autoSaveOrWarn('다음 양식으로 이동'))) return
     setSelectedFormCode(next)
     void loadFormDefinition(next)
   }

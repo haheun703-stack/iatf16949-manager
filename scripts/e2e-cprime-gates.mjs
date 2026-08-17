@@ -112,5 +112,32 @@ console.log('\n── 양성 대조(게이트가 정상 경로까지 막지는 �
   check('11 정상 env = 통과(exit 0)', code === 0, `exit=${code}`)
 }
 
+// ── Minor 12 — 스윕 설계의 전제 실증 + PID 기반 스윕 판정 (C′ 검수 회신 §3 합격 조건) ──
+// 코워크가 "전제(콘솔 소멸해도 산다)에 반례가 있다"며 실증을 요구했다. 상설 단언으로 편입한다.
+// `--skip-console` 로 건너뛸 수 있다(서버를 3회 띄우므로 ~90초).
+if (!argv.includes('--skip-console')) {
+  console.log('\n── Minor 12 스윕 전제 실증(서버 3회 기동 — 임시 포트) ──')
+  const r = run('e2e-console-kill.mjs', { IATF_DATA_DIR: COPY_DIR, E2E_DB: null, E2E_BASE: null })
+  const survivedA = /A 호스트 cmd 종료\(\/t 없음\)\s*→ 서버 생존/.test(r.out)
+  const survivedB = /B 콘솔 창 X 닫기\s*→ 서버 생존/.test(r.out)
+  const treeKills = /C 대조군 \/t 트리킬[^\n]*사망/.test(r.out)
+  check('12 콘솔·호스트 종료 실증 전건 통과(유효성 전제 포함)', r.code === 0, `exit=${r.code}`)
+  check('12-A 호스트 cmd 종료(/t 없음) = 서버 생존', survivedA)
+  check('12-B 콘솔 창 소멸 = 서버 생존(코워크 반례 미재현)', survivedB)
+  check('12-C 대조군 /t 트리킬 = 서버 사망(/t 가 위험했던 이유)', treeKills)
+} else {
+  console.log('\n── Minor 12 스윕 전제 실증 — 건너뜀(--skip-console) ──')
+}
+
+// PID 기반 스윕이 "살아 있는 서버의 런처 창"을 실제로 보호하는가(파괴 없이 WhatIf 로 판정)
+{
+  const r = spawnSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+    join(ROOT, 'scripts', 'sweep-orphan-consoles.ps1'), '-WhatIfOnly'], { encoding: 'utf8', windowsHide: true })
+  const out = `${r.stdout || ''}${r.stderr || ''}`
+  const noBlindSweep = !/WOULD SWEEP/.test(out) || /KEEP pid/.test(out)
+  check('13 PID 기반 스윕 = 리스닝 서버의 런처 창 보호(WhatIf)', r.status === 0 && noBlindSweep,
+    out.trim().split('\n').slice(-1)[0])
+}
+
 console.log(`\n결과: ${pass}/${pass + fail}${fail ? ' — 실패 ' + fail : ' 전건 통과'}`)
 process.exit(fail ? 1 : 0)

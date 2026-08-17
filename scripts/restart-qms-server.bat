@@ -46,18 +46,22 @@ echo        port 8080 confirmed free.
 echo [2/4] sweeping orphan "IATF QMS Server" windows ...
 rem -- M-12 [2]: each restart used to leave one dead launcher window behind (the electron
 rem    child dies by PID kill, its host cmd falls to [FAIL]+pause and sits there forever).
-rem -- C' (260817, review 2 Minor 12 + the 8/16 near-miss): the sweep used /t, so it killed the
-rem    matched window's WHOLE TREE. The review-copy server (:8081) is started by this same
-rem    script family and carries the SAME window title - one restart could have taken it down
-rem    mid-review (rule 36-4 "never restart :8081 during review"). Two changes:
-rem      [a] show what will be swept BEFORE doing it (rule 36-5 - no silent tree kills)
-rem      [b] drop /t. Killing the host cmd can no longer reach any live server, because
-rem          electron.exe is a GUI-subsystem process that DETACHES from its console - the very
-rem          fact proven on 8/13 ("closing the window does NOT stop the server"). So the dead
-rem          launcher window goes, and any still-serving electron (like :8081) survives.
-echo        windows matching "IATF QMS Server*" (their servers are NOT killed by this):
-tasklist /fi "WINDOWTITLE eq IATF QMS Server*" 2>nul | findstr /i "cmd.exe" || echo        (none)
-taskkill /f /fi "WINDOWTITLE eq IATF QMS Server*" >nul 2>&1
+rem -- C' (260817): the sweep used to be `taskkill /f /t /fi "WINDOWTITLE eq IATF QMS Server*"`.
+rem    The review-copy server (:8081) is launched by this same script family and carries the
+rem    SAME window title, so one restart could take it down mid-review (rule 36-4).
+rem
+rem    First fix was "drop /t", on the premise that electron survives its console going away.
+rem    The co-work review (C' reply 3) rejected that premise as unproven and demanded evidence,
+rem    which is fair: "parent process died" (observed 8/16) is NOT "console was destroyed".
+rem    Evidence now exists - scripts/e2e-console-kill.mjs, 12/12: host-cmd kill (no /t) -> server
+rem    SURVIVES; console WM_CLOSE (cmd confirmed gone) -> server SURVIVES; /t tree kill -> server
+rem    DIES. So dropping /t was right for THIS launch shape.
+rem
+rem    But the root fix the reviewer asked for does not depend on that premise at all:
+rem    **decide by ownership, not by window title.** sweep-orphan-consoles.ps1 protects every
+rem    process that currently owns a LISTENING port (and its parent chain) and sweeps only the
+rem    windows that own nothing. If the launch shape ever changes, :8081 is still safe.
+call powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0sweep-orphan-consoles.ps1"
 
 echo [3/4] starting new server (minimized window "IATF QMS Server") ...
 start "IATF QMS Server" /min cmd /c "%~dp0start-qms-server.bat"
