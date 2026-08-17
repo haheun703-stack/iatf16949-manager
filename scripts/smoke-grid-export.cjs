@@ -30,7 +30,35 @@ if (!LOGIN) {
   process.exit(1)
 }
 
-const dir = process.env.IATF_DATA_DIR || path.join(process.env.APPDATA || '', 'iatf16949-manager')
+// C′(8/17 · 2차 검수 Minor 9) — env 가 없으면 **라이브 DB 를 그냥 열던** 폴백 제거.
+// readonly 라 파괴적이진 않지만, 라이브 통계를 검증 산물로 오인한 8/13 사고와 같은 축이다.
+// (.cjs 라 scripts/lib/e2e.mjs(ESM)를 못 쓴다 — 같은 계약을 인라인으로 둔다.)
+if (!process.env.IATF_DATA_DIR) {
+  console.error('[e2e-guard] IATF_DATA_DIR=<복사본폴더> 필수 — 라이브 폴백 금지(검증은 복사본으로)')
+  process.exit(1)
+}
+const dir = path.resolve(process.env.IATF_DATA_DIR)
+{
+  const real = (p) => {
+    try { return fs.realpathSync.native(p) } catch { return path.resolve(p) }
+  }
+  const home = process.env.USERPROFILE || require('os').homedir()
+  const roots = [
+    process.env.APPDATA && path.join(process.env.APPDATA, 'iatf16949-manager'),
+    home && path.join(home, 'AppData', 'Roaming', 'iatf16949-manager')
+  ].filter(Boolean)
+  if (roots.length === 0) {
+    console.error('[e2e-guard] 라이브 경로 판별 불능(APPDATA·USERPROFILE 미설정) — 중단(fail-closed)')
+    process.exit(1)
+  }
+  for (const root of roots) {
+    const rel = path.relative(real(root), real(dir))
+    if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) {
+      console.error(`[e2e-guard] 라이브 데이터 폴더 거부: ${dir} (실경로 ⊂ ${real(root)})`)
+      process.exit(1)
+    }
+  }
+}
 const db = new Database(path.join(dir, 'iatf16949.db'), { readonly: true })
 const OUT = path.join(__dirname, '..', 'captures')
 fs.mkdirSync(OUT, { recursive: true })

@@ -9,15 +9,17 @@ import ExcelJS from 'exceljs'
 import { writeFileSync, mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { assertBaseNotLive, guardLoginName, assertCopyPreflight } from './lib/e2e.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(root, 'captures')
 mkdirSync(OUT, { recursive: true })
 
-const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8080' // 검수 M: 라이브(8080) 오염 방지 — 검증은 E2E_BASE=…:8081
-const LOGIN = process.argv[2]
+const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081') // N-11(C′ 8/17): 기본 = 복사본(:8081). 라이브(:8080)·외부 호스트는 게이트가 거부
+const LOGIN = guardLoginName(process.argv[2]) // N-11: 실무자 이름 각인 차단 — 무인자 = E2E봇
 const PW = process.argv[3] || 'qms1234'
-if (!LOGIN) { console.error('사용법: node scripts/e2e-batch5.mjs <로그인이름> [비번]'); process.exit(1) }
+// N-11: 대상이 복사본 서버인지 먼저 확정(라이브 DB 로 뜬 :8081 차단) — 실패 시 exit 1
+await assertCopyPreflight(BASE, PW)
 
 let cookie = ''
 async function api(channel, body) {

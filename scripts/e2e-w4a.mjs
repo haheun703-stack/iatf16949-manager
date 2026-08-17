@@ -9,27 +9,20 @@
 //   E2E_DB=<복사본.db> node(electron) scripts/e2e-w4a.mjs [비번(기본 qms1234)]
 // ============================================================
 import { createRequire } from 'module'
-import { assertCopyDb, assertBaseNotLive } from './lib/e2e.mjs'
+// Minor 8(8/14 검수 2차): lib 수출 5종이 소비처 0 이고 게이트·login·api 가 하네스마다 복붙돼
+// 있었다(그 표류가 N-4 의 원인). 이 하네스부터 공용 헬퍼를 실제로 쓴다.
+import { assertCopyDb, assertBaseNotLive, assertCopyServer, loginBot, loginProbe, mkApi, mkCheck } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
-// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080 거부(copy 게이트는 1단이 원조)
+// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080/외부 호스트 거부
 const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081')
 const DB_PATH = assertCopyDb(process.env.E2E_DB)
 const PW = process.argv[2] || 'qms1234'
 
-let pass = 0, fail = 0
-const check = (n, ok, d) => { console.log(`${ok ? '✓' : '✗'} ${n}${d ? ' — ' + d : ''}`); ok ? pass++ : fail++ }
-
-async function login(name, pw) {
-  const r = await fetch(`${BASE}/api/auth:login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, password: pw }) })
-  if (!r.ok) throw new Error(`로그인 실패: ${name}`)
-  return (r.headers.get('set-cookie') || '').split(';')[0]
-}
-async function api(cookie, ch, body) {
-  const r = await fetch(`${BASE}/api/${ch}`, { method: 'POST', headers: { 'content-type': 'application/json', cookie }, body: JSON.stringify(body || {}) })
-  return { status: r.status, json: await r.json().catch(() => null) }
-}
+const { check, done } = mkCheck()
+const api = mkApi(BASE)
+const login = (name, pw) => loginProbe(BASE, name, pw)
 
 const dbr = new Database(DB_PATH, { readonly: true })
 const memberName = dbr.prepare("SELECT name FROM app_users WHERE role='member' AND active=1 ORDER BY sort_order LIMIT 1").get()?.name
@@ -43,10 +36,13 @@ if (!memberName) { console.error('member 계정 없음'); process.exit(1) }
 }
 
 // 1단 — E2E봇 계정(시드 보장) + health 세션 상세 + copy 플래그
-const bot = await login('E2E봇', PW)
-check('1단 E2E봇 로그인(복사본 전용 계정 시드)', !!bot)
+// ★N-4(8/14 검수 2차): 종전엔 copy 확인이 `check()` 뿐이라 **실패해도 3단 쓰기까지 진행**했다
+//   (나머지 하네스 9종은 하드 중단 — 여기만 소프트였다). loginBot 이 복사본 게이트를
+//   통과하지 못하면 그 자리에서 exit 1 한다. 표기용 check 는 그 뒤에 남긴다.
+const bot = await loginBot(BASE, PW)
+check('1단 E2E봇 로그인 + ★복사본 하드 게이트 통과(미통과 시 여기 도달 불가)', !!bot)
 {
-  const j = await (await fetch(`${BASE}/api/health`, { headers: { cookie: bot } })).json()
+  const j = await assertCopyServer(BASE, bot)
   check('1단 health 세션 = 상세 복원 + copy 표식', j.ok === true && 'db' in j && j.copy === true, `copy=${j.copy}`)
 }
 
@@ -76,5 +72,4 @@ for (const [ch, body] of [
 }
 
 dbr.close()
-console.log(`\n결과: ${pass}/${pass + fail}${fail ? ' — 실패 ' + fail : ' 전건 통과'}`)
-process.exit(fail ? 1 : 0)
+done()

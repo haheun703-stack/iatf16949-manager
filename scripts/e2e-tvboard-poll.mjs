@@ -19,6 +19,9 @@ import { spawn } from 'child_process'
 import { existsSync, mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
+// C′(8/17 · 2차 검수 Minor 12): 이 프로브는 게이트 분류에서 누락돼 있었다(읽기 전용이라
+// 완화 판정이었으나 무게이트인 건 사실). 브라우저를 띄우기 전에 대상이 복사본인지 못 박는다.
+import { assertCopyPreflight } from './lib/e2e.mjs'
 
 const args = process.argv.slice(2)
 const getArg = (k, d) => {
@@ -38,6 +41,9 @@ const CHROME_CANDIDATES = [
 ]
 const chrome = getArg('--chrome', CHROME_CANDIDATES.find((p) => existsSync(p)))
 if (!chrome) { console.error('Chrome 미발견 — --chrome <경로> 지정'); process.exit(1) }
+
+// 복사본 게이트(무침습 프리플라이트) — 실패 시 크롬을 띄우기도 전에 exit 1
+await assertCopyPreflight(BASE)
 
 let pass = 0, fail = 0
 const check = (n, ok, d) => { console.log(`${ok ? '✓' : '✗'} ${n}${d ? ' — ' + d : ''}`); ok ? pass++ : fail++ }

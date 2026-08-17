@@ -9,7 +9,7 @@
 //   E2E_DB=<복사본.db> node(electron) scripts/e2e-d35-tv.mjs <로그인> [비번]
 // ============================================================
 import { createRequire } from 'module'
-import { assertCopyDb, assertBaseNotLive, guardLoginName, ymdKST } from './lib/e2e.mjs'
+import { assertCopyDb, assertBaseNotLive, guardLoginName, ymdKST, assertCopyServer } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
@@ -32,11 +32,9 @@ async function api(ch, body) {
 const login = await fetch(`${BASE}/api/auth:login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: LOGIN, password: PW }) })
 if (!login.ok) { console.error('로그인 실패'); process.exit(1) }
 cookie = (login.headers.get('set-cookie') || '').split(';')[0]
-// 복사본 서버 게이트(M-13 공용화): health.copy ≠ true = 라이브 DB 서버 — 즉시 중단
-{
-  const hj = await (await fetch(`${BASE}/api/health`, { headers: { cookie } })).json().catch(() => null)
-  if (!hj || hj.copy !== true) { console.error(`[e2e-guard] 복사본 서버 아님(copy=${hj && hj.copy}) — 중단`); process.exit(1) }
-}
+// 복사본 서버 하드 게이트 — Minor 8(8/14 검수 2차): 이 4줄이 하네스 7개에 복붙돼 있었다.
+// lib 수출을 실제로 쓰게 회수(그 표류가 N-4 소프트 게이트의 원인이었다).
+await assertCopyServer(BASE, cookie)
 console.log(`로그인 ${LOGIN} ✓ (${BASE})`)
 
 const ITEM = '28236-2MAA0'

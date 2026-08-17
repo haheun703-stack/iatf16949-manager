@@ -13,6 +13,7 @@
 // ============================================================
 import path from 'path'
 import fs from 'fs'
+import os from 'os'
 
 export const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8081'
 
@@ -21,24 +22,98 @@ function die(msg) {
   process.exit(1)
 }
 
-/** ① 라이브 DB 경로 거부 + 존재 확인. 반환 = 정규화된 복사본 DB 경로 */
+// ── N-5(8/14 검수 2차) — 경로 비교를 실경로·동일파일 축으로 ────────────────────
+// 종전 assertCopyDb 는 **프리픽스 문자열 비교뿐**이라 두 갈래로 뚫렸다:
+//   ⓐ 정션(`mklink /J`)·subst 드라이브로 라이브 폴더를 다른 경로명으로 가리키면 통과
+//   ⓑ `APPDATA` 미설정 환경에선 라이브 거부가 **아예 수행되지 않음**(조용한 무방비)
+// A′ 의 서버 측 N-6 과 같은 기법으로 통일한다 — realpath(native) + dev/ino 동일파일 비교,
+// 그리고 **판별 불능이면 통과가 아니라 중단**(fail-closed · M-7 원칙).
+function realPathOf(p) {
+  try {
+    return fs.realpathSync.native(p)
+  } catch {
+    return path.resolve(p) // 미존재·권한 등 — 정규화만 하고 문자열 비교로 진행
+  }
+}
+function isSameFile(a, b) {
+  if (realPathOf(a).toLowerCase() === realPathOf(b).toLowerCase()) return true
+  try {
+    const sa = fs.statSync(a)
+    const sb = fs.statSync(b)
+    return sa.ino !== 0 && sa.ino === sb.ino && sa.dev === sb.dev // 하드링크·잔여 우회
+  } catch {
+    return false
+  }
+}
+/** child 가 parent 안인가 — 경계 단위 비교(`...-manager-copy` 오탐 방지) */
+function withinDir(child, parent) {
+  const rel = path.relative(parent, child)
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))
+}
+/** 라이브 데이터 루트 후보 — APPDATA 가 없어도 표준 경로로 판정을 살린다(ⓑ) */
+function liveRootCandidates() {
+  const roots = []
+  if (process.env.APPDATA) roots.push(path.join(process.env.APPDATA, 'iatf16949-manager'))
+  const home = process.env.USERPROFILE || os.homedir()
+  if (home) roots.push(path.join(home, 'AppData', 'Roaming', 'iatf16949-manager'))
+  return [...new Set(roots.map((p) => path.resolve(p)))]
+}
+
+/** ① 라이브 DB 거부(실경로·동일파일) + 존재 확인. 반환 = 정규화된 복사본 DB 경로 */
 export function assertCopyDb(dbPath = process.env.E2E_DB) {
   if (!dbPath) die('E2E_DB=<복사본.db> 필수 — 라이브 보호(기본 경로 폴백 금지)')
   const resolved = path.resolve(String(dbPath))
-  if (process.env.APPDATA) {
-    const liveRoot = path.resolve(path.join(process.env.APPDATA, 'iatf16949-manager'))
-    if (resolved.toLowerCase().startsWith(liveRoot.toLowerCase())) {
-      die(`라이브 DB 경로 거부: ${resolved} — 검증은 복사본(%TEMP%\\qms-e2e-*)으로`)
+  if (!fs.existsSync(resolved)) die(`복사본 DB 없음: ${resolved}`)
+
+  const roots = liveRootCandidates()
+  if (roots.length === 0) {
+    die('라이브 경로를 판별할 수 없습니다(APPDATA·USERPROFILE 모두 미설정) — 판별 불능 = 중단(fail-closed)')
+  }
+  const real = realPathOf(resolved)
+  for (const root of roots) {
+    const rootReal = realPathOf(root)
+    if (withinDir(real, rootReal)) {
+      die(`라이브 DB 경로 거부: ${resolved}\n        (실경로 ${real} ⊂ ${rootReal}) — 검증은 복사본(%TEMP%\\qms-e2e-*)으로`)
+    }
+    if (isSameFile(resolved, path.join(root, 'iatf16949.db'))) {
+      die(`라이브 DB 거부(동일 파일): ${resolved} ≡ ${path.join(root, 'iatf16949.db')} — 정션·하드링크 우회`)
     }
   }
-  if (!fs.existsSync(resolved)) die(`복사본 DB 없음: ${resolved}`)
   return resolved
 }
 
-/** BASE 가 라이브(:8080)를 가리키면 거부 — 검증 서버는 :8081 복사본 전용 */
+/**
+ * BASE 사전 필터 — 라이브(:8080)·외부 호스트 거부.
+ * Minor 9(8/14 검수 2차): 종전 정규식 `/:8080(\/|$)/` 은 `:8080?x`·`:8080#x` 를 놓쳤다.
+ * URL 파싱으로 포트를 정확히 본다. 다만 **비표준 포트로 뜬 라이브는 포트만으로 알 수 없다** —
+ * 복사본 여부의 정본은 `assertCopyServer()`(health.copy)이며, 여기는 값싼 1차 관문이다.
+ */
 export function assertBaseNotLive(base = BASE) {
-  if (/:8080(\/|$)/.test(base)) die(`라이브(:8080) 대상 금지: ${base} — 검증은 :8081 복사본 서버로`)
+  let u
+  try {
+    u = new URL(base)
+  } catch {
+    die(`E2E_BASE 형식 오류: ${base}`)
+  }
+  if (u.port === '8080') die(`라이브(:8080) 대상 금지: ${base} — 검증은 :8081 복사본 서버로`)
+  const LOOPBACK = ['127.0.0.1', 'localhost', '::1', '[::1]']
+  if (!LOOPBACK.includes(u.hostname)) {
+    die(`루프백 외 대상 금지: ${base} — E2E 는 이 PC 의 복사본 서버(:8081)만 대상으로 한다`)
+  }
   return base
+}
+
+/**
+ * ★복사본 서버 하드 게이트 — 쓰기 이전에 반드시 통과해야 한다.
+ * N-4(8/14 검수 2차): w4a 는 이 확인을 `check()` 로만 해서 **실패해도 계속 진행**,
+ * 3단에서 조업달력 쓰기까지 갔다(나머지 9종은 하드 중단이었다). 공용 API 로 못 박는다.
+ */
+export async function assertCopyServer(base, cookie) {
+  const h = await (await fetch(`${base}/api/health`, { headers: { cookie } })).json().catch(() => null)
+  if (!h || h.copy !== true) {
+    die(`복사본 서버 아님(health.copy=${h && h.copy}) — 대상 서버가 라이브 DB 로 떠 있습니다. 즉시 중단.`)
+  }
+  return h
 }
 
 /** ③ argv 로그인 계정 강제: 'E2E봇' 외 거부(빈 값 = E2E봇). 반환 = 확정 계정명 */
@@ -64,10 +139,7 @@ async function rawLogin(base, name, pw) {
 export async function loginBot(base = BASE, pw = 'qms1234') {
   assertBaseNotLive(base)
   const cookie = await rawLogin(base, 'E2E봇', pw)
-  const h = await (await fetch(`${base}/api/health`, { headers: { cookie } })).json().catch(() => null)
-  if (!h || h.copy !== true) {
-    die(`복사본 서버 아님(health.copy=${h && h.copy}) — :8081 이 IATF_DATA_DIR 없이(라이브 DB로) 떠 있음. 즉시 중단.`)
-  }
+  await assertCopyServer(base, cookie)
   return cookie
 }
 
@@ -79,6 +151,20 @@ export async function loginExec(base, execName, pw = 'qms1234') {
   assertBaseNotLive(base)
   if (!execName) die('loginExec: executive 계정명 필요(복사본 DB 에서 조회해 전달)')
   return rawLogin(base, execName, pw)
+}
+
+/**
+ * ★복사본 프리플라이트 — 하네스의 자체 로그인 흐름을 건드리지 않고 대상 서버가 복사본인지
+ * 먼저 못 박는다(E2E봇으로 1회 로그인해 health.copy 확인 후 세션 폐기).
+ * N-11(8/14 검수 2차) 구세대 하네스 처분용: 그 7종은 자체 login/api 를 갖고 있어
+ * loginBot 으로 갈아끼우려면 파일마다 흐름을 뜯어야 했다 — 한 줄로 같은 보장을 얻는다.
+ */
+export async function assertCopyPreflight(base = BASE, pw = 'qms1234') {
+  assertBaseNotLive(base)
+  const cookie = await rawLogin(base, 'E2E봇', pw)
+  await assertCopyServer(base, cookie)
+  await fetch(`${base}/api/auth:logout`, { method: 'POST', headers: { cookie } }).catch(() => {})
+  return true
 }
 
 /** 일반 계정 로그인(음성 검증용 — member 403 단언 등 읽기·거부 경로 전용) */

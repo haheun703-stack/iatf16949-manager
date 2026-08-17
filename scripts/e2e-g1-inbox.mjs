@@ -13,7 +13,7 @@
 // 실행: E2E_BASE=http://127.0.0.1:8081 E2E_DB=<복사본.db> node scripts/e2e-g1-inbox.mjs <로그인이름> [비번]
 // ============================================================
 import Database from 'better-sqlite3'
-import { assertCopyDb, assertBaseNotLive, guardLoginName, ymdKST } from './lib/e2e.mjs'
+import { assertCopyDb, assertBaseNotLive, guardLoginName, ymdKST, assertCopyServer } from './lib/e2e.mjs'
 
 // 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080 거부·E2E봇 로그인 강제
 const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081')
@@ -64,11 +64,9 @@ const loginRes = await fetch(`${BASE}/api/auth:login`, {
 })
 if (!loginRes.ok) { console.error('로그인 실패:', await loginRes.text()); process.exit(1) }
 cookie = (loginRes.headers.get('set-cookie') || '').split(';')[0]
-// 복사본 서버 게이트(M-13 공용화): health.copy ≠ true = 라이브 DB 서버 — 즉시 중단
-{
-  const hj = await (await fetch(`${BASE}/api/health`, { headers: { cookie } })).json().catch(() => null)
-  if (!hj || hj.copy !== true) { console.error(`[e2e-guard] 복사본 서버 아님(copy=${hj && hj.copy}) — 중단`); process.exit(1) }
-}
+// 복사본 서버 하드 게이트 — Minor 8(8/14 검수 2차): 이 4줄이 하네스 7개에 복붙돼 있었다.
+// lib 수출을 실제로 쓰게 회수(그 표류가 N-4 소프트 게이트의 원인이었다).
+await assertCopyServer(BASE, cookie)
 console.log(`로그인: ${LOGIN} ✓ (${BASE})`)
 
 const today = ymdKST() // 8/13 검수 슬러지: 날짜식 복제 → lib 공용식

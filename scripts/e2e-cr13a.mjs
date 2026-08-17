@@ -11,7 +11,7 @@
 // 잔여물 0 계약: 테스트 유저·권한 규칙은 try/finally 로 전량 정리(M-15 교훈 선반영).
 // ============================================================
 import { createRequire } from 'module'
-import { assertCopyDb, assertBaseNotLive } from './lib/e2e.mjs'
+import { assertCopyDb, assertBaseNotLive, assertCopyServer } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
@@ -53,11 +53,9 @@ const rulesBefore = dbr.prepare('SELECT COUNT(*) c FROM screen_permission').get(
 }
 
 const bot = await login('E2E봇', PW) // manager
-// 복사본 서버 게이트(M-13 공용화): health.copy ≠ true = 라이브 DB 서버 — 즉시 중단
-{
-  const hj = await (await fetch(`${BASE}/api/health`, { headers: { cookie: bot } })).json().catch(() => null)
-  if (!hj || hj.copy !== true) { console.error(`[e2e-guard] 복사본 서버 아님(copy=${hj && hj.copy}) — 중단`); process.exit(1) }
-}
+// 복사본 서버 하드 게이트 — Minor 8(8/14 검수 2차): 이 4줄이 하네스 7개에 복붙돼 있었다.
+// lib 수출을 실제로 쓰게 회수(그 표류가 N-4 소프트 게이트의 원인이었다).
+await assertCopyServer(BASE, bot)
 const mem = await login(memberName, PW)
 // C-1 검증엔 executive 세션이 필수(승격 시나리오의 방어 실증) — 규칙·계정은 전량 정리, 실기록 0.
 const ex = await login(execName, PW)

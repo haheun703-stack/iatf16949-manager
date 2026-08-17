@@ -10,27 +10,18 @@
 //   E2E_DB=<복사본.db> node(electron) scripts/e2e-w4b.mjs [비번(기본 qms1234)]
 // ============================================================
 import { createRequire } from 'module'
-import { assertCopyDb, assertBaseNotLive, ymdKST } from './lib/e2e.mjs'
+// Minor 8(8/14 검수 2차): lib 헬퍼 실사용 — 게이트·login·api·check 복붙 회수
+import { assertCopyDb, assertBaseNotLive, loginBot, loginExec, loginProbe, mkApi, mkCheck, ymdKST } from './lib/e2e.mjs'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
-// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080 거부. copy 게이트는 로그인 직후.
+// 공용 게이트(8/14 — lib/e2e.mjs): 라이브 경로 거부·:8080/외부 호스트 거부. copy 게이트는 로그인 직후.
 const BASE = assertBaseNotLive(process.env.E2E_BASE || 'http://127.0.0.1:8081')
 const DB_PATH = assertCopyDb(process.env.E2E_DB)
 const PW = process.argv[2] || 'qms1234'
 
-let pass = 0, fail = 0
-const check = (n, ok, d) => { console.log(`${ok ? '✓' : '✗'} ${n}${d ? ' — ' + d : ''}`); ok ? pass++ : fail++ }
-
-async function login(name, pw) {
-  const r = await fetch(`${BASE}/api/auth:login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, password: pw }) })
-  if (!r.ok) throw new Error(`로그인 실패: ${name}`)
-  return (r.headers.get('set-cookie') || '').split(';')[0]
-}
-async function api(cookie, ch, body) {
-  const r = await fetch(`${BASE}/api/${ch}`, { method: 'POST', headers: { 'content-type': 'application/json', cookie }, body: JSON.stringify(body || {}) })
-  return { status: r.status, json: await r.json().catch(() => null) }
-}
+const { check, done } = mkCheck()
+const api = mkApi(BASE)
 
 const dbr = new Database(DB_PATH, { readonly: true })
 const memberName = dbr.prepare("SELECT name FROM app_users WHERE role='member' AND active=1 ORDER BY sort_order LIMIT 1").get()?.name
@@ -54,24 +45,47 @@ if (!memberName || !execName || !botRow) { console.error('계정 시드 부족(m
     dbw.prepare("INSERT INTO screen_permission (subject_kind, subject_key, page_id, can_price) VALUES ('team','스키마검증','work-order',1)").run()
   } catch (e) { blocked = /can_price/.test(String(e)) } // M-14 동반(8/13 검수): 매처 좁히기 — 무관 제약 오탐 방지
   dbw.prepare("DELETE FROM screen_permission WHERE subject_key='스키마검증'").run()
-  // M-15(8/13 검수): 이전 실행이 도중 죽어 남긴 거부 규칙 스윕 — 3단 "규칙 없음" 전제 복원
-  // (복사본 한정 — 규칙은 이 하네스의 검증 산물뿐이어야 정상)
-  const swept = dbw.prepare('DELETE FROM screen_permission').run().changes
-  if (swept > 0) console.log(`… 시작 스윕: 잔류 규칙 ${swept}행 제거(이전 실행 크래시 잔여물)`)
   dbw.close()
   check('0.5단 단가 can_price=1 = 스키마 CHECK 거부(전원 잠금 하드락)', blocked)
 }
+// ※ N-3: 잔류 규칙 스윕은 여기가 아니라 **복사본 서버 게이트 통과 뒤**로 옮겼다(아래).
 
-const bot = await login('E2E봇', PW)
-// 복사본 서버 게이트(M-13 — w4a 에만 있던 것의 공용화): health.copy ≠ true = 라이브 DB 서버
+// 복사본 서버 하드 게이트(lib/e2e.mjs loginBot — Minor 8: 복붙 회수)
+const bot = await loginBot(BASE, PW)
+
+// ★N-3(8/14 검수 2차) — 잔류 규칙 스윕: **게이트 뒤 + 이 하네스의 산물만**.
+//   종전엔 ⓐ 복사본 확인보다 **앞**에서 ⓑ `DELETE FROM screen_permission` **전 행**이었다.
+//   assertCopyDb 우회(N-5)와 겹치면 라이브 권한 규칙이 통째로 소실된다 — 증폭 경로였다.
+//   식별 = 이 하네스가 쓰는 (주체종류, 주체키) 조합뿐. 그 밖의 행은 남의 것이므로 손대지 않고,
+//   남아 있으면 3단 전제("규칙 없음")가 깨지므로 **경고만** 하고 계속한다(조용한 삭제 금지).
 {
-  const hj = await (await fetch(`${BASE}/api/health`, { headers: { cookie: bot } })).json().catch(() => null)
-  if (!hj || hj.copy !== true) { console.error(`[e2e-guard] 복사본 서버 아님(copy=${hj && hj.copy}) — 중단`); process.exit(1) }
+  const exRowForSweep = dbr.prepare('SELECT id FROM app_users WHERE name = ?').get(execName)
+  const OWNED = [
+    ['team', '검수'],
+    ['team', '스키마검증'],
+    ['team', botRow.team_dept],
+    ['user', String(botRow.id)],
+    ['user', String(exRowForSweep?.id ?? -1)]
+  ].filter(([, k]) => k != null && k !== '')
+
+  const dbw = new Database(DB_PATH)
+  let swept = 0
+  const del = dbw.prepare('DELETE FROM screen_permission WHERE subject_kind = ? AND subject_key = ?')
+  for (const [kind, key] of OWNED) swept += del.run(kind, key).changes
+  if (swept > 0) console.log(`… 시작 스윕: 이 하네스 산물 ${swept}행 제거(이전 실행 크래시 잔여물)`)
+
+  const foreign = dbw.prepare('SELECT COUNT(*) AS c FROM screen_permission').get().c
+  dbw.close()
+  if (foreign > 0) {
+    console.warn(`… ⚠ 이 하네스 소유가 아닌 규칙 ${foreign}행 잔존 — 삭제하지 않습니다(N-3). ` +
+      `3단 오버라이드 단언이 영향을 받으면 복사본을 재생성하세요.`)
+  }
+  check('0.6단 ★스윕 = 복사본 게이트 뒤 + 자기 산물 한정(N-3)', true, `제거 ${swept}행 · 타 규칙 ${foreign}행 보존`)
 }
-const mem = await login(memberName, PW)
+const mem = await loginProbe(BASE, memberName, PW)
 // 판정 ①(사장님 확정 8/13): perm:save = executive 전용 — 규칙 저장은 이 세션만.
 // (규칙은 종료 시 전량 삭제 — 실기록 STAMP 아님, E2E봇 단일 로그인 규약의 예외 아님)
-const ex = await login(execName, PW)
+const ex = await loginExec(BASE, execName, PW)
 const CAL = 'semimes:workCalendarSave'
 const CAL_BODY = { ymd: '2026-08-14', workType: '조업', note: 'W4B 매트릭스 검증' }
 const BITS_ALLOW = { read: true, write: true, edit: true, delete: true, excel: true, print: true, price: false }
@@ -174,5 +188,4 @@ const BITS_ALLOW = { read: true, write: true, edit: true, delete: true, excel: t
 }
 
 dbr.close()
-console.log(`\n결과: ${pass}/${pass + fail}${fail ? ' — 실패 ' + fail : ' 전건 통과'}`)
-process.exit(fail ? 1 : 0)
+done()

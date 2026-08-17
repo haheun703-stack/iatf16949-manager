@@ -21,6 +21,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { assertCopyPreflight } from './lib/e2e.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(HERE, '..')
@@ -131,6 +132,10 @@ if (!chrome) {
   console.error('Chrome 미발견 — --chrome <경로> 지정')
   process.exit(1)
 }
+
+// C′(8/17): 브라우저 기동 **전에** 복사본 게이트(2부 0단의 브라우저 내 게이트는 그대로 유지 —
+// 이중 방어). lib 실사용으로 게이트 계약을 하네스 전체와 일치시킨다.
+await assertCopyPreflight(BASE)
 
 const profile = mkdtempSync(join(tmpdir(), 'qms-bprime-'))
 const proc = spawn(chrome, [
