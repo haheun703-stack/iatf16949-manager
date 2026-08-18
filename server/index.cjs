@@ -12,6 +12,7 @@ const express = require('express')
 const Database = require('better-sqlite3')
 const path = require('path')
 const fs = require('fs')
+const crypto = require('crypto')
 const auth = require('./auth.cjs')
 
 // ── DB 연결 (env 로 데이터 루트 외부화 — 서버엔 userData 개념 없음) ──
@@ -282,8 +283,9 @@ function mkdirSafe(d) {
   }
 }
 function randToken() {
-  // Math.random 사용(파일 토큰용, 보안 토큰 아님). 시간+랜덤.
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+  // Minor 10(D군, 8/18): Math.random → crypto 난수. 토큰이 세션에 바인딩되지만(아래) 추측
+  // 자체도 막는 이중화 — 비용 0.
+  return crypto.randomBytes(16).toString('hex')
 }
 
 // ── 등록된 채널 목록(W2 스모크 리스트용) ──
@@ -521,6 +523,22 @@ app.post('/api/:channel', (req, res) => {
     }
   }
 
+  // M-6(D군, 8/18): 권한 원천(app_users) 변경 채널은 실행 전 role/active 스냅샷을 떠 둔다 —
+  // 성공 후 실변경 여부를 대조해 대상 사용자의 세션을 무효화(role 은 로그인 시점 스냅샷이라
+  // 변경이 기존 세션에 반영될 길이 없었다). 신설(before 없음)은 세션 자체가 없어 해당 없음.
+  let permBefore = null
+  if (ch === 'appUser:upsert') {
+    const b = req.body || {}
+    try {
+      permBefore =
+        b.id != null
+          ? db.prepare('SELECT id, role, active FROM app_users WHERE id = ?').get(b.id)
+          : db.prepare('SELECT id, role, active FROM app_users WHERE name = ?').get(String(b.name || '').trim())
+    } catch (e) {
+      permBefore = null
+    }
+  }
+
   // 저장 다이얼로그 채널 → 서버 temp 경로 주입(핸들러가 그 경로에 파일 생성)
   const ext = SAVE_DIALOG_CHANNELS[ch]
   let token = null
@@ -529,13 +547,35 @@ app.post('/api/:channel', (req, res) => {
     const raw = (req.body && (req.body.defaultName || req.body.fileName)) || `${ch.replace(/:/g, '_')}.${ext}`
     const name = String(raw).endsWith('.' + ext) ? String(raw) : `${raw}.${ext}`
     const filePath = path.join(EXPORT_DIR, `${token}.${ext}`)
-    downloadTokens.set(token, { filePath, name, createdAt: Date.now() })
+    // Minor 10(D군, 8/18): 토큰을 발급 세션(sid)에 바인딩 — 다른 로그인자의 선취(30분 창) 차단.
+    downloadTokens.set(token, { filePath, name, createdAt: Date.now(), sid: req.session && req.session.sid })
     setPendingSave(filePath)
   }
 
   ;(async () => {
     try {
       const result = await Promise.resolve(fn(null, req.body))
+
+      // M-6(D군): 성공한 권한 원천 변경 → 대상 사용자 세션 즉시 무효화.
+      // delete/resetPassword = 무조건(삭제·비번 교체는 그 자체가 변경), upsert = role/active 실변경 시만
+      // (이름·팀 등 무해 편집으로 남을 로그아웃시키지 않는다). 대상 = 본인이어도 동일 적용(정직 효력).
+      if (result && result.success === true) {
+        try {
+          if ((ch === 'appUser:delete' || ch === 'appUser:resetPassword') && req.body && req.body.id != null) {
+            const n = auth.invalidateUserSessions(Number(req.body.id))
+            if (n) console.log(`[m6] ${ch} → 세션 무효화 ${n}건 (user ${req.body.id})`)
+          } else if (ch === 'appUser:upsert' && permBefore) {
+            const after = db.prepare('SELECT role, active FROM app_users WHERE id = ?').get(permBefore.id)
+            if (after && (after.role !== permBefore.role || after.active !== permBefore.active)) {
+              const n = auth.invalidateUserSessions(Number(permBefore.id))
+              if (n) console.log(`[m6] appUser:upsert role/active 변경 → 세션 무효화 ${n}건 (user ${permBefore.id})`)
+            }
+          }
+        } catch (e) {
+          console.error('[m6] 세션 무효화 실패(응답은 정상 진행):', (e && e.message) || e)
+        }
+      }
+
       if (token) {
         setPendingSave(null)
         const info = downloadTokens.get(token)
@@ -562,6 +602,11 @@ app.post('/api/:channel', (req, res) => {
 app.get('/download/:token', (req, res) => {
   const info = downloadTokens.get(req.params.token)
   if (!info || !fs.existsSync(info.filePath)) return res.status(404).send('다운로드 만료 또는 없음')
+  // Minor 10(D군, 8/18): 발급 세션만 수령 가능 — 미들웨어가 로그인은 보장하지만 "누구의
+  // 토큰인가"는 여기서만 판정할 수 있다. sid 미기록 토큰(이론상 없음)은 fail-closed.
+  if (!info.sid || !req.session || req.session.sid !== info.sid) {
+    return res.status(403).send('다운로드 소유 세션이 아닙니다 — 내보내기를 다시 실행하세요.')
+  }
   res.download(info.filePath, info.name, (err) => {
     if (!err) {
       // 1회 전달 후 정리(temp 누적 방지)

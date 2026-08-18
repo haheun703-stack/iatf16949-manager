@@ -30,11 +30,12 @@ env 2종(`IATF_DATA_DIR`·`E2E_DB`)은 **필수**다. 없으면 게이트가 즉
 ⚠ **비표준 포트로 뜬 라이브는 포트만으로 판별할 수 없다.** 복사본 여부의 정본은 언제나
 `health.copy` (= `assertCopyServer` / `assertCopyPreflight`)다. `assertBaseNotLive` 는 값싼 1차 관문일 뿐이다.
 
-## 2. 활성 회귀 세트 (8종 · 153건)
+## 2. 활성 회귀 세트 (9종 · 170건)
 
 | 하네스 | 건수 | 축 |
 | --- | --- | --- |
 | `e2e-cr13a.mjs` | 20 | 8/13 처분 A군(C-1 승격 봉쇄·M-1 엑셀 가드·M-12 health 식별자) |
+| `e2e-dgroup.mjs` | 17 | D군 승격분(Minor 10 다운로드 토큰 세션 바인딩·M-6 권한 변경 세션 무효화) |
 | `e2e-cr13b.mjs` | 8 | 8/13 처분 B군(403 통지·정직 표기) |
 | `e2e-w4a.mjs` | 9 | W4 배치A(health 슬림·PROTECTED 3종·E2E봇 시드) |
 | `e2e-w4b.mjs` | 27 | W4 배치B(0142 매트릭스·SCREEN_GUARD·단가 하드락) |

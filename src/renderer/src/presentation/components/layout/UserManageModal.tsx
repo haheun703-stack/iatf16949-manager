@@ -191,7 +191,35 @@ function UserRow({
   onDelete: (id: number) => Promise<WriteResult>
 }): JSX.Element {
   const [name, setName] = useState(u.name)
+  // Minor 3(D군, 8/18): window.prompt 는 Electron 미지원 — 데스크톱에서 재설정 버튼이 무반응이었다.
+  // 행 아래 인라인 입력으로 교체(웹·데스크톱 동일 동작). 검증·통지 로직은 종전 그대로.
+  const [pwOpen, setPwOpen] = useState(false)
+  const [pwValue, setPwValue] = useState('')
   const av = avatarStyle(u)
+
+  const closePw = (): void => {
+    setPwOpen(false)
+    setPwValue('')
+  }
+  const resetPassword = (): void => {
+    const pw = pwValue.trim()
+    if (!/^\d{4}$/.test(pw)) {
+      window.alert('비밀번호는 4자리 숫자입니다(관리팀 대장 정책).')
+      return
+    }
+    void window.api
+      .invoke(window.api.channels.APP_USER_RESET_PASSWORD, { id: u.id, newPassword: pw })
+      .then((r) => {
+        window.alert(
+          r.success
+            ? `'${u.name}' 비밀번호가 재설정됐습니다 — 대장 갱신을 잊지 마세요.`
+            : `실패: ${r.error ?? '알 수 없는 오류'}`
+        )
+        if (r.success) closePw()
+      })
+      // M-10(8/13 검수): 403(권한)·401(세션) 이 무통지로 삼켜지던 자리 — 서버 안내문 표출
+      .catch((e) => window.alert(invokeErrText(e, '재설정 실패 — 통신 오류. 다시 시도해 주세요.')))
+  }
 
   // N-2 ③: 부서·역할·활성 3동선의 공용 통지 관문. 종전엔 결과를 아무도 안 봐서
   // 403 이 나도 화면이 되돌아가는 것 말고는 아무 말이 없었다.
@@ -202,6 +230,7 @@ function UserRow({
   }
 
   return (
+    <div>
     <div className={cn('flex items-center gap-1.5 rounded-lg px-2 py-1.5', !u.active && 'opacity-55')}>
       <span
         className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0"
@@ -270,25 +299,7 @@ function UserRow({
         <button
           type="button"
           disabled={!canEdit}
-          onClick={() => {
-            const pw = window.prompt(`'${u.name}' 새 비밀번호 (4자리 숫자)\n\n관리팀 비번 대장에 함께 기록하세요.`, '')
-            if (pw == null) return
-            if (!/^\d{4}$/.test(pw.trim())) {
-              window.alert('비밀번호는 4자리 숫자입니다(관리팀 대장 정책).')
-              return
-            }
-            void window.api
-              .invoke(window.api.channels.APP_USER_RESET_PASSWORD, { id: u.id, newPassword: pw.trim() })
-              .then((r) => {
-                window.alert(
-                  r.success
-                    ? `'${u.name}' 비밀번호가 재설정됐습니다 — 대장 갱신을 잊지 마세요.`
-                    : `실패: ${r.error ?? '알 수 없는 오류'}`
-                )
-              })
-              // M-10(8/13 검수): 403(권한)·401(세션) 이 무통지로 삼켜지던 자리 — 서버 안내문 표출
-              .catch((e) => window.alert(invokeErrText(e, '재설정 실패 — 통신 오류. 다시 시도해 주세요.')))
-          }}
+          onClick={() => (pwOpen ? closePw() : setPwOpen(true))}
           title={
             canEdit
               ? '비밀번호 재설정 — 4자리 숫자 지정(관리팀 비번 대장 정책)'
@@ -341,6 +352,43 @@ function UserRow({
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
+    </div>
+
+    {/* Minor 3: 비번 재설정 인라인 입력(행 하단) — window.prompt 대체 */}
+    {pwOpen && canEdit && (
+      <div className="mx-2 mb-1.5 flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5">
+        <KeyRound className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+        <span className="text-[11.5px] font-semibold text-amber-900 shrink-0">{u.name} 새 비밀번호</span>
+        <input
+          autoFocus
+          value={pwValue}
+          onChange={(e) => setPwValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') resetPassword()
+            if (e.key === 'Escape') closePw()
+          }}
+          inputMode="numeric"
+          maxLength={4}
+          placeholder="4자리 숫자"
+          className="w-24 bg-fillable text-[12px] px-2 py-1 rounded border border-border focus:border-primary/50 focus:outline-none"
+        />
+        <span className="text-[10.5px] text-amber-800/80 min-w-0 truncate">관리팀 비번 대장에 함께 기록</span>
+        <button
+          type="button"
+          onClick={resetPassword}
+          className="ml-auto shrink-0 text-[11.5px] font-semibold px-2 py-1 rounded-md bg-amber-600 text-white hover:bg-amber-700"
+        >
+          재설정
+        </button>
+        <button
+          type="button"
+          onClick={closePw}
+          className="shrink-0 text-[11.5px] px-2 py-1 rounded-md border border-border hover:bg-muted"
+        >
+          취소
+        </button>
+      </div>
+    )}
     </div>
   )
 }

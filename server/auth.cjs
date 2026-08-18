@@ -77,6 +77,20 @@ function sessionOf(req) {
   return { sid, ...s }
 }
 
+/** M-6(D군, 8/18): 대상 사용자의 활성 세션 전부 무효화 — role 은 로그인 시점 스냅샷이라(위 Map)
+ *  app_users 의 role/active/비번이 바뀌어도 기존 세션에 반영될 길이 없었다(B′ N-7 의 남은 절반).
+ *  호출처 = index.cjs 디스패처(appUser:upsert 의 role/active 실변경 · delete · resetPassword). */
+function invalidateUserSessions(userId) {
+  let n = 0
+  for (const [sid, s] of sessions) {
+    if (s.userId === userId) {
+      sessions.delete(sid)
+      n++
+    }
+  }
+  return n
+}
+
 /** 비밀번호 변경(로그인 상태) — must_change_pw 해제 */
 function changePassword(db, userId, newPassword) {
   if (!newPassword || newPassword.length < 4) return { error: '새 비밀번호는 4자 이상이어야 합니다.' }
@@ -98,6 +112,7 @@ module.exports = {
   login,
   logout,
   sessionOf,
+  invalidateUserSessions,
   changePassword,
   sessionCookie,
   clearCookie,
