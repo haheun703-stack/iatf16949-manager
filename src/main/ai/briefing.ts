@@ -4,6 +4,7 @@
 //  AI 는 그 사실을 자연어로 요약만 한다(추측·환각 없음, read-only).
 // ─────────────────────────────────────────────────────────────────────────────
 import { getSqlite } from '../database/connection'
+import { companyShort, getProfileValue } from '../database/company-profile'
 import { aiCall } from './gateway'
 import type Database from 'better-sqlite3'
 import { todayKST } from '@shared/date-kst'
@@ -103,7 +104,12 @@ export function computeBriefingFacts(db: Database.Database = getSqlite()): Brief
 
 /** AI 요약(사실을 받아 3~5줄 자연어 브리핑). 도구 없음 — 추측 금지. read-only. */
 export async function summarizeBriefing(facts: BriefingFacts): Promise<{ text: string; costUsd: number | null }> {
-  const system = `당신은 TPC AM사업부 품질팀의 비서입니다. 아래 JSON 사실만으로 오늘의 브리핑을 작성하세요.
+  // 39호 S1: 소속구 = company_profile(축약명·divisionLabel→factoryName 폴백). 공백이면 구절 생략.
+  const db = getSqlite()
+  const who = [companyShort(db), getProfileValue(db, 'divisionLabel') || getProfileValue(db, 'factoryName') || '']
+    .filter(Boolean)
+    .join(' ')
+  const system = `당신은 ${who ? who + ' ' : ''}품질팀의 비서입니다. 아래 JSON 사실만으로 오늘의 브리핑을 작성하세요.
 - 3~5줄, 한국어, 우선순위: 기한초과 > 마감임박 > 심사 D-day > SQ 증빙누락.
 - 사실에 있는 숫자/항목만 언급. 없는 것을 지어내지 마세요. 항목 0개면 "없음"으로.
 - 담백하게, 행동을 촉구하는 톤. 마크다운 과용 금지.`

@@ -7,6 +7,7 @@ import {
   detectEmptyFact as guardEmptyFact
 } from './submission-guards'
 import { getSqlite } from '../database/connection'
+import { companyShort, getProfileValue } from '../database/company-profile'
 import { nextFormSerial } from '../database/serial'
 import { generate as aiGenerate } from '../ai'
 import { exportSubmissionXlsx, type FormFieldLite } from '../docgen/form-export-engine'
@@ -37,17 +38,7 @@ function parseJsonSafe<T>(raw: string | null | undefined, fallback: T): T {
   }
 }
 
-function getProfileValue(db: ReturnType<typeof getSqlite>, key: string): string | null {
-  try {
-    const r = db.prepare('SELECT value FROM company_profile WHERE key = ?').get(key) as
-      | { value: string }
-      | undefined
-    return r?.value ?? null
-  } catch {
-    return null
-  }
-}
-
+// getProfileValue 는 database/company-profile.ts 로 이동(39호 S1 — 공용화)
 function rowToField(row: Record<string, unknown>): FormFieldDto {
   return {
     id: row.id as number,
@@ -704,10 +695,20 @@ export function registerFormHandlers(): void {
           }
         }
 
-        const systemPrompt = `당신은 한국 자동차부품 제조업체 TPC(AM사업부)의 IATF 16949 품질경영시스템 문서 작성을 돕는 어시스턴트입니다.
-- 회사: TPC, 2공장 AM사업부 (인발/가공/조립/검사/포장)
-- 주요 공정: 인발, 자동차용 방진고무 INNER/OUTER PIPE류, 필라넥, 워터파이프, 쇼바파이프
-- 톤: 공식 문서체, 간결, 정량적, IATF 16949 용어 사용
+        // 39호 S1: 회사 정체성 = company_profile. 값이 비면 구절/줄 생략(빈 괄호·빈 대시 금지).
+        const short = companyShort(db)
+        const division = getProfileValue(db, 'divisionLabel') || ''
+        const factory = getProfileValue(db, 'factoryName') || ''
+        const processes = getProfileValue(db, 'processes') || ''
+        const products = getProfileValue(db, 'products') || ''
+        const corpPhrase = short ? ` ${short}${division ? `(${division})` : ''}` : ''
+        const companyHead = [short, factory].filter(Boolean).join(', ')
+        const companyLines = [
+          companyHead ? `- 회사: ${companyHead}${processes ? ` (${processes})` : ''}` : '',
+          products ? `- 주요 공정: ${products}` : ''
+        ].filter(Boolean)
+        const systemPrompt = `당신은 한국 자동차부품 제조업체${corpPhrase}의 IATF 16949 품질경영시스템 문서 작성을 돕는 어시스턴트입니다.
+${companyLines.length > 0 ? companyLines.join('\n') + '\n' : ''}- 톤: 공식 문서체, 간결, 정량적, IATF 16949 용어 사용
 - 형식: 평문 한국어. 절대 마크다운(##, **, -) 사용 금지. 필요시 【】와 번호(1. 2.) 또는 줄바꿈만 사용.
 - 분량: 5~15줄 이내.
 - 추측 금지: 컨텍스트에 없는 숫자/날짜/이름은 절대 만들어내지 말고, [확인필요] 또는 일반 표현으로 대체.`

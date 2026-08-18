@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Layers, FileText, ChevronRight, Loader2, ImageOff, Files, X, PencilLine } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
+import { useCompanyProfile } from '../../hooks/useDday'
 import { FormCanvas } from '../form-builder/FormCanvas'
 import { ProcessDocEditor } from './ProcessDocEditor'
 import { ProcessCoverDocument } from './ProcessCoverDocument'
@@ -35,6 +36,7 @@ const SCOPE_STYLE: Record<FormScope, string> = {
  * 관련 양식을 클릭하면 우측에 양식 기본정보+필드 목록을 추가 표시.
  */
 export function BomProcessDetail({ code }: { code: string }): JSX.Element {
+  const profile = useCompanyProfile() // 표지 로고(39호 S1) — useDday 와 IPC 1회 공유
   const [detail, setDetail] = useState<ProcessDetailDto | null>(null)
   const [loading, setLoading] = useState(false)
   // 페이지별 이미지(전체 페이지를 세로로 쌓아 스크롤로 본다)
@@ -242,7 +244,12 @@ export function BomProcessDetail({ code }: { code: string }): JSX.Element {
             </div>
             {docInfo ? (
               <div className="rounded-lg border border-border overflow-hidden shadow-sm">
-                <ProcessCoverDocument doc={docInfo} page={`1/${detail.pages.length || 1}`} />
+                <ProcessCoverDocument
+                  doc={docInfo}
+                  page={`1/${detail.pages.length || 1}`}
+                  logoKo={profile?.companyNameShort || undefined}
+                  logoEn={profile?.companyNameEn || undefined}
+                />
               </div>
             ) : (
               <div className="rounded-lg border border-dashed border-border bg-muted/10 p-4 text-center text-xs text-muted-foreground leading-relaxed">

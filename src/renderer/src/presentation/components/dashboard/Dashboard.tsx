@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, AlertCircle, FileDown, ChevronDown, ChevronRight, Gauge } from 'lucide-react'
 import { useDashboardStore } from '../../stores/dashboardStore'
-import { useDday } from '../../hooks/useDday'
+import { useCompanyProfile, useDday } from '../../hooks/useDday'
 import { KpiStrip } from './KpiStrip'
 import { ScoreDistributionPanel } from './ScoreDistributionPanel'
 import { RecentScoresPanel } from './RecentScoresPanel'
@@ -31,6 +31,7 @@ export function Dashboard(): JSX.Element {
   const { load, loading, error, data } = useDashboardStore()
   const { readiness, teams, board } = useV3Data()
   const { dday, auditDate } = useDday()
+  const profile = useCompanyProfile()
   const [selectedCat, setSelectedCat] = useState<number | null>(null)
   const [aiOpen, setAiOpen] = useState(false)
   const [scoresOpen, setScoresOpen] = useState(false)
@@ -193,6 +194,7 @@ export function Dashboard(): JSX.Element {
     // 템플릿 A — 폭은 AppShell 공통 칼럼(1400px)이 정본. 내부 max-w 는 죽은 제약이라 제거(7/28 A군).
     <div className="space-y-3">
       <HeaderBand
+        divisionLabel={profile?.divisionLabel ?? ''}
         auditDateStr={auditDateStr}
         dday={dday}
         categories={readiness?.categories ?? []}

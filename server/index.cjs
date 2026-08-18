@@ -158,6 +158,20 @@ app.post('/api/auth:changePassword', (req, res) => {
   res.json(r)
 })
 
+// ── 브랜딩(무인증): 로그인 파티클 회사명 — 화면에 그려지는 값이라 비밀 아님(39호 S1). ──
+// health 슬림 계약(37호 ④ · M-12 · e2e-w4a 0단)은 불변 — 별도 라우트로 분리.
+// 인증 미들웨어보다 앞에 등록 → PUBLIC_PREFIX 무수정. 단일 필드만 노출(DB 상세 노출 금지 유지).
+app.get('/api/brand', (_req, res) => {
+  let companyName = ''
+  try {
+    const r = db.prepare("SELECT value FROM company_profile WHERE key = 'companyName'").get()
+    companyName = (r && r.value) || ''
+  } catch (e) {
+    /* company_profile 없으면 '' */
+  }
+  res.json({ companyName })
+})
+
 // ── 인증 미들웨어: 이 지점 이후의 /api/* 와 SPA(/) 는 세션 필수 ──
 // 권한(누가)은 아래 디스패처의 PROTECTED 로. 여기서는 "로그인 여부"만 본다.
 // 로그인 페이지·인증 라우트는 이 미들웨어보다 앞에 등록됨 → 여기 도달 안 함.

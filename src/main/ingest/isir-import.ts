@@ -6,6 +6,7 @@
 import { basename } from 'path'
 import ExcelJS from 'exceljs'
 import type Database from 'better-sqlite3'
+import { getProfileValue } from '../database/company-profile'
 import { parseIsirWorkbook } from './isir-parser'
 import { reindexKb } from '../ai/kb'
 import {
@@ -63,7 +64,8 @@ export async function importIsirFromFile(
   else if (presentCount === 0) warnings.push('표지 보유표시 0 (present 컬럼 상이)')
 
   const customer = inferCustomer(filePath, p.recipient)
-  const plant = '2공장' // 앱 범위(2공장 AM사업부). 향후 추정/편집 대상.
+  // 플랜트 귀속 = company_profile.plant(39호 S1 — 하드코딩 제거). 미설정 시 NULL → COALESCE 가 기존값 유지.
+  const plant = getProfileValue(db, 'plant')
   const revCode = nz(p.revCode)
 
   let replaced = false

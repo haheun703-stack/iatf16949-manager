@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
+import { buildCompanyContext } from '../database/company-profile'
 import { generate as aiGenerate } from '../ai'
 import type {
   FormGuideDto,
@@ -82,8 +83,8 @@ function verdictOf(score: number): string {
   return '부적합'
 }
 
-const COMPANY_CONTEXT = `회사: TPC 2공장 AM사업부 (인발/가공/조립/검사/포장)
-주요 공정/제품: 인발, 자동차용 방진고무 INNER/OUTER PIPE류, 필라넥, 워터파이프, 쇼바파이프`
+// 39호 S1: 회사 컨텍스트 = company_profile 유래(buildCompanyContext, per-call).
+// 값이 비면 '' — 프롬프트 삽입부에서 줄 자체를 생략한다.
 
 interface FormRow {
   code: string
@@ -156,9 +157,9 @@ export function registerScoringHandlers(): void {
         if (!ctx) return { success: false, error: `양식 ${formCode}을 찾을 수 없습니다.` }
         const { form, fields, regulationText } = ctx
 
+        const companyCtx = buildCompanyContext(db)
         const systemPrompt = `당신은 IATF 16949 인증 컨설턴트입니다. 한국 자동차부품 제조업체의 품질담당자가 특정 양식을 처음 작성할 때, 무엇을 왜 써야 심사를 통과하는지 실무 가이드를 제공합니다.
-${COMPANY_CONTEXT}
-반드시 아래 JSON 형식 하나만 출력하세요. 설명/마크다운/코드펜스 금지.
+${companyCtx ? companyCtx + '\n' : ''}반드시 아래 JSON 형식 하나만 출력하세요. 설명/마크다운/코드펜스 금지.
 {
   "purpose": "이 양식의 목적 1~2문장",
   "mustInclude": ["반드시 포함할 항목", "..."],
@@ -249,9 +250,9 @@ ${regulationText || '(원문 미등록 — IATF 16949 일반 요구사항 기준
           else filledLines.push(`- ${f.label}: ${str}`)
         }
 
+        const companyCtx = buildCompanyContext(db)
         const systemPrompt = `당신은 IATF 16949 인증 심사원입니다. 제출된 품질문서(양식)를 관련 규정과 IATF 16949 요구사항에 비추어 엄격하고 공정하게 채점합니다.
-${COMPANY_CONTEXT}
-채점 원칙:
+${companyCtx ? companyCtx + '\n' : ''}채점 원칙:
 - 규정 원문이 제공되면 그 요구사항 충족 여부를 우선 평가. 없으면 IATF 16949 일반 요구사항 기준.
 - 정량적 근거(수치/주기/책임자/기록)가 있는지, 추적성·객관적 증거가 있는지 확인.
 - 빈 칸/모호한 표현/추측성 기술은 감점.

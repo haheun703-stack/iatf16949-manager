@@ -4,7 +4,19 @@ import type { ProcessDocDto } from '@shared/ipc-types'
  * 구조화 데이터(ProcessDocDto)를 공식 문서 표지 양식처럼 렌더한다.
  * (캡쳐 이미지 대신 데이터로 그리는 "문서 모드")
  */
-export function ProcessCoverDocument({ doc, page }: { doc: ProcessDocDto; page?: string }): JSX.Element {
+export function ProcessCoverDocument({
+  doc,
+  page,
+  logoKo,
+  logoEn
+}: {
+  doc: ProcessDocDto
+  page?: string
+  /** 표지 로고 한글 표기(company_profile.companyNameShort, 39호 S1). 공백이면 셀 비움. */
+  logoKo?: string
+  /** 표지 로고 영문 표기(company_profile.companyNameEn). 공백이면 셀 비움. */
+  logoEn?: string
+}): JSX.Element {
   const cell = 'border border-zinc-700 px-2 py-1 align-middle'
   const lbl = `${cell} bg-zinc-200 text-center font-bold`
 
@@ -15,8 +27,12 @@ export function ProcessCoverDocument({ doc, page }: { doc: ProcessDocDto; page?:
         <tbody>
           <tr>
             <td className={`${cell} w-[110px] text-center`} rowSpan={4}>
-              <div className="text-2xl font-black text-blue-700 leading-none tracking-widest">티피씨</div>
-              <div className="text-[10px] font-bold text-blue-700 tracking-[3px] mt-0.5">TPC</div>
+              {logoKo ? (
+                <div className="text-2xl font-black text-blue-700 leading-none tracking-widest">{logoKo}</div>
+              ) : null}
+              {logoEn ? (
+                <div className="text-[10px] font-bold text-blue-700 tracking-[3px] mt-0.5">{logoEn}</div>
+              ) : null}
             </td>
             <td className={`${cell} text-center`} rowSpan={4}>
               <div className="text-xl font-black tracking-[6px]">품질경영 시스템</div>

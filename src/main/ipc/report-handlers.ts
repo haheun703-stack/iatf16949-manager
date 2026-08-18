@@ -2,6 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import ExcelJS from 'exceljs'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getSqlite } from '../database/connection'
+import { companyShort, getProfileValue } from '../database/company-profile'
 import type { ReportExportResult, FormScoreResultDto, FormScoreGapDto } from '@shared/ipc-types'
 
 function pad(n: number): string {
@@ -68,10 +69,15 @@ export function registerReportHandlers(): void {
         views: [{ state: 'frozen', ySplit: 4 }]
       })
 
-      // Title
+      // Title — 회사 접미부 = company_profile(39호 S1). 값이 비면 접미부 생략(빈 대시 금지).
       ws.mergeCells('A1:H1')
       const titleCell = ws.getCell('A1')
-      titleCell.value = 'IATF 16949 AI 채점 리포트 — TPC AM사업부'
+      const titleSuffix = [companyShort(db), getProfileValue(db, 'divisionLabel') || getProfileValue(db, 'factoryName') || '']
+        .filter(Boolean)
+        .join(' ')
+      titleCell.value = titleSuffix
+        ? `IATF 16949 AI 채점 리포트 — ${titleSuffix}`
+        : 'IATF 16949 AI 채점 리포트'
       titleCell.font = { bold: true, size: 15 }
       titleCell.alignment = { vertical: 'middle' }
       ws.getRow(1).height = 24

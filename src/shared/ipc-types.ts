@@ -18,6 +18,19 @@ export interface CompanyProfile {
   mastersDir: string
   /** 정기 인증심사일(YYYY-MM-DD). D-day 배지·브리핑의 기준. Sidebar 에서 설정. */
   auditDate: string
+  // ── 39호 S1 신규 6키 — 회사 정체성 외부화(TPC 예시값은 0144 [TPC팩 후보] 참조). 공백 허용(구절 생략). ──
+  /** 회사 영문 약칭(예: TPC) — 문서 표지 로고·리포트 제목·AI 프롬프트. */
+  companyNameEn: string
+  /** 회사 한글 약칭(예: 티피씨) — 문서 표지 로고. */
+  companyNameShort: string
+  /** 사업부 표시 라벨(예: AM사업부) — 대시보드 헤더·리포트 제목·브리핑. */
+  divisionLabel: string
+  /** 공정 요약(예: 인발/가공/조립/검사/포장) — AI 프롬프트 회사 컨텍스트. */
+  processes: string
+  /** 주요 공정/제품 목록 — AI 프롬프트 회사 컨텍스트. */
+  products: string
+  /** 공장/플랜트 식별(예: 2공장) — ISIR 수입 시 parts.plant 귀속. */
+  plant: string
 }
 
 /** 제품(앱) 정보 — 제품 정보 화면(버전·제조사)용. main 에서 app.getVersion 등으로 수집. (UI P3) */

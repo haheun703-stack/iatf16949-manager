@@ -142,14 +142,23 @@ function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {
   }
 
   // ⚠️실명·실주소·실전화는 시드에 넣지 않는다(설치판 번들에 실림) — 설치 후 프로필에서 입력.
+  // ⚠️회사 식별 문자열(회사명·사업부·공정·제품)도 시드 금지(39호 S1) — TPC 값은
+  //   0144_company_profile_tpc_values.sql([TPC팩 후보])이 공급. 마이그가 시드보다 먼저 돌므로
+  //   라이브/현행 설치는 0144 값이 선점되고, S2 이후 판매판은 이 중립값으로 수렴한다.
   // 기존 설치본은 INSERT OR IGNORE 라 이미 저장된 값이 유지됨.
   const profileDefaults: Record<string, string> = {
-    companyName: '주식회사 티피씨',
+    companyName: '',
     ceoName: '',
     address: '',
     phone: '',
     fax: '',
-    factoryName: '2공장 AM사업부',
+    factoryName: '',
+    companyNameEn: '',
+    companyNameShort: '',
+    divisionLabel: '',
+    processes: '',
+    products: '',
+    plant: '',
     revisionNumber: 'REV.8',
     revisionDate: new Date().toISOString().split('T')[0],
     // 양식 작성자 기본값 = 빈값. 작성자는 활성 사용자(§4)로 자동채움하고, 미선택 시 빈칸 유지.

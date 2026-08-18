@@ -77,9 +77,12 @@ export function registerAllIpcHandlers(): void {
 
   // ──── Company Profile Handlers ────
 
+  // ⚠ 39호 S1: 새 프로파일 키는 반드시 ①이 목록 ②아래 GET 의 map.get ③CompanyProfile DTO
+  //   3곳에 동시 등재할 것 — 하나라도 빠지면 SAVE(전체 객체 라운드트립)가 그 키를 '' 로 와이프한다.
   const PROFILE_KEYS: (keyof CompanyProfile)[] = [
     'companyName', 'ceoName', 'address', 'phone', 'fax',
-    'factoryName', 'revisionNumber', 'revisionDate', 'defaultAuthor', 'mastersDir', 'auditDate'
+    'factoryName', 'revisionNumber', 'revisionDate', 'defaultAuthor', 'mastersDir', 'auditDate',
+    'companyNameEn', 'companyNameShort', 'divisionLabel', 'processes', 'products', 'plant'
   ]
 
   // ──── 제품(앱) 정보 — 버전·런타임 (UI P3 제품 정보 화면) ────
@@ -112,7 +115,13 @@ export function registerAllIpcHandlers(): void {
       revisionDate: map.get('revisionDate') || '',
       defaultAuthor: map.get('defaultAuthor') || '',
       mastersDir: map.get('mastersDir') || '',
-      auditDate: map.get('auditDate') || ''
+      auditDate: map.get('auditDate') || '',
+      companyNameEn: map.get('companyNameEn') || '',
+      companyNameShort: map.get('companyNameShort') || '',
+      divisionLabel: map.get('divisionLabel') || '',
+      processes: map.get('processes') || '',
+      products: map.get('products') || '',
+      plant: map.get('plant') || ''
     }
     return profile
   })

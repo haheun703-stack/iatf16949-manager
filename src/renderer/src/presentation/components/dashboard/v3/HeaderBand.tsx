@@ -5,12 +5,15 @@ import type { SqReadinessCategory } from '@shared/ipc-types'
 
 /** 헤더 밴드 — 타이틀 + 심사 D-day + SQ 카테고리 슬라이서 */
 export function HeaderBand({
+  divisionLabel,
   auditDateStr,
   dday,
   categories,
   selectedCat,
   onSelectCat
 }: {
+  /** 사업부 표시 라벨(company_profile.divisionLabel, 39호 S1). 공백이면 접두 생략. */
+  divisionLabel: string
   auditDateStr: string
   dday: number
   categories: SqReadinessCategory[]
@@ -33,7 +36,8 @@ export function HeaderBand({
           IATF 16949 심사 준비 대시보드
         </h1>
         <div className="text-[13px] text-white/70 mt-0.5">
-          AM사업부 · 기준일 {todayStr} · 정기 인증심사 {auditDateStr} ({dday >= 0 ? 'D-' : 'D+'}
+          {divisionLabel ? `${divisionLabel} · ` : ''}기준일 {todayStr} · 정기 인증심사 {auditDateStr} (
+          {dday >= 0 ? 'D-' : 'D+'}
           {Math.abs(dday)})
         </div>
       </div>

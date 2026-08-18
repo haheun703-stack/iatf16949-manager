@@ -9,7 +9,9 @@
       · 점들이 화면 전체를 드리프트 — 클릭 시 회사명으로 모임 / 재클릭 시 흩어짐 (자동 모임 없음)
       · 색 = 파스텔 블루 주조 + 흰 + 연핑크 + 라벤더 (COLORS 가중치 v3 그대로, 원색·자홍 금지)
       · 저사양 = 파티클 수 자동 축소(면적·DPR 기준) · prefers-reduced-motion = 정적 배경
-      · 제품명 = 데일리Q (판매 제품명, 사장님 결정 7/26). 회사명 문자열은 TPC팩 치환 포인트.
+      · 제품명 = 데일리Q (판매 제품명, 사장님 결정 7/26).
+      · 회사명 = DB(company_profile.companyName) 유래 — GET /api/brand (39호 S1, 하드코딩 제거).
+        미설정/실패 시 제품명 '데일리Q' 폴백.
     -->
     <style>
       html, body { margin: 0; height: 100%; overflow: hidden; }
@@ -91,7 +93,9 @@
       })
 
       // ── 파티클 배경 (v3 정본 이식) ────────────────────────
-      const COMPANY = '주식회사 티피씨' // TPC팩 치환 포인트(고객사별 회사명)
+      // 회사명 = /api/brand(company_profile) 유래(39호 S1). 도착 전엔 타깃 0개 = 클릭 무동작(수 ms 창).
+      // 미설정/실패 폴백 = 제품명 '데일리Q'(중립) — 시각 데모는 항상 성립.
+      let COMPANY = ''
       const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
       const cv = document.getElementById('cv')
       if (reduced) {
@@ -138,6 +142,7 @@
             })
         }
         function assign() {
+          if (targets.length === 0) return // 회사명 미도착(fetch 전) — 클릭 무동작
           const sh = [...targets].sort(() => Math.random() - 0.5)
           pts.forEach((p, i) => {
             const t = sh[i % sh.length]
@@ -172,6 +177,11 @@
         })
         addEventListener('resize', () => { resize(); })
         resize(); init(); tick()
+        // 회사명 로드(무인증 /api/brand) — 도착 후 타깃 재생성. 실패/공백 = '데일리Q' 폴백.
+        fetch('/api/brand')
+          .then((r) => r.json())
+          .then((j) => { COMPANY = ((j && j.companyName) || '').trim() || '데일리Q'; makeTargets() })
+          .catch(() => { COMPANY = '데일리Q'; makeTargets() })
       }
     </script>
   </body>
