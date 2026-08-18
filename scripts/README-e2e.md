@@ -64,7 +64,21 @@ env 2종(`IATF_DATA_DIR`·`E2E_DB`)은 **필수**다. 없으면 게이트가 즉
 ⚠ 검수 보고서(8/14)의 "구세대 9종"은 **실측 7종**이다 — 명단에 있던 `w2-smoke`·`w2-screens` 는
 현존하지 않는다(자기정정, C′ 검수요청 §자기정정 참조).
 
-## 5. 기타 검증 스크립트
+## 5. 판매판 회귀 (의도적 RED — S2/S3 완료가 GREEN 조건)
+
+| 하네스 | 건수 | 축 |
+| --- | --- | --- |
+| `e2e-clean-install.mjs` | 8 | 클린 설치 재현(마이그 전수+시드) · TPC 계열 7종/실명 5인 0건 · 회사명 플로우스루 |
+
+- **"지금 판매 가능한가"의 상시 지표**(39호 S4, 도장 8/18). §2 활성 세트(153건 GREEN)와
+  분리 운영 — **RED 가 정상인 유일한 하네스**. ⑥⑦ 이 GREEN 이 되는 날 = 판매판 성립
+  (S2 [TPC팩 후보] 태그 스킵 + S3 표준팩 이후).
+- 베이스라인(8/18 첫 실행): **TPC 계열 478행 · 실명 124행** (지표 = 패턴×테이블 매치 행수 합).
+- 라이브 무접촉: `%TEMP%` mkdtemp 전용 · DB 경로를 env/argv 에서 받지 않음 —
+  §0 의 `IATF_DATA_DIR`/`E2E_DB` **불필요**, §1 게이트 비경유(서버 비접촉·로그인 없음).
+- 실행: `ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\e2e-clean-install.mjs`
+
+## 6. 기타 검증 스크립트
 
 - `smoke-grid-export.cjs` — grid 8종 스모크. **C′**: `IATF_DATA_DIR` 없을 때 라이브 DB 를 열던
   폴백 제거(.cjs 라 lib(ESM) 미사용 — 같은 계약을 인라인으로 둠).

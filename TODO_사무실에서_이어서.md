@@ -1,4 +1,31 @@
-# TODO — 이어서 작업 (갱신: 2026-08-17 밤 · **★M-9 봉합 + C′ 보강 완료 — 다음 = 38호 도장 5건**)
+# TODO — 이어서 작업 (갱신: 2026-08-18 · **★39호 S1+S4 완결 — 다음 = 코워크 검수 → D군 승격분**)
+
+## ▶▶▶ 8/18 — 39호 도장 접수 + M-9 종결 + S1·S4 완결
+
+- **39호 도장 확정 접수**(`dailyq-39호도장+M9종결_코워크_260818.md`, 커밋 `75a6e13`):
+  ①②③ 일괄 승인 · **⑤ = S1+S4 먼저, 이후 병행**(D군은 그 뒤 재개, S2·S3 별도 창) ·
+  ④ 표준팩 내용 = 별도 협의 유지(봇이 후보 목록 초안 상신 → 사장님 협의).
+- **M-9 종결** — 사장님 30초 육안 확인 **정상**(8/18 아침), 완료보고 §4 기입.
+- **★S1 완결(회사 프로파일 외부화)** — 하드코딩 10곳 전부 `company_profile` 배선:
+  - 신규 공용 모듈 `src/main/database/company-profile.ts`(getProfileValue 승격 + buildCompanyContext).
+  - 신규 키 6종(companyNameEn·companyNameShort·divisionLabel·processes·products·plant) —
+    **DTO+PROFILE_KEYS+GET 3점 동시 등재**(하나라도 빠지면 SAVE 가 '' 와이프 — register.ts 주석 명문화).
+  - TPC 값 = **0144**(`[TPC팩 후보]` 데이터 전용·ON CONFLICT DO NOTHING) · 시드는 중립화.
+  - 렌더러 = useDday 캐시를 CompanyProfile 전체로 확장 + `useCompanyProfile()`(IPC 1회 공유).
+  - 로그인 파티클 = 신규 무인증 `GET /api/brand`(health 슬림 계약 불변) + '데일리Q' 폴백.
+  - 실측: typecheck·build:server·build 통과 · **/api/brand = 주식회사 티피씨** ·
+    **SAVE 라운드트립 17키 전량 보존** · e2e 표적 3종(w4a 9 + w4b 27 + cr13a 20) **56/56**.
+- **★S4 완결(판매판 게이트)** — `scripts/e2e-clean-install.mjs`(8단언·라이브 무접촉 mkdtemp 전용).
+  첫 실행 = **의도적 RED: TPC 계열 478행 · 실명 124행**(= "지금 판매 가능한가" 베이스라인,
+  코워크 권고대로 TPC 7종+실명 5인 명시). README-e2e **§5 판매판 회귀** 신설. GREEN 조건 = S2+S3.
+- **범위外 플래그(S2/S3 대상 — S1 에서 건드리지 않음)**: `ipc-types.ts` FormScope 5사업부 union(구조적) ·
+  `BomProcessDetail` SCOPE_COLORS · `process-handlers.ts:37,49`(TPC-CP-03·정밀인발튜브사업부 프롬프트 예시) ·
+  '2026-12-31' 폴백 중복(useDday·briefing) · seed `revisionNumber:'REV.8'` · `docNoPrefix` 키 보류(소비처 없음).
+- ⚠**라이브 반영은 오늘 안 함** — 검수 후 별도 도장(0144 는 다음 라이브 재기동 시 자동 적용).
+- ▶ **다음 = 코워크 검수**(`dailyq-S1S4_검수요청_260818.md`) → 합격 시 **D군 승격분**(Minor 11→10→3→M-6) → PC-2.
+  S2(마이그 태깅+설치 분기)·S3(표준팩 = ④ 협의 선행)은 별도 창.
+
+# (이전) TODO — 이어서 작업 (갱신: 2026-08-17 밤 · **★M-9 봉합 + C′ 보강 완료 — 다음 = 38호 도장 5건**)
 
 ## ▶▶▶ 8/17 밤 — M-9 즉시 착수분 완료 + C′ 조건부 합격 보강
 
