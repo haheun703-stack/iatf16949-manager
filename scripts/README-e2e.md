@@ -65,19 +65,24 @@ env 2종(`IATF_DATA_DIR`·`E2E_DB`)은 **필수**다. 없으면 게이트가 즉
 ⚠ 검수 보고서(8/14)의 "구세대 9종"은 **실측 7종**이다 — 명단에 있던 `w2-smoke`·`w2-screens` 는
 현존하지 않는다(자기정정, C′ 검수요청 §자기정정 참조).
 
-## 5. 판매판 회귀 (의도적 RED — S2/S3 완료가 GREEN 조건)
+## 5. 판매판 회귀 (S2 개정 8/19 — ⑩만 의도적 RED, S3 완료가 GREEN 조건)
 
 | 하네스 | 건수 | 축 |
 | --- | --- | --- |
-| `e2e-clean-install.mjs` | 8 | 클린 설치 재현(마이그 전수+시드) · TPC 계열 7종/실명 5인 0건 · 회사명 플로우스루 |
+| `e2e-clean-install.mjs` | 10 | **A 레거시 경로**(마이그 전 체인 — 관찰) + **B 판매 경로**(러너 정본 `server/migrate-core.cjs` 클린 설치 = 스키마 스냅샷+팩) · 러너 감사·FK·시드 파리티·팩별 시드·프로파일 16키·TPC 7종/실명 5인 0건·플로우스루·**A↔B 스키마 동치**·**표준팩 최소 내용** |
+| `gen-core-schema.mjs --check` | 1 | `resources/core/schema.sql` 드리프트 0(스냅샷 지점 0144 재생성 결과와 바이트 동일) |
 
-- **"지금 판매 가능한가"의 상시 지표**(39호 S4, 도장 8/18). §2 활성 세트(153건 GREEN)와
-  분리 운영 — **RED 가 정상인 유일한 하네스**. ⑥⑦ 이 GREEN 이 되는 날 = 판매판 성립
-  (S2 [TPC팩 후보] 태그 스킵 + S3 표준팩 이후).
-- 베이스라인(8/18 첫 실행): **TPC 계열 478행 · 실명 124행** (지표 = 패턴×테이블 매치 행수 합).
+- **"지금 판매 가능한가"의 상시 지표**(39호 S4 → 41호 M1). §2 활성 세트와 분리 운영.
+  **8/19 S2 결과 = 9/10** — ⑥⑦(TPC·실명) GREEN, ⑩(표준팩 최소 내용: sq_items≥42·pack_forms>0·kpi>0·의무>0) 만
+  RED = 빈 표준팩. ⑩ 이 GREEN 이 되는 날(S3, 8/27 목표) = 판매판 성립. "판매 가능 여부" 줄은 ⑥⑦⑩ 합산.
+- 클린 설치 경로(S2): 빈 DB → `resources/core/schema.sql`(스냅샷, 데이터 0) + `core/bootstrap.sql`(프로파일 빈 키 16)
+  → snapshot 이하 마이그 143개는 `_migrations.status='snapshot'` 기록 → 초과분(0145~) 은 `packs.json` kind 로
+  적용/스킵 → `resources/packs/<pack>/*.sql`. 웹 서버는 `IATF_INIT_DB=1`(+`IATF_INSTALL_PACKS=standard`) 로만 진입.
+- 관찰치(A 경로): TPC 계열 **478행 · 실명 121행**(8/18 베이스라인 124 는 persons.json 시드 3행 포함분 — A 는 마이그만).
 - 라이브 무접촉: `%TEMP%` mkdtemp 전용 · DB 경로를 env/argv 에서 받지 않음 —
   §0 의 `IATF_DATA_DIR`/`E2E_DB` **불필요**, §1 게이트 비경유(서버 비접촉·로그인 없음).
 - 실행: `ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\e2e-clean-install.mjs`
+- 스냅샷 지점을 옮길 때만 `scripts\gen-core-schema.mjs`(무인자) 로 재생성 — 그 외엔 `--check` 만.
 
 ## 6. 기타 검증 스크립트
 

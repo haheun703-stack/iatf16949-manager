@@ -18,55 +18,51 @@ const auth = require('./auth.cjs')
 // ── DB 연결 (env 로 데이터 루트 외부화 — 서버엔 userData 개념 없음) ──
 const DATA_DIR = process.env.IATF_DATA_DIR || path.join(process.env.APPDATA || '', 'iatf16949-manager')
 const DB_PATH = path.join(DATA_DIR, 'iatf16949.db')
+// 39호 S2(8/19): 클린 설치 = 명시 옵트인(IATF_INIT_DB=1)일 때만 빈 DB 를 만들고 스키마 스냅샷+팩으로 초기화.
+// 옵트인 없이 DB 가 없으면 종전대로 즉시 종료 — IATF_DATA_DIR 오타로 라이브 옆에 빈 DB 가 생기는 사고 방지.
+const INIT_DB = process.env.IATF_INIT_DB === '1'
 if (!fs.existsSync(DB_PATH)) {
-  console.error(`[server] DB 없음: ${DB_PATH} — IATF_DATA_DIR 로 지정하세요.`)
-  process.exit(1)
+  if (!INIT_DB) {
+    console.error(`[server] DB 없음: ${DB_PATH} — IATF_DATA_DIR 로 지정하세요. (신규 설치는 IATF_INIT_DB=1 명시)`)
+    process.exit(1)
+  }
+  fs.mkdirSync(DATA_DIR, { recursive: true })
+  console.log(`[server] 신규 설치: ${DB_PATH} 생성(IATF_INIT_DB=1)`)
 }
-// health/조회용 읽기 연결(별도) + 인증용 R/W 연결(auth 는 password_hash UPDATE 필요).
-const db = new Database(DB_PATH, { readonly: true, fileMustExist: true })
-db.pragma('busy_timeout = 4000')
-const authDb = new Database(DB_PATH, { fileMustExist: true })
+// 인증용 R/W 연결(auth 는 password_hash UPDATE 필요) — 마이그레이션 주체. 읽기 연결은 마이그 뒤에 연다.
+const authDb = new Database(DB_PATH)
 authDb.pragma('busy_timeout = 4000')
 authDb.pragma('journal_mode = WAL')
 
 // ── 서버 기동 시 pending 마이그 적용(설치판/dev 와 동일 체인) ──
-// 서버가 라이브 DB 를 직접 여므로, 로그인 컬럼(0100) 등 최신 마이그를 여기서 정식 적용한다.
+// 러너 정본 = server/migrate-core.cjs (39호 S2): 레거시 DB 는 종전과 같은 번호순 적용,
+// 빈 DB(IATF_INIT_DB=1)는 resources/core/schema.sql 스냅샷 + resources/packs/<pack>/ 로 클린 설치.
+// 설치 팩 = IATF_INSTALL_PACKS(csv, 클린 설치 시) → app_config install.packs → 레거시 기본 standard,tpc.
 // _migrations 에 기록하므로 설치판이 나중에 같은 마이그를 봐도 스킵 = 충돌 없음(마이그 체인 보존).
-// W4 에서 일렉트론 은퇴 후에는 서버가 마이그의 유일 주체가 된다.
-function runServerMigrations(database) {
-  database.exec(
-    "CREATE TABLE IF NOT EXISTS _migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, applied_at TEXT DEFAULT (datetime('now')))"
-  )
-  const migDir = path.join(__dirname, '..', 'resources', 'migrations')
-  if (!fs.existsSync(migDir)) return
-  const files = fs.readdirSync(migDir).filter((f) => f.endsWith('.sql')).sort()
-  const has = database.prepare('SELECT 1 FROM _migrations WHERE name = ?')
-  const ins = database.prepare('INSERT INTO _migrations (name) VALUES (?)')
-  let applied = 0
-  for (const f of files) {
-    if (has.get(f)) continue
-    const sqlText = fs.readFileSync(path.join(migDir, f), 'utf-8')
-    const tx = database.transaction(() => {
-      database.exec(sqlText)
-      ins.run(f)
-    })
-    tx()
-    applied++
-    console.log(`[server] migration applied: ${f}`)
-  }
-  if (applied === 0) console.log('[server] migrations up-to-date')
-}
+const migrateCore = require('./migrate-core.cjs')
+const RESOURCES_DIR = path.join(__dirname, '..', 'resources')
 // M-7(8/13 전수 검수 — 조용한 fail-open 차단): 마이그 적용 실패 = 기동 중단.
 // 종전엔 "계속 진행"이라 0142 실패 시 screenRuleOf 의 catch 가 "규칙 없음 = 허용"으로
 // 해석해 권한 매트릭스가 통째로 꺼진 채 조용히 서빙됐다. 런처 bat 이 [FAIL]+로그 꼬리를
 // 남기므로(8/13 보강) 중단이 곧 발견이다 — 가짜 가동보다 정직한 정지.
 try {
-  runServerMigrations(authDb)
+  const r = migrateCore.runAll(authDb, {
+    resourcesDir: RESOURCES_DIR,
+    allowClean: INIT_DB,
+    packs: migrateCore.parsePacksEnv(process.env.IATF_INSTALL_PACKS),
+    log: (m) => console.log(m.replace('[migrate]', '[server]'))
+  })
+  if (r.applied.length === 0 && r.mode === 'legacy') console.log('[server] migrations up-to-date')
+  console.log(`[server] install.packs=${r.packs.join(',')} (${r.mode})`)
 } catch (e) {
   console.error('[server] 마이그 적용 실패 — 기동 중단(M-7 fail-open 금지):', (e && e.message) || e)
   console.error('[server] DB 와 resources/migrations 상태를 확인한 뒤 다시 기동하세요.')
   process.exit(1)
 }
+// health/조회용 읽기 연결(별도) — 마이그 완료 뒤 개방
+const db = new Database(DB_PATH, { readonly: true, fileMustExist: true })
+db.pragma('busy_timeout = 4000')
+
 // M-7 부팅 후 검증: 권한 매트릭스 테이블(0142)이 실재해야 기동 — 마이그 체인이 어긋난
 // DB(수동 복원본 등)로 뜨면 매트릭스 없는 서버가 정상인 척 서빙되는 것을 막는다.
 {

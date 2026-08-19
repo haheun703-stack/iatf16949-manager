@@ -1,5 +1,5 @@
 import { getSqlite } from './connection'
-import { readFileSync, readdirSync, existsSync, mkdirSync, unlinkSync, statSync } from 'fs'
+import { readdirSync, existsSync, mkdirSync, unlinkSync, statSync } from 'fs'
 import { join } from 'path'
 import { app } from 'electron'
 import type Database from 'better-sqlite3'
@@ -52,64 +52,53 @@ function snapshotBeforeMigrations(db: Database.Database, firstPending: string): 
   }
 }
 
+// 러너 정본 = server/migrate-core.cjs (39호 S2, 8/19) — 서버·일렉트론·클린설치 하네스가 같은 코드로 돈다.
+// 경로: dev = repo/server/migrate-core.cjs · 패키지 = process.resourcesPath/migrate-core.cjs(electron-builder extraResources).
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const migrateCore = require(
+  !app.isPackaged ? join(__dirname, '../../server/migrate-core.cjs') : join(process.resourcesPath, 'migrate-core.cjs')
+) as {
+  runAll: (db: Database.Database, opts: Record<string, unknown>) => { mode: string; packs: string[]; applied: string[]; skipped: string[] }
+  hasPending: (db: Database.Database, resourcesDir: string) => boolean
+  parsePacksEnv: (v: string | undefined) => string[] | null
+  listMigrationFiles: (dir: string) => string[]
+  ensureMigrationsTable: (db: Database.Database) => void
+}
+
+export function resourcesDir(): string {
+  return !app.isPackaged ? join(__dirname, '../../resources') : process.resourcesPath
+}
+
 export function runMigrations(): void {
   const db = getSqlite()
-
-  // Create migrations tracking table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS _migrations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE,
-      applied_at TEXT DEFAULT (datetime('now'))
-    )
-  `)
-
-  // Resolve migrations directory
-  const migrationsDir = !app.isPackaged
-    ? join(__dirname, '../../resources/migrations')
-    : join(process.resourcesPath, 'migrations')
-
+  const resDir = resourcesDir()
+  const migrationsDir = join(resDir, 'migrations')
   if (!existsSync(migrationsDir)) {
     console.warn('Migrations directory not found:', migrationsDir)
     return
   }
-
-  const files = readdirSync(migrationsDir)
-    .filter((f) => f.endsWith('.sql'))
-    .sort()
-
   console.log(`[migrate] dir=${migrationsDir}`)
-  console.log(`[migrate] files=${files.join(', ')}`)
 
-  const checkStmt = db.prepare('SELECT id FROM _migrations WHERE name = ?')
-  const insertStmt = db.prepare('INSERT INTO _migrations (name) VALUES (?)')
+  // 적용 대기분이 있을 때만 스냅샷(매 기동마다 찍지 않음) — 신규 설치(이력 0)는 함수 안에서 스킵
+  migrateCore.ensureMigrationsTable(db)
+  if (migrateCore.hasPending(db, resDir)) {
+    const has = db.prepare('SELECT 1 FROM _migrations WHERE name = ?')
+    const first = migrateCore.listMigrationFiles(migrationsDir).find((f) => !has.get(f)) || 'pending'
+    snapshotBeforeMigrations(db, first)
+  }
 
-  // 적용 대기분이 있을 때만 스냅샷(매 기동마다 찍지 않음)
-  const pending = files.filter((f) => !checkStmt.get(f))
-  if (pending.length > 0) snapshotBeforeMigrations(db, pending[0])
-
-  for (const file of files) {
-    // Check if already applied
-    const applied = checkStmt.get(file)
-    if (applied) {
-      console.log(`[migrate] skip (already applied): ${file}`)
-      continue
-    }
-
-    // Execute migration — exec와 _migrations 기록을 한 트랜잭션으로 묶어 원자화.
-    // 부분실패(예: ALTER ADD COLUMN 직후 크래시) 시 컬럼 추가까지 롤백되어 재실행이 안전.
-    // (SQLite DDL은 트랜잭션 가능. 미적용 시 비멱등 ALTER가 재실행돼 duplicate column으로 영구 부팅불가 위험)
-    const sqlContent = readFileSync(join(migrationsDir, file), 'utf-8')
-    try {
-      const applyMigration = db.transaction(() => {
-        db.exec(sqlContent)
-        insertStmt.run(file)
-      })
-      applyMigration()
-    } catch (err) {
-      console.error(`[migrate] FAILED on ${file}:`, (err as Error).message)
-      throw err
-    }
-    console.log(`Migration applied: ${file}`)
+  // 데스크톱은 빈 DB 를 스스로 만들므로(connection.ts) 클린 설치를 허용한다.
+  // 설치 팩 = IATF_INSTALL_PACKS(csv) → 기존 DB 의 install.packs → 클린 기본 standard / 레거시 기본 standard,tpc.
+  try {
+    const r = migrateCore.runAll(db, {
+      resourcesDir: resDir,
+      allowClean: true,
+      packs: migrateCore.parsePacksEnv(process.env.IATF_INSTALL_PACKS),
+      log: (m: string) => console.log(m)
+    })
+    console.log(`[migrate] install.packs=${r.packs.join(',')} (${r.mode}) applied=${r.applied.length} skipped=${r.skipped.length}`)
+  } catch (err) {
+    console.error('[migrate] FAILED:', (err as Error).message)
+    throw err
   }
 }

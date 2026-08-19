@@ -63,25 +63,31 @@ export function seedDatabase(): void {
 
   console.log('Seeding database...')
 
-  // 1. Seed teams
-  const teams: TeamSeed[] = JSON.parse(readFileSync(join(seedDir, 'teams.json'), 'utf-8'))
-  const insertTeam = db.prepare(
-    'INSERT INTO teams (id, name, manager_id) VALUES (?, ?, ?)'
-  )
-  for (const team of teams) {
-    insertTeam.run(team.id, team.name, team.managerId || null)
-  }
-  console.log(`Seeded ${teams.length} teams`)
+  // 39호 S2(8/19): teams.json·persons.json·regulations.json 은 TPC 실명·실규정 = TPC팩 전용.
+  // 설치 팩(app_config install.packs — 러너가 기록)에 tpc 가 없으면 건너뛴다(표준 설치 = 인원 0 · 조항만).
+  const tpcPack = installPacks(db).includes('tpc')
 
-  // 2. Seed persons
-  const persons: PersonSeed[] = JSON.parse(readFileSync(join(seedDir, 'persons.json'), 'utf-8'))
-  const insertPerson = db.prepare(
-    'INSERT INTO persons (id, name, team_id, role, email, qualifications) VALUES (?, ?, ?, ?, ?, ?)'
-  )
-  for (const person of persons) {
-    insertPerson.run(person.id, person.name, person.teamId, person.role, person.email, person.qualifications)
+  if (tpcPack) {
+    // 1. Seed teams
+    const teams: TeamSeed[] = JSON.parse(readFileSync(join(seedDir, 'teams.json'), 'utf-8'))
+    const insertTeam = db.prepare('INSERT INTO teams (id, name, manager_id) VALUES (?, ?, ?)')
+    for (const team of teams) {
+      insertTeam.run(team.id, team.name, team.managerId || null)
+    }
+    console.log(`Seeded ${teams.length} teams`)
+
+    // 2. Seed persons
+    const persons: PersonSeed[] = JSON.parse(readFileSync(join(seedDir, 'persons.json'), 'utf-8'))
+    const insertPerson = db.prepare(
+      'INSERT INTO persons (id, name, team_id, role, email, qualifications) VALUES (?, ?, ?, ?, ?, ?)'
+    )
+    for (const person of persons) {
+      insertPerson.run(person.id, person.name, person.teamId, person.role, person.email, person.qualifications)
+    }
+    console.log(`Seeded ${persons.length} persons`)
+  } else {
+    console.log('[seed] install.packs 에 tpc 없음 — teams/persons/regulations 시드 생략(표준 설치)')
   }
-  console.log(`Seeded ${persons.length} persons`)
 
   // 3. Seed clauses and documents
   const clauses: ClauseSeed[] = JSON.parse(readFileSync(join(seedDir, 'iatf16949-clauses.json'), 'utf-8'))
@@ -110,9 +116,9 @@ export function seedDatabase(): void {
   }
   console.log(`Seeded ${clauses.length} clauses, ${docCount} documents`)
 
-  // 4. Seed regulations (procedure/manual documents with team mapping)
+  // 4. Seed regulations (procedure/manual documents with team mapping) — TPC팩 전용
   const regPath = join(seedDir, 'regulations.json')
-  if (existsSync(regPath)) {
+  if (tpcPack && existsSync(regPath)) {
     const regulations: RegulationSeed[] = JSON.parse(readFileSync(regPath, 'utf-8'))
     const insertReg = db.prepare(
       'INSERT INTO documents (id, clause_id, name, type, current_version, retention_days, team_id, doc_code, revision) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -129,6 +135,23 @@ export function seedDatabase(): void {
   }
 
   console.log('Database seeding complete!')
+}
+
+function installPacks(db: ReturnType<typeof getSqlite>): string[] {
+  try {
+    const row = db.prepare("SELECT value FROM app_config WHERE key='install.packs'").get() as { value: string } | undefined
+    if (row && row.value) return row.value.split(',').map((s) => s.trim()).filter(Boolean)
+  } catch {
+    /* app_config 없음(구 DB) */
+  }
+  // 이력 있는 DB 에 키가 없으면 레거시 = TPC 설치(러너 LEGACY_DEFAULT_PACKS 와 동일 판단)
+  try {
+    const n = (db.prepare('SELECT COUNT(*) AS c FROM _migrations').get() as { c: number }).c
+    if (n > 0) return ['standard', 'tpc']
+  } catch {
+    /* noop */
+  }
+  return ['standard']
 }
 
 function seedCompanyProfile(db: ReturnType<typeof getSqlite>): void {

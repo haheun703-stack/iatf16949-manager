@@ -16,6 +16,13 @@ extraResources:
     to: migrations
   - from: resources/seed
     to: seed
+  # 39호 S2(8/19): 클린 설치 자원 — 스키마 스냅샷·팩 데이터·러너 정본(migrate.ts 가 process.resourcesPath 에서 require)
+  - from: resources/core
+    to: core
+  - from: resources/packs
+    to: packs
+  - from: server/migrate-core.cjs
+    to: migrate-core.cjs
   # ⚠️ 보안: .env(API 키)는 절대 번들 금지 — 설치판이 곧 유출 패키지가 된다(제품화 감사 7/6).
   # AI 키는 사용자 PC의 userData/.env 에서 읽음(env-loader 1순위). 인스톨러에 미포함.
   # 양식 출력엔진 마스터 원본(있을 때만 번들). 배포 시 원본 72양식을 resources/forms 에 복사.
