@@ -16,6 +16,13 @@
 //                              ※ ppap/fmea/msa 는 데모 인스턴스라 제외(카탈로그는 앱 코드가 보유)
 //   060_kpi_indicators.sql     kpi_indicators 35 (④-6: target→NULL — 이름·단위·방향만)
 //   070_recurring_obligations.sql  정기의무(④-3: 역할 기반 — assignee/anchor/last/next→NULL · TPC 전제 6건 제외 EXCLUDE_OBLIGATIONS)
+//   ── S3-2(8/19 저녁~) ──  규칙·명시 맵 = scripts/lib/neutralize-forms.mjs (before/after 문서와 공유)
+//   080_forms_catalog.sql      forms 294(302 − 제외 8: 사업부 전용 6 + 타사업부 열람형 2 · 사업부 scope 3은 SQ 미니멀 정션 참조라 공통 편입)
+//                              ④-1 코드 채택 · name 접미 정리 · description 중립화(플레이스홀더→NULL·개발 메모 기계 정리·TPC/AM 행 재작성) · scope→'공통'
+//   081_form_layout.sql        form_fields·form_cell_map·form_grid_spec·form_grid_columns·form_option_cells — 보유 양식분만 + 라벨/키 중립화(REWRITE_FIELDS)
+//                              ※ form_examples(④-7 ⓐ 제외)·form_change_log(운영 이력)·process_forms(TPC 프로세스 FK)는 싣지 않음
+//   090_doc_bom_skeleton.sql   bom_documents 105 — 목록 뼈대(④-5 ⓑ): rev/일자 NULL·status '파일없음(작성/수집필요)'·forms_count = 표준팩 양식 수 재계산
+//   091_regulation_skeleton.sql regulation_sections — 규정별 목차 뼈대 + 안내문(신규 집필·TPC 0) + 관련 양식 목록(080 에서 자동) + IATF/SQ 연계 포인터
 //
 // 규칙: INSERT OR IGNORE·컬럼 명시(packs README). AUTOINCREMENT id 는 명시 적재(guide_id 링크 보존).
 // 재실행 = 전량 재생성(결정적 — 체인이 결정적이므로 diff 0 이 정상).
@@ -30,6 +37,7 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 const core = require('../server/migrate-core.cjs')
+import { EXCLUDE_FORMS, PROMOTE_TO_COMMON, REWRITE_FIELDS, cleanName, cleanDescription, RESIDUE_RE } from './lib/neutralize-forms.mjs'
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
 const migDir = join(repo, 'resources', 'migrations')
@@ -129,6 +137,14 @@ function insertBlock(table, cols, rows) {
   if (!rows.length) return `-- ${table}: 0행\n`
   const vals = rows.map((r) => `  (${cols.map((c) => q(r[c])).join(', ')})`).join(',\n')
   return `INSERT OR IGNORE INTO ${table} (${cols.join(', ')}) VALUES\n${vals};\n`
+}
+// 레거시 무해 보강: 대상 테이블이 **비어 있을 때만**(= 클린 설치) 적재. 레거시 DB 는 id 가 이어져 있어 OR IGNORE 만으로는
+// 초과 id 행이 끼어들 수 있는 테이블(regulation_sections — TPC 622행 뒤에 623~855 가 들어감)에 쓴다. 기존 본문 보유 = no-op.
+function insertBlockIfEmpty(table, cols, rows) {
+  if (!rows.length) return `-- ${table}: 0행\n`
+  const vals = rows.map((r) => `  (${cols.map((c) => q(r[c])).join(', ')})`).join(',\n')
+  const sel = cols.map((_, i) => `column${i + 1}`).join(', ')
+  return `INSERT OR IGNORE INTO ${table} (${cols.join(', ')})\nSELECT ${sel} FROM (VALUES\n${vals}\n) WHERE NOT EXISTS (SELECT 1 FROM ${table} LIMIT 1);\n`
 }
 function header(file, desc) {
   return [
@@ -267,6 +283,169 @@ function writePack(file, desc, body) {
       ['id', 'title', 'cadence', 'category', 'clause_ref', 'owner', 'lead_days', 'anchor_date', 'last_done_date', 'next_due_date', 'form_code', 'active', 'note', 'sort_order', 'assignee', 'trigger_type'],
       kept
     )
+  )
+}
+
+// ══════════════════════════ S3-2 — 양식 카탈로그·레이아웃·문서 뼈대 ══════════════════════════
+// ── 080 양식 카탈로그 ──
+const keptForms = []
+{
+  const all = db
+    .prepare(
+      'SELECT code, name, reg_code, description, approvals_json, next_form_code, next_form_label, prev_form_code, layout_json, scope, deprecated, deprecated_note, replacement_page, resp_dept, iatf_clause, sq_item_ids, template_path FROM forms ORDER BY code'
+    )
+    .all()
+  const excluded = all.filter((r) => EXCLUDE_FORMS[r.code])
+  if (excluded.length !== Object.keys(EXCLUDE_FORMS).length) {
+    console.error(`[gen-pack-standard] forms 제외 목록 불일치 — 기대 ${Object.keys(EXCLUDE_FORMS).length}·실제 ${excluded.length}`)
+    process.exit(1)
+  }
+  const divisionLeft = all.filter((r) => !EXCLUDE_FORMS[r.code] && !['common', '공통'].includes(r.scope) && !PROMOTE_TO_COMMON.includes(r.code))
+  if (divisionLeft.length) {
+    console.error(`[gen-pack-standard] 사업부 scope 잔존(제외도 편입도 아님): ${divisionLeft.map((r) => r.code).join(', ')}`)
+    process.exit(1)
+  }
+  for (const r of all) {
+    if (EXCLUDE_FORMS[r.code]) continue
+    keptForms.push({
+      ...r,
+      name: cleanName(r.code, r.name),
+      description: cleanDescription(r.code, r.description),
+      scope: '공통', // 'common'(스키마 기본값 잔재)·'공통' 혼용 → 렌더러 FormScope 정본 '공통' 으로 통일
+      next_form_code: r.next_form_code && EXCLUDE_FORMS[r.next_form_code] ? null : r.next_form_code,
+      prev_form_code: r.prev_form_code && EXCLUDE_FORMS[r.prev_form_code] ? null : r.prev_form_code
+    })
+  }
+  const names = new Map()
+  for (const r of keptForms) {
+    if (names.has(r.name)) {
+      console.error(`[gen-pack-standard] 양식명 중복 — '${r.name}': ${names.get(r.name)} / ${r.code}`)
+      process.exit(1)
+    }
+    names.set(r.name, r.code)
+  }
+  const residue = keptForms.filter((r) => RESIDUE_RE.test(r.name) || (r.description && RESIDUE_RE.test(r.description)))
+  if (residue.length) {
+    console.error(`[gen-pack-standard] 080 잔재 게이트 위반 ${residue.length}행: ${residue.map((r) => r.code).join(', ')}`)
+    process.exit(1)
+  }
+  const descNull = keptForms.filter((r) => r.description === null).length
+  writePack(
+    '080_forms_catalog.sql',
+    `양식 카탈로그 — ${keptForms.length}종(체인 ${all.length} − 제외 ${excluded.length}: 사업부 전용·타사업부 열람형 / 사업부 scope ${PROMOTE_TO_COMMON.length}종은 SQ 미니멀 정션 참조라 공통 편입) · ④-1 코드 체계 채택 · 이름 접미 정리 · 설명 중립화(NULL ${descNull}) · scope '공통' 통일`,
+    insertBlock(
+      'forms',
+      ['code', 'name', 'reg_code', 'description', 'approvals_json', 'next_form_code', 'next_form_label', 'prev_form_code', 'layout_json', 'scope', 'deprecated', 'deprecated_note', 'replacement_page', 'resp_dept', 'iatf_clause', 'sq_item_ids', 'template_path'],
+      keptForms
+    )
+  )
+}
+const keptCodes = new Set(keptForms.map((r) => r.code))
+const inKept = (r) => keptCodes.has(r.form_code)
+
+// ── 081 양식 레이아웃(필드·셀맵·그리드) ──
+{
+  const applyField = (r) => {
+    const rw = REWRITE_FIELDS[`${r.form_code}|${r.field_key}`]
+    return rw ? { ...r, ...rw } : r
+  }
+  const fields = db
+    .prepare('SELECT id, form_code, field_key, label, type, section, placeholder, options_json, unit, ai_enabled, ai_prompt_hint, sort_order, field_class FROM form_fields ORDER BY id')
+    .all()
+    .filter(inKept)
+    .map(applyField)
+  const cellMap = db.prepare('SELECT id, form_code, field_key, label, cell, type, sort_order FROM form_cell_map ORDER BY id').all().filter(inKept).map(applyField)
+  const gridSpec = db.prepare('SELECT form_code, grid_key, data_start_row, stride, max_rows FROM form_grid_spec ORDER BY form_code, grid_key').all().filter(inKept)
+  const gridCols = db
+    .prepare('SELECT form_code, grid_key, col_key, label, sheet_col, type, sort_order FROM form_grid_columns ORDER BY form_code, grid_key, sort_order')
+    .all()
+    .filter(inKept)
+  const optCells = db.prepare('SELECT form_code, field_key, option, cell, sort_order FROM form_option_cells ORDER BY form_code, field_key, sort_order').all().filter(inKept)
+  // 재작성 맵 키가 실제 행에 전부 닿았는지(드리프트 가드)
+  const touched = new Set()
+  for (const r of [...db.prepare('SELECT form_code, field_key FROM form_fields').all(), ...db.prepare('SELECT form_code, field_key FROM form_cell_map').all()]) touched.add(`${r.form_code}|${r.field_key}`)
+  const miss = Object.keys(REWRITE_FIELDS).filter((k) => !touched.has(k))
+  if (miss.length) {
+    console.error(`[gen-pack-standard] REWRITE_FIELDS 키 미존재(드리프트): ${miss.join(', ')}`)
+    process.exit(1)
+  }
+  writePack(
+    '081_form_layout.sql',
+    `양식 레이아웃 — 필드 ${fields.length}·셀맵 ${cellMap.length}·그리드 ${gridSpec.length}/${gridCols.length}·옵션셀 ${optCells.length} (표준팩 양식 ${keptCodes.size}종분 · 라벨/키 중립화 ${Object.keys(REWRITE_FIELDS).length}건) ※ form_examples(④-7)·form_change_log·process_forms 제외`,
+    insertBlock('form_fields', ['id', 'form_code', 'field_key', 'label', 'type', 'section', 'placeholder', 'options_json', 'unit', 'ai_enabled', 'ai_prompt_hint', 'sort_order', 'field_class'], fields) +
+      insertBlock('form_cell_map', ['id', 'form_code', 'field_key', 'label', 'cell', 'type', 'sort_order'], cellMap) +
+      insertBlock('form_grid_spec', ['form_code', 'grid_key', 'data_start_row', 'stride', 'max_rows'], gridSpec) +
+      insertBlock('form_grid_columns', ['form_code', 'grid_key', 'col_key', 'label', 'sheet_col', 'type', 'sort_order'], gridCols) +
+      insertBlock('form_option_cells', ['form_code', 'field_key', 'option', 'cell', 'sort_order'], optCells)
+  )
+}
+
+// ── 090 문서 BOM 목록 뼈대 (④-5 ⓑ) ──
+const bomDocs = db
+  .prepare('SELECT doc_no_norm, doc_no_raw, category, category_label, name, owner_dept, sort_order FROM bom_documents ORDER BY sort_order')
+  .all()
+  .map((r) => ({
+    ...r,
+    owner_dept: r.owner_dept ? r.owner_dept.replace(/\s+/g, '') : r.owner_dept, // "총 무 팀" → "총무팀"(원본 엑셀 정렬 공백)
+    list_rev: null,
+    list_date: null,
+    file_rev: null,
+    file_date: null,
+    status: '파일없음(작성/수집필요)', // 신규 설치 정직값 — 문서 파일은 고객사가 채움
+    forms_count: keptForms.filter((f) => f.reg_code === r.doc_no_raw).length
+  }))
+writePack(
+  '090_doc_bom_skeleton.sql',
+  `문서 BOM 목록 뼈대 — ${bomDocs.length}건(매뉴얼·프로세스·품질규정·안전환경 제목 목록) · rev/일자 NULL · status '파일없음' · forms_count = 표준팩 양식 수`,
+  insertBlock('bom_documents', ['doc_no_norm', 'doc_no_raw', 'category', 'category_label', 'name', 'owner_dept', 'list_rev', 'list_date', 'file_rev', 'file_date', 'status', 'forms_count', 'sort_order'], bomDocs)
+)
+
+// ── 091 규정 뼈대 템플릿 (④-5 ⓑ — 목차 + 안내문 신규 집필 + 관련 양식 자동) ──
+{
+  // 규정 우주 = 문서 BOM 의 규정·지침(품질 56 + 안전환경 39) ∪ 양식이 참조하는 reg_code(누락 시 제목은 코드로)
+  const regs = new Map()
+  for (const d of bomDocs) if (d.category === 'quality' || d.category === 'safety_env') regs.set(d.doc_no_raw, { code: d.doc_no_raw, name: d.name, category: d.category })
+  for (const f of keptForms) if (!regs.has(f.reg_code)) regs.set(f.reg_code, { code: f.reg_code, name: `${f.reg_code} 규정`, category: 'quality', untitled: true })
+  const sqMap = new Map()
+  for (const r of db.prepare('SELECT reg_code, item_code FROM sq_reg_map ORDER BY item_code').all()) {
+    if (!sqMap.has(r.reg_code)) sqMap.set(r.reg_code, [])
+    sqMap.get(r.reg_code).push(r.item_code)
+  }
+  const rows = []
+  let id = 1
+  const push = (reg_code, section_title, section_body, sort_order) => rows.push({ id: id++, reg_code, section_title, section_body, sort_order })
+  const sortedRegs = [...regs.values()].sort((a, b) => a.code.localeCompare(b.code))
+  for (const reg of sortedRegs) {
+    const forms = keptForms.filter((f) => f.reg_code === reg.code)
+    const clauses = [...new Set(forms.map((f) => f.iatf_clause).filter(Boolean))].sort()
+    const sq = sqMap.get(reg.code) || []
+    const cat = reg.category === 'safety_env' ? '안전보건환경(ISO 45001/14001)' : '품질(IATF 16949)'
+    push(reg.code, '(서두)',
+      `${reg.name} · 문서번호 ${reg.code} · 개정 REV.0 · 제정일 (    ) — ※ 뼈대 템플릿: 목차와 각 절의 안내문만 들어 있습니다. 자사 실무에 맞게 본문을 채우고 개정이력을 기록하세요.\n` +
+      `개정이력 | 개정번호 | 재·개정일(시행일자) | 재·개정 사유 및 내용\n0 | (    ) | 제정`, 0)
+    push(reg.code, '1. 적용범위',
+      `이 규정은 당사에서 수행하는 ${reg.name.replace(/\s*(규정|지침)$/, '')} 업무에 적용한다.\n[안내] 적용 조직(전사/사업장/부서)·대상 업무·대상 제품/공정의 경계를 한 문장으로 정한다. 예외(적용 제외)가 있으면 함께 적는다.`, 1)
+    push(reg.code, '2. 목적',
+      `[안내] 이 규정을 운영하는 이유를 ${cat} 요구사항과 연결해 기술한다. "무엇을 관리하여 어떤 결과(고객 요구 충족·부적합 예방·추적성 확보 등)를 얻는가"를 적는다.${clauses.length ? ` 관련 IATF 16949 조항: §${clauses.join(', §')}.` : ''}`, 2)
+    push(reg.code, '3. 용어의 정의',
+      `[안내] 이 규정에서 쓰는 용어 중 해석 차이가 날 수 있는 것만 정의한다(예: 승인/검토/작성, 특채, 4M 변경, 특별특성). 표준 용어는 IATF 16949·ISO 9000 정의를 따른다고 적고 생략해도 된다.`, 3)
+    push(reg.code, '4. 책임과 권한',
+      `[안내] 대표이사·주관 부서장·관련 부서·담당자 순으로 "누가 무엇을 승인/검토/작성/실행하는지"를 역할 기준으로 적는다(실명 금지 — 직위·팀명으로). 위임전결이 있으면 기준을 명시한다.`, 4)
+    push(reg.code, '5. 업무 절차 및 방법',
+      `[안내] 업무 흐름을 순서대로(접수→검토→실행→확인→기록) 번호 붙여 기술한다. 각 단계에서 사용하는 양식(7항)과 판정 기준·주기·이상 시 조치를 함께 적는다. 심사에서는 "절차대로 했다는 기록"이 증거이므로 기록 시점과 보관 위치를 빠뜨리지 않는다.`, 5)
+    push(reg.code, '6. 기록 관리',
+      `이 규정에 따라 발생하는 기록은 "기록관리 규정"에 따라 식별·보관·보존·폐기한다.\n[안내] 기록별 보존기간·보관 부서·매체(전자/지면)를 표로 정리하면 좋다.`, 6)
+    push(reg.code, '7. 관련 양식',
+      forms.length
+        ? forms.map((f, i) => `(${i + 1}) ${f.name} (${f.code})`).join('\n')
+        : `(해당 양식 없음 — 양식을 제정하면 양식등록대장에 등록하고 이 절에 추가한다)`, 7)
+    push(reg.code, '8. 관련 문서·참조',
+      `[안내] 상위 문서(품질·환경 매뉴얼, 관련 프로세스)와 참조 표준·고객 요구사항(CSR)을 적는다.${sq.length ? `\nSQ 평가 연계 항목: ${sq.join(', ')} — 심사대응 SQ 화면의 해당 항목 가이드·체크포인트를 참조.` : ''}${reg.untitled ? '\n※ 이 규정 코드는 양식 카탈로그에서만 참조됨 — 문서 BOM 목록표에 제목을 등록하세요.' : ''}`, 8)
+  }
+  writePack(
+    '091_regulation_skeleton.sql',
+    `규정 뼈대 템플릿 — 규정 ${sortedRegs.length}종 × 9절 = ${rows.length}행(④-5 ⓑ: 목차 + 안내문 신규 집필 · 관련 양식은 080 에서 자동 · IATF/SQ 연계 포인터) · 본문 없음(고객사 집필)`,
+    insertBlockIfEmpty('regulation_sections', ['id', 'reg_code', 'section_title', 'section_body', 'sort_order'], rows) // 레거시(TPC 본문 622행 보유) = no-op
   )
 }
 

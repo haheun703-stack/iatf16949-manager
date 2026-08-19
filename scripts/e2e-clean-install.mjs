@@ -10,7 +10,7 @@
 //   B 판매 경로  = server/migrate-core.cjs runAll(allowClean, packs=['standard']) — 스키마 스냅샷 + 표준팩
 //   단언은 B 에 건다. A 는 스키마 동치(⑨)의 기준이자 TPC 경로 무변경의 관찰치.
 //
-// 단언(11건):
+// 단언(12건):
 //   ① 러너: packs.json 감사 0건 · mode=clean · 스냅샷 대체 = snapshot 이하 파일 수 · 초과분 적용/스킵 합 = 나머지
 //   ② PRAGMA foreign_key_check 위반 0건 (B)
 //   ③ 시드 소스 파리티 — resources/seed 에 하네스가 모르는 json 이 있으면 FAIL(드리프트 가드)
@@ -21,8 +21,10 @@
 //   ⑧ companyName 플로우스루 — 스캔 후 테스트값 주입 → GET 조립 경로 재독 일치
 //   ⑨ 스키마 동치 — A(전 체인) ↔ B(스냅샷) sqlite_master 정규화 집합 동일 (스냅샷 드리프트 가드)
 //   ⑩ 표준팩 SQ층(S3-1, 8/19 GREEN) — 백본 42·가이드 300+·체크포인트(상태 리셋 0)·팩 정션·APQP·KPI(목표 0)·의무(실명 0)
-//   ⑪ 양식 카탈로그·규정 뼈대(S3-2) — ⚠ 의도적 RED: forms 중립판 + ④-5 뼈대 템플릿 전.
+//   ⑪ 양식 카탈로그·규정 뼈대(S3-2, 8/19 저녁 GREEN) — forms 중립판 290+(사업부 scope 0) · bom_documents 100+ · 규정 뼈대 800+ 행.
 //      코워크 소견(8/19) "뼈대 안내문 TPC 0" 은 ⑥ 전 테이블 스캔이 자동 커버(안내문도 행이므로).
+//   ⑫ 레거시 무해(S3 규약) — A 레거시 체인 DB 에 표준팩 전 파일을 얹어도 주요 테이블 행수 불변(OR IGNORE no-op ·
+//      regulation_sections 는 "비어 있을 때만" 적재). TPC 운영 DB 에 표준팩이 끼어들지 않는다는 상시 증거.
 //
 // 안전: 라이브 무접촉 — %TEMP% mkdtemp 전용, DB 경로를 env/argv 에서 받지 않는다. 서버 비접촉·로그인 없음.
 // 사용: ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\e2e-clean-install.mjs
@@ -278,19 +280,51 @@ check(
   sqLayerOk ? '' : 'S3-1(gen-pack-standard.mjs) 미실행 또는 상태 리셋 계약 위반'
 )
 
-// ── ⑪ 양식 카탈로그·규정 뼈대 (S3-2 = 의도적 RED) — ④-1 코드 채택·④-2 xlsx 42종·④-5 뼈대 템플릿 ──
+// ── ⑪ 양식 카탈로그·규정 뼈대 (S3-2, 8/19 GREEN) — ④-1 코드 채택·④-5 뼈대 템플릿 (xlsx 42종은 S3-2 후반 — 파일 자산이라 DB 단언 밖) ──
 const nForms = cntB('forms')
 const nRegSk = cntB('regulation_sections')
+const nBom = cntB('bom_documents')
+const nDivScope = (() => { try { return dbB.prepare("SELECT COUNT(*) AS c FROM forms WHERE scope <> '공통'").get().c } catch { return -1 } })()
+const formsOk = nForms >= 290 && nDivScope === 0 && nRegSk >= 800 && nBom >= 100
 check(
-  `⑪ 양식 카탈로그·규정 뼈대 (forms ${nForms} · reg_sections ${nRegSk})`,
-  nForms > 250 && nRegSk > 0,
-  nForms > 250 && nRegSk > 0 ? '' : 'S3-2 전(양식 카탈로그 중립판 + ④-5 뼈대 템플릿 — 안내문도 ⑥ 전 테이블 스캔에 자동 포함)'
+  `⑪ 양식 카탈로그·규정 뼈대 (forms ${nForms}/사업부 scope ${nDivScope} · bom_documents ${nBom} · reg_sections ${nRegSk})`,
+  formsOk,
+  formsOk ? '' : 'S3-2(gen-pack-standard.mjs 080~091) 미실행 또는 scope 통일 계약 위반'
+)
+
+// ── ⑫ 레거시 무해 — A 레거시 체인 DB 에 표준팩 전 파일을 적용해도 행수 불변 ──
+const LEGACY_TABLES = ['forms', 'form_fields', 'form_cell_map', 'form_grid_spec', 'form_grid_columns', 'bom_documents', 'regulation_sections', 'sq_items', 'sq_guides', 'recurring_obligations', 'kpi_indicators']
+let legacyDiff = []
+let legacyErr = ''
+if (!aFail) {
+  try {
+    const before = Object.fromEntries(LEGACY_TABLES.map((t) => [t, dbA.prepare(`SELECT COUNT(*) AS c FROM ${t}`).get().c]))
+    const beforeNames = dbA.prepare("SELECT code, name FROM forms ORDER BY code").all().map((r) => `${r.code}|${r.name}`).join('|')
+    const packDir = join(resourcesDir, 'packs', 'standard')
+    for (const pf of readdirSync(packDir).filter((f) => f.endsWith('.sql')).sort()) {
+      dbA.exec('BEGIN')
+      dbA.exec(readFileSync(join(packDir, pf), 'utf-8'))
+      dbA.exec('COMMIT')
+    }
+    const after = Object.fromEntries(LEGACY_TABLES.map((t) => [t, dbA.prepare(`SELECT COUNT(*) AS c FROM ${t}`).get().c]))
+    const afterNames = dbA.prepare("SELECT code, name FROM forms ORDER BY code").all().map((r) => `${r.code}|${r.name}`).join('|')
+    legacyDiff = LEGACY_TABLES.filter((t) => before[t] !== after[t]).map((t) => `${t} ${before[t]}→${after[t]}`)
+    if (beforeNames !== afterNames) legacyDiff.push('forms.name 변경')
+  } catch (err) {
+    try { dbA.exec('ROLLBACK') } catch { /* noop */ }
+    legacyErr = err.message.slice(0, 100)
+  }
+}
+check(
+  `⑫ 레거시 무해 — 표준팩 ${LEGACY_TABLES.length}테이블 행수·양식명 불변${legacyErr ? ` (적용 오류: ${legacyErr})` : ''}`,
+  !aFail && !legacyErr && legacyDiff.length === 0,
+  legacyDiff.length ? `변동: ${legacyDiff.join(' · ')}` : ''
 )
 
 // ── 판정·정리 ──
 const sqOk = std.sq_items >= 42 && std.pack_forms > 0 && std.kpi_indicators >= 30 && std.recurring_obligations >= 40
-const sellable = tpcTotal === 0 && nameTotal === 0 && sqOk && nForms > 250 && nRegSk > 0
-console.log(`\n판매 가능 여부: ${sellable ? 'YES' : `NO — TPC ${tpcTotal}행 · 실명 ${nameTotal}행 · SQ층 ${sqOk ? 'GREEN' : 'RED(S3-1)'} · 양식/뼈대 ${nForms > 250 && nRegSk > 0 ? 'GREEN' : 'RED(S3-2)'}`}`)
+const sellable = tpcTotal === 0 && nameTotal === 0 && sqOk && formsOk
+console.log(`\n판매 가능 여부: ${sellable ? 'YES' : `NO — TPC ${tpcTotal}행 · 실명 ${nameTotal}행 · SQ층 ${sqOk ? 'GREEN' : 'RED(S3-1)'} · 양식/뼈대 ${formsOk ? 'GREEN' : 'RED(S3-2)'}`}`)
 dbA.close()
 dbB.close()
 rmSync(tmp, { recursive: true, force: true })
