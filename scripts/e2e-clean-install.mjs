@@ -10,7 +10,7 @@
 //   B 판매 경로  = server/migrate-core.cjs runAll(allowClean, packs=['standard']) — 스키마 스냅샷 + 표준팩
 //   단언은 B 에 건다. A 는 스키마 동치(⑨)의 기준이자 TPC 경로 무변경의 관찰치.
 //
-// 단언(10건):
+// 단언(11건):
 //   ① 러너: packs.json 감사 0건 · mode=clean · 스냅샷 대체 = snapshot 이하 파일 수 · 초과분 적용/스킵 합 = 나머지
 //   ② PRAGMA foreign_key_check 위반 0건 (B)
 //   ③ 시드 소스 파리티 — resources/seed 에 하네스가 모르는 json 이 있으면 FAIL(드리프트 가드)
@@ -20,9 +20,9 @@
 //   ⑦ 실명 5인(김권표·서상규·하헌·서규하·장석봉) 매치 행수 0 (B)
 //   ⑧ companyName 플로우스루 — 스캔 후 테스트값 주입 → GET 조립 경로 재독 일치
 //   ⑨ 스키마 동치 — A(전 체인) ↔ B(스냅샷) sqlite_master 정규화 집합 동일 (스냅샷 드리프트 가드)
-//   ⑩ 표준팩 최소 내용 — sq_items ≥ 42 · pack_forms > 0 · kpi_indicators > 0 · recurring_obligations > 0
-//      ⚠ 의도적 RED(S3 전): 빈 표준팩으로 ⑥⑦ 이 GREEN 인 것을 "판매 가능"으로 오독하지 않게 하는 축.
-//      GREEN 조건 = S3(표준팩 시드) 완료. 코워크 소견(8/19): S3 시 "뼈대 템플릿 안내문 TPC 식별자 0" 축 추가.
+//   ⑩ 표준팩 SQ층(S3-1, 8/19 GREEN) — 백본 42·가이드 300+·체크포인트(상태 리셋 0)·팩 정션·APQP·KPI(목표 0)·의무(실명 0)
+//   ⑪ 양식 카탈로그·규정 뼈대(S3-2) — ⚠ 의도적 RED: forms 중립판 + ④-5 뼈대 템플릿 전.
+//      코워크 소견(8/19) "뼈대 안내문 TPC 0" 은 ⑥ 전 테이블 스캔이 자동 커버(안내문도 행이므로).
 //
 // 안전: 라이브 무접촉 — %TEMP% mkdtemp 전용, DB 경로를 env/argv 에서 받지 않는다. 서버 비접촉·로그인 없음.
 // 사용: ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\e2e-clean-install.mjs
@@ -259,17 +259,38 @@ check(
   onlyA.length + onlyB.length ? `A만 ${onlyA.length}·B만 ${onlyB.length}: ${[...onlyA, ...onlyB].slice(0, 2).map((s) => s.split('|').slice(0, 2).join(':')).join(', ')}` : ''
 )
 
-// ── ⑩ 표준팩 최소 내용 (S3 전 = 의도적 RED) ──
-const std = { sq_items: cntB('sq_items'), pack_forms: cntB('pack_forms'), kpi_indicators: cntB('kpi_indicators'), recurring_obligations: cntB('recurring_obligations') }
+// ── ⑩ 표준팩 SQ층 (S3-1, 8/19 GREEN) — 백본·가이드층·팩 정션·APQP·KPI·의무 + 상태 리셋 계약 ──
+const std = {
+  sq_items: cntB('sq_items'), sq_guides: cntB('sq_guides'), sq_checkpoints: cntB('sq_checkpoints'),
+  pack_forms: cntB('pack_forms'), apqp_elements: cntB('apqp_elements'),
+  kpi_indicators: cntB('kpi_indicators'), recurring_obligations: cntB('recurring_obligations')
+}
+const oblAssignee = (() => { try { return dbB.prepare('SELECT COUNT(*) AS c FROM recurring_obligations WHERE assignee IS NOT NULL').get().c } catch { return -1 } })()
+const cpState = (() => { try { return dbB.prepare("SELECT COUNT(*) AS c FROM sq_checkpoints WHERE evidence_note IS NOT NULL OR updated_by IS NOT NULL OR status <> 'missing'").get().c } catch { return -1 } })()
+const kpiTargets = (() => { try { return dbB.prepare('SELECT COUNT(*) AS c FROM kpi_indicators WHERE target IS NOT NULL').get().c } catch { return -1 } })()
+const sqLayerOk =
+  std.sq_items >= 42 && std.sq_guides >= 300 && std.sq_checkpoints >= 100 && cpState === 0 &&
+  std.pack_forms > 0 && std.apqp_elements >= 40 && std.kpi_indicators >= 30 && kpiTargets === 0 &&
+  std.recurring_obligations >= 40 && oblAssignee === 0
 check(
-  `⑩ 표준팩 최소 내용 (sq_items ${std.sq_items} · pack_forms ${std.pack_forms} · kpi ${std.kpi_indicators} · 의무 ${std.recurring_obligations})`,
-  std.sq_items >= 42 && std.pack_forms > 0 && std.kpi_indicators > 0 && std.recurring_obligations > 0,
-  'S3(표준팩 시드) 전 = 빈 표준팩'
+  `⑩ 표준팩 SQ층 (sq_items ${std.sq_items} · guides ${std.sq_guides} · cp ${std.sq_checkpoints}/상태 ${cpState} · pack_forms ${std.pack_forms} · apqp ${std.apqp_elements} · kpi ${std.kpi_indicators}/목표 ${kpiTargets} · 의무 ${std.recurring_obligations}/실명 ${oblAssignee})`,
+  sqLayerOk,
+  sqLayerOk ? '' : 'S3-1(gen-pack-standard.mjs) 미실행 또는 상태 리셋 계약 위반'
+)
+
+// ── ⑪ 양식 카탈로그·규정 뼈대 (S3-2 = 의도적 RED) — ④-1 코드 채택·④-2 xlsx 42종·④-5 뼈대 템플릿 ──
+const nForms = cntB('forms')
+const nRegSk = cntB('regulation_sections')
+check(
+  `⑪ 양식 카탈로그·규정 뼈대 (forms ${nForms} · reg_sections ${nRegSk})`,
+  nForms > 250 && nRegSk > 0,
+  nForms > 250 && nRegSk > 0 ? '' : 'S3-2 전(양식 카탈로그 중립판 + ④-5 뼈대 템플릿 — 안내문도 ⑥ 전 테이블 스캔에 자동 포함)'
 )
 
 // ── 판정·정리 ──
-const sellable = tpcTotal === 0 && nameTotal === 0 && std.sq_items >= 42 && std.pack_forms > 0
-console.log(`\n판매 가능 여부: ${sellable ? 'YES' : `NO — TPC ${tpcTotal}행 · 실명 ${nameTotal}행 · 표준팩 ${std.sq_items >= 42 && std.pack_forms > 0 ? '있음' : '비어 있음(S3)'}`}`)
+const sqOk = std.sq_items >= 42 && std.pack_forms > 0 && std.kpi_indicators >= 30 && std.recurring_obligations >= 40
+const sellable = tpcTotal === 0 && nameTotal === 0 && sqOk && nForms > 250 && nRegSk > 0
+console.log(`\n판매 가능 여부: ${sellable ? 'YES' : `NO — TPC ${tpcTotal}행 · 실명 ${nameTotal}행 · SQ층 ${sqOk ? 'GREEN' : 'RED(S3-1)'} · 양식/뼈대 ${nForms > 250 && nRegSk > 0 ? 'GREEN' : 'RED(S3-2)'}`}`)
 dbA.close()
 dbB.close()
 rmSync(tmp, { recursive: true, force: true })
