@@ -218,7 +218,9 @@ export function MesMenuBar(): JSX.Element {
     // 32호 §1-2 — 남색 메가바(캡쳐 문법 · §7-1 진한 파스텔톤은 강조 전용)
     <div
       ref={barRef}
-      className="w-full flex items-center gap-0.5 px-3 min-w-0 overflow-x-auto bg-mega-bg"
+      // 8/23 사장님 지적: overflow-x-auto 는 브라우저 규칙상 overflow-y 도 auto 로 바꿔 절대배치 드롭다운(top 40px)을
+      // 막대 높이 안에서 잘라 버렸다 — 눌러도 목록이 안 보이던 원인. visible 로(좁은 화면은 flex-wrap 으로 줄바꿈).
+      className="w-full flex flex-wrap items-center gap-0.5 px-3 min-w-0 overflow-visible bg-mega-bg"
       onMouseLeave={() => setOpen(null)}
     >
       {MODULES.map((m) => {
