@@ -7,8 +7,8 @@ rem
 rem - DB      : %LOCALAPPDATA%\iatf-standard-review  (stable dir, NOT temp - survives cleanup.
 rem             First run creates it via IATF_INIT_DB=1; later runs just reopen it.)
 rem - Packs   : standard only (no tpc pack, no real names - the exact sales-install shape).
-rem - Badge   : IATF_DATA_DIR is set and differs from live -> health.copy=true -> red
-rem             "review copy" banner + E2E bot login allowed (rule 36-6). Real names stay barred.
+rem - Badge   : IATF_REVIEW_COPY=1 (explicit, M2 260823) => health.copy=true => red "review copy" banner
+rem             + E2E bot login allowed (rule 36-6). Without the flag a copy is a plain customer install.
 rem - Login   : E2E봇 / qms1234  (seed once: scripts\seed-local-passwords.cjs with the same
 rem             IATF_DATA_DIR - kept out of this bat so a plain relaunch never reseeds.)
 rem - Title   : distinct from "IATF QMS Server*" so restart-qms-server.bat sweep never hits us.
@@ -30,6 +30,8 @@ if %errorlevel%==0 (
 set ELECTRON_RUN_AS_NODE=1
 set PORT=8083
 set IATF_DATA_DIR=%LOCALAPPDATA%\iatf-standard-review
+rem M2 (260823): review-copy badge + E2E bot login are opened ONLY by this explicit flag (42-D). Never set it for a customer install.
+set IATF_REVIEW_COPY=1
 set IATF_INIT_DB=1
 set IATF_INSTALL_PACKS=standard
 echo Standard-pack clean-install review server.  ( http://127.0.0.1:8083 )

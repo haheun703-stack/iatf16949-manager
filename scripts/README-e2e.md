@@ -70,6 +70,7 @@ env 2종(`IATF_DATA_DIR`·`E2E_DB`)은 **필수**다. 없으면 게이트가 즉
 | 하네스 | 건수 | 축 |
 | --- | --- | --- |
 | `e2e-clean-install.mjs` | 13 | **A 레거시 경로**(마이그 전 체인 — 관찰) + **B 판매 경로**(러너 정본 `server/migrate-core.cjs` 클린 설치 = 스키마 스냅샷+팩) · 러너 감사·FK·시드 파리티·팩별 시드·프로파일 16키·TPC 7종/실명 5인 0건·플로우스루·**A↔B 스키마 동치**·**⑩ 표준팩 SQ층(S3-1 GREEN)**·**⑪ 양식 카탈로그·규정 뼈대(S3-2 GREEN — forms 290+/사업부 scope 0·bom 100+·뼈대 800+)**·**⑫ 레거시 무해(A 체인에 표준팩 전 파일 적용 → 11테이블 행수·양식명 불변)**·**⑬ 표준팩 xlsx 템플릿(238파일 실재·레이아웃 커버 100%·셀 TPC 0)** |
+| `e2e-setup-wizard.mjs` | 22 | **M2 설치 첫날 E2E** — 빈 폴더 클린 설치(:8097) → /login→/setup 유도 → 입력 검증 3 → 마법사 완료(회사·관리자 executive·IATF 애드온 on) → 자동 로그인·brand·프로파일·forms 294 → 재진입 409/redirect → 관리자 재로그인 → **플래그 없음 = E2E봇 401(검수 전용)** → 같은 폴더 `IATF_REVIEW_COPY=1` 재기동 = copy=true + E2E봇 관문 통과. 서버는 스크립트가 띄우고 내림 |
 | `e2e-standard-templates.mjs` | 11 | :8083 표준팩 서버 출력 실증 — 프로파일 companyName 세팅 → 8양식 제출·exportXlsx → 재판독(시트명=코드·`{{companyName}}` 토큰 잔존 0·회사명 치환·TPC 0·주입값) → 원복. 8080 거부 |
 | `gen-core-schema.mjs --check` | 1 | `resources/core/schema.sql` 드리프트 0(스냅샷 지점 0144 재생성 결과와 바이트 동일) |
 
@@ -91,6 +92,12 @@ env 2종(`IATF_DATA_DIR`·`E2E_DB`)은 **필수**다. 없으면 게이트가 즉
   §0 의 `IATF_DATA_DIR`/`E2E_DB` **불필요**, §1 게이트 비경유(서버 비접촉·로그인 없음).
 - 실행: `ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\e2e-clean-install.mjs`
 - 스냅샷 지점을 옮길 때만 `scripts\gen-core-schema.mjs`(무인자) 로 재생성 — 그 외엔 `--check` 만.
+
+## 5-1. ★복사본 규약 변경(M2, 8/23 — 42호 D)
+
+- 검수 복사본 표지(`health.copy`)와 E2E봇 로그인은 **`IATF_REVIEW_COPY=1` 명시 플래그**로만 열린다. `IATF_DATA_DIR` 만 바꾼 서버 = 고객사 설치(copy=false·E2E봇 401).
+  플래그가 켜졌는데 라이브 DB 를 열면 기동 거부(fail-closed). `start-standard-review.bat`·`e2e-console-kill`·`e2e-cprime-gates` 반영.
+  **:8081 수동 기동 시 `set IATF_REVIEW_COPY=1` 필수** — 빠뜨리면 모든 하네스가 `assertCopyServer` 에서 즉시 중단된다(의도된 동작).
 
 ## 6. 기타 검증 스크립트
 

@@ -107,7 +107,16 @@ function isSameFile(a, b) {
 const LIVE_DB_PATH = process.env.APPDATA
   ? path.join(process.env.APPDATA, 'iatf16949-manager', 'iatf16949.db')
   : null
-const IS_COPY_SERVER = !!process.env.IATF_DATA_DIR && !!LIVE_DB_PATH && !isSameFile(DB_PATH, LIVE_DB_PATH)
+// M2(8/23, 42호 D 코워크 소견 채택): 복사본 판정 = **명시 플래그 `IATF_REVIEW_COPY=1` 하나**가 ①빨간 표지(health.copy)
+// ②E2E봇 로그인 허용을 여는 유일 스위치. "IATF_DATA_DIR 지정 = 복사본" 추론 제거 — 고객사 설치(IATF_DATA_DIR 로 경로만
+// 바꾼 경우)가 검수 표지를 달거나 E2E봇이 열리는 일이 없다(fail-closed). 플래그가 켜졌는데 연 DB 가 라이브면 기동 거부.
+const REVIEW_FLAG = process.env.IATF_REVIEW_COPY === '1'
+const OPENED_LIVE = !!LIVE_DB_PATH && isSameFile(DB_PATH, LIVE_DB_PATH)
+if (REVIEW_FLAG && OPENED_LIVE) {
+  console.error('[server] IATF_REVIEW_COPY=1 인데 라이브 DB 를 열었습니다 — 검수 복사본 플래그는 라이브에 금지(fail-closed). 기동 중단.')
+  process.exit(1)
+}
+const IS_COPY_SERVER = REVIEW_FLAG
 // M-12(8/13 전수 검수): 무인증에도 신원 아닌 "식별자"(pid·기동시각)는 노출한다 —
 // 재기동 스크립트가 응답 중인 서버가 구판인지 신판인지 구분할 유일한 근거
 // (배치A 슬림화가 이를 없애 8/13 무음 실패 사고 형태가 재현 가능했다).
@@ -123,11 +132,76 @@ app.get('/api/health', (req, res) => {
 })
 
 // ══ W3 인증 (로그인·세션·권한) — 아래 라우트는 인증 미들웨어 앞(미인증 허용) ══
-app.get('/login', (_req, res) => res.type('html').sendFile(path.join(__dirname, 'login.html')))
+// ── M2 설치 마법사(8/23, 41호 M2 "설치 첫날 경험"): 활성 사용자 0명 = 방금 설치된 빈 시스템 → /setup 으로 유도 ──
+// 마법사 1회 = 회사 프로파일(회사명·대표·주소·전화) + 관리자 1계정(executive) + 팩 선택(IATF 애드온 언락 플래그).
+// fail-closed: 사용자가 1명이라도 있으면 /setup·/api/setup:* 전부 닫힘(409/redirect) — 운영 중 시스템에서 재실행 불가.
+// 쓰기는 authDb(쓰기 핸들) — `db` 는 읽기 전용 핸들(8/13 배치A).
+function setupNeeded() {
+  try {
+    return db.prepare('SELECT COUNT(*) AS c FROM app_users WHERE active = 1').get().c === 0
+  } catch {
+    return false
+  }
+}
+app.get('/setup', (_req, res) => {
+  if (!setupNeeded()) return res.redirect('/login')
+  res.type('html').sendFile(path.join(__dirname, 'setup.html'))
+})
+app.get('/api/setup:status', (_req, res) => res.json({ setupNeeded: setupNeeded() }))
+app.post('/api/setup:complete', (req, res) => {
+  if (!setupNeeded()) return res.status(409).json({ error: '이미 설치가 완료된 시스템입니다.' })
+  const b = req.body || {}
+  const companyName = String(b.companyName || '').trim()
+  const adminName = String(b.adminName || '').trim()
+  const adminPassword = String(b.adminPassword || '')
+  if (companyName.length < 2) return res.status(400).json({ error: '회사명을 2자 이상 입력하세요.' })
+  if (adminName.length < 2) return res.status(400).json({ error: '관리자 이름을 2자 이상 입력하세요.' })
+  if (adminName === 'E2E봇') return res.status(400).json({ error: '사용할 수 없는 이름입니다.' })
+  if (adminPassword.length < 4) return res.status(400).json({ error: '비밀번호는 4자 이상이어야 합니다.' })
+  const iatfAddon = b.iatfAddon === true || b.iatfAddon === 'on'
+  const profile = {
+    companyName,
+    companyNameShort: String(b.companyNameShort || '').trim(),
+    ceoName: String(b.ceoName || '').trim(),
+    address: String(b.address || '').trim(),
+    phone: String(b.phone || '').trim()
+  }
+  try {
+    const tx = authDb.transaction(() => {
+      const up = authDb.prepare('INSERT INTO company_profile (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+      for (const [k, v] of Object.entries(profile)) up.run(k, v)
+      const cfg = authDb.prepare('INSERT INTO app_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+      cfg.run('license.iatf_addon', iatfAddon ? 'on' : 'off')
+      cfg.run('install.setup_done', new Date().toISOString())
+      const hash = require('bcryptjs').hashSync(adminPassword, 10)
+      authDb.prepare('INSERT INTO app_users (name, team_dept, role, active, sort_order, password_hash, must_change_pw) VALUES (?, ?, ?, 1, 0, ?, 0)').run(
+        adminName,
+        String(b.adminDept || '경영').trim() || '경영',
+        'executive',
+        hash
+      )
+    })
+    tx()
+  } catch (e) {
+    return res.status(500).json({ error: `설치 저장 실패: ${e.message}` })
+  }
+  const r = auth.login(authDb, adminName, adminPassword)
+  if (r.error) return res.status(500).json({ error: r.error })
+  res.setHeader('Set-Cookie', auth.sessionCookie(r.sid))
+  console.log(`[server] 설치 마법사 완료 — 회사 "${companyName}" · 관리자 "${adminName}" · IATF 애드온 ${iatfAddon ? 'on' : 'off'}`)
+  res.json({ success: true, user: r.user })
+})
+
+app.get('/login', (_req, res) => {
+  if (setupNeeded()) return res.redirect('/setup')
+  res.type('html').sendFile(path.join(__dirname, 'login.html'))
+})
 
 app.post('/api/auth:login', (req, res) => {
   const { name, password } = req.body || {}
   if (!name) return res.status(400).json({ error: '이름을 입력하세요.' })
+  // M2: E2E봇은 검수 복사본(IATF_REVIEW_COPY=1)에서만 — 고객사·라이브에서는 계정이 있어도 거부(42호 D ②)
+  if (String(name) === 'E2E봇' && !IS_COPY_SERVER) return res.status(401).json({ error: '검수 복사본 전용 계정입니다.' })
   const r = auth.login(authDb, String(name), String(password || ''))
   if (r.error) return res.status(401).json({ error: r.error })
   res.setHeader('Set-Cookie', auth.sessionCookie(r.sid))
@@ -173,7 +247,7 @@ app.get('/api/brand', (_req, res) => {
 // 권한(누가)은 아래 디스패처의 PROTECTED 로. 여기서는 "로그인 여부"만 본다.
 // 로그인 페이지·인증 라우트는 이 미들웨어보다 앞에 등록됨 → 여기 도달 안 함.
 // 나머지(정적 자산·폴리필·SPA·디스패처)는 전부 인증 필요(자산은 인증 후 index.html 이 요청).
-const PUBLIC_PREFIX = ['/login']
+const PUBLIC_PREFIX = ['/login', '/setup', '/api/setup:']
 app.use((req, res, next) => {
   if (req.path === '/api/health') return next()
   const s = auth.sessionOf(req)

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>처음 설정 — 데일리Q</title>
+    <!--
+      M2 설치 마법사(2026-08-23, 41호 M2 "설치 첫날 경험"). 서버가 활성 사용자 0명일 때만 이 페이지를 연다(/setup).
+      1회 입력: 회사(회사명·약칭·대표·주소·전화) → 관리자 1계정 → 팩(IATF 16949 애드온 언락). 완료 = 자동 로그인 → /.
+      시각 = 로그인 페이지와 같은 결(어두운 배경·유리 카드). 파티클은 생략(설정 화면은 집중).
+      회사명은 양식 xlsx 의 {{companyName}} 토큰·로그인 화면·대시보드 헤더에 바로 쓰인다(39호 S1·S3-2).
+    -->
+    <style>
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        background: radial-gradient(1200px 600px at 50% -10%, #15203a 0%, #0b0f1a 60%);
+        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+        color: #e7eaf0; display: flex; align-items: center; justify-content: center; padding: 32px 12px;
+      }
+      .card {
+        width: min(520px, 94vw); background: rgba(17, 23, 38, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 28px 28px 22px;
+        backdrop-filter: blur(10px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      }
+      h1 { font-size: 18px; margin: 0 0 4px; }
+      p.sub { margin: 0 0 18px; color: #8a93a2; font-size: 12.5px; line-height: 1.6; }
+      h2 { font-size: 13px; color: #cbd6ea; margin: 18px 0 8px; letter-spacing: 0.02em; }
+      h2 span { color: #5b8def; margin-right: 6px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      input[type="text"], input[type="password"] {
+        width: 100%; box-sizing: border-box; background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 10px;
+        padding: 11px 12px; color: #fff; font-size: 14px; margin-bottom: 10px; outline: none;
+      }
+      input:focus { border-color: #5b8def; }
+      input::placeholder { color: #6b7280; }
+      label.chk { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #cbd6ea; padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.03); cursor: pointer; }
+      label.chk input { margin-top: 2px; }
+      label.chk small { display: block; color: #8a93a2; font-size: 11.5px; margin-top: 3px; line-height: 1.5; }
+      button {
+        width: 100%; background: #2563eb; border: 0; border-radius: 10px; padding: 13px;
+        color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 16px;
+      }
+      button:hover { background: #1d4fc7; }
+      button:disabled { opacity: 0.6; cursor: default; }
+      .err { margin-top: 12px; font-size: 12.5px; color: #f87171; font-weight: 600; min-height: 17px; text-align: center; }
+      .foot { margin-top: 10px; font-size: 11px; color: #6b7280; text-align: center; line-height: 1.6; }
+      .req { color: #f59e0b; }
+    </style>
+  </head>
+  <body>
+    <form class="card" id="f" autocomplete="off">
+      <h1>데일리Q 처음 설정</h1>
+      <p class="sub">설치 후 한 번만 합니다. 회사 정보와 관리자 계정을 만들면 바로 사용할 수 있습니다.<br />
+        양식·보고서에 찍히는 회사명은 여기서 정한 값이 쓰입니다(나중에 설정에서 변경 가능).</p>
+
+      <h2><span>1</span>회사</h2>
+      <input id="companyName" type="text" placeholder="회사명 (예: 주식회사 ○○정밀) *" autofocus />
+      <div class="row">
+        <input id="companyNameShort" type="text" placeholder="약칭 (예: ○○정밀)" />
+        <input id="ceoName" type="text" placeholder="대표자" />
+      </div>
+      <input id="address" type="text" placeholder="주소" />
+      <input id="phone" type="text" placeholder="대표 전화" />
+
+      <h2><span>2</span>관리자 계정</h2>
+      <div class="row">
+        <input id="adminName" type="text" placeholder="이름(실명) *" />
+        <input id="adminDept" type="text" placeholder="부서 (기본: 경영)" />
+      </div>
+      <div class="row">
+        <input id="adminPassword" type="password" placeholder="비밀번호 (4자 이상) *" />
+        <input id="adminPassword2" type="password" placeholder="비밀번호 확인 *" />
+      </div>
+
+      <h2><span>3</span>사용 범위</h2>
+      <label class="chk">
+        <input id="sqPack" type="checkbox" checked disabled />
+        <div>기본 — 미니MES + SQ(협력사 품질평가) 대응
+          <small>항상 포함. 생산·검사·수불 기록, SQ 42항목 가이드·체크포인트, 표준 양식 294종.</small></div>
+      </label>
+      <div style="height:8px"></div>
+      <label class="chk">
+        <input id="iatfAddon" type="checkbox" />
+        <div>IATF 16949 애드온 켜기
+          <small>IATF 조항 카탈로그·문서 BOM·내부심사 양식·규정 뼈대를 화면에 노출합니다. 라이선스 키는 별도 안내(나중에 켤 수 있음).</small></div>
+      </label>
+
+      <button id="btn" type="submit">설정 완료하고 시작하기</button>
+      <div class="err" id="err"></div>
+      <div class="foot">데일리Q · 설치 첫날 설정 · <span class="req">*</span> 필수</div>
+    </form>
+    <script>
+      const $ = (id) => document.getElementById(id)
+      fetch('/api/setup:status').then((r) => r.json()).then((j) => { if (j && j.setupNeeded === false) location.href = '/login' }).catch(() => {})
+      $('f').addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const err = $('err'); err.textContent = ''
+        if ($('adminPassword').value !== $('adminPassword2').value) { err.textContent = '비밀번호 확인이 일치하지 않습니다.'; return }
+        const body = {
+          companyName: $('companyName').value, companyNameShort: $('companyNameShort').value, ceoName: $('ceoName').value,
+          address: $('address').value, phone: $('phone').value,
+          adminName: $('adminName').value, adminDept: $('adminDept').value, adminPassword: $('adminPassword').value,
+          iatfAddon: $('iatfAddon').checked
+        }
+        $('btn').disabled = true
+        try {
+          const r = await fetch('/api/setup:complete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+          const j = await r.json().catch(() => ({}))
+          if (!r.ok) { err.textContent = j.error || ('실패 (' + r.status + ')'); $('btn').disabled = false; return }
+          location.href = '/'
+        } catch (ex) {
+          err.textContent = '서버에 연결할 수 없습니다.'; $('btn').disabled = false
+        }
+      })
+    </script>
+  </body>
+</html>

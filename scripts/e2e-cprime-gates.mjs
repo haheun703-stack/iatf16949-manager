@@ -66,7 +66,7 @@ function denies(name, script, env, pattern, args = []) {
 
 const COPY_DB = join(COPY_DIR, 'iatf16949.db')
 const LIVE_DB = join(LIVE_DIR, 'iatf16949.db')
-const baseEnv = { IATF_DATA_DIR: COPY_DIR, E2E_DB: COPY_DB, E2E_BASE: null }
+const baseEnv = { IATF_DATA_DIR: COPY_DIR, IATF_REVIEW_COPY: '1', E2E_DB: COPY_DB, E2E_BASE: null } // M2: 명시 플래그
 
 console.log('── N-5 라이브 DB 식별(실경로·동일파일) ──')
 denies('1 라이브 DB 경로 직접 지정 = 거부', 'e2e-w4b.mjs',
