@@ -23,6 +23,7 @@
 //   081_form_layout.sql        form_fields·form_cell_map·form_grid_spec·form_grid_columns·form_option_cells — 보유 양식분만 + 라벨/키 중립화(REWRITE_FIELDS)
 //                              ※ form_examples(④-7 ⓐ 제외)·form_change_log(운영 이력)·process_forms(TPC 프로세스 FK)는 싣지 않음
 //   085_form_examples.sql      form_examples — ④-7 ⓑ(8/23 사장님 "각색 포함"): 체인 163행 중 표준팩 양식분 + 고객사·공정 식별 2행 재작성(REWRITE_EXAMPLES)
+//   095_form_guides.sql        form_guides — 봇 집필 작성 가이드(SQ 필수 45+ 양식: 목적·필수 포함·심사 포인트·자주 지적·팁)
 //   090_doc_bom_skeleton.sql   bom_documents 105 — 목록 뼈대(④-5 ⓑ): rev/일자 NULL·status '파일없음(작성/수집필요)'·forms_count = 표준팩 양식 수 재계산
 //   091_regulation_skeleton.sql regulation_sections — 규정별 목차 뼈대 + 안내문(신규 집필·TPC 0) + 관련 양식 목록(080 에서 자동) + IATF/SQ 연계 포인터
 //
@@ -142,6 +143,14 @@ function insertBlock(table, cols, rows) {
 }
 // 레거시 무해 보강: 대상 테이블이 **비어 있을 때만**(= 클린 설치) 적재. 레거시 DB 는 id 가 이어져 있어 OR IGNORE 만으로는
 // 초과 id 행이 끼어들 수 있는 테이블(regulation_sections — TPC 622행 뒤에 623~855 가 들어감)에 쓴다. 기존 본문 보유 = no-op.
+// 클린 설치 전용 적재: S2 러너가 클린 설치에서만 남기는 표식(_migrations.status='snapshot')이 있을 때만. 레거시(전 파일 'applied') = no-op.
+// "비어 있을 때만"으로는 부족한 테이블(form_guides — 레거시도 0건일 수 있어 끼어듦)에 쓴다.
+function insertBlockIfClean(table, cols, rows) {
+  if (!rows.length) return `-- ${table}: 0행\n`
+  const vals = rows.map((r) => `  (${cols.map((c) => q(r[c])).join(', ')})`).join(',\n')
+  const sel = cols.map((_, i) => `column${i + 1}`).join(', ')
+  return `INSERT OR IGNORE INTO ${table} (${cols.join(', ')})\nSELECT ${sel} FROM (VALUES\n${vals}\n) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);\n`
+}
 function insertBlockIfEmpty(table, cols, rows) {
   if (!rows.length) return `-- ${table}: 0행\n`
   const vals = rows.map((r) => `  (${cols.map((c) => q(r[c])).join(', ')})`).join(',\n')
@@ -439,6 +448,26 @@ const REWRITE_EXAMPLES = {
     '085_form_examples.sql',
     `양식 모범 예시 — ${rows.length}행(체인 각색 ${rows.length - added} + 봇 집필 ${added} · 양식 ${new Set(rows.map((r) => r.form_code)).size}종) · ④-7 ⓑ(8/23) · 테이블이 빈 클린 설치에서만 적재(레거시 no-op)`,
     insertBlockIfEmpty('form_examples', ['id', 'form_code', 'field_key', 'example_value', 'why_note', 'version'], rows)
+  )
+}
+
+// ── 095 양식 작성 가이드 (속 채우기 3순위, 8/23) — form_guides: AI 코파일럿 패널 + 정답 패널(작성 방법·감점) 공급 ──
+{
+  const g = JSON.parse(readFileSync(join(outDir, 'data', 'form-guides-authored.json'), 'utf-8')).guides
+  const codes = Object.keys(g)
+  const missing = codes.filter((c) => !keptCodes.has(c))
+  if (missing.length) { console.error(`[gen-pack-standard] 가이드 코드 미존재/제외: ${missing.join(', ')}`); process.exit(1) }
+  const rows = codes.map((c) => {
+    const x = g[c]
+    const body = { purpose: x.purpose || '', mustInclude: x.mustInclude || [], auditPoints: x.auditPoints || [], commonFindings: x.commonFindings || [], tips: x.tips || [] }
+    return { form_code: c, guide_json: JSON.stringify(body), provider: 'standard-pack', model: 'bot-authored-v1', generated_at: '2026-08-23T00:00:00.000Z' }
+  })
+  const bad = rows.filter((r) => TPC_RE.test(r.guide_json) || /현대|기아|위아|삼보|모비스|브레이징/.test(r.guide_json))
+  if (bad.length) { console.error(`[gen-pack-standard] 095 식별 잔재: ${bad.map((r) => r.form_code).join(', ')}`); process.exit(1) }
+  writePack(
+    '095_form_guides.sql',
+    `양식 작성 가이드 — ${rows.length}종(봇 집필: 목적·필수 포함·심사 포인트·자주 지적·팁) · 클린 설치 표식(_migrations snapshot)이 있는 DB 에서만 적재(레거시 no-op) · AI 재생성(force) 시 덮어씀`,
+    insertBlockIfClean('form_guides', ['form_code', 'guide_json', 'provider', 'model', 'generated_at'], rows)
   )
 }
 

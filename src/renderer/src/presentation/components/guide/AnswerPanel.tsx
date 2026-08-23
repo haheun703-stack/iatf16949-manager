@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BookOpen, ArrowRight, PanelLeftClose, Lock, Check } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useFormStore } from '../../stores/formStore'
-import type { FormExampleDto } from '@shared/ipc-types'
+import type { FormExampleDto, FormGuideDto } from '@shared/ipc-types'
 
 /**
  * P5 — 좌측 정답 패널(정답 따라쓰기, 목업 v2 화면②).
@@ -19,6 +19,7 @@ const TABS: { key: Tab; label: string; warn?: boolean }[] = [
 
 export function AnswerPanel({ onFold }: { onFold: () => void }): JSX.Element {
   const examples = useFormStore((s) => s.examples)
+  const guide = useFormStore((s) => s.guide) // 속 채우기 3순위(8/23): 표준팩 form_guides(봇 집필) 또는 AI 생성 가이드
   const importFrame = useFormStore((s) => s.importFrame)
   const [tab, setTab] = useState<Tab>('example')
   const [imported, setImported] = useState<number | null>(null)
@@ -92,7 +93,7 @@ export function AnswerPanel({ onFold }: { onFold: () => void }): JSX.Element {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 break-keep">
-        {examples.length === 0 ? (
+        {examples.length === 0 && tab === 'example' ? (
           <div className="text-[13px] text-muted-foreground leading-relaxed py-8 px-4 text-center">
             이 양식은 아직 <b>모범 예시</b>가 준비되지 않았습니다.
             <br />
@@ -106,11 +107,11 @@ export function AnswerPanel({ onFold }: { onFold: () => void }): JSX.Element {
         ) : tab === 'example' ? (
           <ExampleTable examples={examples} frameCount={frameCount} factCount={factCount} />
         ) : tab === 'howto' ? (
-          <HowTo examples={examples} />
+          <HowTo examples={examples} guide={guide} />
         ) : tab === 'evidence' ? (
           <Evidence examples={examples} />
         ) : (
-          <Penalty />
+          <Penalty guide={guide} />
         )}
       </div>
     </div>
@@ -179,13 +180,40 @@ function ExampleTable({
   )
 }
 
-function HowTo({ examples }: { examples: FormExampleDto[] }): JSX.Element {
+function HowTo({ examples, guide }: { examples: FormExampleDto[]; guide: FormGuideDto | null }): JSX.Element {
   const notes = examples.filter((e) => e.whyNote)
   return (
-    <div className="space-y-2.5 text-[13px]">
+    <div className="space-y-3 text-[13px]">
+      {guide && (guide.purpose || guide.mustInclude.length > 0) && (
+        <div className="space-y-2">
+          {guide.purpose && (
+            <p className="leading-relaxed rounded-md border border-border bg-muted/40 px-3 py-2">{guide.purpose}</p>
+          )}
+          {guide.mustInclude.length > 0 && (
+            <div>
+              <div className="font-semibold">반드시 들어가야 할 것</div>
+              <ul className="mt-1 space-y-1">
+                {guide.mustInclude.map((t, i) => (
+                  <li key={i} className="flex gap-1.5 leading-relaxed"><span className="text-success">✓</span><span>{t}</span></li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {guide.tips.length > 0 && (
+            <div>
+              <div className="font-semibold">작성 팁</div>
+              <ul className="mt-1 space-y-1 text-muted-foreground">
+                {guide.tips.map((t, i) => (
+                  <li key={i} className="flex gap-1.5 leading-relaxed"><span>→</span><span>{t}</span></li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
       <div className="font-semibold">항목별 작성 요령</div>
       {notes.length === 0 ? (
-        <p className="text-muted-foreground">등록된 작성 요령이 없습니다.</p>
+        <p className="text-muted-foreground">등록된 항목별 요령이 없습니다.</p>
       ) : (
         <ul className="space-y-2">
           {notes.map((e) => (
@@ -199,7 +227,6 @@ function HowTo({ examples }: { examples: FormExampleDto[] }): JSX.Element {
     </div>
   )
 }
-
 function Evidence({ examples }: { examples: FormExampleDto[] }): JSX.Element {
   const facts = examples.filter((e) => e.fieldClass === 'fact')
   return (
@@ -221,16 +248,38 @@ function Evidence({ examples }: { examples: FormExampleDto[] }): JSX.Element {
   )
 }
 
-function Penalty(): JSX.Element {
+function Penalty({ guide }: { guide: FormGuideDto | null }): JSX.Element {
   return (
-    <div className="text-[13px] space-y-2 text-rose-700">
-      <div className="font-semibold">감점 · 주의</div>
-      <ul className="space-y-1.5 text-[12.5px] leading-relaxed">
-        <li>· 측정값을 "OK" 한 글자로 대체 — 실측 수치를 적지 않으면 감점.</li>
-        <li>· 예시값을 그대로 복사 저장 — 기록 조작으로 간주(저장 자체가 차단됨).</li>
-        <li>· 판정 근거(기준·시료수) 누락 — "기준대로 검사했다"가 증명 안 됨.</li>
-        <li>· 부적합인데 관리대장 번호(NCR) 미연결 — 추적성 감점.</li>
-      </ul>
+    <div className="text-[13px] space-y-3">
+      {guide && guide.commonFindings.length > 0 && (
+        <div className="text-rose-700">
+          <div className="font-semibold">이 양식에서 자주 나오는 지적</div>
+          <ul className="mt-1 space-y-1.5 text-[12.5px] leading-relaxed">
+            {guide.commonFindings.map((t, i) => (
+              <li key={i}>! {t}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {guide && guide.auditPoints.length > 0 && (
+        <div>
+          <div className="font-semibold">심사원이 실제로 보는 것</div>
+          <ul className="mt-1 space-y-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+            {guide.auditPoints.map((t, i) => (
+              <li key={i}>• {t}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="text-rose-700">
+        <div className="font-semibold">공통 감점 · 주의</div>
+        <ul className="mt-1 space-y-1.5 text-[12.5px] leading-relaxed">
+          <li>· 측정값을 "OK" 한 글자로 대체 — 실측 수치를 적지 않으면 감점.</li>
+          <li>· 예시값을 그대로 복사 저장 — 기록 조작으로 간주(저장 자체가 차단됨).</li>
+          <li>· 판정 근거(기준·시료수) 누락 — "기준대로 검사했다"가 증명 안 됨.</li>
+          <li>· 부적합인데 관리대장 번호(NCR) 미연결 — 추적성 감점.</li>
+        </ul>
+      </div>
     </div>
   )
 }

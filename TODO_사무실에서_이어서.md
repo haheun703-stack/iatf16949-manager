@@ -32,6 +32,9 @@
 - **★속 채우기 2순위 완료 — 양식 설명 294 상품 문장**: `data/form-descriptions-authored.json` 봇 집필 258 + 규정 문서 자동 36(NULL 0).
   080 카탈로그 생성기 우선순위 = 집필 > 규정 자동 > 기계 정리. 게이트 13/13. :8083 DB 재생성(pid 38556, 하헌/2222·E2E봇 재시드) — 설명·예시 반영.
   잔여 = ③ 작성방법·증빙·감점 가이드(form_guides) · ④ 나머지 양식 예시 · 코워크 대조본(설명 before/after 는 gen-forms-before-after 재생성으로 대체 가능).
+- **★속 채우기 3순위 완료 — 작성 가이드 52양식**: `data/form-guides-authored.json`(목적·필수 포함·심사 포인트·자주 지적·팁) → `095_form_guides.sql`
+  (클린 설치 표식 `_migrations.status=snapshot` 있는 DB 만 적재 — insertBlockIfClean 신설; 하네스 ⑫ 레거시 DB 에 _migrations applied 시드). AnswerPanel 작성 방법/감점 탭이
+  가이드를 표시(예시 없어도 탭 동작). 게이트 13/13 · :8083 pid 19524 화면 확인(자주검사 감점 탭 스크린샷). 잔여 = ④ 나머지 양식 예시·가이드(SQ 필수 외).
 - ▶ **다음** = 코워크 S3-2(8/19·8/23) 회신 대기 → **M2(설치 첫날 9/2)**: 설치 마법사(회사 프로파일·관리자 1계정·로고) · `IATF_REVIEW_COPY` 스위치 ·
   S3-2b(설명 재집필·예시 수치) 판단 · 라이브 도장 2건(mastersDir 경로·자동 시작). 관찰: 복사본 서버 기동 시 repo 루트 0바이트 `red` 재현(원인 미규명, 무해).
 

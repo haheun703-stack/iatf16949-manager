@@ -295,13 +295,17 @@ check(
 )
 
 // ── ⑫ 레거시 무해 — A 레거시 체인 DB 에 표준팩 전 파일을 적용해도 행수 불변 ──
-const LEGACY_TABLES = ['forms', 'form_examples', 'form_fields', 'form_cell_map', 'form_grid_spec', 'form_grid_columns', 'bom_documents', 'regulation_sections', 'sq_items', 'sq_guides', 'recurring_obligations', 'kpi_indicators']
+const LEGACY_TABLES = ['forms', 'form_examples', 'form_guides', 'form_fields', 'form_cell_map', 'form_grid_spec', 'form_grid_columns', 'bom_documents', 'regulation_sections', 'sq_items', 'sq_guides', 'recurring_obligations', 'kpi_indicators']
 let legacyDiff = []
 let legacyErr = ''
 if (!aFail) {
   try {
     const before = Object.fromEntries(LEGACY_TABLES.map((t) => [t, dbA.prepare(`SELECT COUNT(*) AS c FROM ${t}`).get().c]))
     const beforeNames = dbA.prepare("SELECT code, name FROM forms ORDER BY code").all().map((r) => `${r.code}|${r.name}`).join('|')
+    // 실제 레거시 DB 처럼 _migrations(전 파일 status='applied')를 둔다 — 095 처럼 "클린 설치 표식(snapshot)" 조건 팩의 no-op 을 같은 조건으로 검증
+    core.ensureMigrationsTable(dbA)
+    const insA = dbA.prepare('INSERT OR IGNORE INTO _migrations (name, status) VALUES (?, ?)')
+    for (const f of migFiles) insA.run(f, 'applied')
     const packDir = join(resourcesDir, 'packs', 'standard')
     for (const pf of readdirSync(packDir).filter((f) => f.endsWith('.sql')).sort()) {
       dbA.exec('BEGIN')
