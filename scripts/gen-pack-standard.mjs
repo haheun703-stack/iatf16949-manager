@@ -311,12 +311,22 @@ const keptForms = []
   // 없으면(레이아웃 없는 열람형·규정 문서) NULL — 번들 TPC 추출본 경로를 표준팩에 남기지 않는다.
   const stdTplDir = join(repo, 'resources', 'templates', 'standard')
   const hasStdTpl = (code) => existsSync(join(stdTplDir, `${code}.xlsx`))
+  // S3-2b(8/23 속 채우기 2순위): 봇 집필 설명(data/form-descriptions-authored.json) 우선 → 규정 문서 행은 자동 문장 → 나머지는 기계 정리(구 경로)
+  const authoredDesc = JSON.parse(readFileSync(join(outDir, 'data', 'form-descriptions-authored.json'), 'utf-8')).descriptions
+  const REG_DOC_CODE = /^[A-Z]-\d{4}$/
+  const descFor = (r) => {
+    if (authoredDesc[r.code]) return authoredDesc[r.code]
+    if (REG_DOC_CODE.test(r.code)) return `「${cleanName(r.code, r.name)}」 규정 본문(열람용). 작성 양식이 아니며 본문은 문서관리에서 등록·개정합니다.`
+    return cleanDescription(r.code, r.description)
+  }
+  const unknownDesc = Object.keys(authoredDesc).filter((c) => !all.some((r) => r.code === c) || EXCLUDE_FORMS[c])
+  if (unknownDesc.length) { console.error(`[gen-pack-standard] 집필 설명 코드 미존재/제외: ${unknownDesc.join(', ')}`); process.exit(1) }
   for (const r of all) {
     if (EXCLUDE_FORMS[r.code]) continue
     keptForms.push({
       ...r,
       name: cleanName(r.code, r.name),
-      description: cleanDescription(r.code, r.description),
+      description: descFor(r),
       template_path: hasStdTpl(r.code) ? `templates/standard/${r.code}.xlsx` : null,
       scope: '공통', // 'common'(스키마 기본값 잔재)·'공통' 혼용 → 렌더러 FormScope 정본 '공통' 으로 통일
       next_form_code: r.next_form_code && EXCLUDE_FORMS[r.next_form_code] ? null : r.next_form_code,
@@ -337,10 +347,13 @@ const keptForms = []
     process.exit(1)
   }
   const descNull = keptForms.filter((r) => r.description === null).length
+  const descAuthored = keptForms.filter((r) => authoredDesc[r.code]).length
+  const descMissing = keptForms.filter((r) => !r.description).map((r) => r.code)
+  if (descMissing.length) console.warn(`[gen-pack-standard] 설명 없는 양식 ${descMissing.length}: ${descMissing.join(', ')}`)
   const tplN = keptForms.filter((r) => r.template_path).length
   writePack(
     '080_forms_catalog.sql',
-    `양식 카탈로그 — ${keptForms.length}종(표준 xlsx 템플릿 ${tplN}종 = templates/standard/)(체인 ${all.length} − 제외 ${excluded.length}: 사업부 전용·타사업부 열람형 / 사업부 scope ${PROMOTE_TO_COMMON.length}종은 SQ 미니멀 정션 참조라 공통 편입) · ④-1 코드 체계 채택 · 이름 접미 정리 · 설명 중립화(NULL ${descNull}) · scope '공통' 통일`,
+    `양식 카탈로그 — ${keptForms.length}종(표준 xlsx 템플릿 ${tplN}종 = templates/standard/)(체인 ${all.length} − 제외 ${excluded.length}: 사업부 전용·타사업부 열람형 / 사업부 scope ${PROMOTE_TO_COMMON.length}종은 SQ 미니멀 정션 참조라 공통 편입) · ④-1 코드 체계 채택 · 이름 접미 정리 · 설명 = 봇 집필 ${descAuthored} + 규정 자동 ${keptForms.filter((r) => REG_DOC_CODE.test(r.code)).length} (NULL ${descNull}) · scope '공통' 통일`,
     insertBlock(
       'forms',
       ['code', 'name', 'reg_code', 'description', 'approvals_json', 'next_form_code', 'next_form_label', 'prev_form_code', 'layout_json', 'scope', 'deprecated', 'deprecated_note', 'replacement_page', 'resp_dept', 'iatf_clause', 'sq_item_ids', 'template_path'],
