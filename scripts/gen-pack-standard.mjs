@@ -22,6 +22,7 @@
 //                              · template_path → templates/standard/<code>.xlsx (④-2 ⓐ, gen-pack-standard-templates.mjs 산출 238종 · 없으면 NULL)
 //   081_form_layout.sql        form_fields·form_cell_map·form_grid_spec·form_grid_columns·form_option_cells — 보유 양식분만 + 라벨/키 중립화(REWRITE_FIELDS)
 //                              ※ form_examples(④-7 ⓐ 제외)·form_change_log(운영 이력)·process_forms(TPC 프로세스 FK)는 싣지 않음
+//   085_form_examples.sql      form_examples — ④-7 ⓑ(8/23 사장님 "각색 포함"): 체인 163행 중 표준팩 양식분 + 고객사·공정 식별 2행 재작성(REWRITE_EXAMPLES)
 //   090_doc_bom_skeleton.sql   bom_documents 105 — 목록 뼈대(④-5 ⓑ): rev/일자 NULL·status '파일없음(작성/수집필요)'·forms_count = 표준팩 양식 수 재계산
 //   091_regulation_skeleton.sql regulation_sections — 규정별 목차 뼈대 + 안내문(신규 집필·TPC 0) + 관련 양식 목록(080 에서 자동) + IATF/SQ 연계 포인터
 //
@@ -384,6 +385,47 @@ const inKept = (r) => keptCodes.has(r.form_code)
       insertBlock('form_grid_spec', ['form_code', 'grid_key', 'data_start_row', 'stride', 'max_rows'], gridSpec) +
       insertBlock('form_grid_columns', ['form_code', 'grid_key', 'col_key', 'label', 'sheet_col', 'type', 'sort_order'], gridCols) +
       insertBlock('form_option_cells', ['form_code', 'field_key', 'option', 'cell', 'sort_order'], optCells)
+  )
+}
+
+// ── 085 양식 모범 예시 (④-7 ⓑ — 8/23 "속 채우기" 1순위: 화면 "이렇게 작성하세요" 패널의 90% 정답) ──
+// 키 = `${form_code}|${field_key}`. 고객사명·공정 고유 표현만 각색(날짜·수치·문장은 보존 — 가짜 중립화 금지).
+const REWRITE_EXAMPLES = {
+  'H3200-02|r5': '고객사A 1공장',
+  'M1200-11|설비명': '특수공정 설비 #1'
+}
+{
+  const EX_RE = /현대|기아|위아|삼보|모비스|브레이징/
+  const all = db.prepare('SELECT id, form_code, field_key, example_value, why_note, version FROM form_examples ORDER BY id').all()
+  const rows = all
+    .filter((r) => keptCodes.has(r.form_code))
+    .map((r) => {
+      const rw = REWRITE_EXAMPLES[`${r.form_code}|${r.field_key}`]
+      return rw !== undefined ? { ...r, example_value: rw } : r
+    })
+  const missRw = Object.keys(REWRITE_EXAMPLES).filter((k) => !all.some((r) => `${r.form_code}|${r.field_key}` === k))
+  if (missRw.length) { console.error(`[gen-pack-standard] REWRITE_EXAMPLES 키 미존재: ${missRw.join(', ')}`); process.exit(1) }
+  // 봇 집필분(data/form-examples-authored.json — 8/23 속 채우기): 실존 양식·실존 필드만, 체인 예시와 키 충돌 시 체인 우선
+  const authored = JSON.parse(readFileSync(join(outDir, 'data', 'form-examples-authored.json'), 'utf-8')).rows
+  const fieldSet = new Set(db.prepare('SELECT form_code, field_key FROM form_fields').all().map((r) => `${r.form_code}|${r.field_key}`))
+  const have = new Set(rows.map((r) => `${r.form_code}|${r.field_key}`))
+  const badKey = authored.filter((r) => !fieldSet.has(`${r.form_code}|${r.field_key}`) || !keptCodes.has(r.form_code))
+  if (badKey.length) { console.error(`[gen-pack-standard] 집필 예시 키 미존재 ${badKey.length}: ${badKey.map((r) => r.form_code + '|' + r.field_key).slice(0, 8).join(', ')}`); process.exit(1) }
+  let nextId = Math.max(0, ...all.map((r) => r.id)) + 1000 // 체인 id 와 분리(레거시 id 충돌 방지)
+  let added = 0
+  for (const r of authored) {
+    const k = `${r.form_code}|${r.field_key}`
+    if (have.has(k)) continue
+    rows.push({ id: nextId++, form_code: r.form_code, field_key: r.field_key, example_value: r.example_value, why_note: r.why_note ?? null, version: 'std-v1' })
+    have.add(k)
+    added++
+  }
+  const bad = rows.filter((r) => EX_RE.test(`${r.example_value} ${r.why_note || ''}`) || TPC_RE.test(`${r.example_value} ${r.why_note || ''}`))
+  if (bad.length) { console.error(`[gen-pack-standard] 085 고객사/공정/실명 잔재 ${bad.length}행: ${bad.map((r) => r.form_code + '|' + r.field_key).join(', ')}`); process.exit(1) }
+  writePack(
+    '085_form_examples.sql',
+    `양식 모범 예시 — ${rows.length}행(체인 각색 ${rows.length - added} + 봇 집필 ${added} · 양식 ${new Set(rows.map((r) => r.form_code)).size}종) · ④-7 ⓑ(8/23) · 테이블이 빈 클린 설치에서만 적재(레거시 no-op)`,
+    insertBlockIfEmpty('form_examples', ['id', 'form_code', 'field_key', 'example_value', 'why_note', 'version'], rows)
   )
 }
 

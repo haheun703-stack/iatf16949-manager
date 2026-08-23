@@ -295,7 +295,7 @@ check(
 )
 
 // ── ⑫ 레거시 무해 — A 레거시 체인 DB 에 표준팩 전 파일을 적용해도 행수 불변 ──
-const LEGACY_TABLES = ['forms', 'form_fields', 'form_cell_map', 'form_grid_spec', 'form_grid_columns', 'bom_documents', 'regulation_sections', 'sq_items', 'sq_guides', 'recurring_obligations', 'kpi_indicators']
+const LEGACY_TABLES = ['forms', 'form_examples', 'form_fields', 'form_cell_map', 'form_grid_spec', 'form_grid_columns', 'bom_documents', 'regulation_sections', 'sq_items', 'sq_guides', 'recurring_obligations', 'kpi_indicators']
 let legacyDiff = []
 let legacyErr = ''
 if (!aFail) {
