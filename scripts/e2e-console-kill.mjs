@@ -112,6 +112,7 @@ async function startServer(tag, port) {
     'set ELECTRON_RUN_AS_NODE=1\r\n' +
     `set PORT=${port}\r\n` +
     `set IATF_DATA_DIR=${dataDir}\r\n` +
+    'set IATF_REVIEW_COPY=1\r\n' + // M2(8/23): 복사본 표지·E2E봇은 명시 플래그로만(42호 D)
     `"node_modules\\electron\\dist\\electron.exe" "server\\index.cjs" >> "${join(work, `log-${tag}.txt`)}" 2>&1\r\n`,
     'utf8')
 
