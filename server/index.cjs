@@ -14,6 +14,7 @@ const path = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
 const auth = require('./auth.cjs')
+const license = require('./license.cjs')
 
 // ── DB 연결 (env 로 데이터 루트 외부화 — 서버엔 userData 개념 없음) ──
 const DATA_DIR = process.env.IATF_DATA_DIR || path.join(process.env.APPDATA || '', 'iatf16949-manager')
@@ -134,11 +135,11 @@ app.get('/api/health', (req, res) => {
 // ══ W3 인증 (로그인·세션·권한) — 아래 라우트는 인증 미들웨어 앞(미인증 허용) ══
 // ── M2 설치 마법사(8/23, 41호 M2 "설치 첫날 경험"): 활성 사용자 0명 = 방금 설치된 빈 시스템 → /setup 으로 유도 ──
 // 마법사 1회 = 회사 프로파일(회사명·대표·주소·전화) + 관리자 1계정(executive) + 팩 선택(IATF 애드온 언락 플래그).
-// fail-closed: 사용자가 1명이라도 있으면 /setup·/api/setup:* 전부 닫힘(409/redirect) — 운영 중 시스템에서 재실행 불가.
+// fail-closed: 사용자가 1명이라도 있으면(비활성 포함) /setup·/api/setup:* 전부 닫힘(409/redirect) — 운영 중 시스템에서 재실행 불가.
 // 쓰기는 authDb(쓰기 핸들) — `db` 는 읽기 전용 핸들(8/13 배치A).
 function setupNeeded() {
   try {
-    return db.prepare('SELECT COUNT(*) AS c FROM app_users WHERE active = 1').get().c === 0
+    return db.prepare('SELECT COUNT(*) AS c FROM app_users').get().c === 0 // 비활성 포함 — 전원 비활성이어도 마법사는 다시 열리지 않는다(리뷰 8/23)
   } catch {
     return false
   }
@@ -158,7 +159,16 @@ app.post('/api/setup\\:complete', (req, res) => {
   if (adminName.length < 2) return res.status(400).json({ error: '관리자 이름을 2자 이상 입력하세요.' })
   if (adminName === 'E2E봇') return res.status(400).json({ error: '사용할 수 없는 이름입니다.' })
   if (adminPassword.length < 4) return res.status(400).json({ error: '비밀번호는 4자 이상이어야 합니다.' })
-  const iatfAddon = b.iatfAddon === true || b.iatfAddon === 'on'
+  // 애드온은 키가 맞을 때만 on (리뷰 8/23: 체크박스만으로 유료 모듈이 열리던 구멍). 키 없이 체크 = off + 안내.
+  const wantAddon = b.iatfAddon === true || b.iatfAddon === 'on'
+  let iatfAddon = false
+  let addonKey = null
+  if (wantAddon && String(b.licenseKey || '').trim()) {
+    const v = license.verifyKey(b.licenseKey, companyName)
+    if (!v.ok) return res.status(400).json({ error: v.error })
+    iatfAddon = true
+    addonKey = v.key
+  }
   const profile = {
     companyName,
     companyNameShort: String(b.companyNameShort || '').trim(),
@@ -172,6 +182,7 @@ app.post('/api/setup\\:complete', (req, res) => {
       for (const [k, v] of Object.entries(profile)) up.run(k, v)
       const cfg = authDb.prepare('INSERT INTO app_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
       cfg.run('license.iatf_addon', iatfAddon ? 'on' : 'off')
+      if (addonKey) { cfg.run('license.iatf_key', addonKey); cfg.run('license.iatf_unlocked_at', new Date().toISOString()) }
       cfg.run('install.setup_done', new Date().toISOString())
       const hash = require('bcryptjs').hashSync(adminPassword, 10)
       authDb.prepare('INSERT INTO app_users (name, team_dept, role, active, sort_order, password_hash, must_change_pw) VALUES (?, ?, ?, 1, 0, ?, 0)').run(
@@ -189,7 +200,7 @@ app.post('/api/setup\\:complete', (req, res) => {
   if (r.error) return res.status(500).json({ error: r.error })
   res.setHeader('Set-Cookie', auth.sessionCookie(r.sid))
   console.log(`[server] 설치 마법사 완료 — 회사 "${companyName}" · 관리자 "${adminName}" · IATF 애드온 ${iatfAddon ? 'on' : 'off'}`)
-  res.json({ success: true, user: r.user })
+  res.json({ success: true, user: r.user, iatfAddon, addonSkipped: wantAddon && !iatfAddon })
 })
 
 app.get('/login', (_req, res) => {
@@ -218,45 +229,24 @@ app.post('/api/auth\\:logout', (req, res) => {
   res.json({ success: true })
 })
 
-// ── M2 라이선스(IATF 애드온 1키 — 32/33호 상품 구조): app_config 'license.iatf_addon' on/off ──
-// 키 = "IATF-XXXX-XXXX-XXXX-XXXX" — 회사명(company_profile.companyName)에 묶인 HMAC(v1 오프라인 검증).
-// 발급 = scripts/gen-license-key.mjs <회사명> (같은 함수). 정식 발급·회수 절차는 M4(판매 v1 패키지)에서 확정.
-const LICENSE_SALT = 'dailyq-iatf-addon-v1'
-function licenseKeyFor(companyName) {
-  const h = require('crypto').createHmac('sha256', LICENSE_SALT).update(String(companyName || '').trim()).digest('hex').toUpperCase().slice(0, 16)
-  return `IATF-${h.slice(0, 4)}-${h.slice(4, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}`
-}
-function licenseState() {
-  try {
-    const r = db.prepare("SELECT value FROM app_config WHERE key = 'license.iatf_addon'").get()
-    return { iatfAddon: !!r && r.value === 'on' }
-  } catch {
-    return { iatfAddon: false }
-  }
-}
+// ── M2 라이선스(IATF 애드온 1키) — 계산·검증·상태 = server/license.cjs 단일 출처 (gen-license-key.mjs·e2e 도 같은 모듈) ──
+const licenseState = () => license.licenseState(db)
 app.get('/api/auth\\:me', (req, res) => {
   const s = auth.sessionOf(req)
   if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
   res.json({ id: s.userId, name: s.name, role: s.role, teamDept: s.teamDept, license: licenseState() })
 })
-app.get('/api/license\\:state', (req, res) => {
-  const s = auth.sessionOf(req)
-  if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
-  res.json(licenseState())
-})
 app.post('/api/license\\:unlock', (req, res) => {
   const s = auth.sessionOf(req)
   if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
   if (s.role !== 'executive') return res.status(403).json({ error: '라이선스 키 입력은 최종관리자(executive)만 할 수 있습니다.' })
-  const key = String((req.body && req.body.key) || '').trim().toUpperCase().replace(/\s+/g, '')
-  if (!/^IATF-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(key)) return res.status(400).json({ error: '키 형식이 아닙니다. 예: IATF-1A2B-3C4D-5E6F-7A8B' })
   let companyName = ''
   try { companyName = (db.prepare("SELECT value FROM company_profile WHERE key = 'companyName'").get() || {}).value || '' } catch { /* noop */ }
-  if (!companyName) return res.status(400).json({ error: '회사명이 설정되지 않았습니다. 설정 → 회사 프로파일에서 회사명을 먼저 입력하세요.' })
-  if (key !== licenseKeyFor(companyName)) return res.status(400).json({ error: `이 키는 "${companyName}" 용이 아닙니다. 발급받은 회사명과 등록된 회사명이 같은지 확인하세요.` })
+  const v = license.verifyKey(req.body && req.body.key, companyName)
+  if (!v.ok) return res.status(400).json({ error: v.error })
   const cfg = authDb.prepare('INSERT INTO app_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
   cfg.run('license.iatf_addon', 'on')
-  cfg.run('license.iatf_key', key)
+  cfg.run('license.iatf_key', v.key)
   cfg.run('license.iatf_unlocked_at', new Date().toISOString())
   console.log(`[server] IATF 애드온 언락 — ${s.name} · 회사 "${companyName}"`)
   res.json({ success: true, ...licenseState() })
@@ -268,7 +258,6 @@ app.post('/api/license\\:lock', (req, res) => {
   authDb.prepare('INSERT INTO app_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run('license.iatf_addon', 'off')
   res.json({ success: true, ...licenseState() })
 })
-module.exports.licenseKeyFor = licenseKeyFor
 
 app.post('/api/auth\\:changePassword', (req, res) => {
   const s = auth.sessionOf(req)
@@ -296,7 +285,8 @@ app.get('/api/brand', (_req, res) => {
 // 권한(누가)은 아래 디스패처의 PROTECTED 로. 여기서는 "로그인 여부"만 본다.
 // 로그인 페이지·인증 라우트는 이 미들웨어보다 앞에 등록됨 → 여기 도달 안 함.
 // 나머지(정적 자산·폴리필·SPA·디스패처)는 전부 인증 필요(자산은 인증 후 index.html 이 요청).
-const PUBLIC_PREFIX = ['/login', '/setup', '/api/setup:']
+// 리뷰(8/23): startsWith 접두 매칭은 /setup/anything·/setupx 로 인증 없이 SPA 가 열렸다 → 정확 일치 목록
+const PUBLIC_PATHS = new Set(['/login', '/setup', '/api/setup:status', '/api/setup:complete'])
 app.use((req, res, next) => {
   if (req.path === '/api/health') return next()
   const s = auth.sessionOf(req)
@@ -304,12 +294,13 @@ app.use((req, res, next) => {
     req.session = s
     return next()
   }
-  if (PUBLIC_PREFIX.some((p) => req.path.startsWith(p))) return next()
+  if (PUBLIC_PATHS.has(req.path)) return next()
   // API 는 401 JSON, 화면 요청은 로그인 페이지로
   if (req.path.startsWith('/api/') || req.path.startsWith('/download/')) {
     return res.status(401).json({ error: '로그인이 필요합니다.' })
   }
-  return res.redirect('/login')
+  // 현장 폰 진입(/m)은 로그인 뒤 제자리로 — login.html 이 next 를 화이트리스트(/, /m)로만 받는다(리뷰 8/23)
+  return res.redirect(req.path === '/m' ? '/login?next=%2Fm' : '/login')
 })
 
 // ── 채널 맵: main/ipc 핸들러를 electron shim 위에서 등록해 그대로 재사용(W1b, 소스 무수정) ──
@@ -580,11 +571,15 @@ function screenRuleOf(session, pageId) {
 
 // ── POST /api/{channel} 디스패처 ──
 // IPC 핸들러 시그니처 (event, payload) 를 그대로 호출한다(event 미사용 — §0.5 대조로 확인).
-app.post('/api/\:channel', (req, res) => {
+app.post('/api/:channel', (req, res) => {
   const ch = req.params.channel
   const fn = routes.get(ch)
   if (!fn) return res.status(404).json({ error: `미구현 채널: ${ch}` })
 
+  // IATF 애드온 게이트(리뷰 8/23: 종전엔 렌더러 AppShell 만 막아 curl 로 데이터가 그대로 나왔다) — 서버가 정본.
+  if (license.isAddonChannel(ch) && !licenseState().iatfAddon) {
+    return res.status(403).json({ error: 'IATF 16949 애드온 라이선스가 필요합니다.', code: 'ADDON_LOCKED' })
+  }
   // 권한 가드(W3-4): 로그인은 미들웨어가 이미 보장 — 여기서는 role 확인.
   const allowedRoles = PROTECTED[ch]
   if (allowedRoles && !(req.session && allowedRoles.includes(req.session.role))) {

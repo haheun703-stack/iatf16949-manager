@@ -84,8 +84,9 @@
       <label class="chk">
         <input id="iatfAddon" type="checkbox" />
         <div>IATF 16949 애드온 켜기
-          <small>IATF 조항 카탈로그·문서 BOM·내부심사 양식·규정 뼈대를 화면에 노출합니다. 라이선스 키는 별도 안내(나중에 켤 수 있음).</small></div>
+          <small>IATF 조항 카탈로그·문서 BOM·내부심사 양식·규정 뼈대를 화면에 노출합니다. <b>라이선스 키가 있어야 켜집니다</b>(없으면 나중에 설정에서 입력).</small></div>
       </label>
+      <input id="licenseKey" type="text" placeholder="라이선스 키 (IATF-XXXX-XXXX-XXXX-XXXX) — 있을 때만" style="display:none;margin-top:8px" />
 
       <button id="btn" type="submit">설정 완료하고 시작하기</button>
       <div class="err" id="err"></div>
@@ -93,6 +94,7 @@
     </form>
     <script>
       const $ = (id) => document.getElementById(id)
+      $('iatfAddon').addEventListener('change', () => { $('licenseKey').style.display = $('iatfAddon').checked ? 'block' : 'none' })
       fetch('/api/setup:status').then((r) => r.json()).then((j) => { if (j && j.setupNeeded === false) location.href = '/login' }).catch(() => {})
       $('f').addEventListener('submit', async (e) => {
         e.preventDefault()
@@ -102,13 +104,14 @@
           companyName: $('companyName').value, companyNameShort: $('companyNameShort').value, ceoName: $('ceoName').value,
           address: $('address').value, phone: $('phone').value,
           adminName: $('adminName').value, adminDept: $('adminDept').value, adminPassword: $('adminPassword').value,
-          iatfAddon: $('iatfAddon').checked
+          iatfAddon: $('iatfAddon').checked, licenseKey: $('licenseKey').value
         }
         $('btn').disabled = true
         try {
           const r = await fetch('/api/setup:complete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
           const j = await r.json().catch(() => ({}))
           if (!r.ok) { err.textContent = j.error || ('실패 (' + r.status + ')'); $('btn').disabled = false; return }
+          if (j.addonSkipped) alert('IATF 애드온은 라이선스 키가 없어 켜지지 않았습니다. 나중에 최종관리자 계정으로 IATF 메뉴에서 키를 입력하면 열립니다.')
           location.href = '/'
         } catch (ex) {
           err.textContent = '서버에 연결할 수 없습니다.'; $('btn').disabled = false

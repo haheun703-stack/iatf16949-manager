@@ -83,11 +83,9 @@ try {
       if (TPC_RE.test(s)) tpc++
       if (s.includes(`E2E-${code}`)) injected = true
     }))
-    const tplHasToken = exp.source?.includes('templates/standard') || true
     check(
       `${code} export (시트 "${ws.name}" · 토큰 잔존 ${tokens} · 회사명 치환 ${company} · TPC ${tpc} · 주입 ${injected ? '○' : '—'})`,
-      ws.name.includes(code) && tokens === 0 && tpc === 0 && (first ? injected : true),
-      tplHasToken ? '' : ''
+      ws.name.includes(code) && tokens === 0 && tpc === 0 && (first ? injected : true)
     )
   }
 } finally {

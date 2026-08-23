@@ -389,4 +389,4 @@ SELECT column1, column2, column3, column4, column5, column6 FROM (VALUES
   (1403, 'B2300-03', '점검품목', 'ABC-12345 외관·치수', NULL, 'std-v1'),
   (1404, 'B2300-03', '점검대응자', '김영희(반장)', NULL, 'std-v1'),
   (1405, 'B2300-03', '특이사항', '작업대 조도 낮음(420lx) → 조명 추가 요청', NULL, 'std-v1')
-) WHERE NOT EXISTS (SELECT 1 FROM form_examples LIMIT 1);
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);

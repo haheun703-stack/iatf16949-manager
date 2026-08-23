@@ -53,11 +53,11 @@ export function MobileShell(): JSX.Element {
   }
   const logout = async (): Promise<void> => {
     try { await fetch('/api/auth:logout', { method: 'POST' }) } catch { /* noop */ }
-    location.href = '/login'
+    location.href = '/login?next=%2Fm'
   }
 
   if (sessionChecked && !session) {
-    location.href = '/login'
+    location.href = '/login?next=%2Fm'
     return <div />
   }
   const me = session?.name ?? ''

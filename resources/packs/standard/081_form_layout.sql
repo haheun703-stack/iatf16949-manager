@@ -3,7 +3,8 @@
 -- 자동 생성: scripts/gen-pack-standard.mjs (손편집 금지 — 재작성·제외 목록도 생성기에 있음)
 -- 근거: 40호 ④ 도장(2026-08-19) · 39호 S3 · 실명 0·회사식별 0(생성기 게이트)
 -- ============================================================
-INSERT OR IGNORE INTO form_fields (id, form_code, field_key, label, type, section, placeholder, options_json, unit, ai_enabled, ai_prompt_hint, sort_order, field_class) VALUES
+INSERT OR IGNORE INTO form_fields (id, form_code, field_key, label, type, section, placeholder, options_json, unit, ai_enabled, ai_prompt_hint, sort_order, field_class)
+SELECT column1, column2, column3, column4, column5, column6, column7, column8, column9, column10, column11, column12, column13 FROM (VALUES
   (1, 'B1100-01', 'h1', '발행번호', 'auto', '기본정보', 'NCR-2026-XXXX (자동부여)', NULL, NULL, 0, NULL, 1, 'frame'),
   (2, 'B1100-01', 'h2', '작성일자', 'date', '기본정보', NULL, NULL, NULL, 0, NULL, 2, 'fact'),
   (3, 'B1100-01', 'h3', '작성자', 'auto', '기본정보', '로그인 사용자', NULL, NULL, 0, NULL, 3, 'frame'),
@@ -1995,8 +1996,10 @@ INSERT OR IGNORE INTO form_fields (id, form_code, field_key, label, type, sectio
   (2716, 'F1100-06', '교육장소', '교육 장소', 'text', '교육 정보', NULL, NULL, NULL, 0, NULL, 14, 'frame'),
   (2717, 'F1100-06', '교육대상', '교육 대상', 'text', '교육 정보', NULL, NULL, NULL, 0, NULL, 15, 'frame'),
   (2718, 'F1100-06', '교육인원', '교육 인원', 'text', '교육 정보', NULL, NULL, NULL, 0, NULL, 16, 'frame'),
-  (2719, 'F1100-06', '교육내용', '교육 내용', 'textarea', '교육 내용', NULL, NULL, NULL, 0, NULL, 20, NULL);
-INSERT OR IGNORE INTO form_cell_map (id, form_code, field_key, label, cell, type, sort_order) VALUES
+  (2719, 'F1100-06', '교육내용', '교육 내용', 'textarea', '교육 내용', NULL, NULL, NULL, 0, NULL, 20, NULL)
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);
+INSERT OR IGNORE INTO form_cell_map (id, form_code, field_key, label, cell, type, sort_order)
+SELECT column1, column2, column3, column4, column5, column6, column7 FROM (VALUES
   (1, 'A1100-02', '공장장', '공장장', 'AP2', 'text', 0),
   (2, 'A1100-02', '업무변경사유', '업무 변경사유', 'E27', 'text', 1),
   (18, 'A2200-02', '해당팀', '해 당 팀', 'Y20', 'text', 0),
@@ -4296,8 +4299,10 @@ INSERT OR IGNORE INTO form_cell_map (id, form_code, field_key, label, cell, type
   (4532, 'F1100-06', '교육장소', '교육 장소', 'X6', 'text', 7),
   (4533, 'F1100-06', '교육대상', '교육 대상', 'F7', 'text', 8),
   (4534, 'F1100-06', '교육인원', '교육 인원', 'X7', 'text', 9),
-  (4535, 'F1100-06', '교육내용', '교육 내용', 'A9', 'text', 10);
-INSERT OR IGNORE INTO form_grid_spec (form_code, grid_key, data_start_row, stride, max_rows) VALUES
+  (4535, 'F1100-06', '교육내용', '교육 내용', 'A9', 'text', 10)
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);
+INSERT OR IGNORE INTO form_grid_spec (form_code, grid_key, data_start_row, stride, max_rows)
+SELECT column1, column2, column3, column4, column5 FROM (VALUES
   ('A2200-01', '참석자', 7, 1, 5),
   ('A2200-03', 'items', 8, 3, 14),
   ('A5100-01', 'sys', 17, 2, 9),
@@ -4437,8 +4442,10 @@ INSERT OR IGNORE INTO form_grid_spec (form_code, grid_key, data_start_row, strid
   ('M3100-05', 'rows', 5, 1, 14),
   ('M3100-06', 'rows', 4, 1, 23),
   ('M4100-01', 'rows', 8, 1, 25),
-  ('M4100-02', 'rows', 8, 1, 25);
-INSERT OR IGNORE INTO form_grid_columns (form_code, grid_key, col_key, label, sheet_col, type, sort_order) VALUES
+  ('M4100-02', 'rows', 8, 1, 25)
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);
+INSERT OR IGNORE INTO form_grid_columns (form_code, grid_key, col_key, label, sheet_col, type, sort_order)
+SELECT column1, column2, column3, column4, column5, column6, column7 FROM (VALUES
   ('A2200-01', '참석자', '소속1', '소속(좌)', 'C', 'text', 1),
   ('A2200-01', '참석자', '직급1', '직급(좌)', 'H', 'text', 2),
   ('A2200-01', '참석자', '성명1', '성명(좌)', 'L', 'text', 3),
@@ -5564,9 +5571,12 @@ INSERT OR IGNORE INTO form_grid_columns (form_code, grid_key, col_key, label, sh
   ('M4100-01', 'rows', '점수', '점 수', 'T', 'number', 1),
   ('M4100-01', 'rows', '점검결과', '점검결과(미흡/우수사항)', 'V', 'text', 2),
   ('M4100-02', 'rows', '점수', '점 수', 'T', 'number', 1),
-  ('M4100-02', 'rows', '점검결과', '점검결과(미흡/우수사항)', 'V', 'text', 2);
-INSERT OR IGNORE INTO form_option_cells (form_code, field_key, option, cell, sort_order) VALUES
+  ('M4100-02', 'rows', '점검결과', '점검결과(미흡/우수사항)', 'V', 'text', 2)
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);
+INSERT OR IGNORE INTO form_option_cells (form_code, field_key, option, cell, sort_order)
+SELECT column1, column2, column3, column4, column5 FROM (VALUES
   ('H3200-02', 'r2', '유선', 'G6', 0),
   ('H3200-02', 'r2', '이메일', 'J6', 1),
   ('H3200-02', 'r2', 'FAX', 'M6', 2),
-  ('H3200-02', 'r2', '기타', 'P6', 3);
+  ('H3200-02', 'r2', '기타', 'P6', 3)
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);

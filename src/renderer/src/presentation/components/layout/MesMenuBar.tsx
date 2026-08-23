@@ -219,8 +219,8 @@ export function MesMenuBar(): JSX.Element {
     <div
       ref={barRef}
       // 8/23 사장님 지적: overflow-x-auto 는 브라우저 규칙상 overflow-y 도 auto 로 바꿔 절대배치 드롭다운(top 40px)을
-      // 막대 높이 안에서 잘라 버렸다 — 눌러도 목록이 안 보이던 원인. visible 로(좁은 화면은 flex-wrap 으로 줄바꿈).
-      className="w-full flex flex-wrap items-center gap-0.5 px-3 min-w-0 overflow-visible bg-mega-bg"
+      // 막대 높이 안에서 잘라 버렸다 — 눌러도 목록이 안 보이던 원인. visible 로. 줄바꿈은 하지 않는다(2행 위로 드롭다운이 덮임 — 리뷰 8/23).
+      className="w-full flex flex-nowrap items-center gap-0.5 px-3 min-w-0 overflow-visible bg-mega-bg"
       onMouseLeave={() => setOpen(null)}
     >
       {MODULES.map((m) => {

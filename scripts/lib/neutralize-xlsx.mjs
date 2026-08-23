@@ -32,6 +32,16 @@ const DIVISION_RULES = [
   [/쇼바용접|쇼바/g, '사업부 4']
 ]
 
+/** ④-2 고객사명(리뷰 8/23 — 검사 규칙 강화로 드러난 HKMC·삼보 270셀) → 범용 */
+const CUSTOMER_RULES = [
+  [/HKMC|현대자동차그룹|현대차그룹|현대위아|현대모비스|현대트랜시스|기아자동차|현대·기아|현대기아/g, '고객사'],
+  [/삼보s*네고/g, '고객 네고'],
+  [/삼보s*제출가/g, '고객 제출가'],
+  [/삼보매출액/g, '고객사 매출액'],
+  [/삼보모터스|삼보/g, '고객사'],
+  [/현대|기아|위아|모비스|(?<![가-힣])(현대|기아|위아|모비스)(?![가-힣])/g, '고객사']
+]
+
 /** ⑤ 공정·반·제품 고유 표현(명시) — 긴 것부터 */
 const PROCESS_RULES = [
   [/1\.제품안전 교육 대상\s*:\s*[^\n]*?스팟용접공정 작업자 전원/g, '1.제품안전 교육 대상 : 해당 공정 작업자 전원'],
@@ -44,8 +54,8 @@ const PROCESS_RULES = [
   [/스팟용접공정|브레이징 공정|브레징 용접 공정|브레이징/g, '핵심공정'],
   [/인발 파이프|조관 파이프|인발공정|조관공정|인발\/가공/g, '주력 공정'],
   [/티피씨재고/g, '자사재고'],
-  [/\b인발\b/g, '주력 공정'],
-  [/\b조관\b/g, '주력 공정']
+  [/(?<![가-힣A-Za-z])인발(?![가-힣A-Za-z])/g, '주력 공정'], // \b 는 한글에 안 먹힘(리뷰 8/23) — 한글/영문 경계 lookaround
+  [/(?<![가-힣A-Za-z])조관(?![가-힣A-Za-z])/g, '주력 공정']
 ]
 
 /** 문자열 1개 중립화. 변화 없으면 원문 그대로 반환. */
@@ -55,10 +65,25 @@ export function neutralizeString(s) {
   t = t.replace(COMPANY_RE, COMPANY_TOKEN)
   t = t.replace(TPC_PREFIX_RE, '')
   t = t.replace(NAME_RE, '')
+  for (const [re, rep] of CUSTOMER_RULES) t = t.replace(re, rep)
   for (const [re, rep] of PROCESS_RULES) t = t.replace(re, rep) // 공장 범례처럼 사업부명을 품은 긴 표현을 먼저
   for (const [re, rep] of DIVISION_RULES) t = t.replace(re, rep)
   return t
 }
 
 /** 생성기 게이트 — 치환 뒤 남으면 안 되는 것(토큰은 제외) */
-export const XLSX_RESIDUE_RE = /티피씨|TPC|AM사업부|인발|조관|필라넥|쇼바|김권표|서상규|하헌|서규하|장석봉|브레이징|브레징/
+export const XLSX_RESIDUE_RE = /티피씨|TPC|AM사업부|인발|조관|필라넥|쇼바|김권표|서상규|하헌|서규하|장석봉|브레이징|브레징|현대|기아|위아|삼보|모비스|HKMC/
+
+/** 셀 값에서 검사·치환 대상 문자열 전부 — 문자열·리치텍스트·수식 텍스트·수식 캐시 결과(리뷰 8/23: 수식 안 리터럴 누락). */
+export function cellStrings(v) {
+  if (v == null) return []
+  if (typeof v === 'string') return [v]
+  if (typeof v !== 'object') return []
+  const out = []
+  if ('richText' in v) out.push(v.richText.map((t) => t.text).join(''))
+  if (typeof v.formula === 'string') out.push(v.formula)
+  if (typeof v.sharedFormula === 'string') out.push(v.sharedFormula)
+  if (typeof v.result === 'string') out.push(v.result)
+  if (typeof v.text === 'string') out.push(v.text)
+  return out
+}

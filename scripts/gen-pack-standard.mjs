@@ -28,6 +28,8 @@
 //   091_regulation_skeleton.sql regulation_sections — 규정별 목차 뼈대 + 안내문(신규 집필·TPC 0) + 관련 양식 목록(080 에서 자동) + IATF/SQ 연계 포인터
 //
 // 규칙: INSERT OR IGNORE·컬럼 명시(packs README). AUTOINCREMENT id 는 명시 적재(guide_id 링크 보존).
+// 적재 정책(리뷰 8/23): 020~070(S3-1, 코워크 레거시 무해 실증분) = OR IGNORE · 080~095(S3-2 양식·예시·가이드·뼈대) = **클린 설치 표식이 있는 DB 만**
+//   (insertBlockIfClean) — 레거시에서 운영자가 지운 양식·문서가 팩 재적용으로 되살아나는 경로 차단.
 // 재실행 = 전량 재생성(결정적 — 체인이 결정적이므로 diff 0 이 정상).
 // 사용: ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\gen-pack-standard.mjs
 // ============================================================
@@ -363,7 +365,7 @@ const keptForms = []
   writePack(
     '080_forms_catalog.sql',
     `양식 카탈로그 — ${keptForms.length}종(표준 xlsx 템플릿 ${tplN}종 = templates/standard/)(체인 ${all.length} − 제외 ${excluded.length}: 사업부 전용·타사업부 열람형 / 사업부 scope ${PROMOTE_TO_COMMON.length}종은 SQ 미니멀 정션 참조라 공통 편입) · ④-1 코드 체계 채택 · 이름 접미 정리 · 설명 = 봇 집필 ${descAuthored} + 규정 자동 ${keptForms.filter((r) => REG_DOC_CODE.test(r.code)).length} (NULL ${descNull}) · scope '공통' 통일`,
-    insertBlock(
+    insertBlockIfClean(
       'forms',
       ['code', 'name', 'reg_code', 'description', 'approvals_json', 'next_form_code', 'next_form_label', 'prev_form_code', 'layout_json', 'scope', 'deprecated', 'deprecated_note', 'replacement_page', 'resp_dept', 'iatf_clause', 'sq_item_ids', 'template_path'],
       keptForms
@@ -402,11 +404,11 @@ const inKept = (r) => keptCodes.has(r.form_code)
   writePack(
     '081_form_layout.sql',
     `양식 레이아웃 — 필드 ${fields.length}·셀맵 ${cellMap.length}·그리드 ${gridSpec.length}/${gridCols.length}·옵션셀 ${optCells.length} (표준팩 양식 ${keptCodes.size}종분 · 라벨/키 중립화 ${Object.keys(REWRITE_FIELDS).length}건) ※ form_examples(④-7)·form_change_log·process_forms 제외`,
-    insertBlock('form_fields', ['id', 'form_code', 'field_key', 'label', 'type', 'section', 'placeholder', 'options_json', 'unit', 'ai_enabled', 'ai_prompt_hint', 'sort_order', 'field_class'], fields) +
-      insertBlock('form_cell_map', ['id', 'form_code', 'field_key', 'label', 'cell', 'type', 'sort_order'], cellMap) +
-      insertBlock('form_grid_spec', ['form_code', 'grid_key', 'data_start_row', 'stride', 'max_rows'], gridSpec) +
-      insertBlock('form_grid_columns', ['form_code', 'grid_key', 'col_key', 'label', 'sheet_col', 'type', 'sort_order'], gridCols) +
-      insertBlock('form_option_cells', ['form_code', 'field_key', 'option', 'cell', 'sort_order'], optCells)
+    insertBlockIfClean('form_fields', ['id', 'form_code', 'field_key', 'label', 'type', 'section', 'placeholder', 'options_json', 'unit', 'ai_enabled', 'ai_prompt_hint', 'sort_order', 'field_class'], fields) +
+      insertBlockIfClean('form_cell_map', ['id', 'form_code', 'field_key', 'label', 'cell', 'type', 'sort_order'], cellMap) +
+      insertBlockIfClean('form_grid_spec', ['form_code', 'grid_key', 'data_start_row', 'stride', 'max_rows'], gridSpec) +
+      insertBlockIfClean('form_grid_columns', ['form_code', 'grid_key', 'col_key', 'label', 'sheet_col', 'type', 'sort_order'], gridCols) +
+      insertBlockIfClean('form_option_cells', ['form_code', 'field_key', 'option', 'cell', 'sort_order'], optCells)
   )
 }
 
@@ -447,7 +449,7 @@ const REWRITE_EXAMPLES = {
   writePack(
     '085_form_examples.sql',
     `양식 모범 예시 — ${rows.length}행(체인 각색 ${rows.length - added} + 봇 집필 ${added} · 양식 ${new Set(rows.map((r) => r.form_code)).size}종) · ④-7 ⓑ(8/23) · 테이블이 빈 클린 설치에서만 적재(레거시 no-op)`,
-    insertBlockIfEmpty('form_examples', ['id', 'form_code', 'field_key', 'example_value', 'why_note', 'version'], rows)
+    insertBlockIfClean('form_examples', ['id', 'form_code', 'field_key', 'example_value', 'why_note', 'version'], rows)
   )
 }
 
@@ -488,7 +490,7 @@ const bomDocs = db
 writePack(
   '090_doc_bom_skeleton.sql',
   `문서 BOM 목록 뼈대 — ${bomDocs.length}건(매뉴얼·프로세스·품질규정·안전환경 제목 목록) · rev/일자 NULL · status '파일없음' · forms_count = 표준팩 양식 수`,
-  insertBlock('bom_documents', ['doc_no_norm', 'doc_no_raw', 'category', 'category_label', 'name', 'owner_dept', 'list_rev', 'list_date', 'file_rev', 'file_date', 'status', 'forms_count', 'sort_order'], bomDocs)
+  insertBlockIfClean('bom_documents', ['doc_no_norm', 'doc_no_raw', 'category', 'category_label', 'name', 'owner_dept', 'list_rev', 'list_date', 'file_rev', 'file_date', 'status', 'forms_count', 'sort_order'], bomDocs)
 )
 
 // ── 091 규정 뼈대 템플릿 (④-5 ⓑ — 목차 + 안내문 신규 집필 + 관련 양식 자동) ──
@@ -536,7 +538,7 @@ writePack(
   writePack(
     '091_regulation_skeleton.sql',
     `규정 뼈대 템플릿 — 규정 ${sortedRegs.length}종 × 9절 = ${rows.length}행(④-5 ⓑ: 목차 + 안내문 신규 집필 · 관련 양식은 080 에서 자동 · IATF/SQ 연계 포인터) · 본문 없음(고객사 집필)`,
-    insertBlockIfEmpty('regulation_sections', ['id', 'reg_code', 'section_title', 'section_body', 'sort_order'], rows) // 레거시(TPC 본문 622행 보유) = no-op
+    insertBlockIfClean('regulation_sections', ['id', 'reg_code', 'section_title', 'section_body', 'sort_order'], rows) // 레거시(TPC 본문 622행 보유) = no-op
   )
 }
 

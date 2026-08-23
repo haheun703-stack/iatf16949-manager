@@ -24,6 +24,15 @@ interface ItemRow {
   samples: string[]
 }
 
+// 모듈 스코프(리뷰 8/23): 렌더 안 선언 = 매 렌더 리마운트
+function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: string }): JSX.Element {
+  return (
+    <button type="button" onClick={onClick} className={cn('h-12 px-4 rounded-xl border text-[15px] font-semibold active:scale-95', on ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border')}>
+      {children}
+    </button>
+  )
+}
+
 export function MobileInspEntry({ onSaved }: { onSaved?: () => void }): JSX.Element {
   const [query, setQuery] = useState('')
   const [ctx, setCtx] = useState<SemimesScanContextDto | null>(null)
@@ -117,12 +126,6 @@ export function MobileInspEntry({ onSaved }: { onSaved?: () => void }): JSX.Elem
         setBusy(false)
       }
     })
-
-  const Chip = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: string }): JSX.Element => (
-    <button type="button" onClick={onClick} className={cn('h-12 px-4 rounded-xl border text-[15px] font-semibold active:scale-95', on ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border')}>
-      {children}
-    </button>
-  )
 
   return (
     <div className="space-y-4 pb-28">

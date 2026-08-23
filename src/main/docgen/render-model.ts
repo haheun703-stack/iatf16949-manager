@@ -17,6 +17,7 @@ import {
   resolveMasterFile,
   resolveTemplateFile,
   resolveSheet,
+  applyProfileTokens,
   cellText,
   norm,
   ALIASES
@@ -94,12 +95,23 @@ const MAX_COLS = 80 // 65~66열 양식(A5100-02·F2100-02·L3100-04) 수용. 오
 
 // 세션 메모리 캐시 (마스터는 불변 취급 — 앱 재시작 시 리셋)
 const cache = new Map<string, FormRenderModelDto>()
+// 리뷰(8/23): 표준팩 템플릿은 회사 칸이 {{companyName}} 토큰 — 화면 미리보기도 치환해야 하고, 프로파일이 바뀌면 캐시가 낡는다.
+// 캐시 키에 프로파일 서명(전 키 값의 해시)을 섞어 프로파일 변경 즉시 재구성.
+function profileSig(db: Database.Database): string {
+  try {
+    const rows = db.prepare('SELECT key, value FROM company_profile ORDER BY key').all() as Array<{ key: string; value: string | null }>
+    return rows.map((x) => `${x.key}=${x.value ?? ''}`).join('|')
+  } catch {
+    return ''
+  }
+}
 
 export async function buildRenderModel(
   db: Database.Database,
   formCode: string
 ): Promise<FormRenderModelDto> {
-  const hit = cache.get(formCode)
+  const cacheKey = `${formCode}::${profileSig(db)}`
+  const hit = cache.get(cacheKey)
   if (hit) return hit
 
   const form = db.prepare('SELECT reg_code, template_path FROM forms WHERE code = ?').get(formCode) as
@@ -113,6 +125,7 @@ export async function buildRenderModel(
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(src)
   const ws = resolveSheet(wb, formCode, { allowFirstSheetFallback: tpl != null })
+  applyProfileTokens(ws, db) // 표준팩 토큰 → 회사 프로파일(export 엔진과 동일 — 화면·출력 일치)
 
   const rowCount = Math.min(ws.rowCount || 1, MAX_ROWS)
   const colCount = Math.min(ws.columnCount || 1, MAX_COLS)
@@ -229,7 +242,7 @@ export async function buildRenderModel(
     rowCount, colCount, colWidthsPx, rowHeightsPx,
     cells, editCells
   }
-  cache.set(formCode, model)
+  cache.set(cacheKey, model)
   return model
 }
 

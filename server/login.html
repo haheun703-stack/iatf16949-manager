@@ -81,7 +81,9 @@
           })
           const j = await r.json()
           if (r.ok && j.success) {
-            location.href = '/'
+            // 리뷰(8/23): 현장 폰(/m)에서 로그인 벽에 걸리면 제자리로. 화이트리스트 밖은 '/'.
+            const next = new URLSearchParams(location.search).get('next')
+            location.href = next === '/m' ? '/m' : '/'
           } else {
             err.textContent = j.error || '로그인에 실패했습니다.'
             btn.disabled = false

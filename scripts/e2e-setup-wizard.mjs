@@ -19,6 +19,7 @@ import { mkCheck } from './lib/e2e.mjs'
 
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
+const { licenseKeyFor: keyFor } = require('../server/license.cjs')
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PORT = Number(process.env.E2E_PORT || 8097)
 if (PORT === 8080 || PORT === 8081 || PORT === 8083) { console.error('[e2e-guard] 운영 포트 거부'); process.exit(1) }
@@ -86,9 +87,15 @@ try {
   check(`⑦ 관리자명 'E2E봇' 거부 ${bad2.status}`, bad2.status === 400)
   const bad3 = await post('/api/setup:complete', { companyName: 'A', adminName: ADMIN, adminPassword: PW })
   check(`⑧ 회사명 2자 미만 거부 ${bad3.status}`, bad3.status === 400)
+  const bad4 = await post('/api/setup:complete', { companyName: COMPANY, adminName: ADMIN, adminPassword: PW, iatfAddon: true, licenseKey: 'IATF-0000-0000-0000-0000' })
+  check(`⑧-1 애드온 체크 + 틀린 키 → 거부 ${bad4.status} (리뷰: 체크박스만으로 열리던 구멍)`, bad4.status === 400)
+  const rNoAuth = await fetch(`${BASE}/setup/anything`, { redirect: 'manual' })
+  check(`⑧-2 /setup/anything 비인증 → 로그인 벽 ${rNoAuth.status} (접두 매칭 구멍 봉합)`, rNoAuth.status === 302)
+  const rM = await fetch(`${BASE}/m`, { redirect: 'manual' })
+  check(`⑧-3 /m 비인증 → ${rM.headers.get('location')} (next 보존)`, rM.status === 302 && rM.headers.get('location') === '/login?next=%2Fm')
 
   // 마법사 완료 → 자동 로그인
-  const ok = await post('/api/setup:complete', { companyName: COMPANY, companyNameShort: '설치테스트', ceoName: '홍길동', address: '경기도 어딘가 1', phone: '031-000-0000', adminName: ADMIN, adminDept: '품질', adminPassword: PW, iatfAddon: true })
+  const ok = await post('/api/setup:complete', { companyName: COMPANY, companyNameShort: '설치테스트', ceoName: '홍길동', address: '경기도 어딘가 1', phone: '031-000-0000', adminName: ADMIN, adminDept: '품질', adminPassword: PW, iatfAddon: true, licenseKey: keyFor(COMPANY) })
   const okJ = await jsonOf(ok)
   const cookie = (ok.headers.get('set-cookie') || '').split(';')[0]
   check(`⑨ 마법사 완료 200 + 세션 쿠키 + user.role=executive (${okJ?.user?.role})`, ok.ok && !!cookie && okJ?.user?.role === 'executive' && okJ?.user?.name === ADMIN)

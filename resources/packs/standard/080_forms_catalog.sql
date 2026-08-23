@@ -3,7 +3,8 @@
 -- 자동 생성: scripts/gen-pack-standard.mjs (손편집 금지 — 재작성·제외 목록도 생성기에 있음)
 -- 근거: 40호 ④ 도장(2026-08-19) · 39호 S3 · 실명 0·회사식별 0(생성기 게이트)
 -- ============================================================
-INSERT OR IGNORE INTO forms (code, name, reg_code, description, approvals_json, next_form_code, next_form_label, prev_form_code, layout_json, scope, deprecated, deprecated_note, replacement_page, resp_dept, iatf_clause, sq_item_ids, template_path) VALUES
+INSERT OR IGNORE INTO forms (code, name, reg_code, description, approvals_json, next_form_code, next_form_label, prev_form_code, layout_json, scope, deprecated, deprecated_note, replacement_page, resp_dept, iatf_clause, sq_item_ids, template_path)
+SELECT column1, column2, column3, column4, column5, column6, column7, column8, column9, column10, column11, column12, column13, column14, column15, column16, column17 FROM (VALUES
   ('A-2100', '사업계획 운영 규정', 'A-2100', '「사업계획 운영 규정」 규정 본문(열람용). 작성 양식이 아니며 본문은 문서관리에서 등록·개정합니다.', '["담당","팀장","사업부장"]', NULL, NULL, NULL, NULL, '공통', 0, NULL, NULL, '총무팀', '6', NULL, NULL),
   ('A-3100', '회의운영 규정', 'A-3100', '「회의운영 규정」 규정 본문(열람용). 작성 양식이 아니며 본문은 문서관리에서 등록·개정합니다.', '["담당","팀장","사업부장"]', NULL, NULL, NULL, NULL, '공통', 0, NULL, NULL, '총무팀', '5', NULL, NULL),
   ('A-4101', '관리표준 작성 지침', 'A-4101', '「관리표준 작성 지침」 규정 본문(열람용). 작성 양식이 아니며 본문은 문서관리에서 등록·개정합니다.', '["담당","팀장","사업부장"]', NULL, NULL, NULL, NULL, '공통', 0, NULL, NULL, '품질보증팀', '7', NULL, NULL),
@@ -375,4 +376,5 @@ INSERT OR IGNORE INTO forms (code, name, reg_code, description, approvals_json, 
   ('M4100-03', '3정 5S 평가 보고서', 'M-4100', '3정5S 평가 보고서.', '["담당","팀장","사업부장"]', NULL, NULL, NULL, NULL, '공통', 0, NULL, NULL, '생산팀', '7', NULL, 'templates/standard/M4100-03.xlsx'),
   ('M4100-04', '3정 5S 평가지적 및 시정대책서', 'M-4100', '3정5S 평가 지적 사항과 시정 대책서.', '["담당","팀장","사업부장"]', NULL, NULL, NULL, NULL, '공통', 0, NULL, NULL, '생산팀', '7', NULL, 'templates/standard/M4100-04.xlsx'),
   ('M4100-05', '3정5S 관리 구역도', 'M-4100', '열람형 — 3정5S 관리 구역도.', '["담당","팀장","사업부장"]', NULL, NULL, NULL, NULL, '공통', 0, NULL, NULL, '생산팀', '7', NULL, NULL),
-  ('M4200-01', '조도측정 체크시트', 'M-4200', '작업장 조도(Lux) 측정 체크시트. 측정 위치별 조도를 기록해 기준 이상인지 확인합니다.', '["담당","팀장","사업부장"]', NULL, NULL, NULL, NULL, '공통', 0, NULL, NULL, '품질보증팀', '7', NULL, 'templates/standard/M4200-01.xlsx');
+  ('M4200-01', '조도측정 체크시트', 'M-4200', '작업장 조도(Lux) 측정 체크시트. 측정 위치별 조도를 기록해 기준 이상인지 확인합니다.', '["담당","팀장","사업부장"]', NULL, NULL, NULL, NULL, '공통', 0, NULL, NULL, '품질보증팀', '7', NULL, 'templates/standard/M4200-01.xlsx')
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);

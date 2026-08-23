@@ -1504,4 +1504,4 @@ SQ 평가 연계 항목: 6_9 — 심사대응 SQ 화면의 해당 항목 가이�
 (2) 조도측정 체크시트 (M4200-01)', 7),
   (855, 'M-4200', '8. 관련 문서·참조', '[안내] 상위 문서(품질·환경 매뉴얼, 관련 프로세스)와 참조 표준·고객 요구사항(CSR)을 적는다.
 SQ 평가 연계 항목: 6_8 — 심사대응 SQ 화면의 해당 항목 가이드·체크포인트를 참조.', 8)
-) WHERE NOT EXISTS (SELECT 1 FROM regulation_sections LIMIT 1);
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);

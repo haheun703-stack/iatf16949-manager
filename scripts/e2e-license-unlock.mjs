@@ -10,7 +10,7 @@ import { mkdtempSync, rmSync, readFileSync, readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
-import { createHmac } from 'node:crypto'
+import { createRequire } from 'node:module'
 import { mkCheck } from './lib/e2e.mjs'
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -20,7 +20,7 @@ const BASE = `http://127.0.0.1:${PORT}`
 const { check, done } = mkCheck()
 const dataDir = mkdtempSync(join(tmpdir(), 'iatf-lic-e2e-'))
 const COMPANY = '주식회사 라이선스테스트'
-const keyFor = (name) => { const h = createHmac('sha256', 'dailyq-iatf-addon-v1').update(name).digest('hex').toUpperCase().slice(0, 16); return `IATF-${h.slice(0, 4)}-${h.slice(4, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}` }
+const { licenseKeyFor: keyFor, isAddonChannel } = createRequire(import.meta.url)('../server/license.cjs') // 단일 출처(리뷰 8/23)
 
 const child = spawn(join(repo, 'node_modules', 'electron', 'dist', 'electron.exe'), [join(repo, 'server', 'index.cjs')], {
   cwd: repo, env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', PORT: String(PORT), IATF_DATA_DIR: dataDir, IATF_INIT_DB: '1', IATF_INSTALL_PACKS: 'standard' }, stdio: 'ignore', windowsHide: true
@@ -34,6 +34,10 @@ try {
   const ok = await post('/api/setup:complete', { companyName: COMPANY, adminName: '라이선스관리자', adminPassword: 'lic1234', iatfAddon: false })
   const cookie = (ok.headers.get('set-cookie') || '').split(';')[0]
   check('② 마법사 완료(애드온 OFF)', ok.ok && !!cookie)
+  // 리뷰(8/23) 서버 게이트: 잠김 상태에서 애드온 채널은 403 ADDON_LOCKED (curl 우회 차단)
+  const gated = await post('/api/bom:stats', {}, cookie)
+  const gatedJ = await j(gated)
+  check(`②-1 잠김 상태 bom:stats → ${gated.status} ${gatedJ?.code || ''} (서버 게이트 · isAddonChannel=${isAddonChannel('bom:stats')})`, gated.status === 403 && gatedJ?.code === 'ADDON_LOCKED')
   const me0 = await j(await fetch(`${BASE}/api/auth:me`, { headers: { cookie } }))
   check(`③ auth:me.license.iatfAddon = ${me0?.license?.iatfAddon} (잠김)`, me0?.license?.iatfAddon === false)
   const bad1 = await post('/api/license:unlock', { key: 'hello' }, cookie)
@@ -46,6 +50,8 @@ try {
   const good = await post('/api/license:unlock', { key: keyFor(COMPANY).toLowerCase() }, cookie)
   const goodJ = await j(good)
   check(`⑦ 맞는 키(소문자 입력도 허용) → 200 · iatfAddon=${goodJ?.iatfAddon}`, good.ok && goodJ?.iatfAddon === true)
+  const open = await post('/api/bom:stats', {}, cookie)
+  check(`⑦-1 언락 후 bom:stats → ${open.status} (게이트 해제)`, open.ok)
   const me1 = await j(await fetch(`${BASE}/api/auth:me`, { headers: { cookie } }))
   check(`⑧ auth:me 재조회 iatfAddon = ${me1?.license?.iatfAddon} (열림)`, me1?.license?.iatfAddon === true)
   const lock = await post('/api/license:lock', {}, cookie)

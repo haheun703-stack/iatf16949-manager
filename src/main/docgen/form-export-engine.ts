@@ -14,7 +14,7 @@ import { readdirSync, mkdirSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app } from 'electron'
 import type Database from 'better-sqlite3'
-import { getProfileMap } from '../database/company-profile'
+
 
 const execFileP = promisify(execFile)
 
@@ -296,43 +296,43 @@ export function resolveTemplateFile(templatePath: string): string | null {
   return existsSync(base) ? base : null
 }
 
-// 표준팩 템플릿 토큰 치환(39호 S3-2 ④-2 ⓐ, 2026-08-23): 표준팩 xlsx 는 회사명 칸이 `{{companyName}}` 토큰이다
-// (gen-pack-standard-templates.mjs 가 정본의 ㈜티피씨 등을 토큰으로 바꿔 싣는다). 출력 시 company_profile 값으로 치환.
-// 토큰 없는 TPC 정본·구 템플릿에는 no-op. 값이 비어 있으면 빈 문자열(폴백 회사명 금지 — S1 규약).
-export const PROFILE_TOKENS: Record<string, string> = {
-  '{{companyName}}': 'companyName',
-  '{{companyNameShort}}': 'companyNameShort',
-  '{{companyNameEn}}': 'companyNameEn',
-  '{{ceoName}}': 'ceoName',
-  '{{address}}': 'address',
-  '{{phone}}': 'phone'
-}
+// 표준팩 템플릿 토큰 치환(39호 S3-2 ④-2 ⓐ, 2026-08-23 · 리뷰 8/23 개정): 표준팩 xlsx 의 회사 칸은 `{{companyName}}` 같은 토큰.
+// company_profile 의 **모든 키**를 `{{key}}` 로 받는다(종전 6키 하드코딩 → 키 추가 시 엔진 무수정). 문자열·리치텍스트·수식 캐시 결과까지
+// 치환(리뷰: L3101-02 R48~Y48 수식 결과에 토큰 잔존). 미지 키 = '' (폴백 회사명 금지 — S1 규약). TPC 정본·구 템플릿 = no-op.
+const TOKEN_RE = /\{\{\s*([A-Za-z][A-Za-z0-9_]*)\s*\}\}/g
 export function applyProfileTokens(ws: ExcelJS.Worksheet, db: Database.Database): number {
-  let prof: Record<string, string>
+  let prof: Record<string, string> = {}
   try {
-    prof = getProfileMap(db, Object.values(PROFILE_TOKENS))
+    const rows = db.prepare('SELECT key, value FROM company_profile').all() as Array<{ key: string; value: string | null }>
+    for (const r of rows) prof[r.key] = r.value ?? ''
   } catch {
-    return 0
+    prof = {}
   }
-  const tokens = Object.keys(PROFILE_TOKENS)
-  const sub = (t: string): string => {
-    let out = t
-    for (const tk of tokens) if (out.includes(tk)) out = out.split(tk).join(prof[PROFILE_TOKENS[tk]] || '')
-    return out
-  }
+  const sub = (t: string): string => t.replace(TOKEN_RE, (_m, k: string) => prof[k] ?? '')
   let n = 0
   ws.eachRow({ includeEmpty: false }, (row) =>
     row.eachCell({ includeEmpty: false }, (cell) => {
       const v = cell.value
       if (typeof v === 'string') {
-        if (tokens.some((tk) => v.includes(tk))) {
+        if (TOKEN_RE.test(v)) {
+          TOKEN_RE.lastIndex = 0
           cell.value = sub(v)
           n++
         }
+        TOKEN_RE.lastIndex = 0
       } else if (v && typeof v === 'object' && 'richText' in v) {
         const rt = (v as ExcelJS.CellRichTextValue).richText
-        if (rt.some((t) => tokens.some((tk) => t.text.includes(tk)))) {
+        if (rt.some((t) => { const hit = TOKEN_RE.test(t.text); TOKEN_RE.lastIndex = 0; return hit })) {
           cell.value = { richText: rt.map((t) => ({ ...t, text: sub(t.text) })) }
+          n++
+        }
+      } else if (v && typeof v === 'object' && 'formula' in v) {
+        const fv = v as ExcelJS.CellFormulaValue
+        const r = typeof fv.result === 'string' ? fv.result : null
+        const hitF = TOKEN_RE.test(fv.formula); TOKEN_RE.lastIndex = 0
+        const hitR = r != null && TOKEN_RE.test(r); TOKEN_RE.lastIndex = 0
+        if (hitF || hitR) {
+          cell.value = { ...fv, formula: sub(fv.formula), result: r != null ? sub(r) : fv.result } as ExcelJS.CellFormulaValue
           n++
         }
       }

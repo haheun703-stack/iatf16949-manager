@@ -30,15 +30,25 @@ export function ScanInput({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<number | null>(null)
+  const aliveRef = useRef(true) // 언마운트/정지 뒤 늦게 도착한 getUserMedia·detect 결과 무시(리뷰 8/23: 카메라가 안 꺼지던 경로)
+  const scanningRef = useRef(false)
 
   const stop = (): void => {
-    if (timerRef.current) window.clearInterval(timerRef.current)
+    scanningRef.current = false
+    if (timerRef.current) window.clearTimeout(timerRef.current)
     timerRef.current = null
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
     setScanning(false)
   }
-  useEffect(() => () => stop(), [])
+  useEffect(() => {
+    aliveRef.current = true
+    return () => {
+      aliveRef.current = false
+      stop()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const start = async (): Promise<void> => {
     setErr(null)
@@ -48,28 +58,42 @@ export function ScanInput({
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
+      if (!aliveRef.current) {
+        stream.getTracks().forEach((t) => t.stop()) // 기다리는 사이 화면이 닫힘 — 카메라 즉시 해제
+        return
+      }
       streamRef.current = stream
+      scanningRef.current = true
       setScanning(true)
       await new Promise((r) => setTimeout(r, 50))
       const v = videoRef.current
-      if (!v) return
+      if (!v || !aliveRef.current) {
+        stop()
+        return
+      }
       v.srcObject = stream
       await v.play()
       const det = new window.BarcodeDetector!({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'data_matrix'] })
-      timerRef.current = window.setInterval(async () => {
+      // 자기 예약 루프 = detect 1건만 비행(setInterval 은 detect 가 겹쳐 같은 QR 로 onResolve 가 2~3번 발사됐다 — 리뷰 8/23)
+      const tick = async (): Promise<void> => {
+        if (!scanningRef.current || !aliveRef.current) return
         try {
-          if (!videoRef.current || videoRef.current.readyState < 2) return
-          const found = await det.detect(videoRef.current)
-          const raw = found[0]?.rawValue?.trim()
-          if (raw) {
-            onChange(raw)
-            stop()
-            onResolve(raw)
+          if (videoRef.current && videoRef.current.readyState >= 2) {
+            const found = await det.detect(videoRef.current)
+            const raw = found[0]?.rawValue?.trim()
+            if (raw && scanningRef.current) {
+              onChange(raw)
+              stop()
+              onResolve(raw)
+              return
+            }
           }
         } catch {
           /* 프레임 실패 — 다음 틱 */
         }
-      }, 300)
+        if (scanningRef.current && aliveRef.current) timerRef.current = window.setTimeout(() => void tick(), 150)
+      }
+      timerRef.current = window.setTimeout(() => void tick(), 150)
     } catch {
       setErr('카메라를 열 수 없습니다(권한 거부 또는 HTTPS 필요). 번호를 직접 입력하세요.')
       stop()

@@ -24,7 +24,7 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { EXCLUDE_FORMS } from './lib/neutralize-forms.mjs'
-import { neutralizeString, XLSX_RESIDUE_RE } from './lib/neutralize-xlsx.mjs'
+import { neutralizeString, XLSX_RESIDUE_RE, cellStrings } from './lib/neutralize-xlsx.mjs'
 
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
@@ -100,9 +100,11 @@ function setNeutral(cell, stats) {
     let changed = false
     const rt = v.richText.map((t) => { const n = neutralizeString(t.text); if (n !== t.text) changed = true; return { ...t, text: n } })
     if (changed) { cell.value = { richText: rt }; stats.neutralized++ }
-  } else if (isFormula(v) && typeof v.result === 'string') {
-    const n = neutralizeString(v.result)
-    if (n !== v.result) { cell.value = { ...v, result: n }; stats.neutralized++ }
+  } else if (isFormula(v)) {
+    // 수식 텍스트 안의 리터럴("㈜티피씨 "&B3)과 캐시 결과 둘 다(리뷰 8/23: 결과만 바꾸면 재계산 시 회사명이 되살아남)
+    const nf = typeof v.formula === 'string' ? neutralizeString(v.formula) : v.formula
+    const nr = typeof v.result === 'string' ? neutralizeString(v.result) : v.result
+    if (nf !== v.formula || nr !== v.result) { cell.value = { ...v, formula: nf, result: nr }; stats.neutralized++ }
   }
 }
 
@@ -213,8 +215,7 @@ for (const f of forms) {
   const hits = []
   tw.eachRow({ includeEmpty: false }, (row) => row.eachCell({ includeEmpty: false }, (cell) => {
     setNeutral(cell, stats)
-    const s = cellString(cell.value)
-    if (s && XLSX_RESIDUE_RE.test(s)) hits.push(`${cell.address}:"${s.slice(0, 40).replace(/\n/g, ' ')}"`)
+    for (const s of cellStrings(cell.value)) if (s && XLSX_RESIDUE_RE.test(s)) hits.push(`${cell.address}:"${s.slice(0, 40).replace(/\n/g, ' ')}"`)
   }))
   if (hits.length) { residues.push(`${f.code} (${stats.source}) 잔재 ${hits.length}: ${hits.slice(0, 4).join(' · ')}`); continue }
 

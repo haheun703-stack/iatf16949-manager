@@ -37,6 +37,7 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { mkCheck } from './lib/e2e.mjs'
+import { XLSX_RESIDUE_RE, cellStrings } from './lib/neutralize-xlsx.mjs'
 
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
@@ -334,7 +335,7 @@ try {
   const rows = dbB.prepare(`SELECT f.code, f.template_path,
       (SELECT COUNT(*) FROM form_cell_map m WHERE m.form_code=f.code) + (SELECT COUNT(*) FROM form_grid_spec g WHERE g.form_code=f.code) AS layout
     FROM forms f`).all()
-  const TPL_RE = /티피씨|TPC|AM사업부|인발|조관|필라넥|쇼바|김권표|서상규|하헌|서규하|장석봉|브레이징/
+  const TPL_RE = XLSX_RESIDUE_RE // 생성기 게이트와 같은 규칙(리뷰 8/23: 복사본 드리프트 제거)
   for (const r of rows) {
     if (r.layout > 0 && !r.template_path) tplUncovered.push(r.code)
     if (!r.template_path) continue
@@ -345,9 +346,7 @@ try {
     await wb.xlsx.readFile(p)
     tplScanned++
     for (const ws of wb.worksheets) ws.eachRow({ includeEmpty: false }, (row) => row.eachCell({ includeEmpty: false }, (c) => {
-      const v = c.value
-      const s = typeof v === 'string' ? v : v && typeof v === 'object' && 'richText' in v ? v.richText.map((t) => t.text).join('') : v && typeof v === 'object' && 'result' in v && typeof v.result === 'string' ? v.result : ''
-      if (s && TPL_RE.test(s)) tplTpcHits++
+      for (const s of cellStrings(c.value)) if (s && TPL_RE.test(s)) tplTpcHits++ // 수식 텍스트까지(리뷰: 수식 안 회사명 누락)
     }))
   }
 } catch (err) { tplErr = err.message.slice(0, 100) }

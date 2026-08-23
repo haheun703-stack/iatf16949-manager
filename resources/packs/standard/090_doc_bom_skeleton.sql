@@ -3,7 +3,8 @@
 -- 자동 생성: scripts/gen-pack-standard.mjs (손편집 금지 — 재작성·제외 목록도 생성기에 있음)
 -- 근거: 40호 ④ 도장(2026-08-19) · 39호 S3 · 실명 0·회사식별 0(생성기 게이트)
 -- ============================================================
-INSERT OR IGNORE INTO bom_documents (doc_no_norm, doc_no_raw, category, category_label, name, owner_dept, list_rev, list_date, file_rev, file_date, status, forms_count, sort_order) VALUES
+INSERT OR IGNORE INTO bom_documents (doc_no_norm, doc_no_raw, category, category_label, name, owner_dept, list_rev, list_date, file_rev, file_date, status, forms_count, sort_order)
+SELECT column1, column2, column3, column4, column5, column6, column7, column8, column9, column10, column11, column12, column13 FROM (VALUES
   ('', '-', 'manual', '1.품질·환경 매뉴얼', '품질 환경 매뉴얼', '품질경영팀', NULL, NULL, NULL, NULL, '파일없음(작성/수집필요)', 0, 0),
   ('CP01', 'CP-01', 'process', '2.품질·환경 프로세스', '영업관리 프로세스', '영업팀', NULL, NULL, NULL, NULL, '파일없음(작성/수집필요)', 0, 1),
   ('CP02', 'CP-02', 'process', '2.품질·환경 프로세스', '개발관리 프로세스', '개발팀', NULL, NULL, NULL, NULL, '파일없음(작성/수집필요)', 0, 2),
@@ -108,4 +109,5 @@ INSERT OR IGNORE INTO bom_documents (doc_no_norm, doc_no_raw, category, category
   ('E3106', 'E-3106', 'safety_env', '4.안전보건환경(ISO45001) 규정·지침', '수질관리 지침', '총무팀', NULL, NULL, NULL, NULL, '파일없음(작성/수집필요)', 1, 101),
   ('E3107', 'E-3107', 'safety_env', '4.안전보건환경(ISO45001) 규정·지침', '소방시설 관리 지침', '총무팀', NULL, NULL, NULL, NULL, '파일없음(작성/수집필요)', 1, 102),
   ('E3108', 'E-3108', 'safety_env', '4.안전보건환경(ISO45001) 규정·지침', '에너지 관리 지침', '총무팀', NULL, NULL, NULL, NULL, '파일없음(작성/수집필요)', 1, 103),
-  ('E5100', 'E-5100', 'safety_env', '4.안전보건환경(ISO45001) 규정·지침', '감시 및 측정관리 규정', '총무팀', NULL, NULL, NULL, NULL, '파일없음(작성/수집필요)', 1, 104);
+  ('E5100', 'E-5100', 'safety_env', '4.안전보건환경(ISO45001) 규정·지침', '감시 및 측정관리 규정', '총무팀', NULL, NULL, NULL, NULL, '파일없음(작성/수집필요)', 1, 104)
+) WHERE EXISTS (SELECT 1 FROM _migrations WHERE status = 'snapshot' LIMIT 1);

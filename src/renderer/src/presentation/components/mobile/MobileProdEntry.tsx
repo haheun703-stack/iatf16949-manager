@@ -12,6 +12,36 @@ import { ScanInput } from './ScanInput'
  * 흐름: 품번/LOT 스캔 → 공정 칩 → LOT(최근 칩 또는 입력) → 양품/불량 스텝퍼(큰 숫자) → 불량유형 칩 → [저장].
  * 기록주체 = 세션(STAMP worker 서버 강제) — 화면에서 이름을 보내지 않는다. append-only(정정 = 취소+재입력, PC 화면).
  */
+// 모듈 스코프(리뷰 8/23): 렌더 안에서 선언하면 입력마다 컴포넌트 타입이 새로 생겨 <input> 이 리마운트·포커스를 잃는다
+function Stepper({ label, v, set, tone }: { label: string; v: number; set: (n: number) => void; tone: 'ok' | 'ng' }): JSX.Element {
+  return (
+    <div className={cn('rounded-2xl border p-3', tone === 'ok' ? 'border-emerald-300 bg-emerald-50/60' : 'border-red-300 bg-red-50/60')}>
+      <div className="text-[13px] font-semibold text-muted-foreground">{label}</div>
+      <div className="mt-1 flex items-center gap-2">
+        <button type="button" onClick={() => set(Math.max(0, v - 1))} className="h-14 w-14 rounded-xl bg-background border border-border flex items-center justify-center active:scale-95" aria-label={`${label} 감소`}>
+          <Minus className="h-6 w-6" />
+        </button>
+        <input
+          type="number"
+          inputMode="numeric"
+          value={v}
+          onChange={(e) => set(Math.max(0, Number(e.target.value) || 0))}
+          className="min-w-0 flex-1 h-14 rounded-xl border border-border bg-background text-center text-[28px] font-bold outline-none focus:border-primary"
+          data-testid={`m-qty-${tone}`}
+        />
+        <button type="button" onClick={() => set(v + 1)} className="h-14 w-14 rounded-xl bg-background border border-border flex items-center justify-center active:scale-95" aria-label={`${label} 증가`}>
+          <Plus className="h-6 w-6" />
+        </button>
+      </div>
+      <div className="mt-2 flex gap-2">
+        {[10, 50, 100].map((n) => (
+          <button key={n} type="button" onClick={() => set(v + n)} className="flex-1 h-10 rounded-lg bg-background border border-border text-[14px] font-semibold active:scale-95">+{n}</button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function MobileProdEntry({ onSaved }: { onSaved?: () => void }): JSX.Element {
   const [query, setQuery] = useState('')
   const [ctx, setCtx] = useState<SemimesScanContextDto | null>(null)
@@ -77,33 +107,6 @@ export function MobileProdEntry({ onSaved }: { onSaved?: () => void }): JSX.Elem
         setBusy(false)
       }
     })
-
-  const Stepper = ({ label, v, set, tone }: { label: string; v: number; set: (n: number) => void; tone: 'ok' | 'ng' }): JSX.Element => (
-    <div className={cn('rounded-2xl border p-3', tone === 'ok' ? 'border-emerald-300 bg-emerald-50/60' : 'border-red-300 bg-red-50/60')}>
-      <div className="text-[13px] font-semibold text-muted-foreground">{label}</div>
-      <div className="mt-1 flex items-center gap-2">
-        <button type="button" onClick={() => set(Math.max(0, v - 1))} className="h-14 w-14 rounded-xl bg-background border border-border flex items-center justify-center active:scale-95" aria-label={`${label} 감소`}>
-          <Minus className="h-6 w-6" />
-        </button>
-        <input
-          type="number"
-          inputMode="numeric"
-          value={v}
-          onChange={(e) => set(Math.max(0, Number(e.target.value) || 0))}
-          className="min-w-0 flex-1 h-14 rounded-xl border border-border bg-background text-center text-[28px] font-bold outline-none focus:border-primary"
-          data-testid={`m-qty-${tone}`}
-        />
-        <button type="button" onClick={() => set(v + 1)} className="h-14 w-14 rounded-xl bg-background border border-border flex items-center justify-center active:scale-95" aria-label={`${label} 증가`}>
-          <Plus className="h-6 w-6" />
-        </button>
-      </div>
-      <div className="mt-2 flex gap-2">
-        {[10, 50, 100].map((n) => (
-          <button key={n} type="button" onClick={() => set(v + n)} className="flex-1 h-10 rounded-lg bg-background border border-border text-[14px] font-semibold active:scale-95">+{n}</button>
-        ))}
-      </div>
-    </div>
-  )
 
   return (
     <div className="space-y-4 pb-28">

@@ -6,15 +6,18 @@ import { goBackWithGuard } from './presentation/lib/navBack'
 
 // M3 현장 폰 셸(29호 §2 "진입 자체 분리"): /m 은 관리자 화면 미탑재 모바일 셸 — React.lazy 분할(폰 번들 경량).
 const MobileShell = lazy(() => import('./presentation/components/mobile/MobileShell').then((m) => ({ default: m.MobileShell })))
-const isMobilePath = (): boolean => typeof location !== 'undefined' && /^\/m(\/|$)/.test(location.pathname)
+const isMobilePath = (): boolean => typeof location !== 'undefined' && location.pathname === '/m' // 정확히 /m 만(리뷰 8/23: /m/ 은 상대 자산 경로가 깨짐)
 
 function App(): JSX.Element {
   // 저장된 글자 배율을 부팅 시 1회 실제 UI에 적용 (UI P3)
   const fontScale = useUIStore((s) => s.fontScale)
   const loadUsers = useActiveUserStore((s) => s.loadUsers)
+  const refreshSession = useActiveUserStore((s) => s.refreshSession)
   useEffect(() => {
     applyFontScale(fontScale)
-    void loadUsers() // P2 — 공용 PC 사용자 명단 로드(부팅 1회)
+    // 폰 셸은 세션만(사용자 명단·활성 사용자 동기화는 사무실 공용 PC 전용 — 리뷰 8/23)
+    if (isMobilePath()) void refreshSession()
+    else void loadUsers() // P2 — 공용 PC 사용자 명단 로드(부팅 1회)
     // 마운트 시 1회만 — 이후 변경은 setFontScale 이 직접 적용
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
