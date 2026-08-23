@@ -19,6 +19,8 @@ export interface SessionUser {
   name: string
   role: AppUserRole
   teamDept: string | null
+  /** M2(8/23) 라이선스 — IATF 애드온 언락 여부(app_config license.iatf_addon). 데스크톱/구서버 = undefined → 잠금 없음(현행 유지) */
+  license?: { iatfAddon: boolean }
 }
 
 /** 쓰기 결과 — 실패 사유를 호출부까지 올린다(N-2: 종전엔 store catch 가 삼켰다). */
@@ -38,7 +40,8 @@ async function fetchSession(): Promise<SessionUser | null> {
       id: me.id,
       name: String(me.name ?? ''),
       role: me.role as AppUserRole,
-      teamDept: me.teamDept ?? null
+      teamDept: me.teamDept ?? null,
+      license: me.license && typeof me.license.iatfAddon === 'boolean' ? { iatfAddon: me.license.iatfAddon } : undefined
     }
   } catch {
     return null
@@ -65,6 +68,8 @@ interface ActiveUserState {
   sessionChecked: boolean
   /** app_users 목록 로드 + 세션 확정 + 저장된 활성 id 유효성 재검(삭제/비활성 시 해제) */
   loadUsers: () => Promise<void>
+  /** 세션만 다시 읽기(라이선스 언락 직후 등) */
+  refreshSession: () => Promise<void>
   setActiveUser: (id: number | null) => void
   /** 사용자 추가/편집(SettingsMenu 관리). 실패 사유 동반 반환 + 목록 재로드 */
   upsertUser: (input: AppUserUpsertInput) => Promise<WriteResult>
@@ -79,6 +84,10 @@ export const useActiveUserStore = create<ActiveUserState>((set, get) => ({
   session: null,
   sessionChecked: false,
 
+  refreshSession: async () => {
+    const session = await fetchSession()
+    set({ session, sessionChecked: true })
+  },
   loadUsers: async () => {
     // N-7: 세션을 **목록보다 먼저** 확정한다 — 목록 조회가 실패해도 권한 판정은 남아야 하고
     //      (종전엔 try 안에 있어 실패 시 sessionChecked 가 영원히 false), 판정 근거를

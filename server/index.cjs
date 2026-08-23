@@ -147,8 +147,8 @@ app.get('/setup', (_req, res) => {
   if (!setupNeeded()) return res.redirect('/login')
   res.type('html').sendFile(path.join(__dirname, 'setup.html'))
 })
-app.get('/api/setup:status', (_req, res) => res.json({ setupNeeded: setupNeeded() }))
-app.post('/api/setup:complete', (req, res) => {
+app.get('/api/setup\\:status', (_req, res) => res.json({ setupNeeded: setupNeeded() }))
+app.post('/api/setup\\:complete', (req, res) => {
   if (!setupNeeded()) return res.status(409).json({ error: '이미 설치가 완료된 시스템입니다.' })
   const b = req.body || {}
   const companyName = String(b.companyName || '').trim()
@@ -197,7 +197,10 @@ app.get('/login', (_req, res) => {
   res.type('html').sendFile(path.join(__dirname, 'login.html'))
 })
 
-app.post('/api/auth:login', (req, res) => {
+// ⚠ 경로의 ':' 는 express 에서 파라미터 표식 — '/api/auth:login' 은 '/api/auth' + 파라미터라 'auth:logout'·'auth:changePassword'
+// POST 가 전부 login 핸들러로 빨려 들어갔다(M2 8/23 발견: 로그아웃이 서버 세션을 안 지우고 400 "이름을 입력하세요" 반환).
+// '\:' 로 이스케이프해 글자 그대로 매칭(9개 라우트 전부). /api/:channel 디스패처는 그대로.
+app.post('/api/auth\\:login', (req, res) => {
   const { name, password } = req.body || {}
   if (!name) return res.status(400).json({ error: '이름을 입력하세요.' })
   // M2: E2E봇은 검수 복사본(IATF_REVIEW_COPY=1)에서만 — 고객사·라이브에서는 계정이 있어도 거부(42호 D ②)
@@ -208,20 +211,66 @@ app.post('/api/auth:login', (req, res) => {
   res.json({ success: true, user: r.user })
 })
 
-app.post('/api/auth:logout', (req, res) => {
+app.post('/api/auth\\:logout', (req, res) => {
   const s = auth.sessionOf(req)
   if (s) auth.logout(s.sid)
   res.setHeader('Set-Cookie', auth.clearCookie())
   res.json({ success: true })
 })
 
-app.get('/api/auth:me', (req, res) => {
+// ── M2 라이선스(IATF 애드온 1키 — 32/33호 상품 구조): app_config 'license.iatf_addon' on/off ──
+// 키 = "IATF-XXXX-XXXX-XXXX-XXXX" — 회사명(company_profile.companyName)에 묶인 HMAC(v1 오프라인 검증).
+// 발급 = scripts/gen-license-key.mjs <회사명> (같은 함수). 정식 발급·회수 절차는 M4(판매 v1 패키지)에서 확정.
+const LICENSE_SALT = 'dailyq-iatf-addon-v1'
+function licenseKeyFor(companyName) {
+  const h = require('crypto').createHmac('sha256', LICENSE_SALT).update(String(companyName || '').trim()).digest('hex').toUpperCase().slice(0, 16)
+  return `IATF-${h.slice(0, 4)}-${h.slice(4, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}`
+}
+function licenseState() {
+  try {
+    const r = db.prepare("SELECT value FROM app_config WHERE key = 'license.iatf_addon'").get()
+    return { iatfAddon: !!r && r.value === 'on' }
+  } catch {
+    return { iatfAddon: false }
+  }
+}
+app.get('/api/auth\\:me', (req, res) => {
   const s = auth.sessionOf(req)
   if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
-  res.json({ id: s.userId, name: s.name, role: s.role, teamDept: s.teamDept })
+  res.json({ id: s.userId, name: s.name, role: s.role, teamDept: s.teamDept, license: licenseState() })
 })
+app.get('/api/license\\:state', (req, res) => {
+  const s = auth.sessionOf(req)
+  if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
+  res.json(licenseState())
+})
+app.post('/api/license\\:unlock', (req, res) => {
+  const s = auth.sessionOf(req)
+  if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
+  if (s.role !== 'executive') return res.status(403).json({ error: '라이선스 키 입력은 최종관리자(executive)만 할 수 있습니다.' })
+  const key = String((req.body && req.body.key) || '').trim().toUpperCase().replace(/\s+/g, '')
+  if (!/^IATF-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(key)) return res.status(400).json({ error: '키 형식이 아닙니다. 예: IATF-1A2B-3C4D-5E6F-7A8B' })
+  let companyName = ''
+  try { companyName = (db.prepare("SELECT value FROM company_profile WHERE key = 'companyName'").get() || {}).value || '' } catch { /* noop */ }
+  if (!companyName) return res.status(400).json({ error: '회사명이 설정되지 않았습니다. 설정 → 회사 프로파일에서 회사명을 먼저 입력하세요.' })
+  if (key !== licenseKeyFor(companyName)) return res.status(400).json({ error: `이 키는 "${companyName}" 용이 아닙니다. 발급받은 회사명과 등록된 회사명이 같은지 확인하세요.` })
+  const cfg = authDb.prepare('INSERT INTO app_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+  cfg.run('license.iatf_addon', 'on')
+  cfg.run('license.iatf_key', key)
+  cfg.run('license.iatf_unlocked_at', new Date().toISOString())
+  console.log(`[server] IATF 애드온 언락 — ${s.name} · 회사 "${companyName}"`)
+  res.json({ success: true, ...licenseState() })
+})
+app.post('/api/license\\:lock', (req, res) => {
+  const s = auth.sessionOf(req)
+  if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
+  if (s.role !== 'executive') return res.status(403).json({ error: '최종관리자(executive)만 할 수 있습니다.' })
+  authDb.prepare('INSERT INTO app_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run('license.iatf_addon', 'off')
+  res.json({ success: true, ...licenseState() })
+})
+module.exports.licenseKeyFor = licenseKeyFor
 
-app.post('/api/auth:changePassword', (req, res) => {
+app.post('/api/auth\\:changePassword', (req, res) => {
   const s = auth.sessionOf(req)
   if (!s) return res.status(401).json({ error: '로그인이 필요합니다.' })
   const r = auth.changePassword(authDb, s.userId, String((req.body && req.body.newPassword) || ''))
@@ -531,7 +580,7 @@ function screenRuleOf(session, pageId) {
 
 // ── POST /api/{channel} 디스패처 ──
 // IPC 핸들러 시그니처 (event, payload) 를 그대로 호출한다(event 미사용 — §0.5 대조로 확인).
-app.post('/api/:channel', (req, res) => {
+app.post('/api/\:channel', (req, res) => {
   const ch = req.params.channel
   const fn = routes.get(ch)
   if (!fn) return res.status(404).json({ error: `미구현 채널: ${ch}` })

@@ -4,6 +4,7 @@ import { cn } from '../../../lib/utils'
 import { useUIStore, type PageId } from '../../stores/uiStore'
 import { usePermStore } from '../../stores/permStore'
 import { useActiveUserStore } from '../../stores/activeUserStore'
+import { isAddonLocked } from '../../lib/license'
 
 /**
  * PB2 ⓐ — 상단 MES 모듈 메뉴바 (29번 §11 "겉이 MES, 속이 SQ" · 시각 정본 = 30번 목업 v2).
@@ -187,6 +188,7 @@ function useMenuVisible(): (it: MenuEntry) => boolean {
 
 export function MesMenuBar(): JSX.Element {
   const { currentPage, setPage, setSelectedFormCode } = useUIStore()
+  const session = useActiveUserStore((s) => s.session) // M2 라이선스 🔒 표시용
   const visible = useMenuVisible()
   const [open, setOpen] = useState<string | null>(null)
   const barRef = useRef<HTMLDivElement>(null)
@@ -260,6 +262,9 @@ export function MesMenuBar(): JSX.Element {
                       {it.iatf?.map((c) => (
                         <Badge key={c} tone={it.gap ? 'gap' : 'iatf'}>{it.gap ? `IATF ${c} 추가 요구` : `IATF ${c}`}</Badge>
                       ))}
+                      {it.page && isAddonLocked(it.page, session) && (
+                        <span className="text-[11px] text-amber-600" title="IATF 애드온 라이선스 필요" data-testid="addon-lock-badge">🔒 애드온</span>
+                      )}
                     </span>
                   </button>
                 ))}

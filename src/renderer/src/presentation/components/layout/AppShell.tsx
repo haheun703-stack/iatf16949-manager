@@ -3,6 +3,8 @@ import { useUIStore } from '../../stores/uiStore'
 import { markPage, startPerfWatch } from '../../lib/perfWatch'
 import { Sidebar, TopBar } from './Sidebar'
 import { MesMenuBar, MesSubTabs } from './MesMenuBar'
+import { AddonLockPanel } from './AddonLockPanel'
+import { isAddonLocked } from '../../lib/license'
 import { MesHome } from '../mes-home/MesHome'
 import { Dashboard } from '../dashboard/Dashboard'
 import { SqReadinessPage } from '../sq-readiness/SqReadinessPage'
@@ -138,6 +140,11 @@ export function AppShell(): JSX.Element {
           >
           {/* key=currentPage: 한 페이지에서 오류가 나도 다른 메뉴로 이동하면 자동 복구 */}
           <ErrorBoundary key={currentPage}>
+            {/* M2 라이선스: IATF 애드온 화면은 세션 license 가 off 면 본문 대신 잠금 패널(메뉴 🔒 는 보조막, 여기가 화면 관문) */}
+            {isAddonLocked(currentPage, session) ? (
+              <AddonLockPanel page={currentPage} />
+            ) : (
+              <>
             {currentPage === 'home' && <MesHome />}
             {currentPage === 'audit-hub' && <PortalHome />}
             {currentPage === 'team-hub' && <TeamHubView />}
@@ -213,6 +220,8 @@ export function AppShell(): JSX.Element {
                   </div>
                 </div>
               ))}
+              </>
+            )}
           </ErrorBoundary>
           </div>
         </main>
