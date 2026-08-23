@@ -19,6 +19,7 @@
 //   ── S3-2(8/19 저녁~) ──  규칙·명시 맵 = scripts/lib/neutralize-forms.mjs (before/after 문서와 공유)
 //   080_forms_catalog.sql      forms 294(302 − 제외 8: 사업부 전용 6 + 타사업부 열람형 2 · 사업부 scope 3은 SQ 미니멀 정션 참조라 공통 편입)
 //                              ④-1 코드 채택 · name 접미 정리 · description 중립화(플레이스홀더→NULL·개발 메모 기계 정리·TPC/AM 행 재작성) · scope→'공통'
+//                              · template_path → templates/standard/<code>.xlsx (④-2 ⓐ, gen-pack-standard-templates.mjs 산출 238종 · 없으면 NULL)
 //   081_form_layout.sql        form_fields·form_cell_map·form_grid_spec·form_grid_columns·form_option_cells — 보유 양식분만 + 라벨/키 중립화(REWRITE_FIELDS)
 //                              ※ form_examples(④-7 ⓐ 제외)·form_change_log(운영 이력)·process_forms(TPC 프로세스 FK)는 싣지 않음
 //   090_doc_bom_skeleton.sql   bom_documents 105 — 목록 뼈대(④-5 ⓑ): rev/일자 NULL·status '파일없음(작성/수집필요)'·forms_count = 표준팩 양식 수 재계산
@@ -28,7 +29,7 @@
 // 재실행 = 전량 재생성(결정적 — 체인이 결정적이므로 diff 0 이 정상).
 // 사용: ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\gen-pack-standard.mjs
 // ============================================================
-import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -305,12 +306,17 @@ const keptForms = []
     console.error(`[gen-pack-standard] 사업부 scope 잔존(제외도 편입도 아님): ${divisionLeft.map((r) => r.code).join(', ')}`)
     process.exit(1)
   }
+  // ④-2 ⓐ: 표준팩 xlsx 템플릿(gen-pack-standard-templates.mjs → resources/templates/standard/<code>.xlsx)이 있으면 그것이 출력 정본.
+  // 없으면(레이아웃 없는 열람형·규정 문서) NULL — 번들 TPC 추출본 경로를 표준팩에 남기지 않는다.
+  const stdTplDir = join(repo, 'resources', 'templates', 'standard')
+  const hasStdTpl = (code) => existsSync(join(stdTplDir, `${code}.xlsx`))
   for (const r of all) {
     if (EXCLUDE_FORMS[r.code]) continue
     keptForms.push({
       ...r,
       name: cleanName(r.code, r.name),
       description: cleanDescription(r.code, r.description),
+      template_path: hasStdTpl(r.code) ? `templates/standard/${r.code}.xlsx` : null,
       scope: '공통', // 'common'(스키마 기본값 잔재)·'공통' 혼용 → 렌더러 FormScope 정본 '공통' 으로 통일
       next_form_code: r.next_form_code && EXCLUDE_FORMS[r.next_form_code] ? null : r.next_form_code,
       prev_form_code: r.prev_form_code && EXCLUDE_FORMS[r.prev_form_code] ? null : r.prev_form_code
@@ -330,9 +336,10 @@ const keptForms = []
     process.exit(1)
   }
   const descNull = keptForms.filter((r) => r.description === null).length
+  const tplN = keptForms.filter((r) => r.template_path).length
   writePack(
     '080_forms_catalog.sql',
-    `양식 카탈로그 — ${keptForms.length}종(체인 ${all.length} − 제외 ${excluded.length}: 사업부 전용·타사업부 열람형 / 사업부 scope ${PROMOTE_TO_COMMON.length}종은 SQ 미니멀 정션 참조라 공통 편입) · ④-1 코드 체계 채택 · 이름 접미 정리 · 설명 중립화(NULL ${descNull}) · scope '공통' 통일`,
+    `양식 카탈로그 — ${keptForms.length}종(표준 xlsx 템플릿 ${tplN}종 = templates/standard/)(체인 ${all.length} − 제외 ${excluded.length}: 사업부 전용·타사업부 열람형 / 사업부 scope ${PROMOTE_TO_COMMON.length}종은 SQ 미니멀 정션 참조라 공통 편입) · ④-1 코드 체계 채택 · 이름 접미 정리 · 설명 중립화(NULL ${descNull}) · scope '공통' 통일`,
     insertBlock(
       'forms',
       ['code', 'name', 'reg_code', 'description', 'approvals_json', 'next_form_code', 'next_form_label', 'prev_form_code', 'layout_json', 'scope', 'deprecated', 'deprecated_note', 'replacement_page', 'resp_dept', 'iatf_clause', 'sq_item_ids', 'template_path'],

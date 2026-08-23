@@ -69,7 +69,8 @@ env 2종(`IATF_DATA_DIR`·`E2E_DB`)은 **필수**다. 없으면 게이트가 즉
 
 | 하네스 | 건수 | 축 |
 | --- | --- | --- |
-| `e2e-clean-install.mjs` | 12 | **A 레거시 경로**(마이그 전 체인 — 관찰) + **B 판매 경로**(러너 정본 `server/migrate-core.cjs` 클린 설치 = 스키마 스냅샷+팩) · 러너 감사·FK·시드 파리티·팩별 시드·프로파일 16키·TPC 7종/실명 5인 0건·플로우스루·**A↔B 스키마 동치**·**⑩ 표준팩 SQ층(S3-1 GREEN)**·**⑪ 양식 카탈로그·규정 뼈대(S3-2 GREEN — forms 290+/사업부 scope 0·bom 100+·뼈대 800+)**·**⑫ 레거시 무해(A 체인에 표준팩 전 파일 적용 → 11테이블 행수·양식명 불변)** |
+| `e2e-clean-install.mjs` | 13 | **A 레거시 경로**(마이그 전 체인 — 관찰) + **B 판매 경로**(러너 정본 `server/migrate-core.cjs` 클린 설치 = 스키마 스냅샷+팩) · 러너 감사·FK·시드 파리티·팩별 시드·프로파일 16키·TPC 7종/실명 5인 0건·플로우스루·**A↔B 스키마 동치**·**⑩ 표준팩 SQ층(S3-1 GREEN)**·**⑪ 양식 카탈로그·규정 뼈대(S3-2 GREEN — forms 290+/사업부 scope 0·bom 100+·뼈대 800+)**·**⑫ 레거시 무해(A 체인에 표준팩 전 파일 적용 → 11테이블 행수·양식명 불변)**·**⑬ 표준팩 xlsx 템플릿(238파일 실재·레이아웃 커버 100%·셀 TPC 0)** |
+| `e2e-standard-templates.mjs` | 11 | :8083 표준팩 서버 출력 실증 — 프로파일 companyName 세팅 → 8양식 제출·exportXlsx → 재판독(시트명=코드·`{{companyName}}` 토큰 잔존 0·회사명 치환·TPC 0·주입값) → 원복. 8080 거부 |
 | `gen-core-schema.mjs --check` | 1 | `resources/core/schema.sql` 드리프트 0(스냅샷 지점 0144 재생성 결과와 바이트 동일) |
 
 - **"지금 판매 가능한가"의 상시 지표**(39호 S4 → 41호 M1). §2 활성 세트와 분리 운영.
@@ -80,7 +81,7 @@ env 2종(`IATF_DATA_DIR`·`E2E_DB`)은 **필수**다. 없으면 게이트가 즉
   + **⑫ 레거시 무해**(A 체인 DB 에 팩 10파일 적용 → forms/필드/셀맵/그리드/bom/규정/SQ/의무/KPI 행수·양식명 불변 —
   regulation_sections 는 "테이블 비어 있을 때만" 적재하는 SQL 이라 TPC 622행 보유 DB 에 뼈대가 끼어들지 않음).
   "판매 가능 여부" 줄 = ⑥⑦⑩⑪ 합산. 중립화 규칙·명시 맵 = `scripts/lib/neutralize-forms.mjs`, 대조본 생성 =
-  `scripts/gen-forms-before-after.mjs`. 남은 S3-2 = xlsx 42종(회사명 프로파일 치환 + 미추출 ~30종) — 파일 자산, 별도 점검.
+  `scripts/gen-forms-before-after.mjs`. **8/23 S3-2 후반 = xlsx 238종 완료**(`gen-pack-standard-templates.mjs` → templates/standard/ · 회사명 `{{companyName}}` 토큰 + 엔진 `applyProfileTokens`) → **13/13**.
   **레거시 무해 실증(S3-1)**: 8/19 :8081 재기동 — 행수·assignee 73·체크포인트 상태 64·KPI 목표 32 전부 유지.
 - 클린 설치 경로(S2): 빈 DB → `resources/core/schema.sql`(스냅샷, 데이터 0) + `core/bootstrap.sql`(프로파일 빈 키 16)
   → snapshot 이하 마이그 143개는 `_migrations.status='snapshot'` 기록 → 초과분(0145~) 은 `packs.json` kind 로

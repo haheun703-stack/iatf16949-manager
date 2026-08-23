@@ -10,7 +10,7 @@
 //   B 판매 경로  = server/migrate-core.cjs runAll(allowClean, packs=['standard']) — 스키마 스냅샷 + 표준팩
 //   단언은 B 에 건다. A 는 스키마 동치(⑨)의 기준이자 TPC 경로 무변경의 관찰치.
 //
-// 단언(12건):
+// 단언(13건):
 //   ① 러너: packs.json 감사 0건 · mode=clean · 스냅샷 대체 = snapshot 이하 파일 수 · 초과분 적용/스킵 합 = 나머지
 //   ② PRAGMA foreign_key_check 위반 0건 (B)
 //   ③ 시드 소스 파리티 — resources/seed 에 하네스가 모르는 json 이 있으면 FAIL(드리프트 가드)
@@ -25,6 +25,8 @@
 //      코워크 소견(8/19) "뼈대 안내문 TPC 0" 은 ⑥ 전 테이블 스캔이 자동 커버(안내문도 행이므로).
 //   ⑫ 레거시 무해(S3 규약) — A 레거시 체인 DB 에 표준팩 전 파일을 얹어도 주요 테이블 행수 불변(OR IGNORE no-op ·
 //      regulation_sections 는 "비어 있을 때만" 적재). TPC 운영 DB 에 표준팩이 끼어들지 않는다는 상시 증거.
+//   ⑬ 표준팩 xlsx 템플릿(S3-2 후반, 8/23 — ④-2 ⓐ) — B 의 forms.template_path 전건 파일 실재 · 레이아웃 보유 양식 전건 템플릿 보유 ·
+//      템플릿 셀 문자열에 TPC 계열/실명/브레이징 0 (회사명은 {{companyName}} 토큰 — 출력 엔진 applyProfileTokens 가 치환).
 //
 // 안전: 라이브 무접촉 — %TEMP% mkdtemp 전용, DB 경로를 env/argv 에서 받지 않는다. 서버 비접촉·로그인 없음.
 // 사용: ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\e2e-clean-install.mjs
@@ -321,10 +323,41 @@ check(
   legacyDiff.length ? `변동: ${legacyDiff.join(' · ')}` : ''
 )
 
+// ── ⑬ 표준팩 xlsx 템플릿 — 파일 실재·레이아웃 커버리지·셀 문자열 TPC 0 ──
+let tplMissing = [], tplUncovered = [], tplTpcHits = 0, tplScanned = 0, tplErr = ''
+try {
+  const ExcelJS = (await import('exceljs')).default
+  const rows = dbB.prepare(`SELECT f.code, f.template_path,
+      (SELECT COUNT(*) FROM form_cell_map m WHERE m.form_code=f.code) + (SELECT COUNT(*) FROM form_grid_spec g WHERE g.form_code=f.code) AS layout
+    FROM forms f`).all()
+  const TPL_RE = /티피씨|TPC|AM사업부|인발|조관|필라넥|쇼바|김권표|서상규|하헌|서규하|장석봉|브레이징/
+  for (const r of rows) {
+    if (r.layout > 0 && !r.template_path) tplUncovered.push(r.code)
+    if (!r.template_path) continue
+    const p = join(resourcesDir, r.template_path)
+    if (!existsSync(p)) { tplMissing.push(r.code); continue }
+    if (!r.template_path.startsWith('templates/standard/')) continue
+    const wb = new ExcelJS.Workbook()
+    await wb.xlsx.readFile(p)
+    tplScanned++
+    for (const ws of wb.worksheets) ws.eachRow({ includeEmpty: false }, (row) => row.eachCell({ includeEmpty: false }, (c) => {
+      const v = c.value
+      const s = typeof v === 'string' ? v : v && typeof v === 'object' && 'richText' in v ? v.richText.map((t) => t.text).join('') : v && typeof v === 'object' && 'result' in v && typeof v.result === 'string' ? v.result : ''
+      if (s && TPL_RE.test(s)) tplTpcHits++
+    }))
+  }
+} catch (err) { tplErr = err.message.slice(0, 100) }
+const tplOk = !tplErr && tplMissing.length === 0 && tplUncovered.length === 0 && tplTpcHits === 0 && tplScanned >= 200
+check(
+  `⑬ 표준팩 xlsx 템플릿 (스캔 ${tplScanned} · 파일 없음 ${tplMissing.length} · 레이아웃 미커버 ${tplUncovered.length} · 셀 TPC ${tplTpcHits})${tplErr ? ` 오류: ${tplErr}` : ''}`,
+  tplOk,
+  tplOk ? '' : `gen-pack-standard-templates.mjs 재실행 필요${tplMissing.length ? ` · 없음 ${tplMissing.slice(0, 3).join(',')}` : ''}${tplUncovered.length ? ` · 미커버 ${tplUncovered.slice(0, 3).join(',')}` : ''}`
+)
+
 // ── 판정·정리 ──
 const sqOk = std.sq_items >= 42 && std.pack_forms > 0 && std.kpi_indicators >= 30 && std.recurring_obligations >= 40
-const sellable = tpcTotal === 0 && nameTotal === 0 && sqOk && formsOk
-console.log(`\n판매 가능 여부: ${sellable ? 'YES' : `NO — TPC ${tpcTotal}행 · 실명 ${nameTotal}행 · SQ층 ${sqOk ? 'GREEN' : 'RED(S3-1)'} · 양식/뼈대 ${formsOk ? 'GREEN' : 'RED(S3-2)'}`}`)
+const sellable = tpcTotal === 0 && nameTotal === 0 && sqOk && formsOk && tplOk
+console.log(`\n판매 가능 여부: ${sellable ? 'YES' : `NO — TPC ${tpcTotal}행 · 실명 ${nameTotal}행 · SQ층 ${sqOk ? 'GREEN' : 'RED(S3-1)'} · 양식/뼈대 ${formsOk ? 'GREEN' : 'RED(S3-2)'} · xlsx ${tplOk ? 'GREEN' : 'RED(S3-2 후반)'}`}`)
 dbA.close()
 dbB.close()
 rmSync(tmp, { recursive: true, force: true })

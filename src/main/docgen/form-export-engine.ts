@@ -14,6 +14,7 @@ import { readdirSync, mkdirSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app } from 'electron'
 import type Database from 'better-sqlite3'
+import { getProfileMap } from '../database/company-profile'
 
 const execFileP = promisify(execFile)
 
@@ -295,6 +296,51 @@ export function resolveTemplateFile(templatePath: string): string | null {
   return existsSync(base) ? base : null
 }
 
+// 표준팩 템플릿 토큰 치환(39호 S3-2 ④-2 ⓐ, 2026-08-23): 표준팩 xlsx 는 회사명 칸이 `{{companyName}}` 토큰이다
+// (gen-pack-standard-templates.mjs 가 정본의 ㈜티피씨 등을 토큰으로 바꿔 싣는다). 출력 시 company_profile 값으로 치환.
+// 토큰 없는 TPC 정본·구 템플릿에는 no-op. 값이 비어 있으면 빈 문자열(폴백 회사명 금지 — S1 규약).
+export const PROFILE_TOKENS: Record<string, string> = {
+  '{{companyName}}': 'companyName',
+  '{{companyNameShort}}': 'companyNameShort',
+  '{{companyNameEn}}': 'companyNameEn',
+  '{{ceoName}}': 'ceoName',
+  '{{address}}': 'address',
+  '{{phone}}': 'phone'
+}
+export function applyProfileTokens(ws: ExcelJS.Worksheet, db: Database.Database): number {
+  let prof: Record<string, string>
+  try {
+    prof = getProfileMap(db, Object.values(PROFILE_TOKENS))
+  } catch {
+    return 0
+  }
+  const tokens = Object.keys(PROFILE_TOKENS)
+  const sub = (t: string): string => {
+    let out = t
+    for (const tk of tokens) if (out.includes(tk)) out = out.split(tk).join(prof[PROFILE_TOKENS[tk]] || '')
+    return out
+  }
+  let n = 0
+  ws.eachRow({ includeEmpty: false }, (row) =>
+    row.eachCell({ includeEmpty: false }, (cell) => {
+      const v = cell.value
+      if (typeof v === 'string') {
+        if (tokens.some((tk) => v.includes(tk))) {
+          cell.value = sub(v)
+          n++
+        }
+      } else if (v && typeof v === 'object' && 'richText' in v) {
+        const rt = (v as ExcelJS.CellRichTextValue).richText
+        if (rt.some((t) => tokens.some((tk) => t.text.includes(tk)))) {
+          cell.value = { richText: rt.map((t) => ({ ...t, text: sub(t.text) })) }
+          n++
+        }
+      }
+    })
+  )
+  return n
+}
+
 export function resolveSheet(
   wb: ExcelJS.Workbook,
   formCode: string,
@@ -450,6 +496,7 @@ export async function exportSubmissionXlsx(opts: {
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(src)
   const ws = resolveSheet(wb, formCode, { allowFirstSheetFallback: fromTemplate })
+  applyProfileTokens(ws, db)
 
   const mediaBefore = mediaCount(wb)
   let mergesBefore = 0

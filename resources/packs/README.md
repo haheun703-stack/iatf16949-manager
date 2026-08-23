@@ -5,7 +5,7 @@
 
 | 팩 | 내용 | 채움 시점 |
 |---|---|---|
-| `standard/` | 표준팩 — 업종중립 골격. 010 IATF 조항 · 020~070 SQ 백본/가이드층/팩 정션/APQP/KPI/정기의무(S3-1 8/19) · 080 양식 카탈로그 294 · 081 레이아웃 · 090 문서 BOM 뼈대 · 091 규정 뼈대 95종(S3-2 8/19). 전부 `scripts/gen-pack-standard.mjs` 자동 생성(손편집 금지) · 40호 ④ 도장 기준 | **데이터층 완료 8/19** (xlsx 42종 = 파일 자산, 후속) |
+| `standard/` | 표준팩 — 업종중립 골격. 010 IATF 조항 · 020~070 SQ 백본/가이드층/팩 정션/APQP/KPI/정기의무(S3-1 8/19) · 080 양식 카탈로그 294 · 081 레이아웃 · 090 문서 BOM 뼈대 · 091 규정 뼈대 95종(S3-2 8/19). 전부 `scripts/gen-pack-standard.mjs` 자동 생성(손편집 금지) · 40호 ④ 도장 기준 | **데이터층 8/19 · xlsx 템플릿 238종 8/23 완료**(`resources/templates/standard/`, 생성 = `scripts/gen-pack-standard-templates.mjs`) |
 | `tpc/` | TPC팩 — 레거시 DB 는 이미 마이그 체인에 데이터가 있으므로 비어 있음. 신규 TPC 재설치용 시드가 필요해지면 여기 | 필요 시 |
 
 규칙: 파일 = 데이터 전용(INSERT/UPDATE), 컬럼 목록 명시, `INSERT OR IGNORE`/`ON CONFLICT DO NOTHING` 로 멱등.
