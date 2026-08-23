@@ -1,8 +1,12 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { AppShell } from './presentation/components/layout/AppShell'
 import { applyFontScale, useUIStore } from './presentation/stores/uiStore'
 import { useActiveUserStore } from './presentation/stores/activeUserStore'
 import { goBackWithGuard } from './presentation/lib/navBack'
+
+// M3 현장 폰 셸(29호 §2 "진입 자체 분리"): /m 은 관리자 화면 미탑재 모바일 셸 — React.lazy 분할(폰 번들 경량).
+const MobileShell = lazy(() => import('./presentation/components/mobile/MobileShell').then((m) => ({ default: m.MobileShell })))
+const isMobilePath = (): boolean => typeof location !== 'undefined' && /^\/m(\/|$)/.test(location.pathname)
 
 function App(): JSX.Element {
   // 저장된 글자 배율을 부팅 시 1회 실제 UI에 적용 (UI P3)
@@ -38,6 +42,13 @@ function App(): JSX.Element {
     }
   }, [])
 
+  if (isMobilePath()) {
+    return (
+      <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">현장 화면 여는 중…</div>}>
+        <MobileShell />
+      </Suspense>
+    )
+  }
   return <AppShell />
 }
 
