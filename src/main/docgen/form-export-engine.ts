@@ -10,7 +10,7 @@
 import ExcelJS from 'exceljs'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { readdirSync, mkdirSync, existsSync } from 'node:fs'
+import { readdirSync, mkdirSync, existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app } from 'electron'
 import type Database from 'better-sqlite3'
@@ -300,6 +300,123 @@ export function resolveTemplateFile(templatePath: string): string | null {
 // company_profile 의 **모든 키**를 `{{key}}` 로 받는다(종전 6키 하드코딩 → 키 추가 시 엔진 무수정). 문자열·리치텍스트·수식 캐시 결과까지
 // 치환(리뷰: L3101-02 R48~Y48 수식 결과에 토큰 잔존). 미지 키 = '' (폴백 회사명 금지 — S1 규약). TPC 정본·구 템플릿 = no-op.
 const TOKEN_RE = /\{\{\s*([A-Za-z][A-Za-z0-9_]*)\s*\}\}/g
+// ── 회사 로고 주입 (2026-08-24 도장) ─────────────────────────────────────────
+// 표준팩 템플릿의 로고 자리에는 '{{companyLogo}}' 표식이 들어 있다(정본의 로고 이미지는
+// 고객사 자산이라 팩에 싣지 않았다 — S3-2 규약). 출력 때 그 표식을 찾아 **설치처 자기 로고**를
+// 같은 자리에 앉힌다. 로고가 없으면 표식만 지우고 빈칸으로 둔다(토큰 문자열 노출 금지).
+//
+// ⚠ 반드시 applyProfileTokens 보다 **먼저** 부른다 — 토큰 치환이 미지 키를 ''로 지워버리면
+//   로고 자리를 잃는다.
+const LOGO_TOKEN_RE = /\{\{\s*companyLogo\s*\}\}/gi
+
+/** PNG/JPEG 헤더에서 픽셀 크기를 읽는다(비율 보존용). 실패 시 null. */
+function imagePixelSize(buf: Buffer): { w: number; h: number } | null {
+  // PNG: 시그니처 8 + IHDR(길이4+타입4) 다음 width/height 각 4바이트 BE
+  if (buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47) {
+    return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) }
+  }
+  // JPEG: SOF 마커에서 height/width
+  if (buf.length > 4 && buf[0] === 0xff && buf[1] === 0xd8) {
+    let i = 2
+    while (i + 9 < buf.length) {
+      if (buf[i] !== 0xff) { i++; continue }
+      const marker = buf[i + 1]
+      const len = buf.readUInt16BE(i + 2)
+      if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+        return { h: buf.readUInt16BE(i + 5), w: buf.readUInt16BE(i + 7) }
+      }
+      i += 2 + len
+    }
+  }
+  return null
+}
+
+/** 엑셀 열 너비(문자) → 픽셀 근사 · 행 높이(pt) → 픽셀 근사(96dpi). */
+const colPx = (w: number | undefined): number => Math.round(((w ?? 8.43) * 7) + 5)
+const rowPx = (h: number | undefined): number => Math.round((h ?? 15) * (96 / 72))
+
+export function applyProfileLogo(ws: ExcelJS.Worksheet, wb: ExcelJS.Workbook, _db: Database.Database): number {
+  // 표식 위치부터 찾는다 — 로고가 없어도 표식은 지워야 하므로 파일 유무보다 먼저.
+  const marks: Array<{ row: number; col: number }> = []
+  ws.eachRow({ includeEmpty: false }, (row) =>
+    row.eachCell({ includeEmpty: false }, (cell) => {
+      const v = cell.value
+      const text =
+        typeof v === 'string' ? v
+        : v && typeof v === 'object' && 'richText' in v
+          ? (v as ExcelJS.CellRichTextValue).richText.map((t) => t.text).join('')
+          : null
+      if (text == null) return
+      LOGO_TOKEN_RE.lastIndex = 0
+      if (!LOGO_TOKEN_RE.test(text)) return
+      LOGO_TOKEN_RE.lastIndex = 0
+      const rest = text.replace(LOGO_TOKEN_RE, '').trim()
+      cell.value = rest ? rest : null   // 표식만 제거 — 곁들인 문구는 남긴다
+      marks.push({ row: Number(cell.row), col: Number(cell.col) })
+    })
+  )
+  if (marks.length === 0) return 0
+
+  let logoPath: string | null = null
+  try {
+    const dir = join(app.getPath('userData'), 'branding')
+    if (existsSync(dir)) {
+      const f = readdirSync(dir).find((n) => /^logo[.](png|jpg|jpeg|gif|webp)$/i.test(n))
+      if (f) logoPath = join(dir, f)
+    }
+  } catch {
+    logoPath = null
+  }
+  if (!logoPath) return 0   // 로고 미등록 = 빈칸(종전과 동일한 모습)
+
+  const buf = readFileSync(logoPath)
+  const rawExt = (logoPath.split('.').pop() || 'png').toLowerCase()
+  const imageId = wb.addImage({
+    buffer: buf as unknown as ExcelJS.Buffer,
+    extension: (rawExt === 'jpg' ? 'jpeg' : rawExt) as 'png' | 'jpeg' | 'gif'
+  })
+
+  // 표식 칸이 병합돼 있으면 그 병합 영역 전체가 로고 자리다.
+  const merges: string[] = (ws.model?.merges || []) as string[]
+  const rangeOf = (row: number, col: number): { r1: number; c1: number; r2: number; c2: number } => {
+    for (const m of merges) {
+      const [a, b] = m.split(':')
+      if (!a || !b) continue
+      const ca = ws.getCell(a), cb = ws.getCell(b)
+      const r1 = Number(ca.row), c1 = Number(ca.col), r2 = Number(cb.row), c2 = Number(cb.col)
+      if (row >= r1 && row <= r2 && col >= c1 && col <= c2) return { r1, c1, r2, c2 }
+    }
+    return { r1: row, c1: col, r2: row, c2: col }
+  }
+
+  let placed = 0
+  for (const mk of marks) {
+    const { r1, c1, r2, c2 } = rangeOf(mk.row, mk.col)
+    let boxW = 0
+    for (let c = c1; c <= c2; c++) boxW += colPx(ws.getColumn(c).width)
+    let boxH = 0
+    for (let r = r1; r <= r2; r++) boxH += rowPx(ws.getRow(r).height)
+    boxW = Math.max(24, boxW - 8)   // 여백 4px 씩
+    boxH = Math.max(16, boxH - 8)
+
+    // 비율 보존해 자리 안에 맞춘다(찌그러짐 방지). 크기를 못 읽으면 자리를 그대로 채운다.
+    const nat = imagePixelSize(buf)
+    let w = boxW, h = boxH
+    if (nat && nat.w > 0 && nat.h > 0) {
+      const k = Math.min(boxW / nat.w, boxH / nat.h)
+      w = Math.max(8, Math.round(nat.w * k))
+      h = Math.max(8, Math.round(nat.h * k))
+    }
+    ws.addImage(imageId, {
+      tl: { col: c1 - 1 + 0.1, row: r1 - 1 + 0.1 } as ExcelJS.Anchor,
+      ext: { width: w, height: h },
+      editAs: 'oneCell'
+    })
+    placed++
+  }
+  return placed
+}
+
 export function applyProfileTokens(ws: ExcelJS.Worksheet, db: Database.Database): number {
   let prof: Record<string, string> = {}
   try {
@@ -496,6 +613,7 @@ export async function exportSubmissionXlsx(opts: {
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(src)
   const ws = resolveSheet(wb, formCode, { allowFirstSheetFallback: fromTemplate })
+  applyProfileLogo(ws, wb, db)   // ⚠ 토큰 치환보다 먼저 — 뒤면 표식이 ''로 지워진다
   applyProfileTokens(ws, db)
 
   const mediaBefore = mediaCount(wb)

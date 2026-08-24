@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Settings, Check, Pencil, Folder, CalendarClock, Minus, Plus, Info, ShieldCheck, Users } from 'lucide-react'
+import { Settings, Check, Pencil, Folder, CalendarClock, Minus, Plus, Info, ShieldCheck, Users, ImageIcon, X } from 'lucide-react'
 import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, FONT_SCALE_MIN, FONT_SCALE_MAX, FONT_SCALE_STEP } from '../../stores/uiStore'
@@ -19,6 +19,10 @@ export function SettingsMenu(): JSX.Element {
   const [draft, setDraft] = useState('')
   const [editingDate, setEditingDate] = useState(false)
   const [showUsers, setShowUsers] = useState(false) // P2 사용자 관리 모달
+  // 회사 로고(2026-08-24 도장) — 양식 xlsx 로고 자리에 들어갈 그림.
+  const [logo, setLogo] = useState<string | null>(null)
+  const [logoMsg, setLogoMsg] = useState<string | null>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -30,6 +34,10 @@ export function SettingsMenu(): JSX.Element {
           setProfile(p)
           setAuthor(p?.defaultAuthor || '')
         }
+        const lg = (await window.api.invoke(window.api.channels.COMPANY_LOGO_GET)) as {
+          dataUrl: string | null
+        }
+        if (alive) setLogo(lg?.dataUrl || null)
       } catch {
         /* 프로필 없으면 빈 값 */
       }
@@ -95,6 +103,54 @@ export function SettingsMenu(): JSX.Element {
       if (res?.filePath && profile) setProfile({ ...profile, mastersDir: res.filePath })
     } catch {
       /* 취소/실패 무시 */
+    }
+  }
+
+  /**
+   * 로고 올리기 — 네이티브 다이얼로그가 아닌 <input type="file"> 을 쓰는 이유:
+   * 사장님은 브라우저(:8080)로 쓰는데 웹 셸에는 dialog 가 없다. 파일을 dataUrl 로 읽어
+   * 채널로 넘기면 데스크톱·웹이 같은 경로로 동작한다.
+   */
+  const onPickLogo = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // 같은 파일을 다시 골라도 change 가 뜨도록
+    if (!file) return
+    setLogoMsg(null)
+    const dataUrl = await new Promise<string | null>((resolve) => {
+      const fr = new FileReader()
+      fr.onload = () => resolve(typeof fr.result === 'string' ? fr.result : null)
+      fr.onerror = () => resolve(null)
+      fr.readAsDataURL(file)
+    })
+    if (!dataUrl) {
+      setLogoMsg('파일을 읽지 못했습니다.')
+      return
+    }
+    try {
+      const res = (await window.api.invoke(window.api.channels.COMPANY_LOGO_SET, {
+        dataUrl,
+        fileName: file.name
+      })) as { success: boolean; error?: string }
+      // 무음 실패 금지 — 서버가 돌려준 사유를 그대로 보여준다.
+      if (!res?.success) {
+        setLogoMsg(res?.error || '로고를 저장하지 못했습니다.')
+        return
+      }
+      setLogo(dataUrl)
+      setLogoMsg('저장했습니다. 이제 양식 엑셀에 로고가 들어갑니다.')
+    } catch {
+      setLogoMsg('로고를 저장하지 못했습니다.')
+    }
+  }
+
+  const onClearLogo = async (): Promise<void> => {
+    setLogoMsg(null)
+    try {
+      await window.api.invoke(window.api.channels.COMPANY_LOGO_CLEAR)
+      setLogo(null)
+      setLogoMsg('로고를 지웠습니다.')
+    } catch {
+      setLogoMsg('로고를 지우지 못했습니다.')
     }
   }
 
@@ -205,6 +261,51 @@ export function SettingsMenu(): JSX.Element {
               </span>
             </span>
           </button>
+
+          {/* 회사 로고 — 양식 엑셀의 로고 자리에 들어간다 (2026-08-24 도장) */}
+          <div className="mt-1 px-1 py-1">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <ImageIcon className="w-3 h-3 shrink-0 opacity-70" />
+              <span className="shrink-0">회사 로고</span>
+              {logo ? (
+                <img
+                  src={logo}
+                  alt="회사 로고"
+                  className="ml-1 h-5 max-w-[72px] object-contain rounded-sm border border-border bg-white"
+                />
+              ) : (
+                <span className="ml-1 text-amber-600">미등록</span>
+              )}
+              <div className="ml-auto flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  title="로고 그림 파일 올리기 (PNG · JPG · GIF · WEBP, 2MB 이하)"
+                  className="rounded px-1.5 py-0.5 hover:bg-muted text-[11px]"
+                >
+                  {logo ? '바꾸기' : '올리기'}
+                </button>
+                {logo && (
+                  <button
+                    type="button"
+                    onClick={() => void onClearLogo()}
+                    title="로고 지우기"
+                    className="rounded p-0.5 hover:bg-muted"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp"
+              onChange={(e) => void onPickLogo(e)}
+              className="hidden"
+            />
+            {logoMsg && <p className="mt-0.5 pl-4 text-[10px] text-muted-foreground">{logoMsg}</p>}
+          </div>
 
           {/* 글자 크기 배율 — 심사장 시연 접근성 (UI P3) */}
           <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground px-1 py-1">

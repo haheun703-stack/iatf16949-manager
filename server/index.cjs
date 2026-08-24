@@ -773,11 +773,42 @@ const PORT = Number(process.env.PORT) || 8080
 // 해제 조건: W3 로그인 세션 + role 가드(executive/manager) 적용 후에만 HOST 를 개방한다.
 // (코워크 지시 2026-07-24 — env 로도 못 바꾸도록 하드코딩)
 const HOST = '127.0.0.1'
-app.listen(PORT, HOST, () => {
-  console.log(`[server] IATF QMS (W1 골격) → http://${HOST}:${PORT}`)
+
+// ── HTTPS (2026-08-24 도장, M3 폰 카메라 전제) ────────────────────────────────
+// 왜: 폰 브라우저는 **보안 컨텍스트(HTTPS 또는 localhost)** 가 아니면 카메라를 안 준다.
+//     현장 폰 셸 /m 의 바코드·QR 스캔(BarcodeDetector)이 http://사내IP 에서는 원천 불가.
+// 어떻게: 인증서·키가 지정된 경우에만 HTTPS 로 뜬다(미지정이면 종전 HTTP 그대로 — 기존
+//     기동 스크립트·E2E 하네스 전부 무영향). 인증서 발급 = scripts/gen-tls-cert.mjs.
+// ⚠ 바인딩(HOST)은 이 변경과 무관하게 127.0.0.1 고정이다. 사내망 개방은 별도 도장 사안.
+const TLS_CERT = process.env.IATF_TLS_CERT
+const TLS_KEY = process.env.IATF_TLS_KEY
+let tlsOptions = null
+if (TLS_CERT || TLS_KEY) {
+  // 무음 실패 금지(35호) — 한쪽만 주거나 파일이 없으면 HTTP 로 조용히 내려가지 않고 즉시 중단.
+  if (!TLS_CERT || !TLS_KEY) {
+    console.error('[server] IATF_TLS_CERT 와 IATF_TLS_KEY 는 함께 지정해야 합니다.')
+    process.exit(1)
+  }
+  for (const [label, f] of [['IATF_TLS_CERT', TLS_CERT], ['IATF_TLS_KEY', TLS_KEY]]) {
+    if (!fs.existsSync(f)) {
+      console.error(`[server] ${label} 파일 없음: ${f} — scripts/gen-tls-cert.mjs 로 발급하세요.`)
+      process.exit(1)
+    }
+  }
+  tlsOptions = { cert: fs.readFileSync(TLS_CERT), key: fs.readFileSync(TLS_KEY) }
+}
+
+const scheme = tlsOptions ? 'https' : 'http'
+const server = tlsOptions
+  ? require('https').createServer(tlsOptions, app)
+  : require('http').createServer(app)
+
+server.listen(PORT, HOST, () => {
+  console.log(`[server] IATF QMS (W1 골격) → ${scheme}://${HOST}:${PORT}`)
   console.log(`[server] DB=${DB_PATH} (readonly)`)
   // N-6: 기동 로그로도 라이브/복사본을 못 박는다(health 를 못 보는 재기동 창에서의 오인 방지)
   console.log(`[server] 대상 = ${IS_COPY_SERVER ? '검수 복사본(copy=true)' : '★라이브(copy=false)'}`)
+  if (tlsOptions) console.log(`[server] TLS 사용 — cert=${TLS_CERT}`)
 })
 
 module.exports = { app, db, routes }

@@ -49,6 +49,11 @@ export const IPC_CHANNELS = {
   COMPANY_PROFILE_GET: 'company:profileGet',
   COMPANY_PROFILE_SAVE: 'company:profileSave',
   COMPANY_PICK_MASTERS_DIR: 'company:pickMastersDir',
+  // 회사 로고(2026-08-24 도장) — 양식 xlsx·표지의 로고 자리. 데스크톱/웹 공통이라
+  // 네이티브 다이얼로그가 아닌 **브라우저 업로드(dataUrl)** 로 받는다.
+  COMPANY_LOGO_GET: 'company:logoGet',
+  COMPANY_LOGO_SET: 'company:logoSet',
+  COMPANY_LOGO_CLEAR: 'company:logoClear',
 
   // Document Generation
   DOCGEN_GENERATE: 'docgen:generate',

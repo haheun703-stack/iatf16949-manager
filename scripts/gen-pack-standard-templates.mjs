@@ -112,7 +112,7 @@ const report = []
 const residues = []
 let written = 0
 for (const f of forms) {
-  const stats = { cleared: 0, neutralized: 0, images: 0, truncated: false, rowsKept: 0, rowsTotal: 0, beyondCells: 0, beyondNumericShare: 0, source: '' }
+  const stats = { cleared: 0, neutralized: 0, images: 0, logoCell: '', truncated: false, rowsKept: 0, rowsTotal: 0, beyondCells: 0, beyondNumericShare: 0, source: '' }
   let src, srcWs
   if (f.template_path) {
     src = join(repo, 'resources', f.template_path)
@@ -184,7 +184,22 @@ for (const f of forms) {
     if (mm && +mm[4] <= keepRows) { try { tw.mergeCells(m) } catch { /* 겹침 */ } }
   }
   // 이미지는 싣지 않는다 — 정본의 이미지는 회사 로고·현장 사진(고객사 자산). 수량만 리포트.
-  try { stats.images = srcWs.getImages().length } catch { /* noop */ }
+  // 다만 **로고 자리**는 잃으면 안 된다: 정본 머리글(맨 위 왼쪽)에 앵커된 이미지가 회사 로고이므로
+  // 그 좌표만 물려받아 '{{companyLogo}}' 표식을 남긴다. 출력 때 설치처 자기 로고가 그 자리에 앉는다.
+  // 판정 규칙(보수적): tl 이 1~5행 × 1~4열 안. 도장·서명(중단 이하 앵커)·현장 사진은 제외된다.
+  let logoAnchor = null
+  try {
+    const imgs = srcWs.getImages()
+    stats.images = imgs.length
+    for (const im of imgs) {
+      const tl = im.range?.tl
+      if (!tl) continue
+      const r = Number(tl.nativeRow ?? tl.row ?? -1)
+      const c = Number(tl.nativeCol ?? tl.col ?? -1)
+      if (r < 0 || c < 0 || r > 4 || c > 3) continue
+      if (!logoAnchor || r < logoAnchor.r || (r === logoAnchor.r && c < logoAnchor.c)) logoAnchor = { r, c }
+    }
+  } catch { /* noop */ }
 
   // b. 기록 클리어
   for (const a of clearCells) {
@@ -219,6 +234,26 @@ for (const f of forms) {
   }))
   if (hits.length) { residues.push(`${f.code} (${stats.source}) 잔재 ${hits.length}: ${hits.slice(0, 4).join(' · ')}`); continue }
 
+  // e. 로고 표식 — 빈 칸일 때만 남긴다(제목·라벨을 덮지 않는다). 병합이면 병합의 머리 칸에.
+  if (logoAnchor) {
+    let tr = logoAnchor.r + 1, tc = logoAnchor.c + 1
+    for (const m of tw.model?.merges || []) {
+      const mm = m.match(/^([A-Z]+)([0-9]+):([A-Z]+)([0-9]+)$/)
+      if (!mm) continue
+      const c1 = colNum(mm[1]), r1 = +mm[2], c2 = colNum(mm[3]), r2 = +mm[4]
+      if (tr >= r1 && tr <= r2 && tc >= c1 && tc <= c2) { tr = r1; tc = c1; break }
+    }
+    if (tr <= keepRows) {
+      const cell = tw.getRow(tr).getCell(tc)
+      if (cell.value == null || cell.value === '') {
+        cell.value = '{{companyLogo}}'
+        stats.logoCell = cell.address
+      } else {
+        stats.logoCell = `(생략:${cell.address} 내용있음)`
+      }
+    }
+  }
+
   const outPath = join(OUT, `${f.code}.xlsx`)
   await out.xlsx.writeFile(outPath)
   written++
@@ -232,11 +267,11 @@ if (reportPath) {
   L.push(`# 표준팩 xlsx 템플릿 생성 리포트 (gen-pack-standard-templates.mjs · 2026-08-23)`)
   L.push('')
   L.push(`- 대상 ${forms.length}종(레이아웃 보유 양식) → 생성 ${written} · 잔재/오류 ${residues.length}`)
-  L.push(`- 대장형 실기록 클리어 ${report.filter((r) => r.truncated).length}종 · 이미지 미복사 ${report.reduce((a, r) => a + r.images, 0)}장 · 기록 클리어 ${report.reduce((a, r) => a + r.cleared, 0)}셀 · 문자열 중립화 ${report.reduce((a, r) => a + r.neutralized, 0)}셀`)
+  L.push(`- 대장형 실기록 클리어 ${report.filter((r) => r.truncated).length}종 · 이미지 미복사 ${report.reduce((a, r) => a + r.images, 0)}장 · 로고 표식 ${report.filter((r) => /^[A-Z]+[0-9]+$/.test(r.logoCell || '')).length}종 · 기록 클리어 ${report.reduce((a, r) => a + r.cleared, 0)}셀 · 문자열 중립화 ${report.reduce((a, r) => a + r.neutralized, 0)}셀`)
   L.push('')
-  L.push('| code | 양식 | 소스 | 행 | 대장클리어 | 뒷영역 셀/숫자% | 클리어 | 중립화 | 이미지(미복사) |')
-  L.push('|---|---|---|---|---|---|---|---|---|')
-  for (const r of report) L.push(`| ${r.code} | ${r.name} | ${r.source} | ${r.rowsKept}/${r.rowsTotal} | ${r.truncated ? '★' : ''} | ${r.beyondCells ? `${r.beyondCells}/${r.beyondNumericShare}%` : ''} | ${r.cleared} | ${r.neutralized} | ${r.images} |`)
+  L.push('| code | 양식 | 소스 | 행 | 대장클리어 | 뒷영역 셀/숫자% | 클리어 | 중립화 | 이미지(미복사) | 로고 표식 |')
+  L.push('|---|---|---|---|---|---|---|---|---|---|')
+  for (const r of report) L.push(`| ${r.code} | ${r.name} | ${r.source} | ${r.rowsKept}/${r.rowsTotal} | ${r.truncated ? '★' : ''} | ${r.beyondCells ? `${r.beyondCells}/${r.beyondNumericShare}%` : ''} | ${r.cleared} | ${r.neutralized} | ${r.images} | ${r.logoCell || ''} |`)
   if (residues.length) { L.push(''); L.push('## 잔재/오류'); for (const x of residues) L.push(`- ${x}`) }
   writeFileSync(reportPath, L.join('\n'), 'utf-8')
 }

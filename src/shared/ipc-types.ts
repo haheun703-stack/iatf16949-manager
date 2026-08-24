@@ -2244,6 +2244,19 @@ export interface IpcChannelMap {
     request: void
     response: { filePath: string | null; canceled?: boolean }
   }
+  [IPC_CHANNELS.COMPANY_LOGO_GET]: {
+    request: void
+    response: { dataUrl: string | null; fileName: string | null; updatedAt: string | null }
+  }
+  [IPC_CHANNELS.COMPANY_LOGO_SET]: {
+    /** dataUrl = 브라우저 FileReader 의 "data:image/png;base64,..." 문자열 */
+    request: { dataUrl: string; fileName?: string }
+    response: { success: boolean; error?: string; fileName?: string }
+  }
+  [IPC_CHANNELS.COMPANY_LOGO_CLEAR]: {
+    request: void
+    response: { success: boolean }
+  }
   [IPC_CHANNELS.CLAUSE_COVERAGE]: {
     request: void
     response: ClauseCoverageDto[]
