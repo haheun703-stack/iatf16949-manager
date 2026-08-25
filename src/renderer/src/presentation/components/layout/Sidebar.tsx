@@ -9,6 +9,7 @@ import type { CompanyProfile } from '@shared/ipc-types'
 import { cn } from '../../../lib/utils'
 import { useUIStore, PAGE_LABELS, type PageId } from '../../stores/uiStore'
 import { DdayBadge } from '../shared/DdayBadge'
+import { DailyQMark } from '../brand/DailyQMark'
 import { useCopilotStore } from '../../stores/copilotStore'
 import { useAiAuthorStore } from '../../stores/aiAuthorStore'
 import { useSimilarStore } from '../../stores/similarStore'
@@ -211,8 +212,8 @@ export function Sidebar(): JSX.Element {
           <Building2 className="w-4 h-4 text-white" />
         </div>
         <div className={cn('leading-tight min-w-0', lblCls)}>
-          <div className="text-[14px] font-bold text-white truncate">{companyName || 'IATF 16949 QMS'}</div>
-          <div className="text-[11px] text-side-sec">IATF 16949 QMS</div>
+          <div className="text-[14px] font-bold text-white truncate">{companyName || '회사 미설정'}</div>
+          <div className="text-[11px] text-side-sec">데일리Q</div>
         </div>
       </button>
 
@@ -304,7 +305,8 @@ export function TopBar(): JSX.Element {
 
   return (
     <div className="h-[48px] shrink-0 flex items-center justify-between gap-3 px-5 bg-card border-b border-border">
-      <span className="text-[15.5px] font-extrabold tracking-[-0.01em] text-mega-active truncate">
+      <span className="text-[15.5px] font-extrabold tracking-[-0.01em] text-mega-active truncate flex items-center gap-2">
+        <DailyQMark size={20} simple />
         데일리Q <span className="text-muted-foreground font-semibold">-</span> {PAGE_LABELS[currentPage]}
         {isCopy && (
           <span

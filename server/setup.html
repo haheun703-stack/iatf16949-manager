@@ -22,7 +22,13 @@
         border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 28px 28px 22px;
         backdrop-filter: blur(10px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
       }
-      h1 { font-size: 18px; margin: 0 0 4px; }
+      h1 { font-size: 18px; margin: 0; }
+      /* 브랜드 줄 — 마크(시안 C 게이지Q, 2026-08-25). 어두운 바탕이라 흰/연주황으로 뒤집는다. */
+      .brandbox {
+        display: flex; align-items: center; gap: 10px; margin: 0 0 4px;
+        --m-ink: #ffffff; --m-sig: #ff9e6b;
+      }
+      .brandbox svg { width: 30px; height: 30px; display: block; flex: none; overflow: visible; }
       p.sub { margin: 0 0 18px; color: #8a93a2; font-size: 12.5px; line-height: 1.6; }
       h2 { font-size: 13px; color: #cbd6ea; margin: 18px 0 8px; letter-spacing: 0.02em; }
       h2 span { color: #5b8def; margin-right: 6px; }
@@ -51,7 +57,21 @@
   </head>
   <body>
     <form class="card" id="f" autocomplete="off">
-      <h1>데일리Q 처음 설정</h1>
+      <div class="brandbox">
+        <!-- 데일리Q 마크 — 원본은 resources/brand/mark.svg (수정 시 함께 고칠 것) -->
+        <svg viewBox="0 0 100 100" role="img" aria-label="데일리Q">
+          <g transform="translate(1.4, 5.4)" fill="none" stroke-linecap="round">
+            <path d="M57.9 71.3 A 29 29 0 1 1 75.3 53.9" stroke="var(--m-ink)" stroke-width="9"/>
+            <g stroke="var(--m-ink)" stroke-width="4">
+              <path d="M48 26 V31"/><path d="M31.1 37.8 L35.8 39.6"/><path d="M64.9 37.8 L60.2 39.6"/>
+            </g>
+            <path d="M48 44 L59.3 32.7" stroke="var(--m-sig)" stroke-width="7"/>
+            <circle cx="48" cy="44" r="4.5" fill="var(--m-ink)" stroke="none"/>
+            <path d="M62.1 58.1 L77.7 73.7" stroke="var(--m-ink)" stroke-width="10"/>
+          </g>
+        </svg>
+        <h1>데일리Q 처음 설정</h1>
+      </div>
       <p class="sub">설치 후 한 번만 합니다. 회사 정보와 관리자 계정을 만들면 바로 사용할 수 있습니다.<br />
         양식·보고서에 찍히는 회사명은 여기서 정한 값이 쓰입니다(나중에 설정에서 변경 가능).</p>
 

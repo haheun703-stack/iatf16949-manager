@@ -6,7 +6,7 @@ import { registerAllIpcHandlers } from './ipc/register'
 import { closeDatabase } from './database/connection'
 import { reindexKb } from './ai/kb'
 
-// userData 고정: 패키징 시 productName("IATF16949 품질경영시스템")이 app.name 이 되어
+// userData 고정: 패키징 시 productName("데일리Q")이 app.name 이 되어
 // userData 폴더가 바뀌면 dev 에서 쌓아온 DB(%APPDATA%/iatf16949-manager)와 어긋난다.
 // 설치판·dev 모두 같은 데이터 폴더를 보도록 최우선으로 고정한다.
 app.setPath('userData', join(app.getPath('appData'), 'iatf16949-manager'))
@@ -50,7 +50,7 @@ function createWindow(): void {
     height: 900,
     minWidth: 1024,
     minHeight: 700,
-    title: 'IATF 16949 품질경영시스템',
+    title: '데일리Q',
     show: false,
     autoHideMenuBar: true,
     webPreferences: {

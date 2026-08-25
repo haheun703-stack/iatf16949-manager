@@ -1,0 +1,23 @@
+<!--
+  데일리Q 마크 — 작은 크기 판 (16~32px · 파비콘 · 트레이 · 목록 아이콘)
+
+  왜 따로 두나: 표준판(mark.svg)의 눈금 3개와 얇은 바늘은 16px 에서 뭉쳐
+  형태가 무너진다(시안 검토 때 확인된 C안의 유일한 약점). 그래서
+    · 눈금 제거
+    · 베젤·꼬리·바늘 굵게
+    · 축 키움
+  으로 실루엣만 남긴다. 다이얼 + 틈으로 나온 꼬리라는 성격은 유지된다.
+
+  색 규약은 mark.svg 와 동일(--m-ink / --m-sig).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="데일리Q">
+  <g transform="translate(1.4, 5.4)"
+     fill="none"
+     stroke-linecap="round">
+    <path d="M57.9 71.3 A 29 29 0 1 1 75.3 53.9"
+          stroke="var(--m-ink, #152A4A)" stroke-width="12"/>
+    <path d="M48 44 L60.0 32.0" stroke="var(--m-sig, #D2542A)" stroke-width="10"/>
+    <circle cx="48" cy="44" r="5.5" fill="var(--m-ink, #152A4A)" stroke="none"/>
+    <path d="M62.1 58.1 L78.5 74.5" stroke="var(--m-ink, #152A4A)" stroke-width="12"/>
+  </g>
+</svg>

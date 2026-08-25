@@ -1,5 +1,5 @@
-appId: com.iatf16949.qms-manager
-productName: IATF16949 품질경영시스템
+appId: com.dailyq.qms
+productName: 데일리Q
 copyright: Copyright © 2026
 
 directories:
@@ -51,4 +51,4 @@ nsis:
   uninstallerIcon: build/icon.ico
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: IATF16949 QMS
+  shortcutName: 데일리Q

@@ -54,7 +54,7 @@ if (Test-Path $migDir) {
 # 5) 바탕화면 바로가기 생성/유효화 (OneDrive 리다이렉트 대응 = .NET 경로)
 $desktop = [Environment]::GetFolderPath('Desktop')
 $ws = New-Object -ComObject WScript.Shell
-$lnkPath = Join-Path $desktop "IATF16949 QMS.lnk"
+$lnkPath = Join-Path $desktop "데일리Q.lnk"
 $lnk = $ws.CreateShortcut($lnkPath)
 $lnk.TargetPath = $Exe
 $lnk.WorkingDirectory = $InstallDir

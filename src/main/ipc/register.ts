@@ -90,7 +90,7 @@ export function registerAllIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.APP_INFO, (): AppInfo => {
     return {
       // electron-builder.yml 과 일치하는 제품 식별자(개인·TPC 브랜딩 아님, 안전)
-      productName: 'IATF16949 품질경영시스템',
+      productName: '데일리Q',
       version: app.getVersion(),
       copyright: 'Copyright © 2026',
       electron: process.versions.electron,
