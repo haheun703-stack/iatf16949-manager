@@ -154,16 +154,32 @@ export function registerAllIpcHandlers(): void {
   // 어디에 두나: userData/branding/ (= 웹에서는 IATF_DATA_DIR). DB 밖에 두는 이유는
   //   xlsx 삽입이 파일 경로를 요구하고, DB 백업 크기를 이미지가 키우지 않게 하려는 것.
   const LOGO_DIR = joinPath(app.getPath('userData'), 'branding')
+  // WEBP 는 받지 않는다 — 출력 엔진(ExcelJS)이 png|jpeg|gif 만 담을 수 있어, 받아 두면
+  // "올라갔는데 엑셀에서 안 열리는" 파일이 만들어진다(리뷰 8/25).
   const LOGO_MIME: Record<string, string> = {
-    'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/webp': '.webp'
+    'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif'
   }
+  const LOGO_LABEL = 'PNG · JPG · GIF'
   const LOGO_MAX_BYTES = 2 * 1024 * 1024 // 2MB — 양식 머리글에 들어갈 그림에 충분
+
+  /**
+   * 선언된 MIME 을 믿지 않고 **파일 첫 바이트로** 실제 형식을 판정한다(리뷰 8/25).
+   * 종전엔 dataUrl 의 `image/png` 라벨만 보고 아무 바이트나 logo.png 로 저장할 수 있었고,
+   * 그 파일은 이후 모든 양식 출력에 박혀 엑셀을 깨뜨린다.
+   * 반환 = 확장자('.png') 또는 null(이미지 아님).
+   */
+  const sniffImage = (b: Buffer): string | null => {
+    if (b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return '.png'
+    if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return '.jpg'
+    if (b.length >= 6 && b.subarray(0, 4).toString('latin1') === 'GIF8') return '.gif'
+    return null
+  }
 
   /** 저장된 로고 파일 경로(없으면 null). 확장자는 업로드 때 정해지므로 폴더를 훑는다. */
   const findLogoFile = (): string | null => {
     try {
       if (!existsSync(LOGO_DIR)) return null
-      const f = readdirSync(LOGO_DIR).find((n) => /^logo[.](png|jpg|gif|webp)$/i.test(n))
+      const f = readdirSync(LOGO_DIR).find((n) => /^logo[.](png|jpg|gif)$/i.test(n))
       return f ? joinPath(LOGO_DIR, f) : null
     } catch {
       return null
@@ -192,10 +208,12 @@ export function registerAllIpcHandlers(): void {
     // 무음 실패 금지(35호) — 형식·크기 위반은 사유를 돌려준다.
     const m = /^data:([^;,]+);base64,(.+)$/s.exec(dataUrl || '')
     if (!m) return { success: false, error: '이미지 데이터를 읽지 못했습니다.' }
-    const ext = LOGO_MIME[m[1].toLowerCase()]
-    if (!ext) return { success: false, error: 'PNG · JPG · GIF · WEBP 만 넣을 수 있습니다.' }
+    if (!LOGO_MIME[m[1].toLowerCase()]) return { success: false, error: `${LOGO_LABEL} 만 넣을 수 있습니다.` }
     const buf = Buffer.from(m[2], 'base64')
     if (buf.length === 0) return { success: false, error: '빈 파일입니다.' }
+    // 라벨이 아니라 실제 바이트로 판정 — 확장자도 여기서 정한다(라벨과 어긋나면 실물을 따른다).
+    const ext = sniffImage(buf)
+    if (!ext) return { success: false, error: `이미지 파일이 아닙니다 — ${LOGO_LABEL} 만 넣을 수 있습니다.` }
     if (buf.length > LOGO_MAX_BYTES) {
       return { success: false, error: `파일이 너무 큽니다(${Math.round(buf.length / 1024)}KB) — 2MB 이하로 줄여 주세요.` }
     }

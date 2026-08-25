@@ -14,10 +14,11 @@
 // 사용: ELECTRON_RUN_AS_NODE=1 node_modules\electron\dist\electron.exe scripts\e2e-company-logo.mjs
 // ============================================================
 import ExcelJS from 'exceljs'
-import { mkdirSync, existsSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, existsSync, readdirSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import zlib from 'node:zlib'
+import { randomFillSync } from 'node:crypto'
 import { mkCheck } from './lib/e2e.mjs'
 
 const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8083'
@@ -46,15 +47,28 @@ function crc32(buf) {
   }
   return (crc ^ 0xffffffff) >>> 0
 }
-function makePng(w, h) {
-  const raw = Buffer.alloc((w * 3 + 1) * h)
-  let o = 0
-  for (let y = 0; y < h; y++) {
-    raw[o++] = 0 // 필터 바이트
-    for (let x = 0; x < w; x++) {
-      raw[o++] = 21
-      raw[o++] = 94
-      raw[o++] = 179
+/**
+ * 유효한 PNG 를 만든다. noisy=true 면 픽셀을 무작위로 채워 압축이 먹지 않게 한다 —
+ * **용량 초과 경로를 진짜로 검증**하기 위함(단색으로 크게 만들면 deflate 가 몇 KB 로 줄여
+ * 2MB 관문에 닿지 못하고, 아무 바이트나 쓰면 형식 관문에 먼저 걸려 크기 검사가 안 돌아간다).
+ */
+function makePng(w, h, noisy = false) {
+  const stride = w * 3 + 1
+  const raw = Buffer.alloc(stride * h)
+  if (noisy) {
+    // 진짜 난수로 채운다 — 직접 만든 선형 난수는 JS 정수 정밀도를 넘겨 저엔트로피가 되고,
+    // 그러면 deflate 가 30KB 로 줄여 버려 용량 관문에 닿지 못한다(실측).
+    randomFillSync(raw)
+    for (let y = 0; y < h; y++) raw[y * stride] = 0 // 행마다 필터 바이트는 0
+  } else {
+    let o = 0
+    for (let y = 0; y < h; y++) {
+      raw[o++] = 0 // 필터 바이트
+      for (let x = 0; x < w; x++) {
+        raw[o++] = 21
+        raw[o++] = 94
+        raw[o++] = 179
+      }
     }
   }
   const chunk = (type, data) => {
@@ -167,9 +181,30 @@ check('① 미등록 상태 logoGet = null', g0 && g0.dataUrl === null)
 // ② 거부 2종 — 사유를 반드시 돌려줘야 한다(무음 실패 금지)
 const bad1 = await api('company:logoSet', { dataUrl: 'data:text/plain;base64,QUJD', fileName: 'x.txt' })
 check(`② 이미지 아닌 형식 거부 + 사유 ("${bad1 && bad1.error}")`, bad1 && bad1.success === false && !!bad1.error)
-const big = Buffer.alloc(2 * 1024 * 1024 + 1024, 1).toString('base64')
-const bad2 = await api('company:logoSet', { dataUrl: `data:image/png;base64,${big}`, fileName: 'big.png' })
-check(`② 2MB 초과 거부 + 사유 ("${bad2 && bad2.error}")`, bad2 && bad2.success === false && !!bad2.error)
+// 리뷰 8/25: 라벨만 image/png 로 붙인 아무 바이트가 통과하면, 그 파일이 이후 모든 출력에 박혀
+// 엑셀을 깨뜨린다. 실제 바이트로 판정하는지 본다.
+const liar = await api('company:logoSet', {
+  dataUrl: 'data:image/png;base64,' + Buffer.from('이건 그림이 아니라 그냥 글자입니다').toString('base64'),
+  fileName: '가짜.png'
+})
+check(`② 라벨만 PNG 인 가짜 거부 ("${liar && liar.error}")`, liar && liar.success === false && !!liar.error)
+// WEBP 는 출력 엔진이 담지 못하므로 업로드 단계에서 막아야 한다("올라갔는데 안 열림" 방지).
+const webp = await api('company:logoSet', {
+  dataUrl: 'data:image/webp;base64,' + Buffer.from('RIFF0000WEBPVP8 ').toString('base64'),
+  fileName: 'x.webp'
+})
+check(`② WEBP 거부 ("${webp && webp.error}")`, webp && webp.success === false && !!webp.error)
+// 용량 초과 — **형식 관문을 통과하는 진짜 PNG** 여야 크기 검사가 실제로 돌아간다.
+const bigPng = makePng(900, 820, true)
+check(`② (준비) 시험용 큰 PNG = ${(bigPng.length / 1024 / 1024).toFixed(2)}MB`, bigPng.length > 2 * 1024 * 1024)
+const bad2 = await api('company:logoSet', {
+  dataUrl: `data:image/png;base64,${bigPng.toString('base64')}`,
+  fileName: 'big.png'
+})
+check(
+  `② 2MB 초과 거부 + 크기 사유 ("${bad2 && bad2.error}")`,
+  bad2 && bad2.success === false && /너무 큽니다/.test(bad2.error || '')
+)
 
 // ③ 정상 업로드
 const png = makePng(240, 80)
@@ -200,6 +235,14 @@ const g2 = await api('company:logoGet', {})
 check('⑥ logoGet 다시 null', g2 && g2.dataUrl === null)
 const c = await exportAndInspect(WITH_LOGO, 'off')
 check('⑥ 삭제 후 출력 이미지 0 · 표식 잔존 0(빈칸)', c.n === 0 && c.left === 0)
+
+// ⑦ 권한 관문 — 로고는 한 번 올리면 이후 모든 출력에 박히는 회사 자산이라 manager+ 로 좁혀 두었다.
+// 지금 로그인한 E2E봇이 manager 라 위 호출들이 통과한 것이고, 관문 자체가 사라지면
+// member 도 올릴 수 있게 되므로 서버 소스에서 등재를 직접 확인한다(리뷰 8/25).
+const serverSrc = readFileSync(join(process.cwd(), 'server', 'index.cjs'), 'utf-8')
+const gated = (ch) => new RegExp(`'${ch}':\\s*\\[[^\\]]*'manager'`).test(serverSrc)
+check('⑦ company:logoSet 이 PROTECTED(manager+) 에 등재', gated('company:logoSet'))
+check('⑦ company:logoClear 이 PROTECTED(manager+) 에 등재', gated('company:logoClear'))
 
 rmSync(OUT, { recursive: true, force: true })
 done()

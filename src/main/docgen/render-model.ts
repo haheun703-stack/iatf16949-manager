@@ -18,6 +18,7 @@ import {
   resolveTemplateFile,
   resolveSheet,
   applyProfileTokens,
+  applyProfileLogo,
   cellText,
   norm,
   ALIASES
@@ -125,7 +126,13 @@ export async function buildRenderModel(
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(src)
   const ws = resolveSheet(wb, formCode, { allowFirstSheetFallback: tpl != null })
-  applyProfileTokens(ws, db) // 표준팩 토큰 → 회사 프로파일(export 엔진과 동일 — 화면·출력 일치)
+  // 표준팩 토큰 → 회사 프로파일. export 엔진과 **같은 순서로** 부른다(리뷰 8/25):
+  // applyProfileLogo 가 먼저 {{companyLogo}} 표식을 걷어내야, 화면에서도 출력과 똑같이
+  // 그 칸이 빈칸이 된다. 순서가 바뀌면 토큰 치환이 표식을 ''로 지워 두 경로가 갈라진다.
+  // ⚠ 로고 **그림 자체는 출력(xlsx) 전용**이다 — 이 화면 모델은 셀 값만 읽으므로
+  //   워크시트에 꽂힌 이미지를 그리지 않는다(화면에도 띄울지는 미결 판단 사안).
+  applyProfileLogo(ws, wb, db)
+  applyProfileTokens(ws, db)
 
   const rowCount = Math.min(ws.rowCount || 1, MAX_ROWS)
   const colCount = Math.min(ws.columnCount || 1, MAX_COLS)

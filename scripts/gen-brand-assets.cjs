@@ -120,6 +120,7 @@ app.disableHardwareAcceleration()
 
 app.whenReady().then(async () => {
   let win = null
+  let code = 1
   try {
     fs.mkdirSync(BUILD, { recursive: true })
     const out = []
@@ -170,11 +171,13 @@ app.whenReady().then(async () => {
     for (const [name, size, bytes] of out) {
       console.log(`  ${String(name).padEnd(32)} ${String(size).padEnd(5)} ${(bytes / 1024).toFixed(1)} KB`)
     }
-    app.exit(0)
+    code = 0
   } catch (err) {
     console.error('[brand] 실패:', (err && err.message) || err)
-    app.exit(1)
+    code = 1
   } finally {
+    // ⚠ app.exit() 을 try 안에서 부르면 즉시 종료돼 이 정리가 아예 돌지 않는다(리뷰 8/25).
+    //   종료 코드만 정해 두고, 창·임시 파일을 치운 뒤 마지막에 나간다.
     if (win) win.destroy()
     for (const f of tmpFiles) {
       try {
@@ -183,5 +186,6 @@ app.whenReady().then(async () => {
         /* 임시 파일 잔류는 무해 */
       }
     }
+    app.exit(code)
   }
 })

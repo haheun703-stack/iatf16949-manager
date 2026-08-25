@@ -15,8 +15,21 @@ param(
   [switch]$Launch
 )
 $ErrorActionPreference = 'Stop'
-$AppName = "IATF16949 품질경영시스템"
+# 제품명(2026-08-25 데일리Q 로 개명). exe 이름은 productName 을 따라가므로 **하드코딩하지 않고**
+# 설치 폴더에서 찾는다 — 이름이 또 바뀌어도 이 스크립트가 "설치 실패"로 오판하지 않게 한다.
+$AppName = "데일리Q"
 $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\iatf16949-manager"
+function Find-AppExe {
+  if (-not (Test-Path $InstallDir)) { return $null }
+  $prefer = Join-Path $InstallDir "$AppName.exe"
+  if (Test-Path $prefer) { return $prefer }
+  # 언인스톨러를 빼고 가장 큰 exe = 본체
+  $c = Get-ChildItem $InstallDir -Filter *.exe -ErrorAction SilentlyContinue |
+       Where-Object { $_.Name -notmatch '^Uninstall' } |
+       Sort-Object Length -Descending | Select-Object -First 1
+  if ($c) { return $c.FullName }
+  return $null
+}
 $Exe = Join-Path $InstallDir "$AppName.exe"
 
 # 1) Setup 경로 결정 — 미지정 시 repo\dist 의 최신 *Setup*.exe
@@ -30,7 +43,11 @@ if (-not (Test-Path $Setup)) { throw "Setup 파일 없음: $Setup" }
 Write-Host "[reinstall] Setup = $Setup"
 
 # 2) 실행 중 앱 종료(Program Files exe 잠금 해제)
-$running = Get-Process -Name $AppName -ErrorAction SilentlyContinue
+# 프로세스 이름 = exe 파일명. 개명 전 이름으로 돌고 있을 수도 있으니 설치 폴더에서 실행 중인 것을 함께 본다.
+$existing = Find-AppExe
+$procNames = @($AppName)
+if ($existing) { $procNames += [IO.Path]::GetFileNameWithoutExtension($existing) }
+$running = Get-Process -Name ($procNames | Select-Object -Unique) -ErrorAction SilentlyContinue
 if ($running) {
   Write-Host "[reinstall] 실행 중 앱 종료($($running.Count) proc)..."
   $running | Stop-Process -Force
@@ -41,8 +58,10 @@ if ($running) {
 Write-Host "[reinstall] 사일런트 설치 중(/S)..."
 Start-Process -FilePath $Setup -ArgumentList "/S" -Wait
 Start-Sleep -Seconds 2
-if (-not (Test-Path $Exe)) { throw "설치 실패: $Exe 없음" }
-Write-Host "[reinstall] 설치 완료: exe $((Get-Item $Exe).LastWriteTime)"
+# 설치가 만든 실제 exe 를 찾아 확정한다(제품명이 바뀌어도 오판하지 않게).
+$Exe = Find-AppExe
+if (-not $Exe) { throw "설치 실패: $InstallDir 에 실행 파일이 없음" }
+Write-Host "[reinstall] 설치 완료: $([IO.Path]::GetFileName($Exe)) $((Get-Item $Exe).LastWriteTime)"
 
 # 4) 마이그 번들 스모크(설치본 resources/migrations 존재 확인)
 $migDir = Join-Path $InstallDir "resources\migrations"

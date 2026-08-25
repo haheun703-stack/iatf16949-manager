@@ -456,7 +456,13 @@ const PROTECTED = {
   'semimes:ppmTargetSave': ['manager', 'executive'], // PPM 목표선
   // W4-B(#19) 판정 ①(사장님 확정 8/13 — 코워크 권고 수용): 권한 배분 = 조직 설계 행위 →
   // executive 전용. manager 확대는 안정 후 재론(1줄 수정 자리). 조회(perm:list)는 로그인만.
-  'perm:save': ['executive']
+  'perm:save': ['executive'],
+  // 회사 로고(리뷰 8/25) — 한 번 올리면 **이후 모든 양식 출력에 박히는** 회사 정체성 자산이다.
+  // 조업달력·KPI 기준정보와 같은 관리성 채널로 보고 manager+ 로 좁힌다(조회는 로그인만).
+  // ⚠ 남은 구멍: 같은 성격인 company:profileSave(회사명 = 전 양식에 찍힘)는 아직 열려 있다.
+  //    이건 이번 변경 이전부터의 범위라 함께 좁힐지는 사장님 판단 사안으로 남긴다.
+  'company:logoSet': ['manager', 'executive'],
+  'company:logoClear': ['manager', 'executive']
 }
 
 // C-1 — 사용자 관리 쓰기 3종: 디스패처가 세션 주체(actorName/actorRole)를 주입하는 대상.

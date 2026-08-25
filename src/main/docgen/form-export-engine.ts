@@ -309,8 +309,16 @@ const TOKEN_RE = /\{\{\s*([A-Za-z][A-Za-z0-9_]*)\s*\}\}/g
 //   로고 자리를 잃는다.
 const LOGO_TOKEN_RE = /\{\{\s*companyLogo\s*\}\}/gi
 
-/** PNG/JPEG 헤더에서 픽셀 크기를 읽는다(비율 보존용). 실패 시 null. */
+/**
+ * PNG/JPEG/GIF 헤더에서 픽셀 크기를 읽는다(비율 보존용). 실패 시 null.
+ * ⚠ 여기서 못 읽는 형식은 아래에서 자리를 꽉 채우도록 늘어나 비율이 깨진다 —
+ *   그래서 업로드가 허용하는 세 형식을 모두 다룬다(리뷰 8/25: GIF 누락으로 늘어남).
+ */
 function imagePixelSize(buf: Buffer): { w: number; h: number } | null {
+  // GIF: "GIF87a"/"GIF89a" 다음 width/height 각 2바이트 LE
+  if (buf.length > 10 && buf.subarray(0, 4).toString('latin1') === 'GIF8') {
+    return { w: buf.readUInt16LE(6), h: buf.readUInt16LE(8) }
+  }
   // PNG: 시그니처 8 + IHDR(길이4+타입4) 다음 width/height 각 4바이트 BE
   if (buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47) {
     return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) }
@@ -361,7 +369,8 @@ export function applyProfileLogo(ws: ExcelJS.Worksheet, wb: ExcelJS.Workbook, _d
   try {
     const dir = join(app.getPath('userData'), 'branding')
     if (existsSync(dir)) {
-      const f = readdirSync(dir).find((n) => /^logo[.](png|jpg|jpeg|gif|webp)$/i.test(n))
+      // ExcelJS 가 담을 수 있는 세 형식만 본다(webp 는 업로드 단계에서 이미 거른다).
+      const f = readdirSync(dir).find((n) => /^logo[.](png|jpg|jpeg|gif)$/i.test(n))
       if (f) logoPath = join(dir, f)
     }
   } catch {
@@ -370,11 +379,13 @@ export function applyProfileLogo(ws: ExcelJS.Worksheet, wb: ExcelJS.Workbook, _d
   if (!logoPath) return 0   // 로고 미등록 = 빈칸(종전과 동일한 모습)
 
   const buf = readFileSync(logoPath)
-  const rawExt = (logoPath.split('.').pop() || 'png').toLowerCase()
-  const imageId = wb.addImage({
-    buffer: buf as unknown as ExcelJS.Buffer,
-    extension: (rawExt === 'jpg' ? 'jpeg' : rawExt) as 'png' | 'jpeg' | 'gif'
-  })
+  // ExcelJS 가 아는 형식만 넣는다 — 모르는 확장자를 억지로 캐스팅하면 엑셀이 못 여는
+  // 파트가 생긴다(리뷰 8/25). 확장자가 이상하면 로고 없이 빈칸으로 둔다.
+  const rawExt = (logoPath.split('.').pop() || '').toLowerCase()
+  const extension: 'png' | 'jpeg' | 'gif' | null =
+    rawExt === 'png' ? 'png' : rawExt === 'jpg' || rawExt === 'jpeg' ? 'jpeg' : rawExt === 'gif' ? 'gif' : null
+  if (!extension) return 0
+  const imageId = wb.addImage({ buffer: buf as unknown as ExcelJS.Buffer, extension })
 
   // 표식 칸이 병합돼 있으면 그 병합 영역 전체가 로고 자리다.
   const merges: string[] = (ws.model?.merges || []) as string[]

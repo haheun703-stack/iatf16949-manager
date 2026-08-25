@@ -280,7 +280,7 @@ export function SettingsMenu(): JSX.Element {
                 <button
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
-                  title="로고 그림 파일 올리기 (PNG · JPG · GIF · WEBP, 2MB 이하)"
+                  title="로고 그림 파일 올리기 (PNG · JPG · GIF, 2MB 이하)"
                   className="rounded px-1.5 py-0.5 hover:bg-muted text-[11px]"
                 >
                   {logo ? '바꾸기' : '올리기'}
@@ -300,7 +300,7 @@ export function SettingsMenu(): JSX.Element {
             <input
               ref={logoInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/gif,image/webp"
+              accept="image/png,image/jpeg,image/gif"
               onChange={(e) => void onPickLogo(e)}
               className="hidden"
             />
